@@ -10,7 +10,9 @@
  */
 
 if ('undefined' != typeof xajax.debug) {
-	
+	/*
+		Array: text
+	*/
 	xajax.debug.text = [];
 	xajax.debug.text[100] = 'IKAZ: ';
 	xajax.debug.text[101] = 'HATA: ';
@@ -55,27 +57,28 @@ if ('undefined' != typeof xajax.debug) {
 	xajax.debug.exceptions[10008] = '[{data}] ID li element dosya içinde bulunamadi.';
 	xajax.debug.exceptions[10009] = 'Geçersiz istek: Fonksiyon isim parametresi eksik.';
 	xajax.debug.exceptions[10010] = 'Geçersiz istek: Fonksiyon nesne parametresi eksik.';
+
+	xajax.debug.lang = {};
+	xajax.debug.lang.isLoaded = true;
 }
 
-if ('undefined' != typeof xajax.config) {
-	if ('undefined' != typeof xajax.config.status) {
-		/*
-			Object: update
-		*/
-		xajax.config.status.update = function() {
-			return {
-				onRequest: function() {
-					window.status = 'İstek Gönderiliyor...';
-				},
-				onWaiting: function() {
-					window.status = 'Cevap Bekleniyor...';
-				},
-				onProcessing: function() {
-					window.status = 'İşlem Devam Ediyor...';
-				},
-				onComplete: function() {
-					window.status = 'Tamamlandı.';
-				}
+if (typeof xajax.config != 'undefined' && typeof xajax.config.status != 'undefined') {
+	/*
+		Object: update
+	*/
+	xajax.config.status.update = function() {
+		return {
+			onRequest: function() {
+				window.status = 'İstek Gönderiliyor...';
+			},
+			onWaiting: function() {
+				window.status = 'Cevap Bekleniyor...';
+			},
+			onProcessing: function() {
+				window.status = 'İşlem Devam Ediyor...';
+			},
+			onComplete: function() {
+				window.status = 'Tamamlandı.';
 			}
 		}
 	}

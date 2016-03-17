@@ -57,27 +57,28 @@ if ('undefined' != typeof xajax.debug) {
 	xajax.debug.exceptions[10008] = 'Element met het ID [{data}] kon niet in het document worden gevonden.';
 	xajax.debug.exceptions[10009] = 'Ongeldige aanvraag: Missende functie parameter - naam.';
 	xajax.debug.exceptions[10010] = 'Ongeldige aanvraag: Missende functie parameter - object.';
+
+	xajax.debug.lang = {};
+	xajax.debug.lang.isLoaded = true;
 }
 
-if ('undefined' != typeof xajax.config) {
-	if ('undefined' != typeof xajax.config.status) {
-		/*
-			Object: update
-		*/
-		xajax.config.status.update = function() {
-			return {
-				onRequest: function() {
-					window.status = "Verzenden aanvraag...";
-				},
-				onWaiting: function() {
-					window.status = "Wachten op antwoord...";
-				},
-				onProcessing: function() {
-					window.status = "Verwerking...";
-				},
-				onComplete: function() {
-					window.status = "Afgesloten.";
-				}
+if (typeof xajax.config != 'undefined' && typeof xajax.config.status != 'undefined') {
+	/*
+		Object: update
+	*/
+	xajax.config.status.update = function() {
+		return {
+			onRequest: function() {
+				window.status = "Verzenden aanvraag...";
+			},
+			onWaiting: function() {
+				window.status = "Wachten op antwoord...";
+			},
+			onProcessing: function() {
+				window.status = "Verwerking...";
+			},
+			onComplete: function() {
+				window.status = "Afgesloten.";
 			}
 		}
 	}

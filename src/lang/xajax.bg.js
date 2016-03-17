@@ -54,28 +54,29 @@ if ('undefined' != typeof xajax.debug) {
 	xajax.debug.exceptions[10008] = 'Елемент с ID [{data}] не беше намерен в документа.';
 	xajax.debug.exceptions[10009] = 'Невалидна заявка: Параметъра с името на функцията липсва.';
 	xajax.debug.exceptions[10010] = 'Невалидна заявка: Липсва обекта на функцията.';
+
+	xajax.debug.lang = {};
+	xajax.debug.lang.isLoaded = true;
 }
-       
-if ('undefined' != typeof xajax.config) {
-  if ('undefined' != typeof xajax.config.status) {
-    /*
-      Object: update
-    */
-    xajax.config.status.update = function() {
-      return {
-        onRequest: function() {
-          window.status = 'Изпращане на заявка...';
-        },
-        onWaiting: function() {
-          window.status = 'Изчакване на отговор...';
-        },
-        onProcessing: function() {
-          window.status = 'Изпълнение...';
-        },
-        onComplete: function() {
-          window.status = 'Готово.';
-        }
-      }
-    }
-  }
+			 
+if (typeof xajax.config != 'undefined' && typeof xajax.config.status != 'undefined') {
+	/*
+		Object: update
+	*/
+	xajax.config.status.update = function() {
+		return {
+			onRequest: function() {
+				window.status = 'Изпращане на заявка...';
+			},
+			onWaiting: function() {
+				window.status = 'Изчакване на отговор...';
+			},
+			onProcessing: function() {
+				window.status = 'Изпълнение...';
+			},
+			onComplete: function() {
+				window.status = 'Готово.';
+			}
+		}
+	}
 }

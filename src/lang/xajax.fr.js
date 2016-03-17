@@ -1,3 +1,18 @@
+/**
+ * translation for: xajax v.x.x
+ * @version: 1.0.0
+ * @author: mic <info@joomx.com>
+ * @copyright xajax project
+ * @license GNU/GPL
+ * @package xajax x.x.x
+ * @since v.x.x.x
+ * save as UTF-8
+ */
+
+if ('undefined' != typeof xajax.debug) {
+	/*
+		Array: text
+	*/
 	xajax.debug.text = [];
 	xajax.debug.text[100] = 'ATTENTION : ';
 	xajax.debug.text[101] = 'ERREUR : ';
@@ -39,27 +54,26 @@
 	xajax.debug.exceptions[10008] = 'L\'�l�ment d\'ID [{data}] est introuvable dans le document.';
 	xajax.debug.exceptions[10009] = 'Requ�te invalide : Aucun nom de fonction indiqu� en param�tre.';
 	xajax.debug.exceptions[10010] = 'Requ�te invalide : Aucun objet indiqu� en param�tre pour la fonction.';
+}
 
-	if ('undefined' != typeof xajax.config) {
-		if ('undefined' != typeof xajax.config.status) {
-			/*
-				Object: mise � jour
-			*/
-			xajax.config.status.update = function() {
-				return {
-					onRequest: function() {
-						window.status = 'Envoi de la requ�te...';
-					},
-					onWaiting: function() {
-						window.status = 'Attente de la r�ponse...';
-					},
-					onProcessing: function() {
-						window.status = 'En cours de traitement...';
-					},
-					onComplete: function() {
-						window.status = 'Fait.';
-					}
-				}
+if (typeof xajax.config != 'undefined' && typeof xajax.config.status != 'undefined') {
+	/*
+		Object: mise � jour
+	*/
+	xajax.config.status.update = function() {
+		return {
+			onRequest: function() {
+				window.status = 'Envoi de la requ�te...';
+			},
+			onWaiting: function() {
+				window.status = 'Attente de la r�ponse...';
+			},
+			onProcessing: function() {
+				window.status = 'En cours de traitement...';
+			},
+			onComplete: function() {
+				window.status = 'Fait.';
 			}
 		}
 	}
+}

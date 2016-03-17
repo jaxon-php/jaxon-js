@@ -57,27 +57,28 @@ if ('undefined' != typeof xajax.debug) {
 	xajax.debug.exceptions[10008] = 'Es konnte kein Element mit der ID [{data}] konnte im Dokument gefunden werden.';
 	xajax.debug.exceptions[10009] = 'Ungültige Anfrage: Fehlender Funktionsparameter - name.';
 	xajax.debug.exceptions[10010] = 'Ungültige Anfrage: Fehlender Funktionsparameter - object.';
+
+	xajax.debug.lang = {};
+	xajax.debug.lang.isLoaded = true;
 }
 
-if ('undefined' != typeof xajax.config) {
-	if ('undefined' != typeof xajax.config.status) {
-		/*
-			Object: update
-		*/
-		xajax.config.status.update = function() {
-			return {
-				onRequest: function() {
-					window.status = 'Sende Anfrage...';
-				},
-				onWaiting: function() {
-					window.status = 'Warten auf Antwort...';
-				},
-				onProcessing: function() {
-					window.status = 'Verarbeitung...';
-				},
-				onComplete: function() {
-					window.status = 'Fertig.';
-				}
+if (typeof xajax.config != 'undefined' && typeof xajax.config.status != 'undefined') {
+	/*
+		Object: update
+	*/
+	xajax.config.status.update = function() {
+		return {
+			onRequest: function() {
+				window.status = 'Sende Anfrage...';
+			},
+			onWaiting: function() {
+				window.status = 'Warten auf Antwort...';
+			},
+			onProcessing: function() {
+				window.status = 'Verarbeitung...';
+			},
+			onComplete: function() {
+				window.status = 'Fertig.';
 			}
 		}
 	}
