@@ -483,84 +483,6 @@ xajax.tools._escape = function(data) {
 */
 
 /*
-	Function: xajax.tools._objectToXML
-	
-	Convert a javascript object or array into XML suitable for
-	transmission to the server.
-	
-	Parameters: 
-	
-	obj - The object or array to convert.
-	
-	guard - An object used to track the level of recursion
-		when encoding javascript objects.  When an object
-		contains a reference to it's parent and the parent
-		contains a reference to the child, an infinite
-		recursion will cause some browsers to crash.
-		
-	Returns:
-	
-	string - the xml representation of the object or array.
-	
-	See also:
-	
-	<xajax.config.maxObjectDepth> and <xajax.config.maxObjectSize>
-*/
-
-/*
-xajax.tools._objectToXML = function(obj, guard) {
-	var aXml = [];
-	aXml.push('<xjxobj>');
-	for (var key in obj) {
-		++guard.size;
-		if (guard.maxSize < guard.size)
-			return aXml.join('');
-		if ('undefined' != typeof obj[key]) {
-			if ('constructor' == key)
-				continue;
-			if ('function' == typeof obj[key])
-				continue;
-			aXml.push('<e><k>');
-			var val = xajax.tools._escape(key);
-			aXml.push(val);
-			aXml.push('</k><v>');
-			if ('object' == typeof obj[key]) {
-				++guard.depth;
-				if (guard.maxDepth > guard.depth) {
-					try {
-						aXml.push(xajax.tools._objectToXML(obj[key], guard));
-					} catch (e) {
-						// do nothing, if the debug module is installed
-						// it will catch the exception and handle it
-					}
-				}
-				--guard.depth;
-			} else {
-				var val = xajax.tools._escape(obj[key]);
-				if ('undefined' == typeof val || null == val) {
-					aXml.push('*');
-				} else {
-					var sType = typeof val;
-					if ('string' == sType)
-						aXml.push('S');
-					else if ('boolean' == sType)
-						aXml.push('B');
-					else if ('number' == sType)
-						aXml.push('N');
-					aXml.push(val);
-				}
-			}
-				
-			aXml.push('</v></e>');
-		}
-	}
-	aXml.push('</xjxobj>');
-	
-	return aXml.join('');
-}
-*/
-
-/*
 	Function: xajax.tools._enforceDataType 
 	
 	Ensure that the javascript variable created is of the correct data type.
@@ -679,11 +601,11 @@ xajax.tools.getRequestObject = function() {
 	} else if (window.createRequest) {
 		xajax.tools.getRequestObject = function() {
 			return window.createRequest();
-		}
+		};
 	} else {
 		xajax.tools.getRequestObject = function() {
 			throw { code: 10002 };
-		}
+		};
 	}
 	
 	// this would seem to cause an infinite loop, however, the function should
@@ -1059,9 +981,9 @@ xajax.tools.xml.processFragment = function(xmlNode, seq, oRet, oRequest) {
 			oRet = xt._nodeToObject(xmlNode.firstChild);
 		} else if ('debugmsg' == xmlNode.nodeName) {
 			// txt = xt._nodeToObject(xmlNode.firstChild);
-		} else 
-			throw { code: 10004, data: xmlNode.nodeName }
-			
+		} else {
+			throw { code: 10004, data: xmlNode.nodeName };
+		}
 		++seq;
 		xmlNode = xmlNode.nextSibling;
 	}
@@ -3733,7 +3655,6 @@ xjx.$ = xajax.tools.$;
 */
 xjx.getFormValues = xajax.tools.getFormValues;
 
-
 xjx.request = xajax.request;
 
-if ('undefined' == typeof JSON) xajax.js.includeScript({data:xajax.config.JavaScriptURI+'xajax_js/JSON.js'});
+// if ('undefined' == typeof JSON) xajax.js.includeScript({data:xajax.config.JavaScriptURI+'xajax/js/xajax.json.js'});
