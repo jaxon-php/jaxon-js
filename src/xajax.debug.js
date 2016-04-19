@@ -1,5 +1,5 @@
 /*
-	File: xajax_debug.js
+	File: xajax.debug.js
 	
 	This optional file contains the debugging module for use with xajax.  If
 	you include this module after the standard <xajax_core.js> module, you

@@ -1,5 +1,5 @@
 /*
-	File: xajax_core.js
+	File: xajax.core.js
 	
 	This file contains the definition of the main xajax javascript core.
 	

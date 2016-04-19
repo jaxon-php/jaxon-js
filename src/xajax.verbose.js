@@ -1,5 +1,5 @@
 /*
-	File: xajax_verbose.js
+	File: xajax.verbose.js
 	
 	The xajax verbose debugging module.  This is an optional module, include in
 	your project with care. :)
