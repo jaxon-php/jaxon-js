@@ -1,10 +1,10 @@
 /*
-	File: xajax.ready.js
-	
-	Plain javascript replacement for jQuery's .ready() function.
-	
-	Please see https://github.com/jfriend00/docReady for a detailed description, copyright
-	and license information.
+    File: xajax.ready.js
+    
+    Plain javascript replacement for jQuery's .ready() function.
+    
+    Please see https://github.com/jfriend00/docReady for a detailed description, copyright
+    and license information.
 */
 
 (function(funcName, baseObj) {
