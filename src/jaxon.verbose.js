@@ -1,39 +1,37 @@
 /*
-    File: xajax.verbose.js
+    File: jaxon.verbose.js
     
-    The xajax verbose debugging module.  This is an optional module, include in
-    your project with care. :)
+    The jaxon verbose debugging module.  This is an optional module, include in your project with care. :)
     
-    Title: xajax verbose debugging module
+    Title: jaxon verbose debugging module
     
-    Please see <copyright.inc.php> for a detailed description, copyright
-    and license information.
+    Please see <copyright.inc.php> for a detailed description, copyright and license information.
 */
 
 /*
-    @package xajax
-    @version $Id: xajax_verbose_uncompressed 327 2007-02-28 16:55:26Z calltoconstruct $
+    @package jaxon
+    @version $Id: jaxon.verbose.js 327 2007-02-28 16:55:26Z calltoconstruct $
     @copyright Copyright (c) 2005-2007 by Jared White & J. Max Wilson
     @copyright Copyright (c) 2008-2009 by Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
-    @license http://www.xajaxproject.org/bsd_license.txt BSD License
+    @license http://www.jaxonproject.org/bsd_license.txt BSD License
 */
 
 try {
-    if ('undefined' == typeof xajax)
-        throw { name: 'SequenceError', message: 'Error: xajax core was not detected, verbose module disabled.' }
-    if ('undefined' == typeof xajax.debug)
-        throw { name: 'SequenceError', message: 'Error: xajax debugger was not detected, verbose module disabled.' }
+    if ('undefined' == typeof jaxon)
+        throw { name: 'SequenceError', message: 'Error: jaxon core was not detected, verbose module disabled.' }
+    if ('undefined' == typeof jaxon.debug)
+        throw { name: 'SequenceError', message: 'Error: jaxon debugger was not detected, verbose module disabled.' }
     
     /*
-        Class: xajax.debug.verbose
+        Class: jaxon.debug.verbose
         
         Provide a high level of detail which can be used to debug hard to find
         problems.
     */
-    xajax.debug.verbose = {}
+    jaxon.debug.verbose = {}
 
     /*
-        Function: xajax.debug.verbose.expandObject
+        Function: jaxon.debug.verbose.expandObject
         
         Generate a debug message expanding all the first level
         members found therein.
@@ -48,7 +46,7 @@ try {
         string - The textual representation of all the first
             level members.
     */    
-    xajax.debug.verbose.expandObject = function(obj) {
+    jaxon.debug.verbose.expandObject = function(obj) {
         var rec = true;
         if (1 < arguments.length)
             rec = arguments[1];
@@ -63,7 +61,7 @@ try {
                     t += m;
                     t += ': ';
                     try {
-                        t += xajax.debug.verbose.expandObject(obj[m], false);
+                        t += jaxon.debug.verbose.expandObject(obj[m], false);
                     } catch (e) {
                         t += '[n/a]';
                     }
@@ -76,7 +74,7 @@ try {
     }
     
     /*
-        Function: xajax.debug.verbose.makeFunction
+        Function: jaxon.debug.verbose.makeFunction
         
         Generate a wrapper function around the specified function.
         
@@ -90,7 +88,7 @@ try {
         
         function - The wrapper function.
     */        
-    xajax.debug.verbose.makeFunction = function(obj, name) {
+    jaxon.debug.verbose.makeFunction = function(obj, name) {
         return function() {
             var fun = name;
             fun += '(';
@@ -99,7 +97,7 @@ try {
             var pLen = arguments.length;
             for (var p = 0; p < pLen; ++p) {
                 fun += separator;
-                fun += xajax.debug.verbose.expandObject(arguments[p]);
+                fun += jaxon.debug.verbose.expandObject(arguments[p]);
                 separator = ',';
             }
             
@@ -108,7 +106,7 @@ try {
             var msg = '--> ';
             msg += fun;
 
-            xajax.debug.writeMessage(msg);
+            jaxon.debug.writeMessage(msg);
 
             var returnValue = true;
             var code = 'returnValue = obj(';
@@ -125,16 +123,16 @@ try {
             msg = '<-- ';
             msg += fun;
             msg += ' returns ';
-            msg += xajax.debug.verbose.expandObject(returnValue);
+            msg += jaxon.debug.verbose.expandObject(returnValue);
             
-            xajax.debug.writeMessage(msg);
+            jaxon.debug.writeMessage(msg);
             
             return returnValue;
         }
     }
     
     /*
-        Function: xajax.debug.verbose.hook
+        Function: jaxon.debug.verbose.hook
         
         Generate a wrapper function around each of the functions
         contained within the specified object.
@@ -145,32 +143,32 @@ try {
         base - (string):  The base reference to be prepended to the
             generated wrapper functions.
     */
-    xajax.debug.verbose.hook = function(x, base) {
+    jaxon.debug.verbose.hook = function(x, base) {
         for (var m in x) {
             if ('function' == typeof (x[m])) {
-                x[m] = xajax.debug.verbose.makeFunction(x[m], base + m);
+                x[m] = jaxon.debug.verbose.makeFunction(x[m], base + m);
             }
         }
     }
     
-    xajax.debug.verbose.hook(xajax, 'xajax.');
-    xajax.debug.verbose.hook(xajax.callback, 'xajax.callback.');
-    xajax.debug.verbose.hook(xajax.css, 'xajax.css.');
-    xajax.debug.verbose.hook(xajax.dom, 'xajax.dom.');
-    xajax.debug.verbose.hook(xajax.events, 'xajax.events.');
-    xajax.debug.verbose.hook(xajax.forms, 'xajax.forms.');
-    xajax.debug.verbose.hook(xajax.js, 'xajax.js.');
-    xajax.debug.verbose.hook(xajax.tools, 'xajax.tools.');
-    xajax.debug.verbose.hook(xajax.tools.queue, 'xajax.tools.queue.');
-    xajax.debug.verbose.hook(xajax.command, 'xajax.command.');
-    xajax.debug.verbose.hook(xajax.command.handler, 'xajax.command.handler.');
+    jaxon.debug.verbose.hook(jaxon, 'jaxon.');
+    jaxon.debug.verbose.hook(jaxon.callback, 'jaxon.callback.');
+    jaxon.debug.verbose.hook(jaxon.css, 'jaxon.css.');
+    jaxon.debug.verbose.hook(jaxon.dom, 'jaxon.dom.');
+    jaxon.debug.verbose.hook(jaxon.events, 'jaxon.events.');
+    jaxon.debug.verbose.hook(jaxon.forms, 'jaxon.forms.');
+    jaxon.debug.verbose.hook(jaxon.js, 'jaxon.js.');
+    jaxon.debug.verbose.hook(jaxon.tools, 'jaxon.tools.');
+    jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
+    jaxon.debug.verbose.hook(jaxon.command, 'jaxon.command.');
+    jaxon.debug.verbose.hook(jaxon.command.handler, 'jaxon.command.handler.');
     
     /*
         Boolean: isLoaded
         
         true - indicates that the verbose debugging module is loaded.
     */
-    xajax.debug.verbose.isLoaded = true;
+    jaxon.debug.verbose.isLoaded = true;
 } catch (e) {
     alert(e.name + ': ' + e.message);
 }
