@@ -18,8 +18,8 @@ Installation and Configuration
 Contribute
 ----------
 
-- Issue Tracker: github.com/lagdo/jaxon-js/issues
-- Source Code: github.com/lagdo/jaxon-js
+- Issue Tracker: github.com/jaxon-php/jaxon-js/issues
+- Source Code: github.com/jaxon-php/jaxon-js
 
 License
 -------
