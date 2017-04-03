@@ -1128,6 +1128,7 @@ jaxon.tools.queue.process = function(theQ) {
             if (false == jaxon.executeCommand(obj)) 
                 return false;
         } catch (e) {
+            console.log(e);
         }
         delete obj;
         
