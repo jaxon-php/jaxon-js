@@ -37,8 +37,7 @@ if ('undefined' == typeof jaxon.config)
 /*
     Function: jaxon.config.setDefault
     
-    This function will set a default configuration option if it is 
-    not already set.
+    This function will set a default configuration option if it is not already set.
     
     Parameters:
     option - (string):
@@ -416,153 +415,6 @@ jaxon.tools.singleQuotes = function(haystack) {
 */
 
 /*
-    Function: jaxon.tools._escape
-    
-    Determine if the specified value contains special characters and
-    create a CDATA section so the value can be safely transmitted.
-    
-    Parameters:
-    
-    data - (string or other):
-        The source string value to be evaluated or an object of unknown
-        type.
-        
-    Returns:
-    
-    string - The string value, escaped if necessary or the object provided
-        if it is not a string.
-        
-    Note:
-        When the specified object is NOT a string, the value is returned
-        as is.
-*/
-/*
-jaxon.tools._escape = function(data) {
-    if ('undefined' == typeof data)
-        return data;
-    // 'object' is handled elsewhere, 
-    // 'string' handled below, 
-    // 'number' will be returned here
-    // 'boolean' will be returned here
-    if ('string' != typeof data)
-        return data;
-    
-    var needCDATA = false;
-    
-    if (encodeURIComponent(data) != data) {
-        needCDATA = true;
-        
-        var segments = data.split('<![CDATA[');
-        var segLen = segments.length;
-        data = [];
-        for (var i = 0; i < segLen; ++i) {
-            var segment = segments[i];
-            var fragments = segment.split(']]>');
-            var fragLen = fragments.length;
-            segment = '';
-            for (var j = 0; j < fragLen; ++j) {
-                if (0 != j)
-                    segment += ']]]]><![CDATA[>';
-                segment += fragments[j];
-            }
-            if (0 != i)
-                data.push('<![]]><![CDATA[CDATA[');
-            data.push(segment);
-        }
-        data = data.join('');
-    }
-    
-    if (needCDATA)
-        data = '<![CDATA[' + data + ']]>';
-    
-    return data;
-}
-*/
-
-/*
-    Function: jaxon.tools._enforceDataType 
-    
-    Ensure that the javascript variable created is of the correct data type.
-    
-    Parameters:
-        value (string)
-
-    Returns:
-        
-        (unknown) - The value provided converted to the correct data type.
-*/
-jaxon.tools._enforceDataType = function(value) {
-    value = new String(value);
-    var type = value.substr(0, 1);
-    value = value.substr(1);
-
-    if ('*' == type)
-        value = null;
-    else if ('N' == type)
-        value = value - 0;
-    else if ('B' == type)
-        value = !!value;
-//    else if ('S' == type)
-//        value = new String(value);
-
-    return value;
-}
-
-/*
-    Function: jaxon.tools._nodeToObject
-    
-    Deserialize a javascript object from an XML node.
-    
-    Parameters:
-    
-    node - A node, likely from the xml returned by the server.
-    
-    Returns:
-    
-        object - The object extracted from the xml node.
-*/
-jaxon.tools._nodeToObject = function(node) {
-    if (null == node)
-        return '';
-        
-    if ('undefined' != typeof node.nodeName) {
-        if ('#cdata-section' == node.nodeName || '#text' == node.nodeName) {
-            var data = '';
-            do if (node.data) data += node.data; while (node = node.nextSibling);
-            return jaxon.tools._enforceDataType(data);
-        } else if ('jxnobj' == node.nodeName) {
-            var key = null;
-            var value = null;
-            var data = new Array;
-            var child = node.firstChild;
-            while (child) {
-                if ('e' == child.nodeName) {
-                    var grandChild = child.firstChild;
-                    while (grandChild) {
-                        if ('k' == grandChild.nodeName)
-                            // Don't support objects here, only number, string, etc...
-                            key = jaxon.tools._enforceDataType(grandChild.firstChild.data);
-                        else ('v' == grandChild.nodeName)
-                            // Value might be object, string, number, boolean... even null or undefined
-                            value = jaxon.tools._nodeToObject(grandChild.firstChild);
-                        grandChild = grandChild.nextSibling;
-                    }
-                    // Allow the value to be null or undefined (or a value)
-                    if (null != key) { // && null != value) {
-                        data[key] = value;
-                        key = value = null;
-                    }
-                }
-                child = child.nextSibling;
-            }
-            return data;
-        }
-    }
-    
-    throw { code: 10001, data: node.nodeName };
-}
-
-/*
     Function: jaxon.tools.getRequestObject
     
     Construct an XMLHttpRequest object dependent on the capabilities
@@ -651,8 +503,7 @@ jaxon.tools.getBrowserHTML = function(sValue) {
 /*
     Function: jaxon.tools.willChange
     
-    Tests to see if the specified data is the same as the current
-    value of the element's attribute.
+    Tests to see if the specified data is the same as the current value of the element's attribute.
     
     Parameters: 
     element - (string or object):
@@ -662,8 +513,7 @@ jaxon.tools.getBrowserHTML = function(sValue) {
         The name of the attribute.
         
     newData - (string):
-        The value to be compared with the current value of the specified
-        element.
+        The value to be compared with the current value of the specified element.
         
     Returns:
     
@@ -685,8 +535,7 @@ jaxon.tools.willChange = function(element, attribute, newData) {
 /*
     Function: jaxon.tools.getFormValues
     
-    Build an associative array of form elements and their values from
-    the specified form.
+    Build an associative array of form elements and their values from the specified form.
     
     Parameters: 
     
@@ -872,119 +721,6 @@ jaxon.tools.addOnPrefix = function(sEventName) {
         sEventName = 'on' + sEventName;
     
     return sEventName;
-}
-
-
-
-/*
-    Class: jaxon.tools.xml
-    
-    An object that contains utility function for processing
-    xml response packets.
-*/
-jaxon.tools.xml = {};
-
-/*
-    Function: jaxon.tools.xml.parseAttributes 
-    
-    Take the parameters passed in the command of the XML response
-    and convert them to parameters of the args object.  This will 
-    serve as the command object which will be stored in the 
-    response command queue.
-    
-    Parameters: 
-    
-    child - (object):  The xml child node which contains the 
-        attributes for the current response command.
-        
-    obj - (object):  The current response command that will have the
-        attributes applied.
-*/
-jaxon.tools.xml.parseAttributes = function(child, obj) {
-    var iLen = child.attributes.length;
-    for (var i = 0; i < iLen; ++i) {
-        var attr = child.attributes[i];
-        obj[attr.name] = attr.value;
-    }
-}
-
-/*
-    Function: jaxon.tools.xml.parseChildren
-    
-    Parses the child nodes of the command of the response XML.  Generally,
-    the child nodes contain the data element of the command; this member
-    may be an object, which will be deserialized by <jaxon._nodeToObject>
-    
-    Parameters: 
-    
-    child - (object):   The xml node that contains the child (data) for
-        the current response command object.
-        
-    obj - (object):  The response command object.
-*/
-jaxon.tools.xml.parseChildren = function(child, obj) {
-    obj.data = '';
-    if (0 < child.childNodes.length) {
-        if (1 < child.childNodes.length) {
-            var grandChild = child.firstChild;
-            do {
-                if ('#cdata-section' == grandChild.nodeName || '#text' == grandChild.nodeName) {
-                    obj.data += grandChild.data;
-                }
-            } while (grandChild = grandChild.nextSibling);
-        } else {
-            var grandChild = child.firstChild;
-            if ('jxnobj' == grandChild.nodeName) {
-                obj.data = jaxon.tools._nodeToObject(grandChild);
-                return;
-            } else if ('#cdata-section' == grandChild.nodeName || '#text' == grandChild.nodeName) {
-                obj.data = grandChild.data;
-            }
-        }
-    } else if ('undefined' != typeof child.data) {
-        obj.data = child.data;
-    }
-    
-    obj.data = jaxon.tools._enforceDataType(obj.data);
-}
-
-/*
-    Function: jaxon.tools.xml.processFragment
-    
-    Parameters: 
-    
-    xmlNode - (object):  The first xml node in the xml fragment.
-    seq - (number):  A counter used to keep track of the sequence
-        of this command in the response.
-    oRet - (object):  A variable that is used to return the request
-        "return value" for use with synchronous requests.
-*/
-jaxon.tools.xml.processFragment = function(xmlNode, seq, oRet, oRequest) {
-    var xx = jaxon;
-    var xt = xx.tools;
-    while (xmlNode) {
-        if ('cmd' == xmlNode.nodeName) {
-            var obj = {};
-            obj.fullName = '*unknown*';
-            obj.sequence = seq;
-            obj.request = oRequest;
-            obj.context = oRequest.context;
-            
-            xt.xml.parseAttributes(xmlNode, obj);
-            xt.xml.parseChildren(xmlNode, obj);
-            
-            xt.queue.push(xx.response, obj);
-        } else if ('jxnrv' == xmlNode.nodeName) {
-            oRet = xt._nodeToObject(xmlNode.firstChild);
-        } else if ('debugmsg' == xmlNode.nodeName) {
-            // txt = xt._nodeToObject(xmlNode.firstChild);
-        } else {
-            throw { code: 10004, data: xmlNode.nodeName };
-        }
-        ++seq;
-        xmlNode = xmlNode.nextSibling;
-    }
-    return oRet;
 }
 
 /*
@@ -1313,61 +1049,6 @@ jaxon.responseProcessor.json = function (oRequest) {
     return oRet;
 
     
-}
-
-/*
-    Function: jaxon.responseProcessor.xml
-    
-    Parse the response XML into a series of commands.  The commands
-    are constructed by calling <jaxon.tools.xml.parseAttributes> and 
-    <jaxon.tools.xml.parseChildren>.
-    
-    Parameters: 
-    
-    oRequest - (object):  The request context object.
-*/
-jaxon.responseProcessor.xml = function(oRequest) {
-    var xx = jaxon;
-    var xt = xx.tools;
-    var xcb = xx.callback;
-    var gcb = xcb.global;
-    var lcb = oRequest.callback;
-    
-    var oRet = oRequest.returnValue;
-    
-    if (xt.in_array(xx.responseSuccessCodes, oRequest.request.status)) {
-        xcb.execute([gcb, lcb], 'onSuccess', oRequest);
-        var seq = 0;
-        if (oRequest.request.responseXML) {
-            var responseXML = oRequest.request.responseXML;
-            if (responseXML.documentElement) {
-                oRequest.status.onProcessing();
-                
-                var child = responseXML.documentElement.firstChild;
-                oRet = xt.xml.processFragment(child, seq, oRet, oRequest);
-            }
-        } 
-        var obj = {};
-        obj.fullName = 'Response Complete';
-        obj.sequence = seq;
-        obj.request = oRequest;
-        obj.context = oRequest.context;
-        obj.cmd = 'rcmplt';
-        xt.queue.push(xx.response, obj);
-        
-        // do not re-start the queue if a timeout is set
-        if (null == xx.response.timeout)
-            xt.queue.process(xx.response);
-    } else if (xt.in_array(xx.responseRedirectCodes, oRequest.request.status)) {
-        xcb.execute([gcb, lcb], 'onRedirect', oRequest);
-        window.location = oRequest.request.getResponseHeader('location');
-        xx.completeResponse(oRequest);
-    } else if (xt.in_array(xx.responseErrorsForAlert, oRequest.request.status)) {
-        xcb.execute([gcb, lcb], 'onFailure', oRequest);
-        xx.completeResponse(oRequest);
-    }
-    
-    return oRet;
 }
 
 /*
@@ -3523,9 +3204,7 @@ jaxon.getResponseProcessor = function(oRequest) {
     if ('undefined' == typeof oRequest.responseProcessor) {
         var cTyp = oRequest.request.getResponseHeader('content-type');
         if (cTyp) {
-            if (0 <= cTyp.indexOf('text/xml')) {
-                fProc = jaxon.responseProcessor.xml;
-            } else if (0 <= cTyp.indexOf('application/json')) {
+            if (0 <= cTyp.indexOf('application/json')) {
                 fProc = jaxon.responseProcessor.json;
             }
         }
