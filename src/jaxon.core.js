@@ -2785,6 +2785,7 @@ jaxon.initializeRequest = function(oRequest) {
     oRequest.set('maxObjectDepth', xc.maxObjectDepth);
     oRequest.set('maxObjectSize', xc.maxObjectSize);
     oRequest.set('context', window);
+    oRequest.set('upload', false);
     
     var xcb = xx.callback;
     var gcb = xcb.global;
@@ -2826,10 +2827,14 @@ jaxon.initializeRequest = function(oRequest) {
         oRequest.method = 'POST';    // W3C: Method is case sensitive
     
     oRequest.requestRetry = oRequest.retry;
-    
-    oRequest.append('postHeaders', {
-        'content-type': oRequest.contentType
+
+	// The content type is not set when uploading a file with FormData.
+    // It will be set by the browser.
+    if (oRequest.upload == false) {
+        oRequest.append('postHeaders', {
+            'content-type': oRequest.contentType
         });
+    }
         
     delete oRequest['append'];
     delete oRequest['set'];
@@ -2840,21 +2845,86 @@ jaxon.initializeRequest = function(oRequest) {
 }
 
 /*
-    Function: jaxon.processParameters
+    Function: jaxon.getParametersInFormData
     
-    Processes request specific parameters and generates the temporary 
-    variables needed by jaxon to initiate and process the request.
+    Processes request specific parameters and store them in a FormData object.
     
     Parameters:
     
-    oRequest - A request object, created initially by a call to
-        <jaxon.initializeRequest>
-    
-    Note:
-    This is called once per request; upon a request failure, this 
-    will not be called for additional retries.
+    oRequest - A request object, created initially by a call to <jaxon.initializeRequest>
 */
-jaxon.processParameters = function(oRequest) {
+jaxon.getParametersInFormData = function(oRequest) {
+    var xx = jaxon;
+    var xt = xx.tools;
+    
+    var rd = new FormData();
+    var input = jaxon.$(oRequest.upload);
+    if(input != null && input.type == 'file' && input.name != 'undefined') {
+        for(var i = 0, n = input.files.length; i < n; i++) {
+            rd.append(input.name, input.files[i]);
+        }
+    }
+    
+    var separator = '';
+    for (var sCommand in oRequest.functionName) {
+        if ('constructor' != sCommand) {
+            rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand]));
+        }
+    }
+    var dNow = new Date();
+    rd.append('jxnr', dNow.getTime());
+    delete dNow;
+
+    if (oRequest.parameters) {
+        var i = 0;
+        var iLen = oRequest.parameters.length;
+        while (i < iLen) {
+            var oVal = oRequest.parameters[i];
+            if ('object' == typeof oVal && null != oVal) {
+                try {
+                    oVal = JSON.stringify(oVal);
+                } catch (e) {
+                    oVal = '';
+                    // do nothing, if the debug module is installed
+                    // it will catch the exception and handle it
+                }
+                oVal = encodeURIComponent(oVal);
+                rd.append('jxnargs[]', oVal);
+                ++i;
+            } else {
+                if ('undefined' == typeof oVal || null == oVal) {
+                    rd.append('jxnargs[]', '*');
+                } else {
+                    var sPrefix = '';
+                    var sType = typeof oVal;
+                    if ('string' == sType)
+                        sPrefix = 'S';
+                    else if ('boolean' == sType)
+                        sPrefix = 'B';
+                    else if ('number' == sType)
+                        sPrefix = 'N';
+                    oVal = encodeURIComponent(oVal);
+                    rd.append('jxnargs[]', sPrefix + oVal);
+                }
+                ++i;
+            }
+        }
+    }
+    
+    oRequest.requestURI = oRequest.URI;
+    oRequest.requestData = rd;
+}
+
+/*
+    Function: jaxon.getUrlEncodedParameters
+
+    Processes request specific parameters and store them in an URL encoded string.
+
+    Parameters:
+
+    oRequest - A request object, created initially by a call to <jaxon.initializeRequest>
+*/
+jaxon.getUrlEncodedParameters = function(oRequest) {
     var xx = jaxon;
     var xt = xx.tools;
     
@@ -2928,6 +2998,27 @@ jaxon.processParameters = function(oRequest) {
     }
     
     oRequest.requestData = rd.join('');
+}
+
+/*
+    Function: jaxon.processParameters
+
+    Processes request specific parameters and generates the temporary 
+    variables needed by jaxon to initiate and process the request.
+
+    Parameters:
+
+    oRequest - A request object, created initially by a call to <jaxon.initializeRequest>
+
+    Note:
+    This is called once per request; upon a request failure, this 
+    will not be called for additional retries.
+*/
+jaxon.processParameters = function(oRequest) {
+    if (oRequest.upload != false)
+        jaxon.getParametersInFormData(oRequest);
+    else
+        jaxon.getUrlEncodedParameters(oRequest);
 }
 
 /*
