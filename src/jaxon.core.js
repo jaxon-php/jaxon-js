@@ -2757,11 +2757,11 @@ jaxon.initializeRequest = function(oRequest) {
     var xc = xx.config;
     
     oRequest.append = function(opt, def) {
-        if ('undefined' != typeof this[opt]) {
-            for (var itmName in def)
-                if ('undefined' == typeof this[opt][itmName])
-                    this[opt][itmName] = def[itmName];
-        } else this[opt] = def;
+        if ('undefined' == typeof this[opt])
+            this[opt] = {};
+        for (var itmName in def)
+            if ('undefined' == typeof this[opt][itmName])
+                this[opt][itmName] = def[itmName];
     }
     
     oRequest.append('commonHeaders', xc.commonHeaders);
@@ -3049,7 +3049,7 @@ jaxon.request = function() {
     if (0 == numArgs)
         return false;
     
-    var oRequest = {}
+    var oRequest = {};
     if (1 < numArgs)
         oRequest = arguments[1];
     
