@@ -23,7 +23,8 @@ var folder = {
         folder.src + 'jaxon.html.js',
         folder.src + 'jaxon.ajax.js',
         folder.src + 'jaxon.dom.js',
-        folder.src + 'jaxon.js'
+        folder.src + 'jaxon.js',
+        folder.src + 'jaxon.compat.js'
    ];
 
 // Concat core library files
