@@ -1,5 +1,5 @@
 /*
-Function: jaxon.command.create 
+Function: jaxon.command.create
 
 Creates a new command (object) that will be populated with
 command parameters and eventually passed to the command handler.
@@ -256,7 +256,7 @@ jaxon.command.handler.register('wcss', function(args) {
 jaxon.command.handler.register('as', function(args) {
     args.fullName = 'assign/clear';
     try {
-        return jaxon.dom.assign(args.target, args.prop, args.data);
+        return jaxon.dom.node.assign(args.target, args.prop, args.data);
     } catch (e) {
         // do nothing, if the debug module is installed it will
         // catch and handle the exception
@@ -265,31 +265,31 @@ jaxon.command.handler.register('as', function(args) {
 });
 jaxon.command.handler.register('ap', function(args) {
     args.fullName = 'append';
-    return jaxon.dom.append(args.target, args.prop, args.data);
+    return jaxon.dom.node.append(args.target, args.prop, args.data);
 });
 jaxon.command.handler.register('pp', function(args) {
     args.fullName = 'prepend';
-    return jaxon.dom.prepend(args.target, args.prop, args.data);
+    return jaxon.dom.node.prepend(args.target, args.prop, args.data);
 });
 jaxon.command.handler.register('rp', function(args) {
     args.fullName = 'replace';
-    return jaxon.dom.replace(args.id, args.prop, args.data);
+    return jaxon.dom.node.replace(args.id, args.prop, args.data);
 });
 jaxon.command.handler.register('rm', function(args) {
     args.fullName = 'remove';
-    return jaxon.dom.remove(args.id);
+    return jaxon.dom.node.remove(args.id);
 });
 jaxon.command.handler.register('ce', function(args) {
     args.fullName = 'create';
-    return jaxon.dom.create(args.id, args.data, args.prop);
+    return jaxon.dom.node.create(args.id, args.data, args.prop);
 });
 jaxon.command.handler.register('ie', function(args) {
     args.fullName = 'insert';
-    return jaxon.dom.insert(args.id, args.data, args.prop);
+    return jaxon.dom.node.insert(args.id, args.data, args.prop);
 });
 jaxon.command.handler.register('ia', function(args) {
     args.fullName = 'insertAfter';
-    return jaxon.dom.insertAfter(args.id, args.data, args.prop);
+    return jaxon.dom.node.insertAfter(args.id, args.data, args.prop);
 });
 
 jaxon.command.handler.register('DSR', jaxon.dom.response.startResponse);
@@ -302,9 +302,9 @@ jaxon.command.handler.register('DAT', jaxon.dom.response.appendText);
 jaxon.command.handler.register('DRC', jaxon.dom.response.removeChildren);
 jaxon.command.handler.register('DER', jaxon.dom.response.endResponse);
 
-jaxon.command.handler.register('c:as', jaxon.dom.contextAssign);
-jaxon.command.handler.register('c:ap', jaxon.dom.contextAppend);
-jaxon.command.handler.register('c:pp', jaxon.dom.contextPrepend);
+jaxon.command.handler.register('c:as', jaxon.dom.node.contextAssign);
+jaxon.command.handler.register('c:ap', jaxon.dom.node.contextAppend);
+jaxon.command.handler.register('c:pp', jaxon.dom.node.contextPrepend);
 
 jaxon.command.handler.register('s', jaxon.html.js.sleep);
 jaxon.command.handler.register('ino', jaxon.html.js.includeScriptOnce);

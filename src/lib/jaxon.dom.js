@@ -1,5 +1,5 @@
 /*
-Function: jaxon.dom.assign
+Function: jaxon.dom.node.assign
 
 Assign an element's attribute to the specified value.
 
@@ -13,7 +13,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.assign = function(element, property, data) {
+jaxon.dom.node.assign = function(element, property, data) {
     if ('string' == typeof element)
         element = jaxon.$(element);
 
@@ -38,7 +38,7 @@ jaxon.dom.assign = function(element, property, data) {
 };
 
 /*
-Function: jaxon.dom.append
+Function: jaxon.dom.node.append
 
 Append the specified value to an element's attribute.
 
@@ -52,7 +52,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.append = function(element, property, data) {
+jaxon.dom.node.append = function(element, property, data) {
     if ('string' == typeof element)
         element = jaxon.$(element);
 
@@ -61,7 +61,7 @@ jaxon.dom.append = function(element, property, data) {
 };
 
 /*
-Function: jaxon.dom.prepend
+Function: jaxon.dom.node.prepend
 
 Prepend the specified value to an element's attribute.
 
@@ -75,7 +75,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.prepend = function(element, property, data) {
+jaxon.dom.node.prepend = function(element, property, data) {
     if ('string' == typeof element)
         element = jaxon.$(element);
 
@@ -84,7 +84,7 @@ jaxon.dom.prepend = function(element, property, data) {
 };
 
 /*
-Function: jaxon.dom.replace
+Function: jaxon.dom.node.replace
 
 Search and replace the specified text.
 
@@ -99,7 +99,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.replace = function(element, sAttribute, aData) {
+jaxon.dom.node.replace = function(element, sAttribute, aData) {
     var sSearch = aData['s'];
     var sReplace = aData['r'];
 
@@ -140,7 +140,7 @@ jaxon.dom.replace = function(element, sAttribute, aData) {
 };
 
 /*
-Function: jaxon.dom.remove
+Function: jaxon.dom.node.remove
 
 Delete an element.
 
@@ -153,7 +153,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.remove = function(element) {
+jaxon.dom.node.remove = function(element) {
     if ('string' == typeof element)
         element = jaxon.$(element);
 
@@ -164,7 +164,7 @@ jaxon.dom.remove = function(element) {
 };
 
 /*
-Function: jaxon.dom.create
+Function: jaxon.dom.node.create
 
 Create a new element and append it to the specified parent element.
 
@@ -180,7 +180,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.create = function(objParent, sTag, sId) {
+jaxon.dom.node.create = function(objParent, sTag, sId) {
     if ('string' == typeof objParent)
         objParent = jaxon.$(objParent);
     var target = jaxon.config.baseDocument.createElement(sTag);
@@ -191,7 +191,7 @@ jaxon.dom.create = function(objParent, sTag, sId) {
 };
 
 /*
-Function: jaxon.dom.insert
+Function: jaxon.dom.node.insert
 
 Insert a new element before the specified element.
 
@@ -207,7 +207,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.insert = function(objSibling, sTag, sId) {
+jaxon.dom.node.insert = function(objSibling, sTag, sId) {
     if ('string' == typeof objSibling)
         objSibling = jaxon.$(objSibling);
     var target = jaxon.config.baseDocument.createElement(sTag);
@@ -217,7 +217,7 @@ jaxon.dom.insert = function(objSibling, sTag, sId) {
 };
 
 /*
-Function: jaxon.dom.insertAfter
+Function: jaxon.dom.node.insertAfter
 
 Insert a new element after the specified element.
 
@@ -233,7 +233,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.insertAfter = function(objSibling, sTag, sId) {
+jaxon.dom.node.insertAfter = function(objSibling, sTag, sId) {
     if ('string' == typeof objSibling)
         objSibling = jaxon.$(objSibling);
     var target = jaxon.config.baseDocument.createElement(sTag);
@@ -243,7 +243,7 @@ jaxon.dom.insertAfter = function(objSibling, sTag, sId) {
 };
 
 /*
-Function: jaxon.dom.contextAssign
+Function: jaxon.dom.node.contextAssign
 
 Assign a value to a named member of the current script context object.
 
@@ -261,7 +261,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.contextAssign = function(args) {
+jaxon.dom.node.contextAssign = function(args) {
     args.fullName = 'context assign';
 
     var code = [];
@@ -277,7 +277,7 @@ jaxon.dom.contextAssign = function(args) {
 };
 
 /*
-Function: jaxon.dom.contextAppend
+Function: jaxon.dom.node.contextAppend
 
 Appends a value to a named member of the current script context object.
 
@@ -295,7 +295,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.contextAppend = function(args) {
+jaxon.dom.node.contextAppend = function(args) {
     args.fullName = 'context append';
 
     var code = [];
@@ -311,7 +311,7 @@ jaxon.dom.contextAppend = function(args) {
 };
 
 /*
-Function: jaxon.dom.contextPrepend
+Function: jaxon.dom.node.contextPrepend
 
 Prepend a value to a named member of the current script context object.
 
@@ -329,7 +329,7 @@ Returns:
 
 true - The operation completed successfully.
 */
-jaxon.dom.contextPrepend = function(args) {
+jaxon.dom.node.contextPrepend = function(args) {
     args.fullName = 'context prepend';
 
     var code = [];

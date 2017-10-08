@@ -116,6 +116,11 @@ Class: jaxon.dom
 jaxon.dom = {};
 
 /*
+Class: jaxon.dom.node
+*/
+jaxon.dom.node = {};
+
+/*
 Class: jaxon.dom.response
 */
 jaxon.dom.response = {};
