@@ -346,18 +346,18 @@ jaxon.dom.node.contextPrepend = function(args) {
     return true;
 };
 
-jaxon.dom.response.startResponse = function(args) {
+jaxon.dom.tree.startResponse = function(args) {
     jxnElm = [];
 };
 
-jaxon.dom.response.createElement = function(args) {
+jaxon.dom.tree.createElement = function(args) {
     eval(
         [args.tgt, ' = document.createElement(args.data)']
         .join('')
     );
 };
 
-jaxon.dom.response.setAttribute = function(args) {
+jaxon.dom.tree.setAttribute = function(args) {
     args.context.jaxonDelegateCall = function() {
         eval(
             [args.tgt, '.setAttribute(args.key, args.data)']
@@ -367,7 +367,7 @@ jaxon.dom.response.setAttribute = function(args) {
     args.context.jaxonDelegateCall();
 };
 
-jaxon.dom.response.appendChild = function(args) {
+jaxon.dom.tree.appendChild = function(args) {
     args.context.jaxonDelegateCall = function() {
         eval(
             [args.par, '.appendChild(', args.data, ')']
@@ -377,7 +377,7 @@ jaxon.dom.response.appendChild = function(args) {
     args.context.jaxonDelegateCall();
 };
 
-jaxon.dom.response.insertBefore = function(args) {
+jaxon.dom.tree.insertBefore = function(args) {
     args.context.jaxonDelegateCall = function() {
         eval(
             [args.tgt, '.parentNode.insertBefore(', args.data, ', ', args.tgt, ')']
@@ -387,7 +387,7 @@ jaxon.dom.response.insertBefore = function(args) {
     args.context.jaxonDelegateCall();
 };
 
-jaxon.dom.response.insertAfter = function(args) {
+jaxon.dom.tree.insertAfter = function(args) {
     args.context.jaxonDelegateCall = function() {
         eval(
             [args.tgt, 'parentNode.insertBefore(', args.data, ', ', args.tgt, '.nextSibling)']
@@ -397,7 +397,7 @@ jaxon.dom.response.insertAfter = function(args) {
     args.context.jaxonDelegateCall();
 };
 
-jaxon.dom.response.appendText = function(args) {
+jaxon.dom.tree.appendText = function(args) {
     args.context.jaxonDelegateCall = function() {
         eval(
             [args.par, '.appendChild(document.createTextNode(args.data))']
@@ -407,7 +407,7 @@ jaxon.dom.response.appendText = function(args) {
     args.context.jaxonDelegateCall();
 };
 
-jaxon.dom.response.removeChildren = function(args) {
+jaxon.dom.tree.removeChildren = function(args) {
     var skip = args.skip || 0;
     var remove = args.remove || -1;
     var element = null;
@@ -428,7 +428,7 @@ jaxon.dom.response.removeChildren = function(args) {
     }
 };
 
-jaxon.dom.response.endResponse = function(args) {
+jaxon.dom.tree.endResponse = function(args) {
     jxnElm = [];
 };
 

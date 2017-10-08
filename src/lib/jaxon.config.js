@@ -121,9 +121,9 @@ Class: jaxon.dom.node
 jaxon.dom.node = {};
 
 /*
-Class: jaxon.dom.response
+Class: jaxon.dom.tree
 */
-jaxon.dom.response = {};
+jaxon.dom.tree = {};
 
 /*
 Class: jaxon.dom.events

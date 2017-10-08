@@ -292,15 +292,15 @@ jaxon.command.handler.register('ia', function(args) {
     return jaxon.dom.node.insertAfter(args.id, args.data, args.prop);
 });
 
-jaxon.command.handler.register('DSR', jaxon.dom.response.startResponse);
-jaxon.command.handler.register('DCE', jaxon.dom.response.createElement);
-jaxon.command.handler.register('DSA', jaxon.dom.response.setAttribute);
-jaxon.command.handler.register('DAC', jaxon.dom.response.appendChild);
-jaxon.command.handler.register('DIB', jaxon.dom.response.insertBefore);
-jaxon.command.handler.register('DIA', jaxon.dom.response.insertAfter);
-jaxon.command.handler.register('DAT', jaxon.dom.response.appendText);
-jaxon.command.handler.register('DRC', jaxon.dom.response.removeChildren);
-jaxon.command.handler.register('DER', jaxon.dom.response.endResponse);
+jaxon.command.handler.register('DSR', jaxon.dom.tree.startResponse);
+jaxon.command.handler.register('DCE', jaxon.dom.tree.createElement);
+jaxon.command.handler.register('DSA', jaxon.dom.tree.setAttribute);
+jaxon.command.handler.register('DAC', jaxon.dom.tree.appendChild);
+jaxon.command.handler.register('DIB', jaxon.dom.tree.insertBefore);
+jaxon.command.handler.register('DIA', jaxon.dom.tree.insertAfter);
+jaxon.command.handler.register('DAT', jaxon.dom.tree.appendText);
+jaxon.command.handler.register('DRC', jaxon.dom.tree.removeChildren);
+jaxon.command.handler.register('DER', jaxon.dom.tree.endResponse);
 
 jaxon.command.handler.register('c:as', jaxon.dom.node.contextAssign);
 jaxon.command.handler.register('c:ap', jaxon.dom.node.contextAppend);
