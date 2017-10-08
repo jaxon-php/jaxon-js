@@ -1,0 +1,31 @@
+{
+  "name": "jaxon-js",
+  "version": "2.0.0",
+  "description": "Javascript code for the Jaxon PHP library.",
+  "main": "jaxon.core.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaxon-php/jaxon-js.git"
+  },
+  "keywords": [
+    "Ajax",
+    "Xajax",
+    "JSON"
+  ],
+  "author": "Thierry K. Feuzeu",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/jaxon-php/jaxon-js/issues"
+  },
+  "homepage": "https://github.com/jaxon-php/jaxon-js#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-deporder": "^1.1.0",
+    "gulp-strip-debug": "^1.1.0",
+    "gulp-uglify": "^3.0.0"
+  }
+}
