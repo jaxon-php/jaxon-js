@@ -131,31 +131,31 @@ Class: jaxon.dom.events
 jaxon.dom.events = {};
 
 /*
-Class: jaxon.command
+Class: jaxon.fn
 
 The object that manages commands and command handlers.
 */
-jaxon.command = {};
+jaxon.fn = {};
 
 /*
-Class: jaxon.command.callback
+Class: jaxon.fn.callback
 */
-jaxon.command.callback = {};
+jaxon.fn.callback = {};
 
 /*
-Class: jaxon.command.handler
+Class: jaxon.fn.handler
 
 The object that manages command handlers.
 */
-jaxon.command.handler = {};
+jaxon.fn.handler = {};
 
 /*
 Object: handlers
 
-An array that is used internally in the jaxon.command.handler object
+An array that is used internally in the jaxon.fn.handler object
 to keep track of command handlers that have been registered.
 */
-jaxon.command.handler.handlers = [];
+jaxon.fn.handler.handlers = [];
 
 /*
 Function: jaxon.config.setDefault

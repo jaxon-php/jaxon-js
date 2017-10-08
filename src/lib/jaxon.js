@@ -24,7 +24,7 @@ Class: jaxon.callback
 
 The global callback object which is active for every request.
 */
-jaxon.callback = jaxon.command.callback.create();
+jaxon.callback = jaxon.fn.callback.create();
 
 /*
 Class: jaxon
@@ -44,6 +44,14 @@ The response queue that holds response commands, once received
 from the server, until they are processed.
 */
 jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
+
+/*
+Function: jaxon.register
+
+Registers a new command handler.
+Shortcut to <jaxon.fn.handler.register>
+*/
+jaxon.register = jaxon.fn.handler.register;
 
 /*
 Function: jaxon.$
@@ -66,6 +74,42 @@ true - jaxon module is loaded.
 */
 jaxon.isLoaded = true;
 
+
+/*
+Class: jaxon.command
+
+This class is defined for compatibility with previous versions,
+since its functions are used in third party packages.
+*/
+jaxon.command = {};
+
+/*
+Class: jaxon.command.handler
+*/
+jaxon.command.handler = {};
+
+/*
+Function: jaxon.command.handler.register
+
+Registers a new command handler.
+*/
+jaxon.command.handler.register = jaxon.fn.handler.register;
+
+/*
+Function: jaxon.command.create
+
+Creates a new command (object) that will be populated with
+command parameters and eventually passed to the command handler.
+*/
+jaxon.command.create = function(sequence, request, context) {
+    var newCmd = {};
+    newCmd.cmd = '*';
+    newCmd.fullName = '* unknown command name *';
+    newCmd.sequence = sequence;
+    newCmd.request = request;
+    newCmd.context = context;
+    return newCmd;
+};
 
 /*
 Class: jxn

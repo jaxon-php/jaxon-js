@@ -163,8 +163,8 @@ try {
     jaxon.debug.verbose.hook(jaxon.tools.string, 'jaxon.tools.string.');
     jaxon.debug.verbose.hook(jaxon.tools.ajax, 'jaxon.tools.ajax.');
     jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
-    jaxon.debug.verbose.hook(jaxon.command.callback, 'jaxon.command.callback.');
-    jaxon.debug.verbose.hook(jaxon.command.handler, 'jaxon.command.handler.');
+    jaxon.debug.verbose.hook(jaxon.fn.callback, 'jaxon.fn.callback.');
+    jaxon.debug.verbose.hook(jaxon.fn.handler, 'jaxon.fn.handler.');
     
     /*
         Boolean: isLoaded

@@ -233,18 +233,18 @@ try
         and display a message in the debugger.
         
         This is a wrapper function which surrounds the standard 
-        <jaxon.command.handler.execute> function.
+        <jaxon.fn.handler.execute> function.
     */
-    jaxon.debug.executeCommand = jaxon.command.handler.execute;
-    jaxon.command.handler.execute = function(args) {
+    jaxon.debug.executeCommand = jaxon.fn.handler.execute;
+    jaxon.fn.handler.execute = function(args) {
         try {
             if ('undefined' == typeof args.cmd)
                 throw { code: 10006 };
-            if (false == jaxon.command.handler.isRegistered(args))
+            if (false == jaxon.fn.handler.isRegistered(args))
                 throw { code: 10007, data: args.cmd };
             return jaxon.debug.executeCommand(args);
         } catch(e) {
-            var msg = 'jaxon.command.handler.execute (';
+            var msg = 'jaxon.fn.handler.execute (';
             if ('undefined' != typeof args.sequence) {
                 msg += '#';
                 msg += args.sequence;
@@ -264,19 +264,19 @@ try
     }
 
     /*
-        Function: jaxon.command.handler.unregister
+        Function: jaxon.fn.handler.unregister
         
         Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
         
-        This is a wrapper around the standard <jaxon.command.handler.unregister> function.
+        This is a wrapper around the standard <jaxon.fn.handler.unregister> function.
         
         Parameters:
             child - (object): Childnode
             obj - (object): Object
             
     */
-    jaxon.debug.commandHandler = jaxon.command.handler.unregister('dbg');
-    jaxon.command.handler.register('dbg', function(args) {
+    jaxon.debug.commandHandler = jaxon.fn.handler.unregister('dbg');
+    jaxon.fn.handler.register('dbg', function(args) {
         args.cmdFullName = 'debug message';
         jaxon.debug.writeMessage(args.data, jaxon.debug.text[100], 'warningText');
         return jaxon.debug.commandHandler(args);
@@ -465,16 +465,16 @@ try
     }
 
     /*
-        Function: jaxon.command.handler.call
+        Function: jaxon.fn.handler.call
         
         Validates that a function name was provided, generates a message 
         indicating that a jaxon call is starting and sets a flag in the
         request object indicating that debugging is enabled for this call.
         
-        This is a wrapper around the standard <jaxon.command.handler.call> function.
+        This is a wrapper around the standard <jaxon.fn.handler.call> function.
     */
-    jaxon.debug.call = jaxon.command.handler.call;
-    jaxon.command.handler.call = function() {
+    jaxon.debug.call = jaxon.fn.handler.call;
+    jaxon.fn.handler.call = function() {
         try {
             jaxon.debug.writeMessage(jaxon.debug.text[114]);
             
@@ -492,7 +492,7 @@ try
             
             return jaxon.debug.call(functionName, oOptions);
         } catch (e) {
-            var msg = 'jaxon.command.handler.call: ';
+            var msg = 'jaxon.fn.handler.call: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -765,7 +765,7 @@ try
 
     jxn.$ = jaxon.tools.dom.$;
     jxn.getFormValues = jaxon.tools.getFormValues;
-    jxn.call = jaxon.command.handler.call;
+    jxn.call = jaxon.fn.handler.call;
     jxn.request = jaxon.ajax.request.execute;
 
     jaxon.$ = jaxon.tools.dom.$;

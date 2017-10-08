@@ -14,20 +14,22 @@ var
     folder = {
         src: './src/lib/',
         dst: './src/'
-    };
+    },
+
+    sources = [
+       folder.src + 'jaxon.config.js',
+       folder.src + 'jaxon.tools.js',
+       folder.src + 'jaxon.fn.js',
+       folder.src + 'jaxon.html.js',
+       folder.src + 'jaxon.ajax.js',
+       folder.src + 'jaxon.dom.js',
+       folder.src + 'jaxon.js'
+   ];
 
 //JavaScript processing
 gulp.task('js-dev', function() {
 
-    var jsbuild = gulp.src([
-            folder.src + 'jaxon.config.js',
-            folder.src + 'jaxon.tools.js',
-            folder.src + 'jaxon.command.js',
-            folder.src + 'jaxon.html.js',
-            folder.src + 'jaxon.ajax.js',
-            folder.src + 'jaxon.dom.js',
-            folder.src + 'jaxon.js'
-        ])
+    var jsbuild = gulp.src(sources)
         // .pipe(deporder())
         .pipe(concat('jaxon.core.js', {newLine: '\n\n'}));
 
@@ -44,15 +46,7 @@ gulp.task('js-dev', function() {
 //JavaScript processing
 gulp.task('js-min', function() {
 
-  var jsbuild = gulp.src([
-          folder.src + 'jaxon.config.js',
-          folder.src + 'jaxon.tools.js',
-          folder.src + 'jaxon.command.js',
-          folder.src + 'jaxon.html.js',
-          folder.src + 'jaxon.ajax.js',
-          folder.src + 'jaxon.dom.js',
-          folder.src + 'jaxon.js'
-      ])
+  var jsbuild = gulp.src(sources)
       // .pipe(deporder())
       .pipe(concat('jaxon.core.min.js'))
       // .pipe(stripdebug())

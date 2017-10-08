@@ -45,7 +45,7 @@ jaxon.ajax.request.initialize = function(oRequest) {
     oRequest.set('context', window);
     oRequest.set('upload', false);
 
-    var xcb = xx.command.callback;
+    var xcb = xx.fn.callback;
     var gcb = xx.callback;
     var lcb = xcb.create();
 
@@ -392,7 +392,7 @@ jaxon.ajax.request.submit = function(oRequest) {
     oRequest.status.onRequest();
 
     var xx = jaxon;
-    var xcb = xx.command.callback;
+    var xcb = xx.fn.callback;
     var gcb = xx.callback;
     var lcb = oRequest.callback;
 
@@ -479,7 +479,7 @@ jaxon.ajax.request.execute = function() {
             xx.ajax.request.prepare(oRequest);
             return xx.ajax.request.submit(oRequest);
         } catch (e) {
-            jaxon.command.callback.execute(
+            jaxon.fn.callback.execute(
                 [jaxon.callback, oRequest.callback],
                 'onFailure',
                 oRequest
@@ -501,7 +501,7 @@ oRequest - (object):  The request context object.
 */
 jaxon.ajax.response.received = function(oRequest) {
     var xx = jaxon;
-    var xcb = xx.command.callback;
+    var xcb = xx.fn.callback;
     var gcb = xx.callback;
     var lcb = oRequest.callback;
     // sometimes the responseReceived gets called when the
@@ -572,7 +572,7 @@ Parameters:
 oRequest - (object):  The request context object.
 */
 jaxon.ajax.response.complete = function(oRequest) {
-    jaxon.command.callback.execute(
+    jaxon.fn.callback.execute(
         [jaxon.callback, oRequest.callback],
         'onComplete',
         oRequest
@@ -633,7 +633,7 @@ jaxon.ajax.response.process = function(theQ) {
     var obj = jaxon.tools.queue.pop(theQ);
     while (null != obj) {
         try {
-            if (false == jaxon.command.handler.execute(obj))
+            if (false == jaxon.fn.handler.execute(obj))
                 return false;
         } catch (e) {
             console.log(e);
@@ -674,7 +674,7 @@ jaxon.ajax.processor.json = function(oRequest) {
 
     var xx = jaxon;
     var xt = xx.tools;
-    var xcb = xx.command.callback;
+    var xcb = xx.fn.callback;
     var gcb = xx.callback;
     var lcb = oRequest.callback;
 
