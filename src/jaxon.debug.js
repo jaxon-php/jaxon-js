@@ -233,18 +233,18 @@ try
         and display a message in the debugger.
         
         This is a wrapper function which surrounds the standard 
-        <jaxon.executeCommand> function.
+        <jaxon.fn.handler.execute> function.
     */
-    jaxon.debug.executeCommand = jaxon.executeCommand;
-    jaxon.executeCommand = function(args) {
+    jaxon.debug.executeCommand = jaxon.fn.handler.execute;
+    jaxon.fn.handler.execute = function(args) {
         try {
             if ('undefined' == typeof args.cmd)
                 throw { code: 10006 };
-            if (false == jaxon.command.handler.isRegistered(args))
+            if (false == jaxon.fn.handler.isRegistered(args))
                 throw { code: 10007, data: args.cmd };
             return jaxon.debug.executeCommand(args);
         } catch(e) {
-            var msg = 'ExecuteCommand (';
+            var msg = 'jaxon.fn.handler.execute (';
             if ('undefined' != typeof args.sequence) {
                 msg += '#';
                 msg += args.sequence;
@@ -264,31 +264,19 @@ try
     }
 
     /*
-        Function: jaxon.parseAttributes
+        Function: jaxon.fn.handler.unregister
         
-        Catch any exception thrown during the parsing of response command attributes and display an appropriate debug message.
+        Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
         
-        This is a wrapper around the standard <jaxon.parseAttributes> function.
+        This is a wrapper around the standard <jaxon.fn.handler.unregister> function.
         
         Parameters:
             child - (object): Childnode
             obj - (object): Object
             
     */
-    jaxon.debug.parseAttributes = jaxon.parseAttributes;
-    jaxon.parseAttributes = function(child, obj) {
-        try {
-            jaxon.debug.parseAttributes(child, obj);
-        } catch(e) {
-            var msg = 'ParseAttributes:\n';
-            msg += jaxon.debug.getExceptionText(e);
-            msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
-        }
-    }
-
-    jaxon.debug.commandHandler = jaxon.command.handler.unregister('dbg');
-    jaxon.command.handler.register('dbg', function(args) {
+    jaxon.debug.commandHandler = jaxon.fn.handler.unregister('dbg');
+    jaxon.fn.handler.register('dbg', function(args) {
         args.cmdFullName = 'debug message';
         jaxon.debug.writeMessage(args.data, jaxon.debug.text[100], 'warningText');
         return jaxon.debug.commandHandler(args);
@@ -296,18 +284,18 @@ try
 
 
     /*
-        Function: jaxon.tools.$
+        Function: jaxon.tools.dom.$
         
         Catch any exceptions thrown while attempting to locate an HTML element by it's unique name.
         
-        This is a wrapper around the standard <jaxon.tools.$> function.
+        This is a wrapper around the standard <jaxon.tools.dom.$> function.
         
         Parameters:
         sId - (string): Element ID or name
         
     */
-    jaxon.debug.$ = jaxon.tools.$;
-    jaxon.tools.$ = function(sId) {
+    jaxon.debug.$ = jaxon.tools.dom.$;
+    jaxon.tools.dom.$ = function(sId) {
         try {
             var returnValue = jaxon.debug.$(sId);
             if ('object' != typeof returnValue)
@@ -323,57 +311,16 @@ try
     }
 
     /*
-        Function: jaxon.tools._objectToXML
-        
-        Generate a message indicating that a javascript object is
-        being converted to xml.  Indicate the max depth and size.  Then
-        display the size of the object upon completion.  Catch any 
-        exceptions thrown during the conversion process.
-        
-        This is a wrapper around the standard <jaxon.tools._objectToXML> function.
-        
-        Parameters:
-            obj - (object): 
-            guard - (object): 
-            
-    */
-    jaxon.debug._objectToXML = jaxon.tools._objectToXML;
-    jaxon.tools._objectToXML = function(obj, guard) {
-        try {
-            if (0 == guard.size) {
-                var msg = 'OBJECT TO XML: maxDepth = ';
-                msg += guard.maxDepth;
-                msg += ', maxSize = ';
-                msg += guard.maxSize;
-                jaxon.debug.writeMessage(msg);
-            }
-            var r = jaxon.debug._objectToXML(obj, guard);
-            if (0 == guard.depth) {
-                var msg = 'OBJECT TO XML: size = ';
-                msg += guard.size;
-                jaxon.debug.writeMessage(msg);
-            }
-            return r;
-        } catch(e) {
-            var msg = 'ObjectToXML: ';
-            msg += jaxon.debug.getExceptionText(e);
-            msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
-        }
-        return '';
-    }
-
-    /*
-        Function: jaxon._internalSend
+        Function: jaxon.ajax.request._send
         
         Generate a message indicating that the jaxon request is
         about the be sent to the server.
         
-        This is a wrapper around the standard <jaxon._internalSend> 
+        This is a wrapper around the standard <jaxon.ajax.request._send> 
         function.
     */
-    jaxon.debug._internalSend = jaxon._internalSend;
-    jaxon._internalSend = function(oRequest) {
+    jaxon.debug._internalSend = jaxon.ajax.request._send;
+    jaxon.ajax.request._send = function(oRequest) {
         try {
             jaxon.debug.writeMessage(jaxon.debug.text[104]);
             jaxon.debug.writeMessage(
@@ -384,7 +331,7 @@ try
             oRequest.beginDate = new Date();
             jaxon.debug._internalSend(oRequest);
         } catch (e) {
-            var msg = 'InternalSend: ';
+            var msg = 'jaxon.ajax.request._send: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -393,18 +340,18 @@ try
     }
 
     /*
-        Function: jaxon.submitRequest
+        Function: jaxon.ajax.request.submit
         
         Generate a message indicating that a request is ready to be 
         submitted; providing the URL and the function being invoked.
         
         Catch any exceptions thrown and display a message.
         
-        This is a wrapper around the standard <jaxon.submitRequest>
+        This is a wrapper around the standard <jaxon.ajax.request.submit>
         function.
     */
-    jaxon.debug.submitRequest = jaxon.submitRequest;
-    jaxon.submitRequest = function(oRequest) {
+    jaxon.debug.submitRequest = jaxon.ajax.request.submit;
+    jaxon.ajax.request.submit = function(oRequest) {
         var msg = oRequest.method;
         msg += ': ';
         text = decodeURIComponent(oRequest.requestData);
@@ -439,22 +386,22 @@ try
     }
 
     /*
-        Function: jaxon.initializeRequest
+        Function: jaxon.ajax.request.initialize
         
         Generate a message indicating that the request object is
         being initialized.
         
-        This is a wrapper around the standard <jaxon.initializeRequest>
+        This is a wrapper around the standard <jaxon.ajax.request.initialize>
         function.
     */
-    jaxon.debug.initializeRequest = jaxon.initializeRequest;
-    jaxon.initializeRequest = function(oRequest) {
+    jaxon.debug.initializeRequest = jaxon.ajax.request.initialize;
+    jaxon.ajax.request.initialize = function(oRequest) {
         try {
             var msg = jaxon.debug.text[109];
             jaxon.debug.writeMessage(msg);
             return jaxon.debug.initializeRequest(oRequest);
         } catch (e) {
-            var msg = 'InitializeRequest: ';
+            var msg = 'jaxon.ajax.request.initialize: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -463,16 +410,16 @@ try
     }
 
     /*
-        Function: jaxon.processParameters
+        Function: jaxon.ajax.parameters.process
         
         Generate a message indicating that the request object is
         being populated with the parameters provided.
         
-        This is a wrapper around the standard <jaxon.processParameters>
+        This is a wrapper around the standard <jaxon.ajax.parameters.process>
         function.
     */
-    jaxon.debug.processParameters = jaxon.processParameters;
-    jaxon.processParameters = function(oRequest) {
+    jaxon.debug.processParameters = jaxon.ajax.parameters.process;
+    jaxon.ajax.parameters.process = function(oRequest) {
         try {
             if ('undefined' != typeof oRequest.parameters) {
                 var msg = jaxon.debug.text[110];
@@ -485,7 +432,7 @@ try
             }
             return jaxon.debug.processParameters(oRequest);
         } catch (e) {
-            var msg = 'ProcessParameters: ';
+            var msg = 'jaxon.ajax.parameters.process: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -494,22 +441,22 @@ try
     }
 
     /*
-        Function: jaxon.prepareRequest
+        Function: jaxon.ajax.request.prepare
         
         Generate a message indicating that the request is being
         prepared.  This may occur more than once for a request
         if it errors and a retry is attempted.
         
-        This is a wrapper around the standard <jaxon.prepareRequest>
+        This is a wrapper around the standard <jaxon.ajax.request.prepare>
     */
-    jaxon.debug.prepareRequest = jaxon.prepareRequest;
-    jaxon.prepareRequest = function(oRequest) {
+    jaxon.debug.prepareRequest = jaxon.ajax.request.prepare;
+    jaxon.ajax.request.prepare = function(oRequest) {
         try {
             var msg = jaxon.debug.text[113];
             jaxon.debug.writeMessage(msg);
             return jaxon.debug.prepareRequest(oRequest);
         } catch (e) {
-            var msg = 'PrepareRequest: ';
+            var msg = 'jaxon.ajax.request.prepare: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -518,16 +465,16 @@ try
     }
 
     /*
-        Function: jaxon.call
+        Function: jaxon.fn.handler.call
         
         Validates that a function name was provided, generates a message 
         indicating that a jaxon call is starting and sets a flag in the
         request object indicating that debugging is enabled for this call.
         
-        This is a wrapper around the standard <jaxon.call> function.
+        This is a wrapper around the standard <jaxon.fn.handler.call> function.
     */
-    jaxon.debug.call = jaxon.call;
-    jaxon.call = function() {
+    jaxon.debug.call = jaxon.fn.handler.call;
+    jaxon.fn.handler.call = function() {
         try {
             jaxon.debug.writeMessage(jaxon.debug.text[114]);
             
@@ -545,7 +492,7 @@ try
             
             return jaxon.debug.call(functionName, oOptions);
         } catch (e) {
-            var msg = 'Call: ';
+            var msg = 'jaxon.fn.handler.call: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -554,16 +501,16 @@ try
     }
 
     /*
-        Function: jaxon.request
+        Function: jaxon.ajax.request.execute
         
         Validates that a function name was provided, generates a message 
         indicating that a jaxon request is starting and sets a flag in the
         request object indicating that debugging is enabled for this request.
         
-        This is a wrapper around the standard <jaxon.request> function.
+        This is a wrapper around the standard <jaxon.ajax.request.execute> function.
     */
-    jaxon.debug.request = jaxon.request;
-    jaxon.request = function() {
+    jaxon.debug.request = jaxon.ajax.request.execute;
+    jaxon.ajax.request.execute = function() {
         try {
             jaxon.debug.writeMessage(jaxon.debug.text[115]);
             
@@ -581,7 +528,7 @@ try
             
             return jaxon.debug.request(oFunction, oOptions);
         } catch (e) {
-            var msg = 'Request: ';
+            var msg = 'jaxon.ajax.request.execute: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -590,16 +537,16 @@ try
     }
 
     /*
-        Function: jaxon.getResponseProcessor
+        Function: jaxon.ajax.processor.find
         
         Generate an error message when no reponse processor is available
         to process the type of response returned from the server.
         
-        This is a wrapper around the standard <jaxon.getResponseProcessor>
+        This is a wrapper around the standard <jaxon.ajax.processor.find>
         function.
     */
-    jaxon.debug.getResponseProcessor = jaxon.getResponseProcessor;
-    jaxon.getResponseProcessor = function(oRequest) {
+    jaxon.debug.getResponseProcessor = jaxon.ajax.processor.find;
+    jaxon.ajax.processor.find = function(oRequest) {
         try {
             var fProc = jaxon.debug.getResponseProcessor(oRequest);
             
@@ -619,7 +566,7 @@ try
             
             return fProc;
         } catch (e) {
-            var msg = 'GetResponseProcessor: ';
+            var msg = 'jaxon.ajax.processor.find: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -628,7 +575,7 @@ try
     }
 
     /*
-        Function: jaxon.responseReceived
+        Function: jaxon.ajax.response.received
         
         Generate a message indicating that a response has been received
         from the server; provide some statistical data regarding the
@@ -637,11 +584,11 @@ try
         Catch any exceptions that are thrown during the processing of
         the response and generate a message.
         
-        This is a wrapper around the standard <jaxon.responseReceived>
+        This is a wrapper around the standard <jaxon.ajax.response.received>
         function.
     */
-    jaxon.debug.responseReceived = jaxon.responseReceived;
-    jaxon.responseReceived = function(oRequest) {
+    jaxon.debug.responseReceived = jaxon.ajax.response.received;
+    jaxon.ajax.response.received = function(oRequest) {
         var xx = jaxon;
         var xt = xx.tools;
         var xd = xx.debug;
@@ -650,7 +597,7 @@ try
         
         try {
             var status = oRequest.request.status;
-            if (xt.in_array(xx.responseSuccessCodes, status)) {
+            if (xt.array.is_in(xx.ajax.response.successCodes, status)) {
                 var packet = oRequest.request.responseText;
                 packet = packet.replace(new RegExp('<cmd', 'g'), '\n<cmd');
                 packet = packet.replace(new RegExp('<jxn>', 'g'), '\n<jxn>');
@@ -668,20 +615,20 @@ try
                 msg += jaxon.debug.text[121];
                 msg += packet;
                 xd.writeMessage(msg);
-            } else if (xt.in_array(xx.responseErrorsForAlert, status)) {
+            } else if (xt.array.is_in(xx.ajax.response.errorsForAlert, status)) {
                 var msg = jaxon.debug.text[122];
                 msg += status;
                 msg += jaxon.debug.text[123];
                 msg += oRequest.request.responseText;
                 xd.writeMessage(msg, jaxon.debug.text[101], 'errorText');
-            } else if (xt.in_array(xx.responseRedirectCodes, status)) {
+            } else if (xt.array.is_in(xx.ajax.response.redirectCodes, status)) {
                 var msg = jaxon.debug.text[124];
                 msg += oRequest.request.getResponseHeader('location');
                 xd.writeMessage(msg);
             }
             oRet = xd.responseReceived(oRequest);
         } catch (e) {
-            var msg = 'ResponseReceived: ';
+            var msg = 'jaxon.ajax.response.received: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             xd.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -691,16 +638,16 @@ try
     }
 
     /*
-        Function: jaxon.completeResponse
+        Function: jaxon.ajax.response.complete
         
         Generate a message indicating that the request has completed
         and provide some statistics regarding the request and response.
         
-        This is a wrapper around the standard <jaxon.completeResponse>
+        This is a wrapper around the standard <jaxon.ajax.response.complete>
         function.
     */
-    jaxon.debug.completeResponse = jaxon.completeResponse;
-    jaxon.completeResponse = function(oRequest) {
+    jaxon.debug.completeResponse = jaxon.ajax.response.complete;
+    jaxon.ajax.response.complete = function(oRequest) {
         try {
             var returnValue = jaxon.debug.completeResponse(oRequest);
             oRequest.endDate = new Date();
@@ -710,7 +657,7 @@ try
             jaxon.debug.writeMessage(msg);
             return returnValue;
         } catch (e) {
-            var msg = 'CompleteResponse: ';
+            var msg = 'jaxon.ajax.response.complete: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -719,7 +666,7 @@ try
     }
 
     /*
-        Function: jaxon.tools.getRequestObject
+        Function: jaxon.tools.ajax.createRequest
         
         Generate a message indicating that the request object is 
         being initialized.
@@ -727,16 +674,16 @@ try
         Catch any exceptions that are thrown during the process or
         initializing a new request object.
         
-        This is a wrapper around the standard <jaxon.getRequestObject>
+        This is a wrapper around the standard <jaxon.tools.ajax.createRequest>
         function.
     */
-    jaxon.debug.getRequestObject = jaxon.tools.getRequestObject;
-    jaxon.tools.getRequestObject = function() {
+    jaxon.debug.getRequestObject = jaxon.tools.ajax.createRequest;
+    jaxon.tools.ajax.createRequest = function() {
         try {
             jaxon.debug.writeMessage(jaxon.debug.text[127]);
             return jaxon.debug.getRequestObject();
         } catch (e) {
-            var msg = 'GetRequestObject: ';
+            var msg = 'jaxon.tools.ajax.createRequest: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
@@ -816,13 +763,12 @@ try
     */
     jxn = {}
 
-    jxn.$ = jaxon.tools.$;
+    jxn.$ = jaxon.tools.dom.$;
     jxn.getFormValues = jaxon.tools.getFormValues;
-    jxn.call = jaxon.call;
-    jxn.request = jaxon.request;
+    jxn.call = jaxon.fn.handler.call;
+    jxn.request = jaxon.ajax.request.execute;
 
-    jaxon.$ = jaxon.tools.$;
-    jaxon.getFormValues = jaxon.tools.getFormValues;
+    jaxon.$ = jaxon.tools.dom.$;
 } catch (e) {
     alert(e.name + ': ' + e.message);
 }

@@ -152,16 +152,19 @@ try {
     }
     
     jaxon.debug.verbose.hook(jaxon, 'jaxon.');
-    jaxon.debug.verbose.hook(jaxon.callback, 'jaxon.callback.');
-    jaxon.debug.verbose.hook(jaxon.css, 'jaxon.css.');
-    jaxon.debug.verbose.hook(jaxon.dom, 'jaxon.dom.');
-    jaxon.debug.verbose.hook(jaxon.events, 'jaxon.events.');
-    jaxon.debug.verbose.hook(jaxon.forms, 'jaxon.forms.');
-    jaxon.debug.verbose.hook(jaxon.js, 'jaxon.js.');
-    jaxon.debug.verbose.hook(jaxon.tools, 'jaxon.tools.');
+    jaxon.debug.verbose.hook(jaxon.dom.node, 'jaxon.dom.node.');
+    jaxon.debug.verbose.hook(jaxon.dom.tree, 'jaxon.dom.tree.');
+    jaxon.debug.verbose.hook(jaxon.dom.events, 'jaxon.dom.events.');
+    jaxon.debug.verbose.hook(jaxon.html.js, 'jaxon.html.js.');
+    jaxon.debug.verbose.hook(jaxon.html.css, 'jaxon.html.css.');
+    jaxon.debug.verbose.hook(jaxon.html.forms, 'jaxon.html.forms.');
+    jaxon.debug.verbose.hook(jaxon.tools.dom, 'jaxon.tools.dom.');
+    jaxon.debug.verbose.hook(jaxon.tools.array, 'jaxon.tools.array.');
+    jaxon.debug.verbose.hook(jaxon.tools.string, 'jaxon.tools.string.');
+    jaxon.debug.verbose.hook(jaxon.tools.ajax, 'jaxon.tools.ajax.');
     jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
-    jaxon.debug.verbose.hook(jaxon.command, 'jaxon.command.');
-    jaxon.debug.verbose.hook(jaxon.command.handler, 'jaxon.command.handler.');
+    jaxon.debug.verbose.hook(jaxon.fn.callback, 'jaxon.fn.callback.');
+    jaxon.debug.verbose.hook(jaxon.fn.handler, 'jaxon.fn.handler.');
     
     /*
         Boolean: isLoaded
