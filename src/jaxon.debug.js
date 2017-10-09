@@ -18,8 +18,7 @@
     @license http://www.jaxonproject.org/bsd_license.txt BSD License
 */
 
-try
-{
+try {
     /*
         Class: jaxon.debug
 
@@ -29,7 +28,7 @@ try
     */
     if ('undefined' == typeof jaxon)
         throw { name: 'SequenceError', message: 'Error: Jaxon core was not detected, debug module disabled.' }
-        
+
     if ('undefined' == typeof jaxon.debug)
         jaxon.debug = {}
 
@@ -39,7 +38,7 @@ try
         Stores a 'unique' identifier for this session so that an existing debugging
         window can be detected, else one will be created.
     */
-    jaxon.debug.workId = 'jaxonWork'+ new Date().getTime();
+    jaxon.debug.workId = 'jaxonWork' + new Date().getTime();
 
     /*
         String: jaxon.debug.windowSource
@@ -54,7 +53,7 @@ try
         A 'unique' name used to identify the debugging window that is attached
         to this jaxon session.
     */
-    jaxon.debug.windowID = 'jaxon_debug_'+jaxon.debug.workId;
+    jaxon.debug.windowID = 'jaxon_debug_' + jaxon.debug.workId;
 
     /*
         String: windowStyle
@@ -62,13 +61,13 @@ try
         The parameters that will be used to create the debugging window.
     */
     if ('undefined' == typeof jaxon.debug.windowStyle)
-        jaxon.debug.windowStyle = 
-            'width=800,' +
-            'height=600,' +
-            'scrollbars=yes,' +
-            'resizable=yes,' +
-            'status=yes';
-            
+        jaxon.debug.windowStyle =
+        'width=800,' +
+        'height=600,' +
+        'scrollbars=yes,' +
+        'resizable=yes,' +
+        'status=yes';
+
     /*
         String: windowTemplate
         
@@ -76,23 +75,23 @@ try
         debugging window upon creation.
     */
     if ('undefined' == typeof jaxon.debug.windowTemplate)
-        jaxon.debug.windowTemplate = 
-            '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' +
-            '<html><head>' +
-            '<title>jaxon debug output</title>' +
-            '<style type="text/css">' +
-            '/* <![CDATA[ */' +
-            '.debugEntry { margin: 3px; padding: 3px; border-top: 1px solid #999999; } ' +
-            '.debugDate { font-weight: bold; margin: 2px; } ' +
-            '.debugText { margin: 2px; } ' +
-            '.warningText { margin: 2px; font-weight: bold; } ' +
-            '.errorText { margin: 2px; font-weight: bold; color: #ff7777; }' +
-            '/* ]]> */' +
-            '</style>' +
-            '</head><body>' +
-            '<h2>jaxon debug output</h2>' +
-            '<div id="debugTag"></div>' +
-            '</body></html>';
+        jaxon.debug.windowTemplate =
+        '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' +
+        '<html><head>' +
+        '<title>jaxon debug output</title>' +
+        '<style type="text/css">' +
+        '/* <![CDATA[ */' +
+        '.debugEntry { margin: 3px; padding: 3px; border-top: 1px solid #999999; } ' +
+        '.debugDate { font-weight: bold; margin: 2px; } ' +
+        '.debugText { margin: 2px; } ' +
+        '.warningText { margin: 2px; font-weight: bold; } ' +
+        '.errorText { margin: 2px; font-weight: bold; color: #ff7777; }' +
+        '/* ]]> */' +
+        '</style>' +
+        '</head><body>' +
+        '<h2>jaxon debug output</h2>' +
+        '<div id="debugTag"></div>' +
+        '</body></html>';
 
     /*
         Object: window
@@ -162,17 +161,17 @@ try
                 prefix = '';
             if ('undefined' == typeof cls)
                 cls = 'debugText';
-            
+
             text = jaxon.debug.prepareDebugText(text);
-            
+
             var debugTag = xdwd.getElementById('debugTag');
             var debugEntry = xdwd.createElement('div');
             var debugDate = xdwd.createElement('span');
             var debugText = xdwd.createElement('pre');
-            
+
             debugDate.innerHTML = new Date().toString();
             debugText.innerHTML = prefix + text;
-            
+
             debugEntry.appendChild(debugDate);
             debugEntry.appendChild(debugText);
             debugTag.insertBefore(debugEntry, debugTag.firstChild);
@@ -181,11 +180,10 @@ try
                 debugEntry.className = 'debugEntry';
                 debugDate.className = 'debugDate';
                 debugText.className = cls;
-            } catch (e) {
-            }
+            } catch (e) {}
         } catch (e) {
-            if (text.length > 1000) text = text.substr(0,1000) + jaxon.debug.text[102];
-            alert(jaxon.debug.text[102] + text);
+            if (text.length > 1000) text = text.substr(0, 1000) + jaxon.debug.messages.heading;
+            alert(jaxon.debug.messages.heading + text);
         }
     }
 
@@ -243,7 +241,7 @@ try
             if (false == jaxon.fn.handler.isRegistered(args))
                 throw { code: 10007, data: args.cmd };
             return jaxon.debug.executeCommand(args);
-        } catch(e) {
+        } catch (e) {
             var msg = 'jaxon.fn.handler.execute (';
             if ('undefined' != typeof args.sequence) {
                 msg += '#';
@@ -258,7 +256,7 @@ try
             msg += '):\n';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
         }
         return true;
     }
@@ -278,7 +276,7 @@ try
     jaxon.debug.commandHandler = jaxon.fn.handler.unregister('dbg');
     jaxon.fn.handler.register('dbg', function(args) {
         args.cmdFullName = 'debug message';
-        jaxon.debug.writeMessage(args.data, jaxon.debug.text[100], 'warningText');
+        jaxon.debug.writeMessage(args.data, jaxon.debug.messages.warning, 'warningText');
         return jaxon.debug.commandHandler(args);
     });
 
@@ -300,12 +298,11 @@ try
             var returnValue = jaxon.debug.$(sId);
             if ('object' != typeof returnValue)
                 throw { code: 10008 };
-        }
-        catch (e) {
+        } catch (e) {
             var msg = '$:';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[100], 'warningText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.warning, 'warningText');
         }
         return returnValue;
     }
@@ -322,19 +319,16 @@ try
     jaxon.debug._internalSend = jaxon.ajax.request._send;
     jaxon.ajax.request._send = function(oRequest) {
         try {
-            jaxon.debug.writeMessage(jaxon.debug.text[104]);
-            jaxon.debug.writeMessage(
-                jaxon.debug.text[105] + 
-                oRequest.requestData.length + 
-                jaxon.debug.text[106]
-                );
+            var length = oRequest.requestData.length || 0;
+            jaxon.debug.writeMessage(jaxon.debug.messages.request.sending);
             oRequest.beginDate = new Date();
             jaxon.debug._internalSend(oRequest);
+            jaxon.debug.writeMessage(jaxon.debug.messages.request.sent.supplant({ length: length }));
         } catch (e) {
             var msg = 'jaxon.ajax.request._send: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -353,15 +347,16 @@ try
     jaxon.debug.submitRequest = jaxon.ajax.request.submit;
     jaxon.ajax.request.submit = function(oRequest) {
         var msg = oRequest.method;
-        msg += ': ';
-        text = decodeURIComponent(oRequest.requestData);
+        msg += ': ' + oRequest.URI + '\n';
+        var text = decodeURIComponent(oRequest.requestData);
         text = text.replace(new RegExp('&jxn', 'g'), '\n&jxn');
-        text = text.replace(new RegExp('<jxnobj>', 'g'), '\n<jxnobj>');
+        /*text = text.replace(new RegExp('<jxnobj>', 'g'), '\n<jxnobj>');
         text = text.replace(new RegExp('<e>', 'g'), '\n<e>');
-        text = text.replace(new RegExp('</jxnobj>', 'g'), '\n</jxnobj>\n');
+        text = text.replace(new RegExp('</jxnobj>', 'g'), '\n</jxnobj>\n');*/
         msg += text;
         jaxon.debug.writeMessage(msg);
-        msg = jaxon.debug.text[107];
+
+        msg = jaxon.debug.messages.request.calling;
         var separator = '\n';
         for (var mbr in oRequest.functionName) {
             msg += separator;
@@ -370,12 +365,12 @@ try
             msg += oRequest.functionName[mbr];
             separator = '\n';
         }
+        /*msg += separator;
+        msg += jaxon.debug.messages.request.uri;
         msg += separator;
-        msg += jaxon.debug.text[108];
-        msg += separator;
-        msg += oRequest.URI;
+        msg += oRequest.URI;*/
         jaxon.debug.writeMessage(msg);
-        
+
         try {
             return jaxon.debug.submitRequest(oRequest);
         } catch (e) {
@@ -397,14 +392,14 @@ try
     jaxon.debug.initializeRequest = jaxon.ajax.request.initialize;
     jaxon.ajax.request.initialize = function(oRequest) {
         try {
-            var msg = jaxon.debug.text[109];
+            var msg = jaxon.debug.messages.request.init;
             jaxon.debug.writeMessage(msg);
             return jaxon.debug.initializeRequest(oRequest);
         } catch (e) {
             var msg = 'jaxon.ajax.request.initialize: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -422,12 +417,12 @@ try
     jaxon.ajax.parameters.process = function(oRequest) {
         try {
             if ('undefined' != typeof oRequest.parameters) {
-                var msg = jaxon.debug.text[110];
-                msg += oRequest.parameters.length;
-                msg += jaxon.debug.text[111];
+                var msg = jaxon.debug.messages.processing.parameters.supplant({
+                    count: oRequest.parameters.length
+                });
                 jaxon.debug.writeMessage(msg);
             } else {
-                var msg = jaxon.debug.text[112];
+                var msg = jaxon.debug.messages.processing.no_parameters;
                 jaxon.debug.writeMessage(msg);
             }
             return jaxon.debug.processParameters(oRequest);
@@ -435,7 +430,7 @@ try
             var msg = 'jaxon.ajax.parameters.process: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -452,14 +447,14 @@ try
     jaxon.debug.prepareRequest = jaxon.ajax.request.prepare;
     jaxon.ajax.request.prepare = function(oRequest) {
         try {
-            var msg = jaxon.debug.text[113];
+            var msg = jaxon.debug.messages.request.preparing;
             jaxon.debug.writeMessage(msg);
             return jaxon.debug.prepareRequest(oRequest);
         } catch (e) {
             var msg = 'jaxon.ajax.request.prepare: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -476,26 +471,31 @@ try
     jaxon.debug.call = jaxon.fn.handler.call;
     jaxon.fn.handler.call = function() {
         try {
-            jaxon.debug.writeMessage(jaxon.debug.text[114]);
-            
             var numArgs = arguments.length;
-            
+
             if (0 == numArgs)
                 throw { code: 10009 };
-            
-            var functionName = arguments[0];
+
+            var command = arguments[0];
             var oOptions = {}
             if (1 < numArgs)
                 oOptions = arguments[1];
-            
+
             oOptions.debugging = true;
-            
-            return jaxon.debug.call(functionName, oOptions);
+
+            var rv = jaxon.debug.call(command, oOptions);
+
+            jaxon.debug.writeMessage(jaxon.debug.messages.processing.calling.supplant({
+                cmd: command.fullName || command.cmd,
+                options: JSON.stringify(oOptions)
+            }));
+
+            return rv;
         } catch (e) {
             var msg = 'jaxon.fn.handler.call: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -512,26 +512,26 @@ try
     jaxon.debug.request = jaxon.ajax.request.execute;
     jaxon.ajax.request.execute = function() {
         try {
-            jaxon.debug.writeMessage(jaxon.debug.text[115]);
-            
+            jaxon.debug.writeMessage(jaxon.debug.messages.request.starting);
+
             var numArgs = arguments.length;
-            
+
             if (0 == numArgs)
                 throw { code: 10010 };
-            
+
             var oFunction = arguments[0];
             var oOptions = {}
             if (1 < numArgs)
                 oOptions = arguments[1];
-            
+
             oOptions.debugging = true;
-            
+
             return jaxon.debug.request(oFunction, oOptions);
         } catch (e) {
             var msg = 'jaxon.ajax.request.execute: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -549,27 +549,26 @@ try
     jaxon.ajax.processor.find = function(oRequest) {
         try {
             var fProc = jaxon.debug.getResponseProcessor(oRequest);
-            
-            if ('undefined' == typeof fProc) { 
-                var msg = jaxon.debug.text[116];
+
+            if ('undefined' == typeof fProc) {
+                var msg = jaxon.debug.messages.response.no_processor;
                 try {
                     var contentType = oRequest.request.getResponseHeader('content-type');
                     msg += "Content-Type: ";
                     msg += contentType;
                     if ('text/html' == contentType) {
-                        msg += jaxon.debug.text[117];
+                        msg += jaxon.debug.messages.response.check_errors;
                     }
-                } catch (e) {
-                }
-                jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+                } catch (e) {}
+                jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             }
-            
+
             return fProc;
         } catch (e) {
             var msg = 'jaxon.ajax.processor.find: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -592,9 +591,9 @@ try
         var xx = jaxon;
         var xt = xx.tools;
         var xd = xx.debug;
-        
+
         var oRet;
-        
+
         try {
             var status = oRequest.request.status;
             if (xt.array.is_in(xx.ajax.response.successCodes, status)) {
@@ -606,24 +605,23 @@ try
                 packet = packet.replace(new RegExp('</jxnobj>', 'g'), '\n</jxnobj>\n');
                 packet = packet.replace(new RegExp('</jxn>', 'g'), '\n</jxn>');
                 oRequest.midDate = new Date();
-                var msg = jaxon.debug.text[118];
-                msg += oRequest.request.status;
-                msg += jaxon.debug.text[119];
-                msg += packet.length;
-                msg += jaxon.debug.text[120];
-                msg += (oRequest.midDate - oRequest.beginDate);
-                msg += jaxon.debug.text[121];
+                var msg = jaxon.debug.messages.response.success.supplant({
+                    status: status,
+                    length: packet.length,
+                    duration: oRequest.midDate - oRequest.beginDate
+                });
                 msg += packet;
                 xd.writeMessage(msg);
             } else if (xt.array.is_in(xx.ajax.response.errorsForAlert, status)) {
-                var msg = jaxon.debug.text[122];
-                msg += status;
-                msg += jaxon.debug.text[123];
-                msg += oRequest.request.responseText;
-                xd.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+                var msg = jaxon.debug.messages.response.content.supplant({
+                    status: status,
+                    text: oRequest.request.responseText
+                });
+                xd.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             } else if (xt.array.is_in(xx.ajax.response.redirectCodes, status)) {
-                var msg = jaxon.debug.text[124];
-                msg += oRequest.request.getResponseHeader('location');
+                var msg = jaxon.debug.messages.response.redirect.supplant({
+                    location: oRequest.request.getResponseHeader('location')
+                });
                 xd.writeMessage(msg);
             }
             oRet = xd.responseReceived(oRequest);
@@ -631,9 +629,9 @@ try
             var msg = 'jaxon.ajax.response.received: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            xd.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            xd.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
         }
-        
+
         return oRet;
     }
 
@@ -651,16 +649,15 @@ try
         try {
             var returnValue = jaxon.debug.completeResponse(oRequest);
             oRequest.endDate = new Date();
-            var msg = jaxon.debug.text[125];
-            msg += (oRequest.endDate - oRequest.beginDate);
-            msg += jaxon.debug.text[126];
+            var duration = (oRequest.endDate - oRequest.beginDate);
+            var msg = jaxon.debug.messages.processing.done.supplant({ duration: duration });
             jaxon.debug.writeMessage(msg);
             return returnValue;
         } catch (e) {
             var msg = 'jaxon.ajax.response.complete: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -680,13 +677,13 @@ try
     jaxon.debug.getRequestObject = jaxon.tools.ajax.createRequest;
     jaxon.tools.ajax.createRequest = function() {
         try {
-            jaxon.debug.writeMessage(jaxon.debug.text[127]);
+            jaxon.debug.writeMessage(jaxon.debug.messages.request.creating);
             return jaxon.debug.getRequestObject();
         } catch (e) {
             var msg = 'jaxon.tools.ajax.createRequest: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
-            jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             throw e;
         }
     }
@@ -712,7 +709,7 @@ try
                 msg += 'Eval: element.';
                 msg += property;
                 msg += ' = data;\n';
-                jaxon.debug.writeMessage(msg, jaxon.debug.text[101], 'errorText');
+                jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
             }
             return true;
         }

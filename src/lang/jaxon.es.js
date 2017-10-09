@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'ALERTA: ';
-    jaxon.debug.text[101] = 'ERROR: ';
-    jaxon.debug.text[102] = 'MENSAJE DE DEPURACION XAJAX:\n';
-    jaxon.debug.text[103] = '...\n[RESPUESTA LARGA]\n...';
-    jaxon.debug.text[104] = 'ENVIANDO PETICION';
-    jaxon.debug.text[105] = 'ENVIADO [';
-    jaxon.debug.text[106] = ' bytes]';
-    jaxon.debug.text[107] = 'LLAMADA: ';
-    jaxon.debug.text[108] = 'URI: ';
-    jaxon.debug.text[109] = 'INICIALIZANDO PETICION';
-    jaxon.debug.text[110] = 'PROCESANDO PARAMETROS [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'NO HAY PARAMETROS QUE PROCESAR';
-    jaxon.debug.text[113] = 'PREPARANDO PETICION';
-    jaxon.debug.text[114] = 'INICIANDO LLAMADA XAJAX (En desuso: use jaxon.request)';
-    jaxon.debug.text[115] = 'INICIANDO PETICION XAJAX';
-    jaxon.debug.text[116] = 'Ningun procesador de respuesta esta disponible para tratar la respuesta del servidor.\n';
-    jaxon.debug.text[117] = '.\nRevisa mensajes de error del servidor.';
-    jaxon.debug.text[118] = 'RECIBIDO [status: ';
-    jaxon.debug.text[119] = ', tamaño: ';
-    jaxon.debug.text[120] = ' bytes, tiempo: ';
-    jaxon.debug.text[121] = 'ms]:\n';
-    jaxon.debug.text[122] = 'El servidor retorno el siguiente estado HTTP: ';
-    jaxon.debug.text[123] = '\nRECIBIDO:\n';
-    jaxon.debug.text[124] = 'El servidor retorno una redireccion a:<br />';
-    jaxon.debug.text[125] = 'HECHO [';
-    jaxon.debug.text[126] = 'ms]';
-    jaxon.debug.text[127] = 'INICIALIZANDO PETICION DEL OBJETO';
+    jaxon.debug.messages = {
+        warning: 'ALERTA: ',
+        error: 'ERROR: ',
+        heading: 'MENSAJE DE DEPURACION JAXON:\n',
+        request: {
+            uri: 'URI: ',
+            init: 'INICIALIZANDO PETICION',
+            creating: 'INICIALIZANDO PETICION DEL OBJETO',
+            starting: 'INICIANDO PETICION JAXON',
+            preparing: 'PREPARANDO PETICION',
+            calling: 'LLAMADA: ',
+            sending: 'ENVIANDO PETICION',
+            sent: 'ENVIADO [{length} bytes]'
+        },
+        response: {
+            long: '...\n[RESPUESTA LARGA]\n...',
+            success: 'RECIBIDO [status: {status}, tamaño: {length} bytes, tiempo: {duration}ms]:\n',
+            content: 'El servidor retorno el siguiente estado HTTP: {status}\nRECIBIDO:\n{text}',
+            redirect: 'El servidor retorno una redireccion a:<br />{location}',
+            no_processor: 'Ningun procesador de respuesta esta disponible para tratar la respuesta del servidor.\n',
+            check_errors: '.\nRevisa mensajes de error del servidor.'
+        },
+        processing: {
+            parameters: 'PROCESANDO PARAMETROS [{count}]',
+            no_parameters: 'NO HAY PARAMETROS QUE PROCESAR',
+            calling: 'INICIANDO LLAMADA JAXON (En desuso: use jaxon.request)',
+            calling: 'LLAMADA JAXON ({cmd}, {options})',
+            done: 'HECHO [{duration}ms]'
+        }
+    };
      
     jaxon.debug.exceptions = [];
     jaxon.debug.exceptions[10001] = 'Respuesta XML invalida: La respuesta contiene una etiqueta desconocida: {data}.';
@@ -55,8 +56,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Respuesta invalida: Nombre parametro de funcion perdido.';
     jaxon.debug.exceptions[10010] = 'Respuesta invalida: Objeto parametro de funcion perdido.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
 
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {

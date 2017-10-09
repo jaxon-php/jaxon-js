@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'WARNING: ';
-    jaxon.debug.text[101] = 'ERROR: ';
-    jaxon.debug.text[102] = 'XAJAX DEBUG MESSAGE:\n';
-    jaxon.debug.text[103] = '...\n[LONG RESPONSE]\n...';
-    jaxon.debug.text[104] = 'SENDING REQUEST';
-    jaxon.debug.text[105] = 'SENT [';
-    jaxon.debug.text[106] = ' bytes]';
-    jaxon.debug.text[107] = 'CALLING: ';
-    jaxon.debug.text[108] = 'URI: ';
-    jaxon.debug.text[109] = 'INITIALIZING REQUEST';
-    jaxon.debug.text[110] = 'PROCESSING PARAMETERS [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'NO PARAMETERS TO PROCESS';
-    jaxon.debug.text[113] = 'PREPARING REQUEST';
-    jaxon.debug.text[114] = 'STARTING XAJAX CALL (deprecated: use jaxon.request instead)';
-    jaxon.debug.text[115] = 'STARTING XAJAX REQUEST';
-    jaxon.debug.text[116] = 'No response processor is available to process the response from the server.\n';
-    jaxon.debug.text[117] = '.\nCheck for error messages from the server.';
-    jaxon.debug.text[118] = 'RECEIVED [status: ';
-    jaxon.debug.text[119] = ', size: ';
-    jaxon.debug.text[120] = ' bytes, time: ';
-    jaxon.debug.text[121] = 'ms]:\n';
-    jaxon.debug.text[122] = 'The server returned the following HTTP status: ';
-    jaxon.debug.text[123] = '\nRECEIVED:\n';
-    jaxon.debug.text[124] = 'The server returned a redirect to:<br />';
-    jaxon.debug.text[125] = 'DONE [';
-    jaxon.debug.text[126] = 'ms]';
-    jaxon.debug.text[127] = 'INITIALIZING REQUEST OBJECT';
+    jaxon.debug.messages = {
+        warning: 'WARNING: ',
+        error: 'ERROR: ',
+        heading: 'JAXON DEBUG MESSAGE:\n',
+        request: {
+            uri: 'URI: ',
+            init: 'INITIALIZING REQUEST',
+            creating: 'INITIALIZING REQUEST OBJECT',
+            starting: 'STARTING JAXON REQUEST',
+            preparing: 'PREPARING REQUEST',
+            calling: 'CALLING: ',
+            sending: 'SENDING REQUEST',
+            sent: 'SENT [{length} bytes]'
+        },
+        response: {
+            long: '...\n[LONG RESPONSE]\n...',
+            success: 'RECEIVED [status: {status}, size: {length} bytes, time: {duration}ms]:\n',
+            content: 'The server returned the following HTTP status: {status}\nRECEIVED:\n{text}',
+            redirect: 'The server returned a redirect to:<br />{location}',
+            no_processor: 'No response processor is available to process the response from the server.\n',
+            check_errors: '.\nCheck for error messages from the server.'
+        },
+        processing: {
+            parameters: 'PROCESSING PARAMETERS [{count}]',
+            no_parameters: 'NO PARAMETERS TO PROCESS',
+            calling: 'STARTING JAXON CALL (deprecated: use jaxon.request instead)',
+            calling: 'JAXON CALL ({cmd}, {options})',
+            done: 'DONE [{duration}ms]'
+        }
+    };
 
     /*
         Array: exceptions
@@ -58,8 +59,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Invalid request: Missing function name parameter.';
     jaxon.debug.exceptions[10010] = 'Invalid request: Missing function object parameter.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
 
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {

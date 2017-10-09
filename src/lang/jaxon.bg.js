@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'ПРЕДУПРЕЖДЕНИЕ: ';
-    jaxon.debug.text[101] = 'ГРЕШКА: ';
-    jaxon.debug.text[102] = 'XAJAX ДЕБЪГ СЪОБЩЕНИЕ:\n';
-    jaxon.debug.text[103] = '...\n[ДЪЛЪГ ОТГОВОР]\n...';
-    jaxon.debug.text[104] = 'ИЗПРАЩАНЕ НА ЗАЯВКИ';
-    jaxon.debug.text[105] = 'ИЗПРАТЕНИ [';
-    jaxon.debug.text[106] = ' байта]';
-    jaxon.debug.text[107] = 'ИЗВИКВАНЕ: ';
-    jaxon.debug.text[108] = 'Адрес: ';
-    jaxon.debug.text[109] = 'ИНИЦИАЛИЗИРАНЕ НА ЗАЯВКАТА';
-    jaxon.debug.text[110] = 'ОБРАБОТВАНЕ НА ПАРАМЕТРИТЕ [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'НЯМА ПАРАМЕТРИ ЗА ОБРАБОТВАНЕ';
-    jaxon.debug.text[113] = 'ПОДГОТВЯВАНЕ НА ЗАЯВКАТА';
-    jaxon.debug.text[114] = 'СТАРТИРАНЕ НА XAJAX ПОВИКВАНЕТО (остаряло: вместо това използвай jaxon.request)';
-    jaxon.debug.text[115] = 'СТАРТИРАНЕ НА XAJAX ЗАЯВКАТА';
-    jaxon.debug.text[116] = 'Няма регистрирани функции, които да обработят заявката ви на сървъра!\n';
-    jaxon.debug.text[117] = '.\nПровери за съобщения за грешки на сървъра.';
-    jaxon.debug.text[118] = 'ПОЛУЧЕНИ [статус: ';
-    jaxon.debug.text[119] = ', размер: ';
-    jaxon.debug.text[120] = ' байта, време: ';
-    jaxon.debug.text[121] = 'мсек]:\n';
-    jaxon.debug.text[122] = 'Сървъра върна следния HTTP статус: ';
-    jaxon.debug.text[123] = '\nПОЛУЧЕНИ:\n';
-    jaxon.debug.text[124] = 'Сървъра върна пренасочване към:<br />';
-    jaxon.debug.text[125] = 'ГОТОВО [';
-    jaxon.debug.text[126] = 'мсек]';
-    jaxon.debug.text[127] = 'ИНИЦИАЛИЗИРАНЕ НА ОБЕКТА НА ЗАЯВКАТА';
+    jaxon.debug.messages = {
+        warning: 'ПРЕДУПРЕЖДЕНИЕ: ',
+        error: 'ГРЕШКА: ',
+        heading: 'JAXON ДЕБЪГ СЪОБЩЕНИЕ:\n',
+        request: {
+            uri: 'Адрес: ',
+            init: 'ИНИЦИАЛИЗИРАНЕ НА ЗАЯВКАТА',
+            creating: 'ИНИЦИАЛИЗИРАНЕ НА ОБЕКТА НА ЗАЯВКАТА',
+            starting: 'СТАРТИРАНЕ НА JAXON ЗАЯВКАТА',
+            preparing: 'ПОДГОТВЯВАНЕ НА ЗАЯВКАТА',
+            calling: 'ИЗВИКВАНЕ: ',
+            sending: 'ИЗПРАЩАНЕ НА ЗАЯВКИ',
+            sent: 'ИЗПРАТЕНИ [{length} байта]'
+        },
+        response: {
+            long: '...\n[ДЪЛЪГ ОТГОВОР]\n...',
+            success: 'ПОЛУЧЕНИ [статус: {status}, размер: {length} байта, време: {duration}мсек]:\n',
+            content: 'Сървъра върна следния HTTP статус: {status}\nПОЛУЧЕНИ:\n{text}',
+            redirect: 'Сървъра върна пренасочване към:<br />{location}',
+            no_processor: 'Няма регистрирани функции, които да обработят заявката ви на сървъра!\n',
+            check_errors: '.\nПровери за съобщения за грешки на сървъра.'
+        },
+        processing: {
+            parameters: 'ОБРАБОТВАНЕ НА ПАРАМЕТРИТЕ [{count}]',
+            no_parameters: 'НЯМА ПАРАМЕТРИ ЗА ОБРАБОТВАНЕ',
+            calling: 'СТАРТИРАНЕ НА JAXON ПОВИКВАНЕТО (остаряло: вместо това използвай jaxon.request)',
+            calling: 'JAXON ПОВИКВАНЕТО ({cmd}, {options})',
+            done: 'ГОТОВО [{duration}мсек]'
+        }
+    };
      
     jaxon.debug.exceptions = [];
     jaxon.debug.exceptions[10001] = 'Невалиден XML отговор: Отговора съдържа непознат таг: {data}.';
@@ -55,8 +56,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Невалидна заявка: Параметъра с името на функцията липсва.';
     jaxon.debug.exceptions[10010] = 'Невалидна заявка: Липсва обекта на функцията.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
              
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {

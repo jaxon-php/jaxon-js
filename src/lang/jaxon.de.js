@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'WARNUNG: ';
-    jaxon.debug.text[101] = 'FEHLER: ';
-    jaxon.debug.text[102] = 'XAJAX FEHLERSUCHE NACHRICHT:\n';
-    jaxon.debug.text[103] = '...\n[UMGFANGREICHE ANTWORT]\n...';
-    jaxon.debug.text[104] = 'SENDE ANFRAGE';
-    jaxon.debug.text[105] = 'GESENDET [';
-    jaxon.debug.text[106] = ' bytes]';
-    jaxon.debug.text[107] = 'STARTE AUFRUF: ';
-    jaxon.debug.text[108] = 'URI: ';
-    jaxon.debug.text[109] = 'BEGINNE ANFRAGE';
-    jaxon.debug.text[110] = 'PARAMETER IN BEARBEITUNG [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'KEINE PARAMETER ZU VERARBEITEN';
-    jaxon.debug.text[113] = 'BEREITE REQUEST VOR';
-    jaxon.debug.text[114] = 'BEGINNE XAJAX CALL (veraltet: verwendet stattdessen jaxon.request)';
-    jaxon.debug.text[115] = 'BEGINNE XAJAX ANFRAGE';
-    jaxon.debug.text[116] = 'Die vom Server erhaltenen Daten konnten nicht verarbeitet werden.\n';
-    jaxon.debug.text[117] = '.\nPrüfe auf Fehlermeldungen des Servers.';
-    jaxon.debug.text[118] = 'ERHALTEN [status: ';
-    jaxon.debug.text[119] = ', Größe: ';
-    jaxon.debug.text[120] = ' bytes, Zeit: ';
-    jaxon.debug.text[121] = 'ms]:\n';
-    jaxon.debug.text[122] = 'Der Server hat folgenden HTTP-Status zurück gesendet: ';
-    jaxon.debug.text[123] = '\nERHALTEN:\n';
-    jaxon.debug.text[124] = 'Der Server lieferte einen Redirect nach:<br />';
-    jaxon.debug.text[125] = 'ABGESCHLOSSEN [';
-    jaxon.debug.text[126] = 'ms]';
-    jaxon.debug.text[127] = 'INITIALISIERE REQUEST OBJEKT';
+    jaxon.debug.messages = {
+        warning: 'WARNUNG: ',
+        error: 'FEHLER: ',
+        heading: 'JAXON FEHLERSUCHE NACHRICHT:\n',
+        request: {
+            uri: 'URI: ',
+            init: 'BEGINNE ANFRAGE',
+            creating: 'INITIALISIERE REQUEST OBJEKT',
+            starting: 'BEGINNE JAXON ANFRAGE',
+            preparing: 'BEREITE REQUEST VOR',
+            calling: 'STARTE AUFRUF: ',
+            sending: 'SENDE ANFRAGE',
+            sent: 'GESENDET [{length} bytes]'
+        },
+        response: {
+            long: '...\n[UMGFANGREICHE ANTWORT]\n...',
+            success: 'ERHALTEN [status: {status}, Größe: {length} bytes, Zeit: {duration}ms]:\n',
+            content: 'Der Server hat folgenden HTTP-Status zurück gesendet: {status}\nERHALTEN:\n{text}',
+            redirect: 'Der Server lieferte einen Redirect nach:<br />{location}',
+            no_processor: 'Die vom Server erhaltenen Daten konnten nicht verarbeitet werden.\n',
+            check_errors: '.\nPrüfe auf Fehlermeldungen des Servers.'
+        },
+        processing: {
+            parameters: 'PARAMETER IN BEARBEITUNG [{count}]',
+            no_parameters: 'KEINE PARAMETER ZU VERARBEITEN',
+            calling: 'BEGINNE JAXON CALL (veraltet: verwendet stattdessen jaxon.request)',
+            calling: 'JAXON CALL ({cmd}, {options})',
+            done: 'ABGESCHLOSSEN [{duration}ms]'
+        }
+    };
 
     /*
         Array: exceptions
@@ -58,8 +59,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Ungültige Anfrage: Fehlender Funktionsparameter - name.';
     jaxon.debug.exceptions[10010] = 'Ungültige Anfrage: Fehlender Funktionsparameter - object.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
 
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {

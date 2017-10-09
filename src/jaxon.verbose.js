@@ -21,14 +21,6 @@ try {
         throw { name: 'SequenceError', message: 'Error: jaxon core was not detected, verbose module disabled.' }
     if ('undefined' == typeof jaxon.debug)
         throw { name: 'SequenceError', message: 'Error: jaxon debugger was not detected, verbose module disabled.' }
-    
-    /*
-        Class: jaxon.debug.verbose
-        
-        Provide a high level of detail which can be used to debug hard to find
-        problems.
-    */
-    jaxon.debug.verbose = {}
 
     /*
         Function: jaxon.debug.verbose.expandObject
@@ -45,14 +37,14 @@ try {
         
         string - The textual representation of all the first
             level members.
-    */    
+    */
     jaxon.debug.verbose.expandObject = function(obj) {
         var rec = true;
         if (1 < arguments.length)
             rec = arguments[1];
-        if ('function' == typeof (obj)) {
+        if ('function' == typeof(obj)) {
             return '[Function]';
-        } else if ('object' == typeof (obj)) {
+        } else if ('object' == typeof(obj)) {
             if (true == rec) {
                 var t = ' { ';
                 var separator = '';
@@ -72,7 +64,7 @@ try {
             } else return '[Object]';
         } else return '"' + obj + '"';
     }
-    
+
     /*
         Function: jaxon.debug.verbose.makeFunction
         
@@ -87,7 +79,7 @@ try {
         Returns:
         
         function - The wrapper function.
-    */        
+    */
     jaxon.debug.verbose.makeFunction = function(obj, name) {
         return function() {
             var fun = name;
@@ -100,9 +92,9 @@ try {
                 fun += jaxon.debug.verbose.expandObject(arguments[p]);
                 separator = ',';
             }
-            
+
             fun += ');';
-            
+
             var msg = '--> ';
             msg += fun;
 
@@ -119,18 +111,18 @@ try {
             code += ');';
 
             eval(code);
-            
+
             msg = '<-- ';
             msg += fun;
             msg += ' returns ';
             msg += jaxon.debug.verbose.expandObject(returnValue);
-            
+
             jaxon.debug.writeMessage(msg);
-            
+
             return returnValue;
         }
     }
-    
+
     /*
         Function: jaxon.debug.verbose.hook
         
@@ -145,12 +137,12 @@ try {
     */
     jaxon.debug.verbose.hook = function(x, base) {
         for (var m in x) {
-            if ('function' == typeof (x[m])) {
+            if ('function' == typeof(x[m])) {
                 x[m] = jaxon.debug.verbose.makeFunction(x[m], base + m);
             }
         }
     }
-    
+
     jaxon.debug.verbose.hook(jaxon, 'jaxon.');
     jaxon.debug.verbose.hook(jaxon.dom.node, 'jaxon.dom.node.');
     jaxon.debug.verbose.hook(jaxon.dom.tree, 'jaxon.dom.tree.');
@@ -165,7 +157,7 @@ try {
     jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
     jaxon.debug.verbose.hook(jaxon.fn.callback, 'jaxon.fn.callback.');
     jaxon.debug.verbose.hook(jaxon.fn.handler, 'jaxon.fn.handler.');
-    
+
     /*
         Boolean: isLoaded
         

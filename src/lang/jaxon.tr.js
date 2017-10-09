@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'IKAZ: ';
-    jaxon.debug.text[101] = 'HATA: ';
-    jaxon.debug.text[102] = 'XAJAX DEBUG (HATA AYIKLAMASI) MESAJI:\n';
-    jaxon.debug.text[103] = '...\n[UZUN YANIT]\n...';
-    jaxon.debug.text[104] = 'ISTEK GÖNDERILIYOR';
-    jaxon.debug.text[105] = 'GÖNDERILDI [';
-    jaxon.debug.text[106] = ' byte]';
-    jaxon.debug.text[107] = 'ÇAGIRILIYOR: ';
-    jaxon.debug.text[108] = 'URI: ';
-    jaxon.debug.text[109] = 'ISTEK BASLATILIYOR';
-    jaxon.debug.text[110] = 'PARAMETRELER ISLENIYOR [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'ISLENECEK PARAMETRE YOK';
-    jaxon.debug.text[113] = 'ISTEK HAZIRLANIYOR';
-    jaxon.debug.text[114] = 'XAJAX ÇAGRISI BASLATILIYOR (kullanimi tavsiye edilmiyor: yerine jaxon.request kullanin)';
-    jaxon.debug.text[115] = 'XAJAX ISTEGI BASLATILIYOR';
-    jaxon.debug.text[116] = 'Sunucudan gelen cevabi isleyecek cevap islemcisi yok.\n';
-    jaxon.debug.text[117] = '.\nSunucudan gelen hata mesajlarini kontrol edin.';
-    jaxon.debug.text[118] = 'ALINDI [durum: ';
-    jaxon.debug.text[119] = ', boyut: ';
-    jaxon.debug.text[120] = ' byte, süre: ';
-    jaxon.debug.text[121] = 'ms]:\n';
-    jaxon.debug.text[122] = 'Sunucu asagidaki HTTP durumunu gönderdi: ';
-    jaxon.debug.text[123] = '\nALINDI:\n';
-    jaxon.debug.text[124] = 'Sunucu su adrese yönlendirme istegi gönderdi :<br />';
-    jaxon.debug.text[125] = 'TAMAMLANDI [';
-    jaxon.debug.text[126] = 'ms]';
-    jaxon.debug.text[127] = 'ISTEK NESNESI BASLATILIYOR';
+    jaxon.debug.messages = {
+        warning: 'IKAZ: ',
+        error: 'HATA: ',
+        heading: 'JAXON DEBUG (HATA AYIKLAMASI) MESAJI:\n',
+        request: {
+            uri: 'URI: ',
+            init: 'ISTEK BASLATILIYOR',
+            creating: 'ISTEK NESNESI BASLATILIYOR',
+            starting: 'JAXON ISTEGI BASLATILIYOR',
+            preparing: 'ISTEK HAZIRLANIYOR',
+            calling: 'ÇAGIRILIYOR: ',
+            sending: 'ISTEK GÖNDERILIYOR',
+            sent: 'GÖNDERILDI [{length} byte]'
+        },
+        response: {
+            long: '...\n[UZUN YANIT]\n...',
+            success: 'ALINDI [durum: {status}, boyut: {length} byte, süre: {duration}ms]:\n',
+            content: 'Sunucu asagidaki HTTP durumunu gönderdi: {status}\nALINDI:\n{text}',
+            redirect: 'Sunucu su adrese yönlendirme istegi gönderdi :<br />{location}',
+            no_processor: 'Sunucudan gelen cevabi isleyecek cevap islemcisi yok.\n',
+            check_errors: '.\nSunucudan gelen hata mesajlarini kontrol edin.'
+        },
+        processing: {
+            parameters: 'PARAMETRELER ISLENIYOR [{count}]',
+            no_parameters: 'ISLENECEK PARAMETRE YOK',
+            calling: 'JAXON ÇAGRISI BASLATILIYOR (kullanimi tavsiye edilmiyor: yerine jaxon.request kullanin)',
+            calling: 'JAXON BASLATILIYOR ({cmd}, {options})',
+            done: 'TAMAMLANDI [{duration}ms]'
+        }
+    };
     
     /*
         Array: exceptions
@@ -58,8 +59,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Geçersiz istek: Fonksiyon isim parametresi eksik.';
     jaxon.debug.exceptions[10010] = 'Geçersiz istek: Fonksiyon nesne parametresi eksik.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
 
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {

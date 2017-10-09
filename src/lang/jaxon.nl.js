@@ -13,35 +13,36 @@ if ('undefined' != typeof jaxon.debug) {
     /*
         Array: text
     */
-    jaxon.debug.text = [];
-    jaxon.debug.text[100] = 'FOUTMELDING: ';
-    jaxon.debug.text[101] = 'FOUT: ';
-    jaxon.debug.text[102] = 'XAJAX FOUTMELDINGS BERICHT:\n';
-    jaxon.debug.text[103] = '...\n[LANG ANTWOORD]\n...';
-    jaxon.debug.text[104] = 'VERZENDING AANVRAAG';
-    jaxon.debug.text[105] = 'VERZONDEN [';
-    jaxon.debug.text[106] = ' bytes]';
-    jaxon.debug.text[107] = 'AANROEPING: ';
-    jaxon.debug.text[108] = 'URI: ';
-    jaxon.debug.text[109] = 'INITIALISATIE AANVRAAG';
-    jaxon.debug.text[110] = 'VERWERKING PARAMETERS [';
-    jaxon.debug.text[111] = ']';
-    jaxon.debug.text[112] = 'GEEN PARAMETERS OM TE VERWERKEN';
-    jaxon.debug.text[113] = 'VOORBEREIDING AANVRAAG';
-    jaxon.debug.text[114] = 'BEGIN XAJAX AANVRAAG (verouderd: gebruik jaxon.request)';
-    jaxon.debug.text[115] = 'BEGIN XAJAX AANVRAAG';
-    jaxon.debug.text[116] = 'Er is geen verwerkingsbestand gespecificeerd om de aanvraag te verwerken.\n';
-    jaxon.debug.text[117] = '.\nBekijk foutmeldingen van de server.';
-    jaxon.debug.text[118] = 'ONTVANGEN [status: ';
-    jaxon.debug.text[119] = ', omvang: ';
-    jaxon.debug.text[120] = ' bytes, Zeit: ';
-    jaxon.debug.text[121] = 'ms]:\n';
-    jaxon.debug.text[122] = 'De server retourneert de volgende HTTP-status: ';
-    jaxon.debug.text[123] = '\nONTVANGEN:\n';
-    jaxon.debug.text[124] = 'De server retourneert een doorverwijzing naar:<br />';
-    jaxon.debug.text[125] = 'KLAAR [';
-    jaxon.debug.text[126] = 'ms]';
-    jaxon.debug.text[127] = 'INITIALISATIE OBJECT AANVRAAG';
+    jaxon.debug.messages = {
+        warning: 'FOUTMELDING: ',
+        error: 'FOUT: ',
+        heading: 'JAXON FOUTMELDINGS BERICHT:\n',
+        request: {
+            uri: 'URI: ',
+            init: 'INITIALISATIE AANVRAAG',
+            creating: 'INITIALISATIE OBJECT AANVRAAG',
+            starting: 'BEGIN JAXON AANVRAAG',
+            preparing: 'VOORBEREIDING AANVRAAG',
+            calling: 'AANROEPING: ',
+            sending: 'VERZENDING AANVRAAG',
+            sent: 'VERZONDEN [{length} bytes]'
+        },
+        response: {
+            long: '...\n[LANG ANTWOORD]\n...',
+            success: 'ONTVANGEN [status: {status}, omvang: {length} bytes, Zeit: {duration}ms]:\n',
+            content: 'De server retourneert de volgende HTTP-status: {status}\nONTVANGEN:\n{text}',
+            redirect: 'De server retourneert een doorverwijzing naar:<br />{location}',
+            no_processor: 'Er is geen verwerkingsbestand gespecificeerd om de aanvraag te verwerken.\n',
+            check_errors: '.\nBekijk foutmeldingen van de server.'
+        },
+        processing: {
+            parameters: 'VERWERKING PARAMETERS [{count}]',
+            no_parameters: 'GEEN PARAMETERS OM TE VERWERKEN',
+            calling: 'BEGIN JAXON AANVRAAG (verouderd: gebruik jaxon.request)',
+            calling: 'JAXON AANVRAAG ({cmd}, {options})',
+            done: 'KLAAR [{duration}ms]'
+        }
+    };
 
     /*
         Array: exceptions
@@ -58,8 +59,9 @@ if ('undefined' != typeof jaxon.debug) {
     jaxon.debug.exceptions[10009] = 'Ongeldige aanvraag: Missende functie parameter - naam.';
     jaxon.debug.exceptions[10010] = 'Ongeldige aanvraag: Missende functie parameter - object.';
 
-    jaxon.debug.lang = {};
-    jaxon.debug.lang.isLoaded = true;
+    jaxon.debug.lang = {
+        isLoaded: true
+    };
 }
 
 if (typeof jaxon.config != 'undefined' && typeof jaxon.config.status != 'undefined') {
