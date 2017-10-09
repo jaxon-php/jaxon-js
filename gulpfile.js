@@ -4,6 +4,7 @@
 var gulp = require('gulp'),
     concat = require('gulp-concat'),
     // deporder = require('gulp-deporder'),
+    rename = require('gulp-rename'),
     // stripdebug = require('gulp-strip-debug'),
     uglify = require('gulp-uglify');
 
@@ -11,27 +12,40 @@ var gulp = require('gulp'),
 var devBuild = (process.env.NODE_ENV !== 'production');
 
 // Folders and files
-var folder = {
-        src: './src/lib/',
-        dst: './src/'
+var folders = {
+        lib: './src/lib/',
+        src: './src/'
     },
 
-    sources = [
-        folder.src + 'jaxon.config.js',
-        folder.src + 'jaxon.tools.js',
-        folder.src + 'jaxon.fn.js',
-        folder.src + 'jaxon.html.js',
-        folder.src + 'jaxon.ajax.js',
-        folder.src + 'jaxon.dom.js',
-        folder.src + 'jaxon.js',
-        folder.src + 'jaxon.compat.js'
-   ];
+    files = {
+        lib: {
+            core: [
+                folders.lib + 'jaxon.config.js',
+                folders.lib + 'jaxon.tools.js',
+                folders.lib + 'jaxon.fn.js',
+                folders.lib + 'jaxon.html.js',
+                folders.lib + 'jaxon.ajax.js',
+                folders.lib + 'jaxon.dom.js',
+                folders.lib + 'jaxon.js',
+                folders.lib + 'jaxon.compat.js'
+            ]
+        },
+        src: {
+            core: 'jaxon.core.js',
+            debug: 'jaxon.debug.js',
+            verbose: 'jaxon.verbose.js'
+        },
+        min: {
+            core: 'jaxon.core.min.js',
+            debug: 'jaxon.debug.min.js',
+            verbose: 'jaxon.verbose.min.js'
+        }};
 
 // Concat core library files
 gulp.task('js-core', function() {
-    var jsbuild = gulp.src(sources)
+    var jsbuild = gulp.src(files.lib.core)
         // .pipe(deporder())
-        .pipe(concat('jaxon.core.js', {newLine: '\n\n'}));
+        .pipe(concat(files.src.core, {newLine: '\n\n'}));
 
     /*if (!devBuild) {
         jsbuild = jsbuild
@@ -39,34 +53,34 @@ gulp.task('js-core', function() {
             .pipe(uglify());
     }*/
 
-    return jsbuild.pipe(gulp.dest(folder.dst));
+    return jsbuild.pipe(gulp.dest(folders.src));
 });
 
 // Concat and minify core library files
 gulp.task('js-core-min', ['js-core'], function() {
-    return gulp.src(folder.dst + 'jaxon.core.js')
+    return gulp.src(folders.src + files.src.core)
         // .pipe(stripdebug())
-        .pipe(concat('jaxon.core.min.js'))
         .pipe(uglify())
-        .pipe(gulp.dest(folder.dst));
+        .pipe(rename(files.min.core))
+        .pipe(gulp.dest(folders.src));
 });
 
 // Minify the jaxon.debug.js file
 gulp.task('js-debug-min', function() {
-    return gulp.src(folder.dst + 'jaxon.debug.js')
+    return gulp.src(folders.src + files.src.debug)
         // .pipe(stripdebug())
-        .pipe(concat('jaxon.debug.min.js'))
         .pipe(uglify())
-        .pipe(gulp.dest(folder.dst));
+        .pipe(rename(files.min.debug))
+        .pipe(gulp.dest(folders.src));
 });
 
 // Minify the jaxon.verbose.js file
 gulp.task('js-verbose-min', function() {
-    return gulp.src(folder.dst + 'jaxon.verbose.js')
+    return gulp.src(folders.src + files.src.verbose)
         // .pipe(stripdebug())
-        .pipe(concat('jaxon.verbose.min.js'))
         .pipe(uglify())
-        .pipe(gulp.dest(folder.dst));
+        .pipe(rename(files.min.verbose))
+        .pipe(gulp.dest(folders.src));
 });
 
 // Minify all the files

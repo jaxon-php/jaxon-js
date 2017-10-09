@@ -3536,7 +3536,7 @@ jaxon.isLoaded = true;
 Class: jaxon.command
 
 This class is defined for compatibility with previous versions,
-since its functions are used in third party packages.
+since its functions are used in other packages.
 */
 jaxon.command = {};
 
