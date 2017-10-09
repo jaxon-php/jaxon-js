@@ -14,7 +14,8 @@ var devBuild = (process.env.NODE_ENV !== 'production');
 // Folders and files
 var folders = {
         lib: './src/lib/',
-        src: './src/'
+        src: './src/',
+        lang: './src/lang/'
     },
 
     files = {
@@ -33,7 +34,16 @@ var folders = {
         src: {
             core: 'jaxon.core.js',
             debug: 'jaxon.debug.js',
-            verbose: 'jaxon.verbose.js'
+            verbose: 'jaxon.verbose.js',
+            lang: [
+                folders.src + 'lang/jaxon.bg.js',
+                folders.src + 'lang/jaxon.de.js',
+                folders.src + 'lang/jaxon.en.js',
+                folders.src + 'lang/jaxon.es.js',
+                folders.src + 'lang/jaxon.fr.js',
+                folders.src + 'lang/jaxon.nl.js',
+                folders.src + 'lang/jaxon.tr.js'
+            ]
         },
         min: {
             core: 'jaxon.core.min.js',
@@ -81,6 +91,19 @@ gulp.task('js-verbose-min', function() {
         .pipe(uglify())
         .pipe(rename(files.min.verbose))
         .pipe(gulp.dest(folders.src));
+});
+
+// Minify the jaxon language files
+gulp.task('js-lang-min', function() {
+    return gulp.src(files.src.lang)
+        // .pipe(stripdebug())
+        .pipe(uglify())
+        .pipe(rename(function (path) {
+            // path.dirname = "";
+            path.basename += ".min";
+            // path.extname = ""
+        }))
+        .pipe(gulp.dest(folders.lang));
 });
 
 // Minify all the files
