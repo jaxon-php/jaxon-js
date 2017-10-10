@@ -21,6 +21,18 @@ jaxon = {};
 jaxon.config = {};
 
 /*
+Class: jaxon.debug
+*/
+jaxon.debug = {};
+
+/*
+    Class: jaxon.debug.verbose
+    
+    Provide a high level of detail which can be used to debug hard to find problems.
+*/
+jaxon.debug.verbose = {}
+
+/*
 Class: jaxon.ajax
 */
 jaxon.ajax = {};

@@ -34,7 +34,6 @@ var folders = {
         src: {
             core: 'jaxon.core.js',
             debug: 'jaxon.debug.js',
-            verbose: 'jaxon.verbose.js',
             lang: [
                 folders.src + 'lang/jaxon.bg.js',
                 folders.src + 'lang/jaxon.de.js',
@@ -47,8 +46,7 @@ var folders = {
         },
         min: {
             core: 'jaxon.core.min.js',
-            debug: 'jaxon.debug.min.js',
-            verbose: 'jaxon.verbose.min.js'
+            debug: 'jaxon.debug.min.js'
         }};
 
 // Concat core library files
@@ -84,15 +82,6 @@ gulp.task('js-debug-min', function() {
         .pipe(gulp.dest(folders.src));
 });
 
-// Minify the jaxon.verbose.js file
-gulp.task('js-verbose-min', function() {
-    return gulp.src(folders.src + files.src.verbose)
-        // .pipe(stripdebug())
-        .pipe(uglify())
-        .pipe(rename(files.min.verbose))
-        .pipe(gulp.dest(folders.src));
-});
-
 // Minify the jaxon language files
 gulp.task('js-lang-min', function() {
     return gulp.src(files.src.lang)
@@ -107,4 +96,4 @@ gulp.task('js-lang-min', function() {
 });
 
 // Minify all the files
-gulp.task('js-min', ['js-core-min', 'js-debug-min', 'js-verbose-min']);
+gulp.task('js-min', ['js-core-min', 'js-debug-min']);
