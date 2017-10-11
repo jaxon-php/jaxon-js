@@ -88,7 +88,8 @@ jaxon.ajax.request.initialize = function(oRequest) {
 
     // The content type is not set when uploading a file with FormData.
     // It will be set by the browser.
-    if (oRequest.upload == false) {
+    oRequest.hasFormData = false; // !!window.FormData;
+    if (!oRequest.upload || !oRequest.hasFormData) {
         oRequest.append('postHeaders', {
             'content-type': oRequest.contentType
         });
@@ -103,7 +104,7 @@ jaxon.ajax.request.initialize = function(oRequest) {
 }
 
 /*
-Function: jaxon.ajax.parameters.formData
+Function: jaxon.ajax.parameters.toFormData
 
 Processes request specific parameters and store them in a FormData object.
 
@@ -111,7 +112,7 @@ Parameters:
 
 oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
 */
-jaxon.ajax.parameters.formData = function(oRequest) {
+jaxon.ajax.parameters.toFormData = function(oRequest) {
     var xx = jaxon;
     var xt = xx.tools;
 
@@ -174,7 +175,7 @@ jaxon.ajax.parameters.formData = function(oRequest) {
 }
 
 /*
-Function: jaxon.ajax.parameters.urlEncoded
+Function: jaxon.ajax.parameters.toUrlEncoded
 
 Processes request specific parameters and store them in an URL encoded string.
 
@@ -182,7 +183,7 @@ Parameters:
 
 oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
 */
-jaxon.ajax.parameters.urlEncoded = function(oRequest) {
+jaxon.ajax.parameters.toUrlEncoded = function(oRequest) {
     var xx = jaxon;
     var xt = xx.tools;
 
@@ -273,10 +274,15 @@ This is called once per request; upon a request failure, this
 will not be called for additional retries.
 */
 jaxon.ajax.parameters.process = function(oRequest) {
+    // Initialize file upload.
     if (oRequest.upload != false)
-        jaxon.ajax.parameters.formData(oRequest);
+        jaxon.tools.form.initializeUpload(oRequest);
+
+    // Make request parameters.
+    if (oRequest.upload != false && !oRequest.upload.iframe)
+        jaxon.ajax.parameters.toFormData(oRequest);
     else
-        jaxon.ajax.parameters.urlEncoded(oRequest);
+        jaxon.ajax.parameters.toUrlEncoded(oRequest);
 };
 
 /*
@@ -406,10 +412,64 @@ jaxon.ajax.request.submit = function(oRequest) {
     oRequest.cursor.onWaiting();
     oRequest.status.onWaiting();
 
-    jaxon.ajax.request._send(oRequest);
+    if(oRequest.upload != false && oRequest.upload.iframe) {
+        // The request will be sent after the files are uploaded
+        oRequest.upload.iframe.onload = function() {
+            jaxon.ajax.response.upload(oRequest);
+        }
+        // Submit the upload form
+        oRequest.upload.input.form.submit();
+    } else {
+        jaxon.ajax.request._send(oRequest);
+    }
 
     // synchronous mode causes response to be processed immediately here
     return oRequest.finishRequest();
+};
+
+/*
+Function: jaxon.ajax.response.upload
+
+Process the file upload response received in an iframe.
+
+Parameters:
+
+oRequest - (object):  The request context object.
+*/
+jaxon.ajax.response.upload = function(oRequest) {
+    var xx = jaxon;
+    var xcb = xx.fn.callback;
+    var gcb = xx.callback;
+    var lcb = oRequest.callback;
+
+    var endRequest = false;
+    var res = oRequest.upload.iframe.contentWindow.res;
+    if(!res || !res.code) {
+        // Todo: show the error message with the selected dialog library
+        alert('The server returned an invalid response');
+        // End the request
+        endRequest = true;
+    }
+    else if(res.code == 'error') {
+        // Todo: show the error message with the selected dialog library
+        alert(res.msg);
+        // End the request
+        endRequest = true;
+    }
+
+    if(endRequest) {
+        // End the request
+        xcb.clearTimer([gcb, lcb], 'onExpiration');
+        xcb.clearTimer([gcb, lcb], 'onResponseDelay');
+        xcb.execute([gcb, lcb], 'onFailure', oRequest);
+        jaxon.ajax.response.complete(oRequest);
+        return;
+    }
+
+    if(res.code = 'success') {
+        oRequest.requestData += '&jxnupl=' + encodeURIComponent(res.upl);
+        jaxon.ajax.request._send(oRequest);
+    }
 }
 
 /*

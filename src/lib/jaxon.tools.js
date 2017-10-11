@@ -365,6 +365,58 @@ jaxon.tools.form._getValue = function(aFormValues, child, submitDisabledElements
     }
 };
 
+/*
+Function: jaxon.tools.form.initializeUpload
+
+Check upload data and initialize the request.
+*/
+jaxon.tools.form.initializeUpload = function(oRequest) {
+    if(!oRequest.upload)
+        return false;
+    var input = jaxon.tools.dom.$(oRequest.upload);
+    if(!input) {
+        console.log('Unable to find input for file upload with id ' + oRequest.upload);
+        return false;
+    }
+    if(!input.form) {
+        // Find the input form
+        var form = input;
+        while(form != null && form.nodeName != 'FORM')
+            form = form.parentNode;
+        if(form == null) {
+            console.log('Unable to find form for file upload with id ' + oRequest.upload);
+            return false;
+        }
+        input.form = form;
+    }
+    oRequest.upload = {id: oRequest.upload, input: input, form: input.form};
+    // If FormData feature is not available, files are uploaded with iframes.
+    if (!oRequest.hasFormData)
+        jaxon.tools.form.createUploadIframe(oRequest);
+};
+
+/*
+Function: jaxon.tools.form.createUploadIframe
+
+Create an iframe for file upload.
+*/
+jaxon.tools.form.createUploadIframe = function(oRequest) {
+    var target = 'jaxon_upload_' + oRequest.upload.id;
+    // Delete the iframe, in the case it already exists
+    jaxon.dom.node.remove(target);
+    // Create the iframe.
+    jaxon.dom.node.insert(oRequest.upload.form, 'iframe', target);
+    iframe = jaxon.tools.dom.$(target);
+    iframe.name = target;
+    iframe.style.display = 'none';
+    // Set the form attributes
+    oRequest.upload.form.method = 'POST';
+    oRequest.upload.form.enctype = 'multipart/form-data';
+    oRequest.upload.form.action = jaxon.config.requestURI;
+    oRequest.upload.form.target = target;
+    oRequest.upload.iframe = iframe;
+    return true;
+};
 
 /*
 Function: jaxon.tools.string.stripOnPrefix

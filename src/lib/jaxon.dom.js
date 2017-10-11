@@ -226,8 +226,7 @@ Parameters:
 objSibling - (string or object):  The name of, or the element itself
     that will be used as the reference point for insertion.
 sTag - (string):  The tag name for the new element.
-sId - (string):  The value that will be assigned to the new element's
-    id attribute.
+sId - (string):  The value that will be assigned to the new element's id attribute.
 
 Returns:
 

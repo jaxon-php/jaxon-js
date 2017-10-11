@@ -797,6 +797,58 @@ jaxon.tools.form._getValue = function(aFormValues, child, submitDisabledElements
     }
 };
 
+/*
+Function: jaxon.tools.form.initializeUpload
+
+Check upload data and initialize the request.
+*/
+jaxon.tools.form.initializeUpload = function(oRequest) {
+    if(!oRequest.upload)
+        return false;
+    var input = jaxon.tools.dom.$(oRequest.upload);
+    if(!input) {
+        console.log('Unable to find input for file upload with id ' + oRequest.upload);
+        return false;
+    }
+    if(!input.form) {
+        // Find the input form
+        var form = input;
+        while(form != null && form.nodeName != 'FORM')
+            form = form.parentNode;
+        if(form == null) {
+            console.log('Unable to find form for file upload with id ' + oRequest.upload);
+            return false;
+        }
+        input.form = form;
+    }
+    oRequest.upload = {id: oRequest.upload, input: input, form: input.form};
+    // If FormData feature is not available, files are uploaded with iframes.
+    if (!oRequest.hasFormData)
+        jaxon.tools.form.createUploadIframe(oRequest);
+};
+
+/*
+Function: jaxon.tools.form.createUploadIframe
+
+Create an iframe for file upload.
+*/
+jaxon.tools.form.createUploadIframe = function(oRequest) {
+    var target = 'jaxon_upload_' + oRequest.upload.id;
+    // Delete the iframe, in the case it already exists
+    jaxon.dom.node.remove(target);
+    // Create the iframe.
+    jaxon.dom.node.insert(oRequest.upload.form, 'iframe', target);
+    iframe = jaxon.tools.dom.$(target);
+    iframe.name = target;
+    iframe.style.display = 'none';
+    // Set the form attributes
+    oRequest.upload.form.method = 'POST';
+    oRequest.upload.form.enctype = 'multipart/form-data';
+    oRequest.upload.form.action = jaxon.config.requestURI;
+    oRequest.upload.form.target = target;
+    oRequest.upload.iframe = iframe;
+    return true;
+};
 
 /*
 Function: jaxon.tools.string.stripOnPrefix
@@ -2141,7 +2193,8 @@ jaxon.ajax.request.initialize = function(oRequest) {
 
     // The content type is not set when uploading a file with FormData.
     // It will be set by the browser.
-    if (oRequest.upload == false) {
+    oRequest.hasFormData = false; // !!window.FormData;
+    if (!oRequest.upload || !oRequest.hasFormData) {
         oRequest.append('postHeaders', {
             'content-type': oRequest.contentType
         });
@@ -2156,7 +2209,7 @@ jaxon.ajax.request.initialize = function(oRequest) {
 }
 
 /*
-Function: jaxon.ajax.parameters.formData
+Function: jaxon.ajax.parameters.toFormData
 
 Processes request specific parameters and store them in a FormData object.
 
@@ -2164,7 +2217,7 @@ Parameters:
 
 oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
 */
-jaxon.ajax.parameters.formData = function(oRequest) {
+jaxon.ajax.parameters.toFormData = function(oRequest) {
     var xx = jaxon;
     var xt = xx.tools;
 
@@ -2227,7 +2280,7 @@ jaxon.ajax.parameters.formData = function(oRequest) {
 }
 
 /*
-Function: jaxon.ajax.parameters.urlEncoded
+Function: jaxon.ajax.parameters.toUrlEncoded
 
 Processes request specific parameters and store them in an URL encoded string.
 
@@ -2235,7 +2288,7 @@ Parameters:
 
 oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
 */
-jaxon.ajax.parameters.urlEncoded = function(oRequest) {
+jaxon.ajax.parameters.toUrlEncoded = function(oRequest) {
     var xx = jaxon;
     var xt = xx.tools;
 
@@ -2326,10 +2379,15 @@ This is called once per request; upon a request failure, this
 will not be called for additional retries.
 */
 jaxon.ajax.parameters.process = function(oRequest) {
+    // Initialize file upload.
     if (oRequest.upload != false)
-        jaxon.ajax.parameters.formData(oRequest);
+        jaxon.tools.form.initializeUpload(oRequest);
+
+    // Make request parameters.
+    if (oRequest.upload != false && !oRequest.upload.iframe)
+        jaxon.ajax.parameters.toFormData(oRequest);
     else
-        jaxon.ajax.parameters.urlEncoded(oRequest);
+        jaxon.ajax.parameters.toUrlEncoded(oRequest);
 };
 
 /*
@@ -2459,10 +2517,64 @@ jaxon.ajax.request.submit = function(oRequest) {
     oRequest.cursor.onWaiting();
     oRequest.status.onWaiting();
 
-    jaxon.ajax.request._send(oRequest);
+    if(oRequest.upload != false && oRequest.upload.iframe) {
+        // The request will be sent after the files are uploaded
+        oRequest.upload.iframe.onload = function() {
+            jaxon.ajax.response.upload(oRequest);
+        }
+        // Submit the upload form
+        oRequest.upload.input.form.submit();
+    } else {
+        jaxon.ajax.request._send(oRequest);
+    }
 
     // synchronous mode causes response to be processed immediately here
     return oRequest.finishRequest();
+};
+
+/*
+Function: jaxon.ajax.response.upload
+
+Process the file upload response received in an iframe.
+
+Parameters:
+
+oRequest - (object):  The request context object.
+*/
+jaxon.ajax.response.upload = function(oRequest) {
+    var xx = jaxon;
+    var xcb = xx.fn.callback;
+    var gcb = xx.callback;
+    var lcb = oRequest.callback;
+
+    var endRequest = false;
+    var res = oRequest.upload.iframe.contentWindow.res;
+    if(!res || !res.code) {
+        // Todo: show the error message with the selected dialog library
+        alert('The server returned an invalid response');
+        // End the request
+        endRequest = true;
+    }
+    else if(res.code == 'error') {
+        // Todo: show the error message with the selected dialog library
+        alert(res.msg);
+        // End the request
+        endRequest = true;
+    }
+
+    if(endRequest) {
+        // End the request
+        xcb.clearTimer([gcb, lcb], 'onExpiration');
+        xcb.clearTimer([gcb, lcb], 'onResponseDelay');
+        xcb.execute([gcb, lcb], 'onFailure', oRequest);
+        jaxon.ajax.response.complete(oRequest);
+        return;
+    }
+
+    if(res.code = 'success') {
+        oRequest.requestData += '&jxnupl=' + encodeURIComponent(res.upl);
+        jaxon.ajax.request._send(oRequest);
+    }
 }
 
 /*
@@ -3065,8 +3177,7 @@ Parameters:
 objSibling - (string or object):  The name of, or the element itself
     that will be used as the reference point for insertion.
 sTag - (string):  The tag name for the new element.
-sId - (string):  The value that will be assigned to the new element's
-    id attribute.
+sId - (string):  The value that will be assigned to the new element's id attribute.
 
 Returns:
 
