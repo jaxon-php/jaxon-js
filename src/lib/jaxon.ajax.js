@@ -86,10 +86,15 @@ jaxon.ajax.request.initialize = function(oRequest) {
 
     oRequest.requestRetry = oRequest.retry;
 
+    // Initialize file upload.
+    if (oRequest.upload != false) {
+        oRequest.upload = {id: oRequest.upload, input: null, form: null, ajax: !!window.FormData};
+        jaxon.tools.upload.initialize(oRequest);
+    }
+
     // The content type is not set when uploading a file with FormData.
     // It will be set by the browser.
-    oRequest.hasFormData = false; // !!window.FormData;
-    if (!oRequest.upload || !oRequest.hasFormData) {
+    if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
         oRequest.append('postHeaders', {
             'content-type': oRequest.contentType
         });
@@ -117,11 +122,9 @@ jaxon.ajax.parameters.toFormData = function(oRequest) {
     var xt = xx.tools;
 
     var rd = new FormData();
-    var input = jaxon.$(oRequest.upload);
-    if (input != null && input.type == 'file' && input.name != 'undefined') {
-        for (var i = 0, n = input.files.length; i < n; i++) {
-            rd.append(input.name, input.files[i]);
-        }
+    var input = oRequest.upload.input;
+    for (var i = 0, n = input.files.length; i < n; i++) {
+        rd.append(input.name, input.files[i]);
     }
 
     var separator = '';
@@ -274,12 +277,8 @@ This is called once per request; upon a request failure, this
 will not be called for additional retries.
 */
 jaxon.ajax.parameters.process = function(oRequest) {
-    // Initialize file upload.
-    if (oRequest.upload != false)
-        jaxon.tools.form.initializeUpload(oRequest);
-
     // Make request parameters.
-    if (oRequest.upload != false && !oRequest.upload.iframe)
+    if (oRequest.upload != false && oRequest.upload.ajax && oRequest.upload.input)
         jaxon.ajax.parameters.toFormData(oRequest);
     else
         jaxon.ajax.parameters.toUrlEncoded(oRequest);
@@ -412,13 +411,13 @@ jaxon.ajax.request.submit = function(oRequest) {
     oRequest.cursor.onWaiting();
     oRequest.status.onWaiting();
 
-    if(oRequest.upload != false && oRequest.upload.iframe) {
+    if(oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
         // The request will be sent after the files are uploaded
         oRequest.upload.iframe.onload = function() {
             jaxon.ajax.response.upload(oRequest);
         }
         // Submit the upload form
-        oRequest.upload.input.form.submit();
+        oRequest.upload.form.submit();
     } else {
         jaxon.ajax.request._send(oRequest);
     }

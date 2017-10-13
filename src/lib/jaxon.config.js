@@ -76,6 +76,11 @@ jaxon.tools.string = {};
 jaxon.tools.form = {};
 
 /*
+    Class: jaxon.tools.upload
+*/
+jaxon.tools.upload = {};
+
+/*
     Class: jaxon.tools.dom
 */
 jaxon.tools.dom = {};

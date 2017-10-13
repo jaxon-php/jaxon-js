@@ -76,6 +76,11 @@ jaxon.tools.string = {};
 jaxon.tools.form = {};
 
 /*
+    Class: jaxon.tools.upload
+*/
+jaxon.tools.upload = {};
+
+/*
     Class: jaxon.tools.dom
 */
 jaxon.tools.dom = {};
@@ -798,55 +803,65 @@ jaxon.tools.form._getValue = function(aFormValues, child, submitDisabledElements
 };
 
 /*
-Function: jaxon.tools.form.initializeUpload
+Function: jaxon.tools.upload.initialize
 
 Check upload data and initialize the request.
 */
-jaxon.tools.form.initializeUpload = function(oRequest) {
-    if(!oRequest.upload)
-        return false;
-    var input = jaxon.tools.dom.$(oRequest.upload);
-    if(!input) {
-        console.log('Unable to find input for file upload with id ' + oRequest.upload);
+jaxon.tools.upload.initialize = function(oRequest) {
+    var input = jaxon.tools.dom.$(oRequest.upload.id);
+    if(input == null) {
+        console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
         return false;
     }
+    if(input.type != 'file') {
+        console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+        return false;
+    }
+    if(typeof input.name == 'undefined') {
+        console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
+        return false;
+    }
+    oRequest.upload.input = input;
+    oRequest.upload.form = input.form;
+    // Having the input field is enough for upload with FormData (Ajax).
+    if (oRequest.upload.ajax != false)
+        return true;
+    // For upload with iframe, we need to get the form too.
     if(!input.form) {
         // Find the input form
         var form = input;
         while(form != null && form.nodeName != 'FORM')
             form = form.parentNode;
         if(form == null) {
-            console.log('Unable to find form for file upload with id ' + oRequest.upload);
+            console.log('The upload input field with id ' + oRequest.upload.id + ' is not in a form');
             return false;
         }
-        input.form = form;
+        oRequest.upload.form = form;
     }
-    oRequest.upload = {id: oRequest.upload, input: input, form: input.form};
     // If FormData feature is not available, files are uploaded with iframes.
-    if (!oRequest.hasFormData)
-        jaxon.tools.form.createUploadIframe(oRequest);
+    jaxon.tools.upload.createIframe(oRequest);
+    return true;
 };
 
 /*
-Function: jaxon.tools.form.createUploadIframe
+Function: jaxon.tools.upload.createIframe
 
 Create an iframe for file upload.
 */
-jaxon.tools.form.createUploadIframe = function(oRequest) {
+jaxon.tools.upload.createIframe = function(oRequest) {
     var target = 'jaxon_upload_' + oRequest.upload.id;
     // Delete the iframe, in the case it already exists
     jaxon.dom.node.remove(target);
     // Create the iframe.
     jaxon.dom.node.insert(oRequest.upload.form, 'iframe', target);
-    iframe = jaxon.tools.dom.$(target);
-    iframe.name = target;
-    iframe.style.display = 'none';
+    oRequest.upload.iframe = jaxon.tools.dom.$(target);
+    oRequest.upload.iframe.name = target;
+    oRequest.upload.iframe.style.display = 'none';
     // Set the form attributes
     oRequest.upload.form.method = 'POST';
     oRequest.upload.form.enctype = 'multipart/form-data';
     oRequest.upload.form.action = jaxon.config.requestURI;
     oRequest.upload.form.target = target;
-    oRequest.upload.iframe = iframe;
     return true;
 };
 
@@ -2191,10 +2206,15 @@ jaxon.ajax.request.initialize = function(oRequest) {
 
     oRequest.requestRetry = oRequest.retry;
 
+    // Initialize file upload.
+    if (oRequest.upload != false) {
+        oRequest.upload = {id: oRequest.upload, input: null, form: null, ajax: !!window.FormData};
+        jaxon.tools.upload.initialize(oRequest);
+    }
+
     // The content type is not set when uploading a file with FormData.
     // It will be set by the browser.
-    oRequest.hasFormData = false; // !!window.FormData;
-    if (!oRequest.upload || !oRequest.hasFormData) {
+    if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
         oRequest.append('postHeaders', {
             'content-type': oRequest.contentType
         });
@@ -2222,11 +2242,9 @@ jaxon.ajax.parameters.toFormData = function(oRequest) {
     var xt = xx.tools;
 
     var rd = new FormData();
-    var input = jaxon.$(oRequest.upload);
-    if (input != null && input.type == 'file' && input.name != 'undefined') {
-        for (var i = 0, n = input.files.length; i < n; i++) {
-            rd.append(input.name, input.files[i]);
-        }
+    var input = oRequest.upload.input;
+    for (var i = 0, n = input.files.length; i < n; i++) {
+        rd.append(input.name, input.files[i]);
     }
 
     var separator = '';
@@ -2379,12 +2397,8 @@ This is called once per request; upon a request failure, this
 will not be called for additional retries.
 */
 jaxon.ajax.parameters.process = function(oRequest) {
-    // Initialize file upload.
-    if (oRequest.upload != false)
-        jaxon.tools.form.initializeUpload(oRequest);
-
     // Make request parameters.
-    if (oRequest.upload != false && !oRequest.upload.iframe)
+    if (oRequest.upload != false && oRequest.upload.ajax && oRequest.upload.input)
         jaxon.ajax.parameters.toFormData(oRequest);
     else
         jaxon.ajax.parameters.toUrlEncoded(oRequest);
@@ -2517,13 +2531,13 @@ jaxon.ajax.request.submit = function(oRequest) {
     oRequest.cursor.onWaiting();
     oRequest.status.onWaiting();
 
-    if(oRequest.upload != false && oRequest.upload.iframe) {
+    if(oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
         // The request will be sent after the files are uploaded
         oRequest.upload.iframe.onload = function() {
             jaxon.ajax.response.upload(oRequest);
         }
         // Submit the upload form
-        oRequest.upload.input.form.submit();
+        oRequest.upload.form.submit();
     } else {
         jaxon.ajax.request._send(oRequest);
     }
