@@ -2,8 +2,8 @@ jaxon.ajax.callback = {
     /*
     Function: jaxon.ajax.callback.create
 
-    Create a blank callback object.  Two optional arguments let you 
-    set the delay time for the onResponseDelay and onExpiration events.
+    Create a blank callback object.
+    Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
 
     Returns:
 
@@ -42,8 +42,8 @@ jaxon.ajax.callback = {
     /*
     Function: jaxon.ajax.callback.setupTimer
 
-    Create a timer to fire an event in the future.  This will
-    be used fire the onRequestDelay and onExpiration events.
+    Create a timer to fire an event in the future.
+    This will be used fire the onRequestDelay and onExpiration events.
 
     Parameters:
 

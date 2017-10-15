@@ -2176,8 +2176,8 @@ jaxon.ajax.callback = {
     /*
     Function: jaxon.ajax.callback.create
 
-    Create a blank callback object.  Two optional arguments let you 
-    set the delay time for the onResponseDelay and onExpiration events.
+    Create a blank callback object.
+    Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
 
     Returns:
 
@@ -2216,8 +2216,8 @@ jaxon.ajax.callback = {
     /*
     Function: jaxon.ajax.callback.setupTimer
 
-    Create a timer to fire an event in the future.  This will
-    be used fire the onRequestDelay and onExpiration events.
+    Create a timer to fire an event in the future.
+    This will be used fire the onRequestDelay and onExpiration events.
 
     Parameters:
 
@@ -2505,6 +2505,60 @@ jaxon.ajax.handler.register('dbg', function(args) {
     args.fullName = 'debug message';
     return true;
 });
+
+jaxon.ajax.message = {
+    /*
+    Function: jaxon.ajax.message.success
+
+    Print a success message on the screen.
+
+    Parameters:
+        content - (string):  The message content.
+        title - (string):  The message title.
+    */
+    success: function(content, title) {
+        alert(content);
+    },
+
+    /*
+    Function: jaxon.ajax.message.info
+
+    Print an info message on the screen.
+
+    Parameters:
+        content - (string):  The message content.
+        title - (string):  The message title.
+    */
+    info: function(content, title) {
+        alert(content);
+    },
+
+    /*
+    Function: jaxon.ajax.message.warning
+
+    Print a warning message on the screen.
+
+    Parameters:
+        content - (string):  The message content.
+        title - (string):  The message title.
+    */
+    warning: function(content, title) {
+        alert(content);
+    },
+
+    /*
+    Function: jaxon.ajax.message.error
+
+    Print an error message on the screen.
+
+    Parameters:
+        content - (string):  The message content.
+        title - (string):  The message title.
+    */
+    error: function(content, title) {
+        alert(content);
+    }
+};
 
 jaxon.ajax.parameters = {
     /*
@@ -3260,13 +3314,13 @@ jaxon.ajax.response = {
         var endRequest = false;
         var res = oRequest.upload.iframe.contentWindow.res;
         if (!res || !res.code) {
-            // Todo: show the error message with the selected dialog library
-            alert('The server returned an invalid response');
+            // Show the error message with the selected dialog library
+            jaxon.ajax.message.error('The server returned an invalid response');
             // End the request
             endRequest = true;
         } else if (res.code == 'error') {
             // Todo: show the error message with the selected dialog library
-            alert(res.msg);
+            jaxon.ajax.message.error(res.msg);
             // End the request
             endRequest = true;
         }
@@ -3351,7 +3405,7 @@ jaxon.ajax.response = {
 };
 
 /*
-    File: jaxon.core.js
+    File: jaxon.js
     
     This file contains the definition of the main jaxon javascript core.
     
@@ -3418,6 +3472,13 @@ Function: jaxon.getFormValues
 Shortcut to <jaxon.tools.form.getValues>.
 */
 jaxon.getFormValues = jaxon.tools.form.getValues;
+
+/*
+Object: jaxon.msg
+
+Prints various types of messages on the user screen.
+*/
+jaxon.msg = jaxon.ajax.message;
 
 /*
 Boolean: jaxon.isLoaded

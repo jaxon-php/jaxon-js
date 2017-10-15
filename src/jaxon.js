@@ -1,5 +1,5 @@
 /*
-    File: jaxon.core.js
+    File: jaxon.js
     
     This file contains the definition of the main jaxon javascript core.
     
@@ -66,6 +66,13 @@ Function: jaxon.getFormValues
 Shortcut to <jaxon.tools.form.getValues>.
 */
 jaxon.getFormValues = jaxon.tools.form.getValues;
+
+/*
+Object: jaxon.msg
+
+Prints various types of messages on the user screen.
+*/
+jaxon.msg = jaxon.ajax.message;
 
 /*
 Boolean: jaxon.isLoaded

@@ -245,13 +245,13 @@ jaxon.ajax.response = {
         var endRequest = false;
         var res = oRequest.upload.iframe.contentWindow.res;
         if (!res || !res.code) {
-            // Todo: show the error message with the selected dialog library
-            alert('The server returned an invalid response');
+            // Show the error message with the selected dialog library
+            jaxon.ajax.message.error('The server returned an invalid response');
             // End the request
             endRequest = true;
         } else if (res.code == 'error') {
             // Todo: show the error message with the selected dialog library
-            alert(res.msg);
+            jaxon.ajax.message.error(res.msg);
             // End the request
             endRequest = true;
         }

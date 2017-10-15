@@ -89,7 +89,7 @@ jaxon.ajax.request = {
 
         // Initialize file upload.
         if (oRequest.upload != false) {
-            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormDat };
+            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
             jaxon.tools.upload.initialize(oRequest);
         }
 
