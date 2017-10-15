@@ -12,7 +12,7 @@ Features
 Installation and Configuration
 ------------------------------
 
-1. Download the package and unzip the file in a directory of your webserver.
+1. Copy the content of the `dist` directory to your webserver.
 2. Set the `js.lib.uri` option in the Jaxon PHP library to the link to the directory.
 
 Contribute

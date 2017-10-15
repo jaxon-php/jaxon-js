@@ -7,7 +7,7 @@
     <jaxon_core.js> file, or by specifying the appropriate configuration
     options on a per call basis.
 */
-jaxon = {};
+var jaxon = {};
 
 /*
     Class: jaxon.config
@@ -38,26 +38,6 @@ Class: jaxon.ajax
 jaxon.ajax = {};
 
 /*
-Class: jaxon.ajax.request
-*/
-jaxon.ajax.request = {};
-
-/*
-Class: jaxon.ajax.parameters
-*/
-jaxon.ajax.parameters = {};
-
-/*
-Class: jaxon.ajax.response
-*/
-jaxon.ajax.response = {};
-
-/*
-Class: jaxon.ajax.processor
-*/
-jaxon.ajax.processor = {};
-
-/*
 Class: jaxon.tools
 
 This contains utility functions which are used throughout
@@ -66,113 +46,11 @@ the jaxon core.
 jaxon.tools = {};
 
 /*
-    Class: jaxon.tools.string
-*/
-jaxon.tools.string = {};
-
-/*
-    Class: jaxon.tools.form
-*/
-jaxon.tools.form = {};
-
-/*
-    Class: jaxon.tools.upload
-*/
-jaxon.tools.upload = {};
-
-/*
-    Class: jaxon.tools.dom
-*/
-jaxon.tools.dom = {};
-
-/*
-    Class: jaxon.tools.array
-*/
-jaxon.tools.array = {};
-
-/*
-Class: jaxon.tools.queue
-
-This contains the code and variables for building, populating
-and processing First In Last Out (FILO) buffers.
-*/
-jaxon.tools.queue = {};
-
-/*
-Class: jaxon.tools.ajax
-*/
-jaxon.tools.ajax = {};
-
-/*
-Class: jaxon.html
+Class: jaxon.cmd
 
 Contains the functions for page content, layout, functions and events.
 */
-jaxon.html = {};
-
-/*
-Class: jaxon.html.js
-
-Contains the functions for javascript file and function manipulation.
-*/
-jaxon.html.js = {};
-
-/*
-Class: jaxon.html.css
-*/
-jaxon.html.css = {};
-
-/*
-Class: jaxon.html.forms
-*/
-jaxon.html.forms = {};
-
-/*
-Class: jaxon.dom
-*/
-jaxon.dom = {};
-
-/*
-Class: jaxon.dom.node
-*/
-jaxon.dom.node = {};
-
-/*
-Class: jaxon.dom.tree
-*/
-jaxon.dom.tree = {};
-
-/*
-Class: jaxon.dom.events
-*/
-jaxon.dom.events = {};
-
-/*
-Class: jaxon.fn
-
-The object that manages commands and command handlers.
-*/
-jaxon.fn = {};
-
-/*
-Class: jaxon.fn.callback
-*/
-jaxon.fn.callback = {};
-
-/*
-Class: jaxon.fn.handler
-
-The object that manages command handlers.
-*/
-jaxon.fn.handler = {};
-
-/*
-Object: handlers
-
-An array that is used internally in the jaxon.fn.handler object
-to keep track of command handlers that have been registered.
-*/
-jaxon.fn.handler.handlers = [];
+jaxon.cmd = {};
 
 /*
 Function: jaxon.config.setDefault

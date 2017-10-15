@@ -16,7 +16,7 @@ Function: jaxon.command.handler.register
 
 Registers a new command handler.
 */
-jaxon.command.handler.register = jaxon.fn.handler.register;
+jaxon.command.handler.register = jaxon.ajax.handler.register;
 
 /*
 Function: jaxon.command.create
@@ -39,7 +39,7 @@ Class: jxn
 
 Contains shortcut's to frequently used functions.
 */
-jxn = {};
+var jxn = {};
 
 /*
 Function: jxn.$

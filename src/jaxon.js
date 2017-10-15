@@ -24,7 +24,7 @@ Class: jaxon.callback
 
 The global callback object which is active for every request.
 */
-jaxon.callback = jaxon.fn.callback.create();
+jaxon.callback = jaxon.ajax.callback.create();
 
 /*
 Class: jaxon
@@ -49,9 +49,9 @@ jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
 Function: jaxon.register
 
 Registers a new command handler.
-Shortcut to <jaxon.fn.handler.register>
+Shortcut to <jaxon.ajax.handler.register>
 */
-jaxon.register = jaxon.fn.handler.register;
+jaxon.register = jaxon.ajax.handler.register;
 
 /*
 Function: jaxon.$
