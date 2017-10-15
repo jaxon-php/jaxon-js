@@ -2557,6 +2557,26 @@ jaxon.ajax.message = {
     */
     error: function(content, title) {
         alert(content);
+    },
+
+    /*
+    Function: jaxon.ajax.message.confirm
+
+    Print an error message on the screen.
+
+    Parameters:
+        question - (string):  The confirm question.
+        title - (string):  The confirm title.
+        yesCallback - (Function): The function to call if the user answers yes.
+        noCallback - (Function): The function to call if the user answers no.
+    */
+    confirm: function(question, title, yesCallback, noCallback) {
+        if(noCallback == undefined)
+            noCallback = function(){};
+        if(confirm(question))
+            yesCallback();
+        else
+            noCallback();
     }
 };
 
@@ -2829,7 +2849,7 @@ jaxon.ajax.request = {
 
         // Initialize file upload.
         if (oRequest.upload != false) {
-            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormDat };
+            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
             jaxon.tools.upload.initialize(oRequest);
         }
 
