@@ -520,11 +520,32 @@ jaxon.tools.dom = {
         if ('string' == typeof element)
             element = jaxon.$(element);
         if (element) {
-            var oldData;
-            eval('oldData=element.' + attribute);
+            var oldData = element[attribute];
+            // var oldData;
+            // eval('oldData=element.' + attribute);
             return (newData != oldData);
         }
         return false;
+    },
+
+    /*
+    Function: jaxon.tools.dom.findFunction
+
+    Find a function using its name as a string.
+
+    Parameters: 
+    sFuncName - (string): The name of the function to find.
+
+    Returns:
+    Functiion - The function with the given name.
+    */
+    findFunction: function (sFuncName) {
+        var context = window;
+        var namespaces = sFuncName.split(".");
+        for(var i = 0; i < namespaces.length && context != undefined; i++) {
+            context = context[namespaces[i]];
+        }
+        return context;
     }
 };
 
@@ -968,7 +989,7 @@ jaxon.cmd.event = {
     command - (object): Response command object.
     - id: Element ID
     - prop: Event
-    - data: Code    
+    - data: Code
 
     Returns:
 
@@ -980,10 +1001,12 @@ jaxon.cmd.event = {
         var sEvent = command.prop;
         var code = command.data;
         //force to get the element 
-        element = jaxon.$(element);
+        if ('string' == typeof element)
+            element = jaxon.$(element);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
-        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        element[sEvent] = new Function(code);
+        // eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
         return true;
     },
 
@@ -994,26 +1017,27 @@ jaxon.cmd.event = {
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself
-        which will have the event handler assigned.
-    sEvent - (string):  The name of the event.
-    fun - (string):  The function to be called.
+    command - (object): Response command object.
+    - id: The id of, or the element itself
+    - prop: The name of the event.
+    - data: The name of the function to be called
 
     Returns:
 
     true - The operation completed successfully.
     */
-    addHandler: function(element, sEvent, fun) {
+    addHandler: function(command) {
         if (window.addEventListener) {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
                 var element = command.id;
                 var sEvent = command.prop;
-                var fun = command.data;
+                var sFuncName = command.data;
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.addEventListener("' + sEvent + '", ' + fun + ', false);');
+                element.addEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
+                // eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -1021,15 +1045,16 @@ jaxon.cmd.event = {
                 command.fullName = 'addHandler';
                 var element = command.id;
                 var sEvent = command.prop;
-                var fun = command.data;
+                var sFuncName = command.data;
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.attachEvent("' + sEvent + '", ' + fun + ', false);');
+                element.attachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
+                // eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
-        return jaxon.cmd.event.addHandler(element, sEvent, fun);
+        return jaxon.cmd.event.addHandler(command);
     },
 
     /*
@@ -1039,25 +1064,27 @@ jaxon.cmd.event = {
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself which will have the event handler removed.
-    event - (string):  The name of the event for which this handler is associated.
-    fun - The function to be removed.
+    command - (object): Response command object.
+    - id: The id of, or the element itself
+    - prop: The name of the event.
+    - data: The name of the function to be removed
 
     Returns:
 
     true - The operation completed successfully.
     */
-    removeHandler: function(element, sEvent, fun) {
+    removeHandler: function(command) {
         if (window.removeEventListener) {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
                 var element = command.id;
                 var sEvent = command.prop;
-                var fun = command.data;
+                var sFuncName = command.data;
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.removeEventListener("' + sEvent + '", ' + fun + ', false);');
+                element.removeEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
+                // eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -1065,15 +1092,16 @@ jaxon.cmd.event = {
                 command.fullName = 'removeHandler';
                 var element = command.id;
                 var sEvent = command.prop;
-                var fun = command.data;
+                var sFuncName = command.data;
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.detachEvent("' + sEvent + '", ' + fun + ', false);');
+                element.detachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
+                // eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
-        return jaxon.cmd.event.removeHandler(element, sEvent, fun);
+        return jaxon.cmd.event.removeHandler(command);
     }
 };
 
@@ -1241,7 +1269,8 @@ jaxon.cmd.node = {
                 break;
             default:
                 if (jaxon.tools.dom.willChange(element, property, data))
-                    eval('element.' + property + ' = data;');
+                    element[property] = data;
+                    // eval('element.' + property + ' = data;');
                 break;
         }
         return true;
@@ -1266,7 +1295,17 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('element.' + property + ' += data;');
+        // Check if the insertAdjacentHTML() function is available
+        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
+        	if(property == 'innerHTML')
+        		element.insertAdjacentHTML('beforeend', data);
+        	else if(property == 'outerHTML')
+	    		element.insertAdjacentHTML('afterend', data);
+        	else
+        		element[property] += data;
+        else
+            element[property] += data;
+        // eval('element.' + property + ' += data;');
         return true;
     },
 
@@ -1289,7 +1328,17 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('element.' + property + ' = data + element.' + property);
+        // Check if the insertAdjacentHTML() function is available
+        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
+        	if(property == 'innerHTML')
+        		element.insertAdjacentHTML('afterbegin', data);
+        	else if(property == 'outerHTML')
+	    		element.insertAdjacentHTML('beforebegin', data);
+            else
+                element[property] = data + element[property];
+        else
+            element[property] = data + element[property];
+        // eval('element.' + property + ' = data + element.' + property);
         return true;
     },
 
@@ -1300,8 +1349,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself which is
-        to be modified.
+    element - (string or object):  The name of, or the element itself which is to be modified.
     sAttribute - (string):  The name of the attribute to be set.
     aData - (array):  The search text and replacement text.
 
@@ -1319,7 +1367,8 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('var txt = element.' + sAttribute);
+        var txt = element[sAttribute];
+        // eval('var txt = element.' + sAttribute);
 
         var bFunction = false;
         if ('function' == typeof txt) {
@@ -1341,9 +1390,11 @@ jaxon.cmd.node = {
             newTxt = newTxt.join('');
 
             if (bFunction) {
-                eval('element.' + sAttribute + '=newTxt;');
+                element[sAttribute] = newTxt;
+                // eval('element.' + sAttribute + '=newTxt;');
             } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                eval('element.' + sAttribute + '=newTxt;');
+                element[sAttribute] = newTxt;
+                // eval('element.' + sAttribute + '=newTxt;');
             }
         }
         return true;
@@ -1356,8 +1407,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself which
-        will be deleted.
+    element - (string or object):  The name of, or the element itself which will be deleted.
         
     Returns:
 
@@ -1471,13 +1521,14 @@ jaxon.cmd.node = {
     contextAssign: function(args) {
         args.fullName = 'context assign';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data;');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            this[args.prop] = data;
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -1505,13 +1556,23 @@ jaxon.cmd.node = {
     contextAppend: function(args) {
         args.fullName = 'context append';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' += data;');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+        	// Check if the insertAdjacentHTML() function is available
+            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
+            	if(args.prop == 'innerHTML')
+            		this.insertAdjacentHTML('beforeend', data);
+            	else if(args.prop == 'outerHTML')
+            		this.insertAdjacentHTML('afterend', data);
+            	else
+            		this[args.prop] += data;
+            else
+                this[args.prop] += data;
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -1539,15 +1600,25 @@ jaxon.cmd.node = {
     contextPrepend: function(args) {
         args.fullName = 'context prepend';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data + this.');
         code.push(args.prop);
         code.push(';');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+        	// Check if the insertAdjacentHTML() function is available
+            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
+            	if(args.prop == 'innerHTML')
+            		this.insertAdjacentHTML('afterbegin', data);
+            	else if(args.prop == 'outerHTML')
+            		this.insertAdjacentHTML('beforebegin', data);
+                else
+                	this[args.prop] = data + this[args.prop];
+            else
+                this[args.prop] = data + this[args.prop];
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -3284,7 +3355,8 @@ jaxon.ajax.response = {
             var seq = 0;
             if (oRequest.request.responseText) {
                 try {
-                    var responseJSON = eval('(' + oRequest.request.responseText + ')');
+                    // var responseJSON = eval('(' + oRequest.request.responseText + ')');
+                    var responseJSON = JSON.parse(oRequest.request.responseText);
                 } catch (ex) {
                     throw (ex);
                 }
@@ -3581,6 +3653,13 @@ Object: jaxon.msg
 Prints various types of messages on the user screen.
 */
 jaxon.msg = jaxon.ajax.message;
+
+/*
+Object: jaxon.js
+
+Shortcut to <jaxon.cmd.script>.
+*/
+jaxon.js = jaxon.cmd.script;
 
 /*
 Boolean: jaxon.isLoaded
