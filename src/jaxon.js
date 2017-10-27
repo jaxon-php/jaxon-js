@@ -75,6 +75,13 @@ Prints various types of messages on the user screen.
 jaxon.msg = jaxon.ajax.message;
 
 /*
+Object: jaxon.js
+
+Shortcut to <jaxon.cmd.script>.
+*/
+jaxon.js = jaxon.cmd.script;
+
+/*
 Boolean: jaxon.isLoaded
 
 true - jaxon module is loaded.
