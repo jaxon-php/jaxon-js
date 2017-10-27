@@ -98,5 +98,25 @@ jaxon.tools.dom = {
             return (newData != oldData);
         }
         return false;
+    },
+
+    /*
+    Function: jaxon.tools.dom.findFunction
+
+    Find a function using its name as a string.
+
+    Parameters: 
+    sFuncName - (string): The name of the function to find.
+
+    Returns:
+    Functiion - The function with the given name.
+    */
+    findFunction: function (sFuncName) {
+        var context = window;
+        var namespaces = sFuncName.split(".");
+        for(var i = 0; i < namespaces.length && context != undefined; i++) {
+            context = context[namespaces[i]];
+        }
+        return context;
     }
 };
