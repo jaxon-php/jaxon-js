@@ -195,7 +195,8 @@ jaxon.ajax.response = {
             var seq = 0;
             if (oRequest.request.responseText) {
                 try {
-                    var responseJSON = eval('(' + oRequest.request.responseText + ')');
+                    // var responseJSON = eval('(' + oRequest.request.responseText + ')');
+                    var responseJSON = JSON.parse(oRequest.request.responseText);
                 } catch (ex) {
                     throw (ex);
                 }

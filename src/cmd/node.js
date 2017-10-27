@@ -32,7 +32,8 @@ jaxon.cmd.node = {
                 break;
             default:
                 if (jaxon.tools.dom.willChange(element, property, data))
-                    eval('element.' + property + ' = data;');
+                    element[property] = data;
+                    // eval('element.' + property + ' = data;');
                 break;
         }
         return true;
@@ -57,7 +58,8 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('element.' + property + ' += data;');
+        element[property] += data;
+        // eval('element.' + property + ' += data;');
         return true;
     },
 
@@ -80,7 +82,8 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('element.' + property + ' = data + element.' + property);
+        element[property] = data + element[property];
+        // eval('element.' + property + ' = data + element.' + property);
         return true;
     },
 
@@ -110,7 +113,8 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        eval('var txt = element.' + sAttribute);
+        var txt = element[sAttribute];
+        // eval('var txt = element.' + sAttribute);
 
         var bFunction = false;
         if ('function' == typeof txt) {
@@ -132,9 +136,11 @@ jaxon.cmd.node = {
             newTxt = newTxt.join('');
 
             if (bFunction) {
-                eval('element.' + sAttribute + '=newTxt;');
+            	element[sAttribute] = newTxt;
+                // eval('element.' + sAttribute + '=newTxt;');
             } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                eval('element.' + sAttribute + '=newTxt;');
+            	element[sAttribute] = newTxt;
+                // eval('element.' + sAttribute + '=newTxt;');
             }
         }
         return true;
@@ -262,13 +268,14 @@ jaxon.cmd.node = {
     contextAssign: function(args) {
         args.fullName = 'context assign';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data;');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+        	this[args.prop] = data;
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -296,13 +303,14 @@ jaxon.cmd.node = {
     contextAppend: function(args) {
         args.fullName = 'context append';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' += data;');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+        	this[args.prop] += data;
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -330,15 +338,16 @@ jaxon.cmd.node = {
     contextPrepend: function(args) {
         args.fullName = 'context prepend';
 
-        var code = [];
+        /*var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data + this.');
         code.push(args.prop);
         code.push(';');
-        code = code.join('');
+        code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-            eval(code);
+        	this[args.prop] = data + this[args.prop];
+            // eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
