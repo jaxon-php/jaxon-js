@@ -87,19 +87,8 @@ jaxon.ajax.request = {
 
         oRequest.requestRetry = oRequest.retry;
 
-        // Initialize file upload.
-        if (oRequest.upload != false) {
-            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
-            jaxon.tools.upload.initialize(oRequest);
-        }
-
-        // The content type is not set when uploading a file with FormData.
-        // It will be set by the browser.
-        if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
-            oRequest.append('postHeaders', {
-                'content-type': oRequest.contentType
-            });
-        }
+        // Look for upload parameter
+        jaxon.tools.upload.initialize(oRequest);
 
         delete oRequest['append'];
         delete oRequest['set'];

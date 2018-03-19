@@ -22,11 +22,27 @@ jaxon.tools.upload = {
     },
 
     /*
-    Function: jaxon.tools.upload.initialize
+    Function: jaxon.tools.upload._initialize
 
     Check upload data and initialize the request.
     */
-    initialize: function(oRequest) {
+    _initialize: function(oRequest) {
+        /*if (oRequest.parameters) {
+            var i = 0;
+            var iLen = oRequest.parameters.length;
+            while (i < iLen) {
+                var oVal = oRequest.parameters[i];
+                if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    oRequest.upload = oVal.upload.id;
+                    break;
+                }
+            }
+        }*/
+        if (oRequest.upload == false) {
+            return false;
+        }
+        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
+
         var input = jaxon.tools.dom.$(oRequest.upload.id);
         if (input == null) {
             console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
@@ -59,6 +75,28 @@ jaxon.tools.upload = {
         }
         // If FormData feature is not available, files are uploaded with iframes.
         jaxon.tools.upload.createIframe(oRequest);
+
         return true;
+    },
+
+    /*
+    Function: jaxon.tools.upload.initialize
+
+    Check upload data and initialize the request.
+
+    Parameters:
+
+    oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+    */
+    initialize: function(oRequest) {
+        jaxon.tools.upload._initialize(oRequest);
+
+        // The content type is not set when uploading a file with FormData.
+        // It will be set by the browser.
+        if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
+            oRequest.append('postHeaders', {
+                'content-type': oRequest.contentType
+            });
+        }
     }
 };

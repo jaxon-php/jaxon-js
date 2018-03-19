@@ -1,5 +1,31 @@
 jaxon.ajax.parameters = {
     /*
+    Function: jaxon.ajax.parameters.upload
+
+    Create a parameter of type upload.
+
+    Parameters:
+
+    id - The id od the upload form element
+    */
+    /*upload: function(id) {
+        return {upload: {id: id}};
+    },*/
+
+    /*
+    Function: jaxon.ajax.parameters.isUpload
+
+    Check if a parameter is of type upload.
+
+    Parameters:
+
+    parameter - A parameter passed to an Ajax function
+    */
+    /*isUpload: function(parameter) {
+        return (parameter != null && typeof parameter == 'object' && typeof parameter.upload == 'object');
+    },*/
+
+    /*
     Function: jaxon.ajax.parameters.toFormData
 
     Processes request specific parameters and store them in a FormData object.
@@ -33,6 +59,10 @@ jaxon.ajax.parameters = {
             var iLen = oRequest.parameters.length;
             while (i < iLen) {
                 var oVal = oRequest.parameters[i];
+                // Don't include upload parameter
+                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    continue;
+                }*/
                 if ('object' == typeof oVal && null != oVal) {
                     try {
                         oVal = JSON.stringify(oVal);
@@ -103,6 +133,10 @@ jaxon.ajax.parameters = {
             var iLen = oRequest.parameters.length;
             while (i < iLen) {
                 var oVal = oRequest.parameters[i];
+                // Don't include upload parameter
+                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    continue;
+                }*/
                 if ('object' == typeof oVal && null != oVal) {
                     try {
                         // var oGuard = {};
