@@ -25,8 +25,7 @@ jaxon.cmd.event = {
             element = jaxon.$(element);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
-        element[sEvent] = new Function(code);
-        // eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
         return true;
     },
 
@@ -56,8 +55,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                element.addEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
-                // eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -69,8 +67,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                element.attachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
-                // eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -103,8 +100,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                element.removeEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
-                // eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -116,8 +112,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                element.detachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
-                // eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }

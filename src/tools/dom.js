@@ -92,9 +92,8 @@ jaxon.tools.dom = {
         if ('string' == typeof element)
             element = jaxon.$(element);
         if (element) {
-            var oldData = element[attribute];
-            // var oldData;
-            // eval('oldData=element.' + attribute);
+            var oldData;
+            eval('oldData=element.' + attribute);
             return (newData != oldData);
         }
         return false;

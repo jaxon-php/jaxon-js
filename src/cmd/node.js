@@ -32,8 +32,7 @@ jaxon.cmd.node = {
                 break;
             default:
                 if (jaxon.tools.dom.willChange(element, property, data))
-                    element[property] = data;
-                    // eval('element.' + property + ' = data;');
+                    eval('element.' + property + ' = data;');
                 break;
         }
         return true;
@@ -67,8 +66,7 @@ jaxon.cmd.node = {
             else
                 element[property] += data;
         else
-            element[property] += data;
-        // eval('element.' + property + ' += data;');
+            eval('element.' + property + ' += data;');
         return true;
     },
 
@@ -91,17 +89,7 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        // Check if the insertAdjacentHTML() function is available
-        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-            if(property == 'innerHTML')
-                element.insertAdjacentHTML('afterbegin', data);
-            else if(property == 'outerHTML')
-                element.insertAdjacentHTML('beforebegin', data);
-            else
-                element[property] = data + element[property];
-        else
-            element[property] = data + element[property];
-        // eval('element.' + property + ' = data + element.' + property);
+        eval('element.' + property + ' = data + element.' + property);
         return true;
     },
 
@@ -130,8 +118,7 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        var txt = element[sAttribute];
-        // eval('var txt = element.' + sAttribute);
+        eval('var txt = element.' + sAttribute);
 
         var bFunction = false;
         if ('function' == typeof txt) {
@@ -153,11 +140,9 @@ jaxon.cmd.node = {
             newTxt = newTxt.join('');
 
             if (bFunction) {
-                element[sAttribute] = newTxt;
-                // eval('element.' + sAttribute + '=newTxt;');
+                eval('element.' + sAttribute + '=newTxt;');
             } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                element[sAttribute] = newTxt;
-                // eval('element.' + sAttribute + '=newTxt;');
+                eval('element.' + sAttribute + '=newTxt;');
             }
         }
         return true;
@@ -284,14 +269,13 @@ jaxon.cmd.node = {
     contextAssign: function(args) {
         args.fullName = 'context assign';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data;');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-            this[args.prop] = data;
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -319,23 +303,13 @@ jaxon.cmd.node = {
     contextAppend: function(args) {
         args.fullName = 'context append';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' += data;');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-            // Check if the insertAdjacentHTML() function is available
-            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-                if(args.prop == 'innerHTML')
-                    this.insertAdjacentHTML('beforeend', data);
-                else if(args.prop == 'outerHTML')
-                    this.insertAdjacentHTML('afterend', data);
-                else
-                    this[args.prop] += data;
-            else
-                this[args.prop] += data;
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -363,25 +337,15 @@ jaxon.cmd.node = {
     contextPrepend: function(args) {
         args.fullName = 'context prepend';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data + this.');
         code.push(args.prop);
         code.push(';');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-            // Check if the insertAdjacentHTML() function is available
-            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-                if(args.prop == 'innerHTML')
-                    this.insertAdjacentHTML('afterbegin', data);
-                else if(args.prop == 'outerHTML')
-                    this.insertAdjacentHTML('beforebegin', data);
-                else
-                    this[args.prop] = data + this[args.prop];
-            else
-                this[args.prop] = data + this[args.prop];
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;

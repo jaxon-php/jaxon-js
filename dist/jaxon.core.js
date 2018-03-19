@@ -520,9 +520,8 @@ jaxon.tools.dom = {
         if ('string' == typeof element)
             element = jaxon.$(element);
         if (element) {
-            var oldData = element[attribute];
-            // var oldData;
-            // eval('oldData=element.' + attribute);
+            var oldData;
+            eval('oldData=element.' + attribute);
             return (newData != oldData);
         }
         return false;
@@ -897,7 +896,7 @@ jaxon.tools.string = {
  */
 
 /**
- * Substiture variables in the string
+ * Substitute variables in the string
  *
  * @return string
  */
@@ -937,11 +936,27 @@ jaxon.tools.upload = {
     },
 
     /*
-    Function: jaxon.tools.upload.initialize
+    Function: jaxon.tools.upload._initialize
 
     Check upload data and initialize the request.
     */
-    initialize: function(oRequest) {
+    _initialize: function(oRequest) {
+        /*if (oRequest.parameters) {
+            var i = 0;
+            var iLen = oRequest.parameters.length;
+            while (i < iLen) {
+                var oVal = oRequest.parameters[i];
+                if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    oRequest.upload = oVal.upload.id;
+                    break;
+                }
+            }
+        }*/
+        if (oRequest.upload == false) {
+            return false;
+        }
+        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
+
         var input = jaxon.tools.dom.$(oRequest.upload.id);
         if (input == null) {
             console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
@@ -974,7 +989,29 @@ jaxon.tools.upload = {
         }
         // If FormData feature is not available, files are uploaded with iframes.
         jaxon.tools.upload.createIframe(oRequest);
+
         return true;
+    },
+
+    /*
+    Function: jaxon.tools.upload.initialize
+
+    Check upload data and initialize the request.
+
+    Parameters:
+
+    oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+    */
+    initialize: function(oRequest) {
+        jaxon.tools.upload._initialize(oRequest);
+
+        // The content type is not set when uploading a file with FormData.
+        // It will be set by the browser.
+        if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
+            oRequest.append('postHeaders', {
+                'content-type': oRequest.contentType
+            });
+        }
     }
 };
 
@@ -1005,8 +1042,7 @@ jaxon.cmd.event = {
             element = jaxon.$(element);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
-        element[sEvent] = new Function(code);
-        // eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
         return true;
     },
 
@@ -1036,8 +1072,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                element.addEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
-                // eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -1049,8 +1084,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                element.attachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
-                // eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -1083,8 +1117,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                element.removeEventListener(sEvent, jaxon.tools.dom.findFunction(sFuncName), false);
-                // eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
@@ -1096,8 +1129,7 @@ jaxon.cmd.event = {
                 if ('string' == typeof element)
                     element = jaxon.$(element);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                element.detachEvent(sEvent, jaxon.tools.dom.findFunction(sFuncName));
-                // eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -1269,8 +1301,7 @@ jaxon.cmd.node = {
                 break;
             default:
                 if (jaxon.tools.dom.willChange(element, property, data))
-                    element[property] = data;
-                    // eval('element.' + property + ' = data;');
+                    eval('element.' + property + ' = data;');
                 break;
         }
         return true;
@@ -1297,15 +1328,14 @@ jaxon.cmd.node = {
 
         // Check if the insertAdjacentHTML() function is available
         if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-        	if(property == 'innerHTML')
-        		element.insertAdjacentHTML('beforeend', data);
-        	else if(property == 'outerHTML')
-	    		element.insertAdjacentHTML('afterend', data);
-        	else
-        		element[property] += data;
+            if(property == 'innerHTML')
+                element.insertAdjacentHTML('beforeend', data);
+            else if(property == 'outerHTML')
+                element.insertAdjacentHTML('afterend', data);
+            else
+                element[property] += data;
         else
-            element[property] += data;
-        // eval('element.' + property + ' += data;');
+            eval('element.' + property + ' += data;');
         return true;
     },
 
@@ -1328,17 +1358,7 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        // Check if the insertAdjacentHTML() function is available
-        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-        	if(property == 'innerHTML')
-        		element.insertAdjacentHTML('afterbegin', data);
-        	else if(property == 'outerHTML')
-	    		element.insertAdjacentHTML('beforebegin', data);
-            else
-                element[property] = data + element[property];
-        else
-            element[property] = data + element[property];
-        // eval('element.' + property + ' = data + element.' + property);
+        eval('element.' + property + ' = data + element.' + property);
         return true;
     },
 
@@ -1367,8 +1387,7 @@ jaxon.cmd.node = {
         if ('string' == typeof element)
             element = jaxon.$(element);
 
-        var txt = element[sAttribute];
-        // eval('var txt = element.' + sAttribute);
+        eval('var txt = element.' + sAttribute);
 
         var bFunction = false;
         if ('function' == typeof txt) {
@@ -1390,11 +1409,9 @@ jaxon.cmd.node = {
             newTxt = newTxt.join('');
 
             if (bFunction) {
-                element[sAttribute] = newTxt;
-                // eval('element.' + sAttribute + '=newTxt;');
+                eval('element.' + sAttribute + '=newTxt;');
             } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                element[sAttribute] = newTxt;
-                // eval('element.' + sAttribute + '=newTxt;');
+                eval('element.' + sAttribute + '=newTxt;');
             }
         }
         return true;
@@ -1521,14 +1538,13 @@ jaxon.cmd.node = {
     contextAssign: function(args) {
         args.fullName = 'context assign';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data;');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-            this[args.prop] = data;
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -1556,23 +1572,13 @@ jaxon.cmd.node = {
     contextAppend: function(args) {
         args.fullName = 'context append';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' += data;');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-        	// Check if the insertAdjacentHTML() function is available
-            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-            	if(args.prop == 'innerHTML')
-            		this.insertAdjacentHTML('beforeend', data);
-            	else if(args.prop == 'outerHTML')
-            		this.insertAdjacentHTML('afterend', data);
-            	else
-            		this[args.prop] += data;
-            else
-                this[args.prop] += data;
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -1600,25 +1606,15 @@ jaxon.cmd.node = {
     contextPrepend: function(args) {
         args.fullName = 'context prepend';
 
-        /*var code = [];
+        var code = [];
         code.push('this.');
         code.push(args.prop);
         code.push(' = data + this.');
         code.push(args.prop);
         code.push(';');
-        code = code.join('');*/
+        code = code.join('');
         args.context.jaxonDelegateCall = function(data) {
-        	// Check if the insertAdjacentHTML() function is available
-            if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-            	if(args.prop == 'innerHTML')
-            		this.insertAdjacentHTML('afterbegin', data);
-            	else if(args.prop == 'outerHTML')
-            		this.insertAdjacentHTML('beforebegin', data);
-                else
-                	this[args.prop] = data + this[args.prop];
-            else
-                this[args.prop] = data + this[args.prop];
-            // eval(code);
+            eval(code);
         }
         args.context.jaxonDelegateCall(args.data);
         return true;
@@ -2653,6 +2649,32 @@ jaxon.ajax.message = {
 
 jaxon.ajax.parameters = {
     /*
+    Function: jaxon.ajax.parameters.upload
+
+    Create a parameter of type upload.
+
+    Parameters:
+
+    id - The id od the upload form element
+    */
+    /*upload: function(id) {
+        return {upload: {id: id}};
+    },*/
+
+    /*
+    Function: jaxon.ajax.parameters.isUpload
+
+    Check if a parameter is of type upload.
+
+    Parameters:
+
+    parameter - A parameter passed to an Ajax function
+    */
+    /*isUpload: function(parameter) {
+        return (parameter != null && typeof parameter == 'object' && typeof parameter.upload == 'object');
+    },*/
+
+    /*
     Function: jaxon.ajax.parameters.toFormData
 
     Processes request specific parameters and store them in a FormData object.
@@ -2686,6 +2708,10 @@ jaxon.ajax.parameters = {
             var iLen = oRequest.parameters.length;
             while (i < iLen) {
                 var oVal = oRequest.parameters[i];
+                // Don't include upload parameter
+                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    continue;
+                }*/
                 if ('object' == typeof oVal && null != oVal) {
                     try {
                         oVal = JSON.stringify(oVal);
@@ -2756,6 +2782,10 @@ jaxon.ajax.parameters = {
             var iLen = oRequest.parameters.length;
             while (i < iLen) {
                 var oVal = oRequest.parameters[i];
+                // Don't include upload parameter
+                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
+                    continue;
+                }*/
                 if ('object' == typeof oVal && null != oVal) {
                     try {
                         // var oGuard = {};
@@ -2918,19 +2948,8 @@ jaxon.ajax.request = {
 
         oRequest.requestRetry = oRequest.retry;
 
-        // Initialize file upload.
-        if (oRequest.upload != false) {
-            oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
-            jaxon.tools.upload.initialize(oRequest);
-        }
-
-        // The content type is not set when uploading a file with FormData.
-        // It will be set by the browser.
-        if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
-            oRequest.append('postHeaders', {
-                'content-type': oRequest.contentType
-            });
-        }
+        // Look for upload parameter
+        jaxon.tools.upload.initialize(oRequest);
 
         delete oRequest['append'];
         delete oRequest['set'];
@@ -3355,8 +3374,7 @@ jaxon.ajax.response = {
             var seq = 0;
             if (oRequest.request.responseText) {
                 try {
-                    // var responseJSON = eval('(' + oRequest.request.responseText + ')');
-                    var responseJSON = JSON.parse(oRequest.request.responseText);
+                    var responseJSON = eval('(' + oRequest.request.responseText + ')');
                 } catch (ex) {
                     throw (ex);
                 }
