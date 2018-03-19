@@ -77,7 +77,7 @@ jaxon.tools.string = {
  */
 
 /**
- * Substiture variables in the string
+ * Substitute variables in the string
  *
  * @return string
  */

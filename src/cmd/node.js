@@ -60,12 +60,12 @@ jaxon.cmd.node = {
 
         // Check if the insertAdjacentHTML() function is available
         if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-        	if(property == 'innerHTML')
-        		element.insertAdjacentHTML('beforeend', data);
-        	else if(property == 'outerHTML')
-	    		element.insertAdjacentHTML('afterend', data);
-        	else
-        		element[property] += data;
+            if(property == 'innerHTML')
+                element.insertAdjacentHTML('beforeend', data);
+            else if(property == 'outerHTML')
+                element.insertAdjacentHTML('afterend', data);
+            else
+                element[property] += data;
         else
             element[property] += data;
         // eval('element.' + property + ' += data;');
@@ -93,10 +93,10 @@ jaxon.cmd.node = {
 
         // Check if the insertAdjacentHTML() function is available
         if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-        	if(property == 'innerHTML')
-        		element.insertAdjacentHTML('afterbegin', data);
-        	else if(property == 'outerHTML')
-	    		element.insertAdjacentHTML('beforebegin', data);
+            if(property == 'innerHTML')
+                element.insertAdjacentHTML('afterbegin', data);
+            else if(property == 'outerHTML')
+                element.insertAdjacentHTML('beforebegin', data);
             else
                 element[property] = data + element[property];
         else
@@ -325,14 +325,14 @@ jaxon.cmd.node = {
         code.push(' += data;');
         code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-        	// Check if the insertAdjacentHTML() function is available
+            // Check if the insertAdjacentHTML() function is available
             if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-            	if(args.prop == 'innerHTML')
-            		this.insertAdjacentHTML('beforeend', data);
-            	else if(args.prop == 'outerHTML')
-            		this.insertAdjacentHTML('afterend', data);
-            	else
-            		this[args.prop] += data;
+                if(args.prop == 'innerHTML')
+                    this.insertAdjacentHTML('beforeend', data);
+                else if(args.prop == 'outerHTML')
+                    this.insertAdjacentHTML('afterend', data);
+                else
+                    this[args.prop] += data;
             else
                 this[args.prop] += data;
             // eval(code);
@@ -371,14 +371,14 @@ jaxon.cmd.node = {
         code.push(';');
         code = code.join('');*/
         args.context.jaxonDelegateCall = function(data) {
-        	// Check if the insertAdjacentHTML() function is available
+            // Check if the insertAdjacentHTML() function is available
             if((window.insertAdjacentHTML) || (this.insertAdjacentHTML))
-            	if(args.prop == 'innerHTML')
-            		this.insertAdjacentHTML('afterbegin', data);
-            	else if(args.prop == 'outerHTML')
-            		this.insertAdjacentHTML('beforebegin', data);
+                if(args.prop == 'innerHTML')
+                    this.insertAdjacentHTML('afterbegin', data);
+                else if(args.prop == 'outerHTML')
+                    this.insertAdjacentHTML('beforebegin', data);
                 else
-                	this[args.prop] = data + this[args.prop];
+                    this[args.prop] = data + this[args.prop];
             else
                 this[args.prop] = data + this[args.prop];
             // eval(code);
