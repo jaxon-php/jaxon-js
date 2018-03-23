@@ -46,8 +46,7 @@ var folders = {
         min: {
             core: 'jaxon.core.min.js',
             debug: 'jaxon.debug.min.js'
-        }
-    };
+        }};
 
 // Concat core library files
 gulp.task('js-core', function() {
