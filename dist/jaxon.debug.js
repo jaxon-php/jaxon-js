@@ -235,18 +235,18 @@ jaxon.debug.prepareDebugText = function(text) {
     and display a message in the debugger.
     
     This is a wrapper function which surrounds the standard 
-    <jaxon.fn.handler.execute> function.
+    <jaxon.ajax.handler.execute> function.
 */
-jaxon.debug.executeCommand = jaxon.fn.handler.execute;
-jaxon.fn.handler.execute = function(args) {
+jaxon.debug.executeCommand = jaxon.ajax.handler.execute;
+jaxon.ajax.handler.execute = function(args) {
     try {
         if ('undefined' == typeof args.cmd)
             throw { code: 10006 };
-        if (false == jaxon.fn.handler.isRegistered(args))
+        if (false == jaxon.ajax.handler.isRegistered(args))
             throw { code: 10007, data: args.cmd };
         return jaxon.debug.executeCommand(args);
     } catch (e) {
-        var msg = 'jaxon.fn.handler.execute (';
+        var msg = 'jaxon.ajax.handler.execute (';
         if ('undefined' != typeof args.sequence) {
             msg += '#';
             msg += args.sequence;
@@ -266,19 +266,19 @@ jaxon.fn.handler.execute = function(args) {
 }
 
 /*
-    Function: jaxon.fn.handler.unregister
+    Function: jaxon.ajax.handler.unregister
     
     Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
     
-    This is a wrapper around the standard <jaxon.fn.handler.unregister> function.
+    This is a wrapper around the standard <jaxon.ajax.handler.unregister> function.
     
     Parameters:
         child - (object): Childnode
         obj - (object): Object
         
 */
-jaxon.debug.commandHandler = jaxon.fn.handler.unregister('dbg');
-jaxon.fn.handler.register('dbg', function(args) {
+jaxon.debug.commandHandler = jaxon.ajax.handler.unregister('dbg');
+jaxon.ajax.handler.register('dbg', function(args) {
     args.cmdFullName = 'debug message';
     jaxon.debug.writeMessage(args.data, jaxon.debug.messages.warning, 'warningText');
     return jaxon.debug.commandHandler(args);
@@ -464,16 +464,16 @@ jaxon.ajax.request.prepare = function(oRequest) {
 }
 
 /*
-    Function: jaxon.fn.handler.call
+    Function: jaxon.ajax.handler.call
     
     Validates that a function name was provided, generates a message 
     indicating that a jaxon call is starting and sets a flag in the
     request object indicating that debugging is enabled for this call.
     
-    This is a wrapper around the standard <jaxon.fn.handler.call> function.
+    This is a wrapper around the standard <jaxon.ajax.handler.call> function.
 */
-jaxon.debug.call = jaxon.fn.handler.call;
-jaxon.fn.handler.call = function() {
+jaxon.debug.call = jaxon.ajax.handler.call;
+jaxon.ajax.handler.call = function() {
     try {
         var numArgs = arguments.length;
 
@@ -496,7 +496,7 @@ jaxon.fn.handler.call = function() {
 
         return rv;
     } catch (e) {
-        var msg = 'jaxon.fn.handler.call: ';
+        var msg = 'jaxon.ajax.handler.call: ';
         msg += jaxon.debug.getExceptionText(e);
         msg += '\n';
         jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
@@ -541,16 +541,16 @@ jaxon.ajax.request.execute = function() {
 }
 
 /*
-    Function: jaxon.ajax.processor.find
+    Function: jaxon.ajax.response.processor
     
     Generate an error message when no reponse processor is available
     to process the type of response returned from the server.
     
-    This is a wrapper around the standard <jaxon.ajax.processor.find>
+    This is a wrapper around the standard <jaxon.ajax.response.processor>
     function.
 */
-jaxon.debug.getResponseProcessor = jaxon.ajax.processor.find;
-jaxon.ajax.processor.find = function(oRequest) {
+jaxon.debug.getResponseProcessor = jaxon.ajax.response.processor;
+jaxon.ajax.response.processor = function(oRequest) {
     try {
         var fProc = jaxon.debug.getResponseProcessor(oRequest);
 
@@ -569,7 +569,7 @@ jaxon.ajax.processor.find = function(oRequest) {
 
         return fProc;
     } catch (e) {
-        var msg = 'jaxon.ajax.processor.find: ';
+        var msg = 'jaxon.ajax.response.processor: ';
         msg += jaxon.debug.getExceptionText(e);
         msg += '\n';
         jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
@@ -765,8 +765,8 @@ jaxon.debug.isLoaded = true;
 jxn = {}
 
 jxn.$ = jaxon.tools.dom.$;
-jxn.getFormValues = jaxon.tools.getFormValues;
-jxn.call = jaxon.fn.handler.call;
+jxn.getFormValues = jaxon.tools.form.getValues;
+jxn.call = jaxon.ajax.handler.call;
 jxn.request = jaxon.ajax.request.execute;
 
 jaxon.$ = jaxon.tools.dom.$;
@@ -910,8 +910,8 @@ jaxon.dom.ready(function() {
         jaxon.debug.verbose.hook(jaxon.tools.string, 'jaxon.tools.string.');
         jaxon.debug.verbose.hook(jaxon.tools.ajax, 'jaxon.tools.ajax.');
         jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
-        jaxon.debug.verbose.hook(jaxon.fn.callback, 'jaxon.fn.callback.');
-        jaxon.debug.verbose.hook(jaxon.fn.handler, 'jaxon.fn.handler.');
+        jaxon.debug.verbose.hook(jaxon.ajax.callback, 'jaxon.ajax.callback.');
+        jaxon.debug.verbose.hook(jaxon.ajax.handler, 'jaxon.ajax.handler.');
     }
 });
 
