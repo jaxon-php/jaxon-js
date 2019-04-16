@@ -4,7 +4,7 @@ jaxon.tools.form = {
 
     Build an associative array of form elements and their values from the specified form.
 
-    Parameters: 
+    Parameters:
     element - (string): The unique name (id) of the form to be processed.
     disabled - (boolean, optional): Include form elements which are currently disabled.
     prefix - (string, optional): A prefix used for selecting form elements.
@@ -41,7 +41,7 @@ jaxon.tools.form = {
     Function: jaxon.tools.form._getValues
 
     Used internally by <jaxon.tools.form.getValues> to recursively get the value
-    of form elements.  This function will extract all form element values 
+    of form elements.  This function will extract all form element values
     regardless of the depth of the element within the form.
     */
     _getValues: function(aFormValues, children, submitDisabledElements, prefix) {
@@ -77,9 +77,13 @@ jaxon.tools.form = {
             return;
 
         if (child.type)
+        {
             if (child.type == 'radio' || child.type == 'checkbox')
                 if (false == child.checked)
                     return;
+            if (child.type == 'file')
+                return;
+        }
 
         var name = child.name;
 
