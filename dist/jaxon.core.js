@@ -946,17 +946,6 @@ jaxon.tools.upload = {
     Check upload data and initialize the request.
     */
     _initialize: function(oRequest) {
-        /*if (oRequest.parameters) {
-            var i = 0;
-            var iLen = oRequest.parameters.length;
-            while (i < iLen) {
-                var oVal = oRequest.parameters[i];
-                if(jaxon.ajax.parameters.isUpload(oVal)) {
-                    oRequest.upload = oVal.upload.id;
-                    break;
-                }
-            }
-        }*/
         if (oRequest.upload == false) {
             return false;
         }
@@ -969,6 +958,10 @@ jaxon.tools.upload = {
         }
         if (input.type != 'file') {
             console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+            return false;
+        }
+        if (input.files.length == 0) {
+            console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
         if (typeof input.name == 'undefined') {
@@ -1019,6 +1012,7 @@ jaxon.tools.upload = {
         }
     }
 };
+
 
 jaxon.cmd.event = {
     /*
