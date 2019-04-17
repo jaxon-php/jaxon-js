@@ -554,7 +554,7 @@ jaxon.tools.form = {
 
     Build an associative array of form elements and their values from the specified form.
 
-    Parameters: 
+    Parameters:
     element - (string): The unique name (id) of the form to be processed.
     disabled - (boolean, optional): Include form elements which are currently disabled.
     prefix - (string, optional): A prefix used for selecting form elements.
@@ -591,7 +591,7 @@ jaxon.tools.form = {
     Function: jaxon.tools.form._getValues
 
     Used internally by <jaxon.tools.form.getValues> to recursively get the value
-    of form elements.  This function will extract all form element values 
+    of form elements.  This function will extract all form element values
     regardless of the depth of the element within the form.
     */
     _getValues: function(aFormValues, children, submitDisabledElements, prefix) {
@@ -627,9 +627,13 @@ jaxon.tools.form = {
             return;
 
         if (child.type)
+        {
             if (child.type == 'radio' || child.type == 'checkbox')
                 if (false == child.checked)
                     return;
+            if (child.type == 'file')
+                return;
+        }
 
         var name = child.name;
 
@@ -688,6 +692,7 @@ jaxon.tools.form = {
         }
     }
 };
+
 
 jaxon.tools.queue = {
     /*
@@ -2364,15 +2369,15 @@ jaxon.ajax.handler = {
     handlers: [],
 
     /*
-    Function: jaxon.ajax.handler.execute 
+    Function: jaxon.ajax.handler.execute
 
     Perform a lookup on the command specified by the response command
     object passed in the first parameter.  If the command exists, the
     function checks to see if the command references a DOM object by
-    ID; if so, the object is located within the DOM and added to the 
+    ID; if so, the object is located within the DOM and added to the
     command data.  The command handler is then called.
 
-    If the command handler returns true, it is assumed that the command 
+    If the command handler returns true, it is assumed that the command
     completed successfully.  If the command handler returns false, then the
     command is considered pending; jaxon enters a wait state.  It is up
     to the command handler to set an interval, timeout or event handler
@@ -2418,7 +2423,7 @@ jaxon.ajax.handler = {
 
     Parameters:
         shortName - (string): The name of the command handler.
-        
+
     Returns:
         func - (function): The unregistered function.
     */
@@ -2438,9 +2443,9 @@ jaxon.ajax.handler = {
 
     Returns:
 
-    boolean - (true or false): depending on whether a command handler has 
+    boolean - (true or false): depending on whether a command handler has
     been created for the specified command (object).
-        
+
     */
     isRegistered: function(command) {
         var shortName = command.cmd;
@@ -2570,8 +2575,10 @@ jaxon.ajax.handler.register('rh', jaxon.cmd.event.removeHandler);
 
 jaxon.ajax.handler.register('dbg', function(args) {
     args.fullName = 'debug message';
+    console.log(args.data);
     return true;
 });
+
 
 jaxon.ajax.message = {
     /*
