@@ -1,6 +1,6 @@
 {
   "name": "jaxon-js",
-  "version": "2.0.4",
+  "version": "3.0.0",
   "description": "Javascript code for the Jaxon PHP library.",
   "main": "jaxon.core.js",
   "scripts": {
