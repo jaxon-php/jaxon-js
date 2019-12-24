@@ -26,8 +26,9 @@ jaxon.ajax.response = {
         var challenge = oRequest.request.getResponseHeader('challenge');
         if (challenge) {
             oRequest.challengeResponse = challenge;
-            xx.ajax.request.prepare(oRequest);
-            return xx.ajax.request.submit(oRequest);
+            if(xx.ajax.request.prepare(oRequest)) {
+                return xx.ajax.request.submit(oRequest);
+            }
         }
 
         var fProc = xx.ajax.response.processor(oRequest);
@@ -82,16 +83,16 @@ jaxon.ajax.response = {
     While entries exist in the queue, pull and entry out and process it's command.
     When a command returns false, the processing is halted.
 
-    Parameters: 
+    Parameters:
 
     theQ - (object): The queue object to process.
-    This should have been crated by calling <jaxon.tools.queue.create>.
+    This should have been created by calling <jaxon.tools.queue.create>.
 
     Returns:
 
     true - The queue was fully processed and is now empty.
     false - The queue processing was halted before the queue was fully processed.
-        
+
     Note:
 
     - Use <jaxon.ajax.response.setWakeup> or call this function to cause the queue processing to continue.
@@ -125,11 +126,11 @@ jaxon.ajax.response = {
     This allows the queue to asynchronously wait for an event to occur (giving the browser time
     to process pending events, like loading files)
 
-    Parameters: 
+    Parameters:
 
     theQ - (object):
         The queue to process upon timeout.
-        
+
     when - (integer):
         The number of milliseconds to wait before starting/restarting the processing of the queue.
     */
