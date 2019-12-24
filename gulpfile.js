@@ -6,7 +6,7 @@ var gulp = require('gulp'),
     // deporder = require('gulp-deporder'),
     rename = require('gulp-rename'),
     // stripdebug = require('gulp-strip-debug'),
-    uglify = require('gulp-uglify');
+    terser = require('gulp-terser');
 
 // Development mode?
 var devBuild = (process.env.NODE_ENV !== 'production');
@@ -23,8 +23,8 @@ var folders = {
             core: [
                 folders.src + 'config.js',
                 folders.src + 'tools/*.js',
-                folders.src + 'cmd/*.js',
                 folders.src + 'ajax/*.js',
+                folders.src + 'cmd/*.js',
                 folders.src + 'ready.js',
                 folders.src + 'jaxon.js',
                 folders.src + 'compat.js'
@@ -57,7 +57,7 @@ gulp.task('js-core', function() {
     /*if (!devBuild) {
         jsbuild = jsbuild
             .pipe(stripdebug())
-            .pipe(uglify());
+            .pipe(terser());
     }*/
 
     return jsbuild.pipe(gulp.dest(folders.dist));
@@ -67,7 +67,7 @@ gulp.task('js-core', function() {
 gulp.task('js-core-min', ['js-core'], function() {
     return gulp.src(folders.dist + files.dist.core)
         // .pipe(stripdebug())
-        .pipe(uglify())
+        .pipe(terser())
         .pipe(rename(files.min.core))
         .pipe(gulp.dest(folders.dist));
 });
@@ -76,7 +76,7 @@ gulp.task('js-core-min', ['js-core'], function() {
 gulp.task('js-debug-min', function() {
     return gulp.src(folders.dist + files.dist.debug)
         // .pipe(stripdebug())
-        .pipe(uglify())
+        .pipe(terser())
         .pipe(rename(files.min.debug))
         .pipe(gulp.dest(folders.dist));
 });
@@ -85,7 +85,7 @@ gulp.task('js-debug-min', function() {
 gulp.task('js-lang-min', function() {
     return gulp.src(files.dist.lang)
         // .pipe(stripdebug())
-        .pipe(uglify())
+        .pipe(terser())
         .pipe(rename(function (path) {
             // path.dirname = "";
             path.basename += ".min";
@@ -96,3 +96,4 @@ gulp.task('js-lang-min', function() {
 
 // Minify all the files
 gulp.task('js-min', ['js-core-min', 'js-debug-min', 'js-lang-min']);
+gulp.task('default', ['js-min']);
