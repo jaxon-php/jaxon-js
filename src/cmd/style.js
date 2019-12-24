@@ -105,7 +105,7 @@ jaxon.cmd.style = {
         if (false == ssLoaded) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
+            if (jaxon.tools.ajax.retry(args, args.prop)) {
                 jaxon.ajax.response.setWakeup(jaxon.response, 10);
                 return false;
             }

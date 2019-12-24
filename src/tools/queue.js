@@ -39,32 +39,6 @@ jaxon.tools.queue = {
         return (theQ.count >= theQ.size);
     },
 
-    /*
-    Function: jaxon.tools.queue.retry
-
-    Maintains a retry counter for the given object.
-
-    Parameters:
-    obj - (object):
-        The object to track the retry count for.
-    count - (integer):
-        The number of times the operation should be attempted before a failure is indicated.
-
-    Returns:
-    true - The object has not exhausted all the retries.
-    false - The object has exhausted the retry count specified.
-    */
-    retry: function(obj, count) {
-        var retries = obj.retries;
-        if(retries) {
-            --retries;
-            if(1 > retries)
-                return false;
-        } else retries = count;
-        obj.retries = retries;
-        return true;
-    },
-
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *

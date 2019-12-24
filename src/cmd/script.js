@@ -6,7 +6,7 @@ jaxon.cmd.script = {
 
     This will effecitvely cause the script file to be loaded in the browser.
 
-    Parameters: 
+    Parameters:
 
     fileName - (string):  The URI of the file.
 
@@ -37,7 +37,7 @@ jaxon.cmd.script = {
     Adds a SCRIPT tag referencing the specified file.
     This effectively causes the script to be loaded in the browser.
 
-    Parameters: 
+    Parameters:
 
     command (object) - Xajax response object
 
@@ -63,10 +63,10 @@ jaxon.cmd.script = {
 
     Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
 
-    Parameters: 
+    Parameters:
 
     command (object) - Xajax response object
-            
+
     Returns:
 
     true - The script was not found or was removed.
@@ -118,7 +118,7 @@ jaxon.cmd.script = {
         command.fullName = 'sleep';
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.tools.queue.retry(command, command.prop)) {
+        if (jaxon.tools.ajax.retry(command, command.prop)) {
             jaxon.ajax.response.setWakeup(jaxon.response, 100);
             return false;
         }
@@ -136,7 +136,7 @@ jaxon.cmd.script = {
     Parameters:
 
     command (object) - jaxon response object
-        
+
     Returns:
 
     true - The operation completed successfully.
@@ -164,7 +164,7 @@ jaxon.cmd.script = {
     args - The response command object containing the following:
         - args.data: (string):  The javascript to be evaluated.
         - args.context: (object):  The javascript object that to be referenced as 'this' in the script.
-            
+
     Returns:
 
     unknown - A value set by the script using 'returnValue = '
@@ -217,7 +217,7 @@ jaxon.cmd.script = {
         if (false == bResult) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
+            if (jaxon.tools.ajax.retry(args, args.prop)) {
                 jaxon.ajax.response.setWakeup(jaxon.response, 100);
                 return false;
             }
@@ -238,7 +238,7 @@ jaxon.cmd.script = {
         - args.func: (string):  The name of the function to call.
         - args.context: (object):  The current script context object which is accessable in the
             function name via the 'this keyword.
-            
+
     Returns:
 
     true - The call completed successfully.
@@ -282,7 +282,7 @@ jaxon.cmd.script = {
         - args.data: (string):  The script that will be the function body.
         - args.context: (object):  The current script context object
             which is accessable in the script name via the 'this' keyword.
-            
+
     Returns:
 
     true - The function was constructed successfully.
@@ -319,16 +319,16 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain 
+    args - (object):  The response command object which will contain
         the following:
-        
+
         - args.func: (string):  The name of the function to be wrapped.
         - args.prop: (string):  List of parameters used when calling the function.
         - args.data: (array):  The portions of code to be called before, after
             or even between calls to the original function.
-        - args.context: (object):  The current script context object which is 
+        - args.context: (object):  The current script context object which is
             accessable in the function name and body via the 'this' keyword.
-            
+
     Returns:
 
     true - The wrapper function was constructed successfully.
@@ -354,7 +354,7 @@ jaxon.cmd.script = {
 
     Helper function used in the wrapping of an existing javascript function.
 
-    Parameters:    
+    Parameters:
 
     origFun - (string):  The name of the original function.
     args - (string):  The list of parameters used when calling the function.
@@ -364,7 +364,7 @@ jaxon.cmd.script = {
         return value from the call to the original function.
     context - (object):  The current script context object which is accessable
         in the function name and body via the 'this' keyword.
-        
+
     Returns:
 
     object - The complete wrapper function.
