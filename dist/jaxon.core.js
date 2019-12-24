@@ -368,7 +368,7 @@ jaxon.tools.ajax = {
 
     Parse the JSON response into a series of commands.
 
-    Parameters: 
+    Parameters:
     oRequest - (object):  The request context object.
     */
     processFragment: function(nodes, seq, oRet, oRequest) {
@@ -400,8 +400,35 @@ jaxon.tools.ajax = {
                 throw { code: 10004, data: obj.fullName }
         }
         return oRet;
+    },
+
+    /*
+    Function: jaxon.tools.ajax.retry
+
+    Maintains a retry counter for the given object.
+
+    Parameters:
+    obj - (object):
+        The object to track the retry count for.
+    count - (integer):
+        The number of times the operation should be attempted before a failure is indicated.
+
+    Returns:
+    true - The object has not exhausted all the retries.
+    false - The object has exhausted the retry count specified.
+    */
+    retry: function(obj, count) {
+        var retries = obj.retries;
+        if(retries) {
+            --retries;
+            if(1 > retries)
+                return false;
+        } else retries = count;
+        obj.retries = retries;
+        return true;
     }
 };
+
 
 jaxon.tools.array = {
     /*
@@ -738,32 +765,6 @@ jaxon.tools.queue = {
         return (theQ.count >= theQ.size);
     },
 
-    /*
-    Function: jaxon.tools.queue.retry
-
-    Maintains a retry counter for the given object.
-
-    Parameters:
-    obj - (object):
-        The object to track the retry count for.
-    count - (integer):
-        The number of times the operation should be attempted before a failure is indicated.
-
-    Returns:
-    true - The object has not exhausted all the retries.
-    false - The object has exhausted the retry count specified.
-    */
-    retry: function(obj, count) {
-        var retries = obj.retries;
-        if(retries) {
-            --retries;
-            if(1 > retries)
-                return false;
-        } else retries = count;
-        obj.retries = retries;
-        return true;
-    },
-
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *
@@ -1042,6 +1043,1232 @@ jaxon.tools.upload = {
     }
 };
 
+
+jaxon.cmd.event = {
+    /*
+    Function: jaxon.cmd.event.setEvent
+
+    Set an event handler.
+
+    Parameters:
+
+    command - (object): Response command object.
+    - id: Element ID
+    - prop: Event
+    - data: Code
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    setEvent: function(command) {
+        command.fullName = 'setEvent';
+        var element = command.id;
+        var sEvent = command.prop;
+        var code = command.data;
+        //force to get the element 
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+        sEvent = jaxon.tools.string.addOnPrefix(sEvent);
+        code = jaxon.tools.string.doubleQuotes(code);
+        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.event.addHandler
+
+    Add an event handler to the specified element.
+
+    Parameters:
+
+    command - (object): Response command object.
+    - id: The id of, or the element itself
+    - prop: The name of the event.
+    - data: The name of the function to be called
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    addHandler: function(command) {
+        if (window.addEventListener) {
+            jaxon.cmd.event.addHandler = function(command) {
+                command.fullName = 'addHandler';
+                var element = command.id;
+                var sEvent = command.prop;
+                var sFuncName = command.data;
+                if ('string' == typeof element)
+                    element = jaxon.$(element);
+                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
+                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                return true;
+            }
+        } else {
+            jaxon.cmd.event.addHandler = function(command) {
+                command.fullName = 'addHandler';
+                var element = command.id;
+                var sEvent = command.prop;
+                var sFuncName = command.data;
+                if ('string' == typeof element)
+                    element = jaxon.$(element);
+                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
+                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                return true;
+            }
+        }
+        return jaxon.cmd.event.addHandler(command);
+    },
+
+    /*
+    Function: jaxon.cmd.event.removeHandler
+
+    Remove an event handler from an element.
+
+    Parameters:
+
+    command - (object): Response command object.
+    - id: The id of, or the element itself
+    - prop: The name of the event.
+    - data: The name of the function to be removed
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    removeHandler: function(command) {
+        if (window.removeEventListener) {
+            jaxon.cmd.event.removeHandler = function(command) {
+                command.fullName = 'removeHandler';
+                var element = command.id;
+                var sEvent = command.prop;
+                var sFuncName = command.data;
+                if ('string' == typeof element)
+                    element = jaxon.$(element);
+                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
+                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                return true;
+            }
+        } else {
+            jaxon.cmd.event.removeHandler = function(command) {
+                command.fullName = 'removeHandler';
+                var element = command.id;
+                var sEvent = command.prop;
+                var sFuncName = command.data;
+                if ('string' == typeof element)
+                    element = jaxon.$(element);
+                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
+                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                return true;
+            }
+        }
+        return jaxon.cmd.event.removeHandler(command);
+    }
+};
+
+jaxon.cmd.form = {
+    /*
+    Function: jaxon.cmd.form.getInput
+
+    Create and return a form input element with the specified parameters.
+
+    Parameters:
+
+    type - (string):  The type of input element desired.
+    name - (string):  The value to be assigned to the name attribute.
+    id - (string):  The value to be assigned to the id attribute.
+
+    Returns:
+
+    object - The new input element.
+    */
+    getInput: function(type, name, id) {
+        if ('undefined' == typeof window.addEventListener) {
+            jaxon.cmd.form.getInput = function(type, name, id) {
+                return jaxon.config.baseDocument.createElement('<input type="' + type + '" name="' + name + '" id="' + id + '">');
+            }
+        } else {
+            jaxon.cmd.form.getInput = function(type, name, id) {
+                var oDoc = jaxon.config.baseDocument;
+                var Obj = oDoc.createElement('input');
+                Obj.setAttribute('type', type);
+                Obj.setAttribute('name', name);
+                Obj.setAttribute('id', id);
+                return Obj;
+            }
+        }
+        return jaxon.cmd.form.getInput(type, name, id);
+    },
+
+    /*
+    Function: jaxon.cmd.form.createInput
+
+    Create a new input element under the specified parent.
+
+    Parameters:
+
+    objParent - (string or object):  The name of, or the element itself
+        that will be used as the reference for the insertion.
+    sType - (string):  The value to be assigned to the type attribute.
+    sName - (string):  The value to be assigned to the name attribute.
+    sId - (string):  The value to be assigned to the id attribute.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    createInput: function(command) {
+        command.fullName = 'createInput';
+        var objParent = command.id;
+
+        var sType = command.type;
+        var sName = command.data;
+        var sId = command.prop;
+        if ('string' == typeof objParent)
+            objParent = jaxon.$(objParent);
+        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        if (objParent && target) {
+            objParent.appendChild(target);
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.form.insertInput
+
+    Insert a new input element before the specified element.
+
+    Parameters:
+
+    objSibling - (string or object):  The name of, or the element itself
+        that will be used as the reference for the insertion.
+    sType - (string):  The value to be assigned to the type attribute.
+    sName - (string):  The value to be assigned to the name attribute.
+    sId - (string):  The value to be assigned to the id attribute.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    insertInput: function(command) {
+        command.fullName = 'insertInput';
+        var objSibling = command.id;
+        var sType = command.type;
+        var sName = command.data;
+        var sId = command.prop;
+        if ('string' == typeof objSibling)
+            objSibling = jaxon.$(objSibling);
+        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        if (target && objSibling && objSibling.parentNode)
+            objSibling.parentNode.insertBefore(target, objSibling);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.form.insertInputAfter
+
+    Insert a new input element after the specified element.
+
+    Parameters:
+
+    objSibling - (string or object):  The name of, or the element itself
+        that will be used as the reference for the insertion.
+    sType - (string):  The value to be assigned to the type attribute.
+    sName - (string):  The value to be assigned to the name attribute.
+    sId - (string):  The value to be assigned to the id attribute.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    insertInputAfter: function(command) {
+        command.fullName = 'insertInputAfter';
+        var objSibling = command.id;
+        var sType = command.type;
+        var sName = command.data;
+        var sId = command.prop;
+        if ('string' == typeof objSibling)
+            objSibling = jaxon.$(objSibling);
+        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        if (target && objSibling && objSibling.parentNode)
+            objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
+        return true;
+    }
+};
+
+jaxon.cmd.node = {
+    /*
+    Function: jaxon.cmd.node.assign
+
+    Assign an element's attribute to the specified value.
+
+    Parameters:
+
+    element - (object):  The HTML element to effect.
+    property - (string):  The name of the attribute to set.
+    data - (string):  The new value to be applied.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    assign: function(element, property, data) {
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+
+        switch (property) {
+            case 'innerHTML':
+                element.innerHTML = data;
+                break;
+            case 'outerHTML':
+                if ('undefined' == typeof element.outerHTML) {
+                    var r = jaxon.config.baseDocument.createRange();
+                    r.setStartBefore(element);
+                    var df = r.createContextualFragment(data);
+                    element.parentNode.replaceChild(df, element);
+                } else element.outerHTML = data;
+                break;
+            default:
+                if (jaxon.tools.dom.willChange(element, property, data))
+                    eval('element.' + property + ' = data;');
+                break;
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.append
+
+    Append the specified value to an element's attribute.
+
+    Parameters:
+
+    element - (object):  The HTML element to effect.
+    property - (string):  The name of the attribute to append to.
+    data - (string):  The new value to be appended.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    append: function(element, property, data) {
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+
+        // Check if the insertAdjacentHTML() function is available
+        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
+            if(property == 'innerHTML')
+                element.insertAdjacentHTML('beforeend', data);
+            else if(property == 'outerHTML')
+                element.insertAdjacentHTML('afterend', data);
+            else
+                element[property] += data;
+        else
+            eval('element.' + property + ' += data;');
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.prepend
+
+    Prepend the specified value to an element's attribute.
+
+    Parameters:
+
+    element - (object):  The HTML element to effect.
+    property - (string):  The name of the attribute.
+    data - (string):  The new value to be prepended.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    prepend: function(element, property, data) {
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+
+        eval('element.' + property + ' = data + element.' + property);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.replace
+
+    Search and replace the specified text.
+
+    Parameters:
+
+    element - (string or object):  The name of, or the element itself which is to be modified.
+    sAttribute - (string):  The name of the attribute to be set.
+    aData - (array):  The search text and replacement text.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    replace: function(element, sAttribute, aData) {
+        var sSearch = aData['s'];
+        var sReplace = aData['r'];
+
+        if (sAttribute == 'innerHTML')
+            sSearch = jaxon.tools.dom.getBrowserHTML(sSearch);
+
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+
+        eval('var txt = element.' + sAttribute);
+
+        var bFunction = false;
+        if ('function' == typeof txt) {
+            txt = txt.join('');
+            bFunction = true;
+        }
+
+        var start = txt.indexOf(sSearch);
+        if (start > -1) {
+            var newTxt = [];
+            while (start > -1) {
+                var end = start + sSearch.length;
+                newTxt.push(txt.substr(0, start));
+                newTxt.push(sReplace);
+                txt = txt.substr(end, txt.length - end);
+                start = txt.indexOf(sSearch);
+            }
+            newTxt.push(txt);
+            newTxt = newTxt.join('');
+
+            if (bFunction) {
+                eval('element.' + sAttribute + '=newTxt;');
+            } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
+                eval('element.' + sAttribute + '=newTxt;');
+            }
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.remove
+
+    Delete an element.
+
+    Parameters:
+
+    element - (string or object):  The name of, or the element itself which will be deleted.
+        
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    remove: function(element) {
+        if ('string' == typeof element)
+            element = jaxon.$(element);
+
+        if (element && element.parentNode && element.parentNode.removeChild)
+            element.parentNode.removeChild(element);
+
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.create
+
+    Create a new element and append it to the specified parent element.
+
+    Parameters:
+
+    objParent - (string or object):  The name of, or the element itself
+        which will contain the new element.
+    sTag - (string):  The tag name for the new element.
+    sId - (string):  The value to be assigned to the id attribute of the new element.
+        
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    create: function(objParent, sTag, sId) {
+        if ('string' == typeof objParent)
+            objParent = jaxon.$(objParent);
+        var target = jaxon.config.baseDocument.createElement(sTag);
+        target.setAttribute('id', sId);
+        if (objParent)
+            objParent.appendChild(target);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.insert
+
+    Insert a new element before the specified element.
+
+    Parameters:
+
+    objSibling - (string or object):  The name of, or the element itself
+        that will be used as the reference point for insertion.
+    sTag - (string):  The tag name for the new element.
+    sId - (string):  The value that will be assigned to the new element's id attribute.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    insert: function(objSibling, sTag, sId) {
+        if ('string' == typeof objSibling)
+            objSibling = jaxon.$(objSibling);
+        var target = jaxon.config.baseDocument.createElement(sTag);
+        target.setAttribute('id', sId);
+        objSibling.parentNode.insertBefore(target, objSibling);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.insertAfter
+
+    Insert a new element after the specified element.
+
+    Parameters:
+
+    objSibling - (string or object):  The name of, or the element itself
+        that will be used as the reference point for insertion.
+    sTag - (string):  The tag name for the new element.
+    sId - (string):  The value that will be assigned to the new element's id attribute.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    insertAfter: function(objSibling, sTag, sId) {
+        if ('string' == typeof objSibling)
+            objSibling = jaxon.$(objSibling);
+        var target = jaxon.config.baseDocument.createElement(sTag);
+        target.setAttribute('id', sId);
+        objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.contextAssign
+
+    Assign a value to a named member of the current script context object.
+
+    Parameters:
+
+    args - (object):  The response command object which will contain the
+        following:
+        
+        - args.prop: (string):  The name of the member to assign.
+        - args.data: (string or object):  The value to assign to the member.
+        - args.context: (object):  The current script context object which
+            is accessable via the 'this' keyword.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    contextAssign: function(args) {
+        args.fullName = 'context assign';
+
+        var code = [];
+        code.push('this.');
+        code.push(args.prop);
+        code.push(' = data;');
+        code = code.join('');
+        args.context.jaxonDelegateCall = function(data) {
+            eval(code);
+        }
+        args.context.jaxonDelegateCall(args.data);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.contextAppend
+
+    Appends a value to a named member of the current script context object.
+
+    Parameters:
+
+    args - (object):  The response command object which will contain the
+        following:
+        
+        - args.prop: (string):  The name of the member to append to.
+        - args.data: (string or object):  The value to append to the member.
+        - args.context: (object):  The current script context object which
+            is accessable via the 'this' keyword.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    contextAppend: function(args) {
+        args.fullName = 'context append';
+
+        var code = [];
+        code.push('this.');
+        code.push(args.prop);
+        code.push(' += data;');
+        code = code.join('');
+        args.context.jaxonDelegateCall = function(data) {
+            eval(code);
+        }
+        args.context.jaxonDelegateCall(args.data);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.node.contextPrepend
+
+    Prepend a value to a named member of the current script context object.
+
+    Parameters:
+
+    args - (object):  The response command object which will contain the
+        following:
+        
+        - args.prop: (string):  The name of the member to prepend to.
+        - args.data: (string or object):  The value to prepend to the member.
+        - args.context: (object):  The current script context object which
+            is accessable via the 'this' keyword.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    contextPrepend: function(args) {
+        args.fullName = 'context prepend';
+
+        var code = [];
+        code.push('this.');
+        code.push(args.prop);
+        code.push(' = data + this.');
+        code.push(args.prop);
+        code.push(';');
+        code = code.join('');
+        args.context.jaxonDelegateCall = function(data) {
+            eval(code);
+        }
+        args.context.jaxonDelegateCall(args.data);
+        return true;
+    }
+};
+
+jaxon.cmd.script = {
+    /*
+    Function: jaxon.cmd.script.includeScriptOnce
+
+    Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
+
+    This will effecitvely cause the script file to be loaded in the browser.
+
+    Parameters:
+
+    fileName - (string):  The URI of the file.
+
+    Returns:
+
+    true - The reference exists or was added.
+    */
+    includeScriptOnce: function(command) {
+        command.fullName = 'includeScriptOnce';
+        var fileName = command.data;
+        // Check for existing script tag for this file.
+        var oDoc = jaxon.config.baseDocument;
+        var loadedScripts = oDoc.getElementsByTagName('script');
+        var iLen = loadedScripts.length;
+        for (var i = 0; i < iLen; ++i) {
+            var script = loadedScripts[i];
+            if (script.src) {
+                if (0 <= script.src.indexOf(fileName))
+                    return true;
+            }
+        }
+        return jaxon.cmd.script.includeScript(command);
+    },
+
+    /*
+    Function: jaxon.cmd.script.includeScript
+
+    Adds a SCRIPT tag referencing the specified file.
+    This effectively causes the script to be loaded in the browser.
+
+    Parameters:
+
+    command (object) - Xajax response object
+
+    Returns:
+
+    true - The reference was added.
+    */
+    includeScript: function(command) {
+        command.fullName = 'includeScript';
+        var oDoc = jaxon.config.baseDocument;
+        var objHead = oDoc.getElementsByTagName('head');
+        var objScript = oDoc.createElement('script');
+        objScript.src = command.data;
+        if ('undefined' == typeof command.type) objScript.type = 'text/javascript';
+        else objScript.type = command.type;
+        if ('undefined' != typeof command.type) objScript.setAttribute('id', command.elm_id);
+        objHead[0].appendChild(objScript);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.removeScript
+
+    Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
+
+    Parameters:
+
+    command (object) - Xajax response object
+
+    Returns:
+
+    true - The script was not found or was removed.
+    */
+    removeScript: function(command) {
+        command.fullName = 'removeScript';
+        var fileName = command.data;
+        var unload = command.unld;
+        var oDoc = jaxon.config.baseDocument;
+        var loadedScripts = oDoc.getElementsByTagName('script');
+        var iLen = loadedScripts.length;
+        for (var i = 0; i < iLen; ++i) {
+            var script = loadedScripts[i];
+            if (script.src) {
+                if (0 <= script.src.indexOf(fileName)) {
+                    if ('undefined' != typeof unload) {
+                        var args = {};
+                        args.data = unload;
+                        args.context = window;
+                        jaxon.cmd.script.execute(args);
+                    }
+                    var parent = script.parentNode;
+                    parent.removeChild(script);
+                }
+            }
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.sleep
+
+    Causes the processing of items in the queue to be delayed for the specified amount of time.
+    This is an asynchronous operation, therefore, other operations will be given an opportunity
+    to execute during this delay.
+
+    Parameters:
+
+    args - (object):  The response command containing the following
+        parameters.
+        - args.prop: The number of 10ths of a second to sleep.
+
+    Returns:
+
+    true - The sleep operation completed.
+    false - The sleep time has not yet expired, continue sleeping.
+    */
+    sleep: function(command) {
+        command.fullName = 'sleep';
+        // inject a delay in the queue processing
+        // handle retry counter
+        if (jaxon.tools.ajax.retry(command, command.prop)) {
+            jaxon.ajax.response.setWakeup(jaxon.response, 100);
+            return false;
+        }
+        // wake up, continue processing queue
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.confirmCommands
+
+    Prompt the user with the specified text, if the user responds by clicking cancel, then skip
+    the specified number of commands in the response command queue.
+    If the user clicks Ok, the command processing resumes normal operation.
+
+    Parameters:
+
+    command (object) - jaxon response object
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    confirmCommands: function(command) {
+        command.fullName = 'confirmCommands';
+        var msg = command.data;
+        var numberOfCommands = command.id;
+        if (false == confirm(msg)) {
+            while (0 < numberOfCommands) {
+                jaxon.tools.queue.pop(jaxon.response);
+                --numberOfCommands;
+            }
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.execute
+
+    Execute the specified string of javascript code, using the current script context.
+
+    Parameters:
+
+    args - The response command object containing the following:
+        - args.data: (string):  The javascript to be evaluated.
+        - args.context: (object):  The javascript object that to be referenced as 'this' in the script.
+
+    Returns:
+
+    unknown - A value set by the script using 'returnValue = '
+    true - If the script does not set a returnValue.
+    */
+    execute: function(args) {
+        args.fullName = 'execute Javascript';
+        var returnValue = true;
+        args.context = args.context ? args.context : {};
+        args.context.jaxonDelegateCall = function() {
+            eval(args.data);
+        };
+        args.context.jaxonDelegateCall();
+        return returnValue;
+    },
+
+    /*
+    Function: jaxon.cmd.script.waitFor
+
+    Test for the specified condition, using the current script context;
+    if the result is false, sleep for 1/10th of a second and try again.
+
+    Parameters:
+
+    args - The response command object containing the following:
+
+        - args.data: (string):  The javascript to evaluate.
+        - args.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
+        - args.context: (object):  The current script context object which is accessable in
+            the javascript being evaulated via the 'this' keyword.
+
+    Returns:
+
+    false - The condition evaulates to false and the sleep time has not expired.
+    true - The condition evaluates to true or the sleep time has expired.
+    */
+    waitFor: function(args) {
+        args.fullName = 'waitFor';
+
+        var bResult = false;
+        var cmdToEval = 'bResult = (';
+        cmdToEval += args.data;
+        cmdToEval += ');';
+        try {
+            args.context.jaxonDelegateCall = function() {
+                eval(cmdToEval);
+            }
+            args.context.jaxonDelegateCall();
+        } catch (e) {}
+        if (false == bResult) {
+            // inject a delay in the queue processing
+            // handle retry counter
+            if (jaxon.tools.ajax.retry(args, args.prop)) {
+                jaxon.ajax.response.setWakeup(jaxon.response, 100);
+                return false;
+            }
+            // give up, continue processing queue
+        }
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.call
+
+    Call a javascript function with a series of parameters using the current script context.
+
+    Parameters:
+
+    args - The response command object containing the following:
+        - args.data: (array):  The parameters to pass to the function.
+        - args.func: (string):  The name of the function to call.
+        - args.context: (object):  The current script context object which is accessable in the
+            function name via the 'this keyword.
+
+    Returns:
+
+    true - The call completed successfully.
+    */
+    call: function(args) {
+        args.fullName = 'call js function';
+
+        var parameters = args.data;
+
+        var scr = new Array();
+        scr.push(args.func);
+        scr.push('(');
+        if ('undefined' != typeof parameters) {
+            if ('object' == typeof parameters) {
+                var iLen = parameters.length;
+                if (0 < iLen) {
+                    scr.push('parameters[0]');
+                    for (var i = 1; i < iLen; ++i)
+                        scr.push(', parameters[' + i + ']');
+                }
+            }
+        }
+        scr.push(');');
+        args.context.jaxonDelegateCall = function() {
+            eval(scr.join(''));
+        }
+        args.context.jaxonDelegateCall();
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.setFunction
+
+    Constructs the specified function using the specified javascript as the body of the function.
+
+    Parameters:
+
+    args - The response command object which contains the following:
+
+        - args.func: (string):  The name of the function to construct.
+        - args.data: (string):  The script that will be the function body.
+        - args.context: (object):  The current script context object
+            which is accessable in the script name via the 'this' keyword.
+
+    Returns:
+
+    true - The function was constructed successfully.
+    */
+    setFunction: function(args) {
+        args.fullName = 'setFunction';
+
+        var code = new Array();
+        code.push(args.func);
+        code.push(' = function(');
+        if ('object' == typeof args.prop) {
+            var separator = '';
+            for (var m in args.prop) {
+                code.push(separator);
+                code.push(args.prop[m]);
+                separator = ',';
+            }
+        } else code.push(args.prop);
+        code.push(') { ');
+        code.push(args.data);
+        code.push(' }');
+        args.context.jaxonDelegateCall = function() {
+            eval(code.join(''));
+        }
+        args.context.jaxonDelegateCall();
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.wrapFunction
+
+    Construct a javascript function which will call the original function with the same name,
+    potentially executing code before and after the call to the original function.
+
+    Parameters:
+
+    args - (object):  The response command object which will contain
+        the following:
+
+        - args.func: (string):  The name of the function to be wrapped.
+        - args.prop: (string):  List of parameters used when calling the function.
+        - args.data: (array):  The portions of code to be called before, after
+            or even between calls to the original function.
+        - args.context: (object):  The current script context object which is
+            accessable in the function name and body via the 'this' keyword.
+
+    Returns:
+
+    true - The wrapper function was constructed successfully.
+    */
+    wrapFunction: function(args) {
+        args.fullName = 'wrapFunction';
+
+        var code = new Array();
+        code.push(args.func);
+        code.push(' = jaxon.cmd.script.makeWrapper(');
+        code.push(args.func);
+        code.push(', args.prop, args.data, args.type, args.context);');
+        args.context.jaxonDelegateCall = function() {
+            eval(code.join(''));
+        }
+        args.context.jaxonDelegateCall();
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.makeWrapper
+
+
+    Helper function used in the wrapping of an existing javascript function.
+
+    Parameters:
+
+    origFun - (string):  The name of the original function.
+    args - (string):  The list of parameters used when calling the function.
+    codeBlocks - (array):  Array of strings of javascript code to be executed
+        before, after and perhaps between calls to the original function.
+    returnVariable - (string):  The name of the variable used to retain the
+        return value from the call to the original function.
+    context - (object):  The current script context object which is accessable
+        in the function name and body via the 'this' keyword.
+
+    Returns:
+
+    object - The complete wrapper function.
+    */
+    makeWrapper: function(origFun, args, codeBlocks, returnVariable, context) {
+        var originalCall = '';
+        if (0 < returnVariable.length) {
+            originalCall += returnVariable;
+            originalCall += ' = ';
+        }
+        var originalCall = 'origFun(';
+        originalCall += args;
+        originalCall += '); ';
+
+        var code = 'wrapper = function(';
+        code += args;
+        code += ') { ';
+
+        if (0 < returnVariable.length) {
+            code += ' var ';
+            code += returnVariable;
+            code += ' = null;';
+        }
+        var separator = '';
+        var bLen = codeBlocks.length;
+        for (var b = 0; b < bLen; ++b) {
+            code += separator;
+            code += codeBlocks[b];
+            separator = originalCall;
+        }
+        if (0 < returnVariable.length) {
+            code += ' return ';
+            code += returnVariable;
+            code += ';';
+        }
+        code += ' } ';
+
+        var wrapper = null;
+        context.jaxonDelegateCall = function() {
+            eval(code);
+        }
+        context.jaxonDelegateCall();
+        return wrapper;
+    }
+};
+
+
+jaxon.cmd.style = {
+    /*
+    Function: jaxon.cmd.style.add
+
+    Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
+
+    Parameters:
+
+    filename - (string):  The URI of the .css file to reference.
+    media - (string):  The media type of the css file (print/screen/handheld,..)
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    add: function(fileName, media) {
+        var oDoc = jaxon.config.baseDocument;
+        var oHeads = oDoc.getElementsByTagName('head');
+        var oHead = oHeads[0];
+        var oLinks = oHead.getElementsByTagName('link');
+
+        var found = false;
+        var iLen = oLinks.length;
+        for (var i = 0; i < iLen && false == found; ++i)
+            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
+                found = true;
+
+        if (false == found) {
+            var oCSS = oDoc.createElement('link');
+            oCSS.rel = 'stylesheet';
+            oCSS.type = 'text/css';
+            oCSS.href = fileName;
+            oCSS.media = media;
+            oHead.appendChild(oCSS);
+        }
+
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.style.remove
+
+    Locate and remove a LINK reference from the current document's HEAD.
+
+    Parameters:
+
+    filename - (string):  The URI of the .css file.
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    remove: function(fileName, media) {
+        var oDoc = jaxon.config.baseDocument;
+        var oHeads = oDoc.getElementsByTagName('head');
+        var oHead = oHeads[0];
+        var oLinks = oHead.getElementsByTagName('link');
+
+        var i = 0;
+        while (i < oLinks.length)
+            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
+                oHead.removeChild(oLinks[i]);
+            else ++i;
+
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.style.waitForCSS
+
+    Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
+    in the HEAD of the current document.
+
+    Parameters:
+
+    args - (object):  The response command object which will contain the following:
+        - args.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
+
+    Returns:
+
+    true - The .css files appear to be loaded.
+    false - The .css files do not appear to be loaded and the timeout has not expired.
+    */
+    waitForCSS: function(args) {
+        var oDocSS = jaxon.config.baseDocument.styleSheets;
+        var ssEnabled = [];
+        var iLen = oDocSS.length;
+        for (var i = 0; i < iLen; ++i) {
+            ssEnabled[i] = 0;
+            try {
+                ssEnabled[i] = oDocSS[i].cssRules.length;
+            } catch (e) {
+                try {
+                    ssEnabled[i] = oDocSS[i].rules.length;
+                } catch (e) {}
+            }
+        }
+
+        var ssLoaded = true;
+        var iLen = ssEnabled.length;
+        for (var i = 0; i < iLen; ++i)
+            if (0 == ssEnabled[i])
+                ssLoaded = false;
+
+        if (false == ssLoaded) {
+            // inject a delay in the queue processing
+            // handle retry counter
+            if (jaxon.tools.ajax.retry(args, args.prop)) {
+                jaxon.ajax.response.setWakeup(jaxon.response, 10);
+                return false;
+            }
+            // give up, continue processing queue
+        }
+        return true;
+    }
+};
+
+
+jaxon.cmd.tree = {
+    startResponse: function(args) {
+        jxnElm = [];
+    },
+
+    createElement: function(args) {
+        eval(
+            [args.tgt, ' = document.createElement(args.data)']
+            .join('')
+        );
+    },
+
+    setAttribute: function(args) {
+        args.context.jaxonDelegateCall = function() {
+            eval(
+                [args.tgt, '.setAttribute(args.key, args.data)']
+                .join('')
+            );
+        }
+        args.context.jaxonDelegateCall();
+    },
+
+    appendChild: function(args) {
+        args.context.jaxonDelegateCall = function() {
+            eval(
+                [args.par, '.appendChild(', args.data, ')']
+                .join('')
+            );
+        }
+        args.context.jaxonDelegateCall();
+    },
+
+    insertBefore: function(args) {
+        args.context.jaxonDelegateCall = function() {
+            eval(
+                [args.tgt, '.parentNode.insertBefore(', args.data, ', ', args.tgt, ')']
+                .join('')
+            );
+        }
+        args.context.jaxonDelegateCall();
+    },
+
+    insertAfter: function(args) {
+        args.context.jaxonDelegateCall = function() {
+            eval(
+                [args.tgt, 'parentNode.insertBefore(', args.data, ', ', args.tgt, '.nextSibling)']
+                .join('')
+            );
+        }
+        args.context.jaxonDelegateCall();
+    },
+
+    appendText: function(args) {
+        args.context.jaxonDelegateCall = function() {
+            eval(
+                [args.par, '.appendChild(document.createTextNode(args.data))']
+                .join('')
+            );
+        }
+        args.context.jaxonDelegateCall();
+    },
+
+    removeChildren: function(args) {
+        var skip = args.skip || 0;
+        var remove = args.remove || -1;
+        var element = null;
+        args.context.jaxonDelegateCall = function() {
+            eval(['element = ', args.data].join(''));
+        }
+        args.context.jaxonDelegateCall();
+        var children = element.childNodes;
+        for (var i in children) {
+            if (isNaN(i) == false && children[i].nodeType == 1) {
+                if (skip > 0) skip = skip - 1;
+                else if (remove != 0) {
+                    if (remove > 0)
+                        remove = remove - 1;
+                    element.removeChild(children[i]);
+                }
+            }
+        }
+    },
+
+    endResponse: function(args) {
+        jxnElm = [];
+    }
+};
 
 jaxon.ajax.callback = {
     /*
@@ -2384,1230 +3611,6 @@ jaxon.ajax.response = {
     redirectCodes: ['301', '302', '307']
 };
 
-
-jaxon.cmd.event = {
-    /*
-    Function: jaxon.cmd.event.setEvent
-
-    Set an event handler.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: Element ID
-    - prop: Event
-    - data: Code
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    setEvent: function(command) {
-        command.fullName = 'setEvent';
-        var element = command.id;
-        var sEvent = command.prop;
-        var code = command.data;
-        //force to get the element 
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-        sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-        code = jaxon.tools.string.doubleQuotes(code);
-        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.event.addHandler
-
-    Add an event handler to the specified element.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: The id of, or the element itself
-    - prop: The name of the event.
-    - data: The name of the function to be called
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    addHandler: function(command) {
-        if (window.addEventListener) {
-            jaxon.cmd.event.addHandler = function(command) {
-                command.fullName = 'addHandler';
-                var element = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
-                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        } else {
-            jaxon.cmd.event.addHandler = function(command) {
-                command.fullName = 'addHandler';
-                var element = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
-                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        }
-        return jaxon.cmd.event.addHandler(command);
-    },
-
-    /*
-    Function: jaxon.cmd.event.removeHandler
-
-    Remove an event handler from an element.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: The id of, or the element itself
-    - prop: The name of the event.
-    - data: The name of the function to be removed
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    removeHandler: function(command) {
-        if (window.removeEventListener) {
-            jaxon.cmd.event.removeHandler = function(command) {
-                command.fullName = 'removeHandler';
-                var element = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
-                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        } else {
-            jaxon.cmd.event.removeHandler = function(command) {
-                command.fullName = 'removeHandler';
-                var element = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
-                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        }
-        return jaxon.cmd.event.removeHandler(command);
-    }
-};
-
-jaxon.cmd.form = {
-    /*
-    Function: jaxon.cmd.form.getInput
-
-    Create and return a form input element with the specified parameters.
-
-    Parameters:
-
-    type - (string):  The type of input element desired.
-    name - (string):  The value to be assigned to the name attribute.
-    id - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    object - The new input element.
-    */
-    getInput: function(type, name, id) {
-        if ('undefined' == typeof window.addEventListener) {
-            jaxon.cmd.form.getInput = function(type, name, id) {
-                return jaxon.config.baseDocument.createElement('<input type="' + type + '" name="' + name + '" id="' + id + '">');
-            }
-        } else {
-            jaxon.cmd.form.getInput = function(type, name, id) {
-                var oDoc = jaxon.config.baseDocument;
-                var Obj = oDoc.createElement('input');
-                Obj.setAttribute('type', type);
-                Obj.setAttribute('name', name);
-                Obj.setAttribute('id', id);
-                return Obj;
-            }
-        }
-        return jaxon.cmd.form.getInput(type, name, id);
-    },
-
-    /*
-    Function: jaxon.cmd.form.createInput
-
-    Create a new input element under the specified parent.
-
-    Parameters:
-
-    objParent - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    createInput: function(command) {
-        command.fullName = 'createInput';
-        var objParent = command.id;
-
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
-        if ('string' == typeof objParent)
-            objParent = jaxon.$(objParent);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
-        if (objParent && target) {
-            objParent.appendChild(target);
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.form.insertInput
-
-    Insert a new input element before the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    insertInput: function(command) {
-        command.fullName = 'insertInput';
-        var objSibling = command.id;
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
-            objSibling.parentNode.insertBefore(target, objSibling);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.form.insertInputAfter
-
-    Insert a new input element after the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    insertInputAfter: function(command) {
-        command.fullName = 'insertInputAfter';
-        var objSibling = command.id;
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
-            objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
-        return true;
-    }
-};
-
-jaxon.cmd.node = {
-    /*
-    Function: jaxon.cmd.node.assign
-
-    Assign an element's attribute to the specified value.
-
-    Parameters:
-
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute to set.
-    data - (string):  The new value to be applied.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    assign: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        switch (property) {
-            case 'innerHTML':
-                element.innerHTML = data;
-                break;
-            case 'outerHTML':
-                if ('undefined' == typeof element.outerHTML) {
-                    var r = jaxon.config.baseDocument.createRange();
-                    r.setStartBefore(element);
-                    var df = r.createContextualFragment(data);
-                    element.parentNode.replaceChild(df, element);
-                } else element.outerHTML = data;
-                break;
-            default:
-                if (jaxon.tools.dom.willChange(element, property, data))
-                    eval('element.' + property + ' = data;');
-                break;
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.append
-
-    Append the specified value to an element's attribute.
-
-    Parameters:
-
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute to append to.
-    data - (string):  The new value to be appended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    append: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        // Check if the insertAdjacentHTML() function is available
-        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-            if(property == 'innerHTML')
-                element.insertAdjacentHTML('beforeend', data);
-            else if(property == 'outerHTML')
-                element.insertAdjacentHTML('afterend', data);
-            else
-                element[property] += data;
-        else
-            eval('element.' + property + ' += data;');
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.prepend
-
-    Prepend the specified value to an element's attribute.
-
-    Parameters:
-
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute.
-    data - (string):  The new value to be prepended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    prepend: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        eval('element.' + property + ' = data + element.' + property);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.replace
-
-    Search and replace the specified text.
-
-    Parameters:
-
-    element - (string or object):  The name of, or the element itself which is to be modified.
-    sAttribute - (string):  The name of the attribute to be set.
-    aData - (array):  The search text and replacement text.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    replace: function(element, sAttribute, aData) {
-        var sSearch = aData['s'];
-        var sReplace = aData['r'];
-
-        if (sAttribute == 'innerHTML')
-            sSearch = jaxon.tools.dom.getBrowserHTML(sSearch);
-
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        eval('var txt = element.' + sAttribute);
-
-        var bFunction = false;
-        if ('function' == typeof txt) {
-            txt = txt.join('');
-            bFunction = true;
-        }
-
-        var start = txt.indexOf(sSearch);
-        if (start > -1) {
-            var newTxt = [];
-            while (start > -1) {
-                var end = start + sSearch.length;
-                newTxt.push(txt.substr(0, start));
-                newTxt.push(sReplace);
-                txt = txt.substr(end, txt.length - end);
-                start = txt.indexOf(sSearch);
-            }
-            newTxt.push(txt);
-            newTxt = newTxt.join('');
-
-            if (bFunction) {
-                eval('element.' + sAttribute + '=newTxt;');
-            } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                eval('element.' + sAttribute + '=newTxt;');
-            }
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.remove
-
-    Delete an element.
-
-    Parameters:
-
-    element - (string or object):  The name of, or the element itself which will be deleted.
-        
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    remove: function(element) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        if (element && element.parentNode && element.parentNode.removeChild)
-            element.parentNode.removeChild(element);
-
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.create
-
-    Create a new element and append it to the specified parent element.
-
-    Parameters:
-
-    objParent - (string or object):  The name of, or the element itself
-        which will contain the new element.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value to be assigned to the id attribute of the new element.
-        
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    create: function(objParent, sTag, sId) {
-        if ('string' == typeof objParent)
-            objParent = jaxon.$(objParent);
-        var target = jaxon.config.baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        if (objParent)
-            objParent.appendChild(target);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.insert
-
-    Insert a new element before the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference point for insertion.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    insert: function(objSibling, sTag, sId) {
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
-        var target = jaxon.config.baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        objSibling.parentNode.insertBefore(target, objSibling);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.insertAfter
-
-    Insert a new element after the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference point for insertion.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    insertAfter: function(objSibling, sTag, sId) {
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
-        var target = jaxon.config.baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.contextAssign
-
-    Assign a value to a named member of the current script context object.
-
-    Parameters:
-
-    args - (object):  The response command object which will contain the
-        following:
-        
-        - args.prop: (string):  The name of the member to assign.
-        - args.data: (string or object):  The value to assign to the member.
-        - args.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    contextAssign: function(args) {
-        args.fullName = 'context assign';
-
-        var code = [];
-        code.push('this.');
-        code.push(args.prop);
-        code.push(' = data;');
-        code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
-            eval(code);
-        }
-        args.context.jaxonDelegateCall(args.data);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.contextAppend
-
-    Appends a value to a named member of the current script context object.
-
-    Parameters:
-
-    args - (object):  The response command object which will contain the
-        following:
-        
-        - args.prop: (string):  The name of the member to append to.
-        - args.data: (string or object):  The value to append to the member.
-        - args.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    contextAppend: function(args) {
-        args.fullName = 'context append';
-
-        var code = [];
-        code.push('this.');
-        code.push(args.prop);
-        code.push(' += data;');
-        code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
-            eval(code);
-        }
-        args.context.jaxonDelegateCall(args.data);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.node.contextPrepend
-
-    Prepend a value to a named member of the current script context object.
-
-    Parameters:
-
-    args - (object):  The response command object which will contain the
-        following:
-        
-        - args.prop: (string):  The name of the member to prepend to.
-        - args.data: (string or object):  The value to prepend to the member.
-        - args.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    contextPrepend: function(args) {
-        args.fullName = 'context prepend';
-
-        var code = [];
-        code.push('this.');
-        code.push(args.prop);
-        code.push(' = data + this.');
-        code.push(args.prop);
-        code.push(';');
-        code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
-            eval(code);
-        }
-        args.context.jaxonDelegateCall(args.data);
-        return true;
-    }
-};
-
-jaxon.cmd.script = {
-    /*
-    Function: jaxon.cmd.script.includeScriptOnce
-
-    Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
-
-    This will effecitvely cause the script file to be loaded in the browser.
-
-    Parameters: 
-
-    fileName - (string):  The URI of the file.
-
-    Returns:
-
-    true - The reference exists or was added.
-    */
-    includeScriptOnce: function(command) {
-        command.fullName = 'includeScriptOnce';
-        var fileName = command.data;
-        // Check for existing script tag for this file.
-        var oDoc = jaxon.config.baseDocument;
-        var loadedScripts = oDoc.getElementsByTagName('script');
-        var iLen = loadedScripts.length;
-        for (var i = 0; i < iLen; ++i) {
-            var script = loadedScripts[i];
-            if (script.src) {
-                if (0 <= script.src.indexOf(fileName))
-                    return true;
-            }
-        }
-        return jaxon.cmd.script.includeScript(command);
-    },
-
-    /*
-    Function: jaxon.cmd.script.includeScript
-
-    Adds a SCRIPT tag referencing the specified file.
-    This effectively causes the script to be loaded in the browser.
-
-    Parameters: 
-
-    command (object) - Xajax response object
-
-    Returns:
-
-    true - The reference was added.
-    */
-    includeScript: function(command) {
-        command.fullName = 'includeScript';
-        var oDoc = jaxon.config.baseDocument;
-        var objHead = oDoc.getElementsByTagName('head');
-        var objScript = oDoc.createElement('script');
-        objScript.src = command.data;
-        if ('undefined' == typeof command.type) objScript.type = 'text/javascript';
-        else objScript.type = command.type;
-        if ('undefined' != typeof command.type) objScript.setAttribute('id', command.elm_id);
-        objHead[0].appendChild(objScript);
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.removeScript
-
-    Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
-
-    Parameters: 
-
-    command (object) - Xajax response object
-            
-    Returns:
-
-    true - The script was not found or was removed.
-    */
-    removeScript: function(command) {
-        command.fullName = 'removeScript';
-        var fileName = command.data;
-        var unload = command.unld;
-        var oDoc = jaxon.config.baseDocument;
-        var loadedScripts = oDoc.getElementsByTagName('script');
-        var iLen = loadedScripts.length;
-        for (var i = 0; i < iLen; ++i) {
-            var script = loadedScripts[i];
-            if (script.src) {
-                if (0 <= script.src.indexOf(fileName)) {
-                    if ('undefined' != typeof unload) {
-                        var args = {};
-                        args.data = unload;
-                        args.context = window;
-                        jaxon.cmd.script.execute(args);
-                    }
-                    var parent = script.parentNode;
-                    parent.removeChild(script);
-                }
-            }
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.sleep
-
-    Causes the processing of items in the queue to be delayed for the specified amount of time.
-    This is an asynchronous operation, therefore, other operations will be given an opportunity
-    to execute during this delay.
-
-    Parameters:
-
-    args - (object):  The response command containing the following
-        parameters.
-        - args.prop: The number of 10ths of a second to sleep.
-
-    Returns:
-
-    true - The sleep operation completed.
-    false - The sleep time has not yet expired, continue sleeping.
-    */
-    sleep: function(command) {
-        command.fullName = 'sleep';
-        // inject a delay in the queue processing
-        // handle retry counter
-        if (jaxon.tools.queue.retry(command, command.prop)) {
-            jaxon.ajax.response.setWakeup(jaxon.response, 100);
-            return false;
-        }
-        // wake up, continue processing queue
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.confirmCommands
-
-    Prompt the user with the specified text, if the user responds by clicking cancel, then skip
-    the specified number of commands in the response command queue.
-    If the user clicks Ok, the command processing resumes normal operation.
-
-    Parameters:
-
-    command (object) - jaxon response object
-        
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    confirmCommands: function(command) {
-        command.fullName = 'confirmCommands';
-        var msg = command.data;
-        var numberOfCommands = command.id;
-        if (false == confirm(msg)) {
-            while (0 < numberOfCommands) {
-                jaxon.tools.queue.pop(jaxon.response);
-                --numberOfCommands;
-            }
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.execute
-
-    Execute the specified string of javascript code, using the current script context.
-
-    Parameters:
-
-    args - The response command object containing the following:
-        - args.data: (string):  The javascript to be evaluated.
-        - args.context: (object):  The javascript object that to be referenced as 'this' in the script.
-            
-    Returns:
-
-    unknown - A value set by the script using 'returnValue = '
-    true - If the script does not set a returnValue.
-    */
-    execute: function(args) {
-        args.fullName = 'execute Javascript';
-        var returnValue = true;
-        args.context = args.context ? args.context : {};
-        args.context.jaxonDelegateCall = function() {
-            eval(args.data);
-        };
-        args.context.jaxonDelegateCall();
-        return returnValue;
-    },
-
-    /*
-    Function: jaxon.cmd.script.waitFor
-
-    Test for the specified condition, using the current script context;
-    if the result is false, sleep for 1/10th of a second and try again.
-
-    Parameters:
-
-    args - The response command object containing the following:
-
-        - args.data: (string):  The javascript to evaluate.
-        - args.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
-        - args.context: (object):  The current script context object which is accessable in
-            the javascript being evaulated via the 'this' keyword.
-
-    Returns:
-
-    false - The condition evaulates to false and the sleep time has not expired.
-    true - The condition evaluates to true or the sleep time has expired.
-    */
-    waitFor: function(args) {
-        args.fullName = 'waitFor';
-
-        var bResult = false;
-        var cmdToEval = 'bResult = (';
-        cmdToEval += args.data;
-        cmdToEval += ');';
-        try {
-            args.context.jaxonDelegateCall = function() {
-                eval(cmdToEval);
-            }
-            args.context.jaxonDelegateCall();
-        } catch (e) {}
-        if (false == bResult) {
-            // inject a delay in the queue processing
-            // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
-                jaxon.ajax.response.setWakeup(jaxon.response, 100);
-                return false;
-            }
-            // give up, continue processing queue
-        }
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.call
-
-    Call a javascript function with a series of parameters using the current script context.
-
-    Parameters:
-
-    args - The response command object containing the following:
-        - args.data: (array):  The parameters to pass to the function.
-        - args.func: (string):  The name of the function to call.
-        - args.context: (object):  The current script context object which is accessable in the
-            function name via the 'this keyword.
-            
-    Returns:
-
-    true - The call completed successfully.
-    */
-    call: function(args) {
-        args.fullName = 'call js function';
-
-        var parameters = args.data;
-
-        var scr = new Array();
-        scr.push(args.func);
-        scr.push('(');
-        if ('undefined' != typeof parameters) {
-            if ('object' == typeof parameters) {
-                var iLen = parameters.length;
-                if (0 < iLen) {
-                    scr.push('parameters[0]');
-                    for (var i = 1; i < iLen; ++i)
-                        scr.push(', parameters[' + i + ']');
-                }
-            }
-        }
-        scr.push(');');
-        args.context.jaxonDelegateCall = function() {
-            eval(scr.join(''));
-        }
-        args.context.jaxonDelegateCall();
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.setFunction
-
-    Constructs the specified function using the specified javascript as the body of the function.
-
-    Parameters:
-
-    args - The response command object which contains the following:
-
-        - args.func: (string):  The name of the function to construct.
-        - args.data: (string):  The script that will be the function body.
-        - args.context: (object):  The current script context object
-            which is accessable in the script name via the 'this' keyword.
-            
-    Returns:
-
-    true - The function was constructed successfully.
-    */
-    setFunction: function(args) {
-        args.fullName = 'setFunction';
-
-        var code = new Array();
-        code.push(args.func);
-        code.push(' = function(');
-        if ('object' == typeof args.prop) {
-            var separator = '';
-            for (var m in args.prop) {
-                code.push(separator);
-                code.push(args.prop[m]);
-                separator = ',';
-            }
-        } else code.push(args.prop);
-        code.push(') { ');
-        code.push(args.data);
-        code.push(' }');
-        args.context.jaxonDelegateCall = function() {
-            eval(code.join(''));
-        }
-        args.context.jaxonDelegateCall();
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.wrapFunction
-
-    Construct a javascript function which will call the original function with the same name,
-    potentially executing code before and after the call to the original function.
-
-    Parameters:
-
-    args - (object):  The response command object which will contain 
-        the following:
-        
-        - args.func: (string):  The name of the function to be wrapped.
-        - args.prop: (string):  List of parameters used when calling the function.
-        - args.data: (array):  The portions of code to be called before, after
-            or even between calls to the original function.
-        - args.context: (object):  The current script context object which is 
-            accessable in the function name and body via the 'this' keyword.
-            
-    Returns:
-
-    true - The wrapper function was constructed successfully.
-    */
-    wrapFunction: function(args) {
-        args.fullName = 'wrapFunction';
-
-        var code = new Array();
-        code.push(args.func);
-        code.push(' = jaxon.cmd.script.makeWrapper(');
-        code.push(args.func);
-        code.push(', args.prop, args.data, args.type, args.context);');
-        args.context.jaxonDelegateCall = function() {
-            eval(code.join(''));
-        }
-        args.context.jaxonDelegateCall();
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.script.makeWrapper
-
-
-    Helper function used in the wrapping of an existing javascript function.
-
-    Parameters:    
-
-    origFun - (string):  The name of the original function.
-    args - (string):  The list of parameters used when calling the function.
-    codeBlocks - (array):  Array of strings of javascript code to be executed
-        before, after and perhaps between calls to the original function.
-    returnVariable - (string):  The name of the variable used to retain the
-        return value from the call to the original function.
-    context - (object):  The current script context object which is accessable
-        in the function name and body via the 'this' keyword.
-        
-    Returns:
-
-    object - The complete wrapper function.
-    */
-    makeWrapper: function(origFun, args, codeBlocks, returnVariable, context) {
-        var originalCall = '';
-        if (0 < returnVariable.length) {
-            originalCall += returnVariable;
-            originalCall += ' = ';
-        }
-        var originalCall = 'origFun(';
-        originalCall += args;
-        originalCall += '); ';
-
-        var code = 'wrapper = function(';
-        code += args;
-        code += ') { ';
-
-        if (0 < returnVariable.length) {
-            code += ' var ';
-            code += returnVariable;
-            code += ' = null;';
-        }
-        var separator = '';
-        var bLen = codeBlocks.length;
-        for (var b = 0; b < bLen; ++b) {
-            code += separator;
-            code += codeBlocks[b];
-            separator = originalCall;
-        }
-        if (0 < returnVariable.length) {
-            code += ' return ';
-            code += returnVariable;
-            code += ';';
-        }
-        code += ' } ';
-
-        var wrapper = null;
-        context.jaxonDelegateCall = function() {
-            eval(code);
-        }
-        context.jaxonDelegateCall();
-        return wrapper;
-    }
-};
-
-jaxon.cmd.style = {
-    /*
-    Function: jaxon.cmd.style.add
-
-    Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file to reference.
-    media - (string):  The media type of the css file (print/screen/handheld,..)
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    add: function(fileName, media) {
-        var oDoc = jaxon.config.baseDocument;
-        var oHeads = oDoc.getElementsByTagName('head');
-        var oHead = oHeads[0];
-        var oLinks = oHead.getElementsByTagName('link');
-
-        var found = false;
-        var iLen = oLinks.length;
-        for (var i = 0; i < iLen && false == found; ++i)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                found = true;
-
-        if (false == found) {
-            var oCSS = oDoc.createElement('link');
-            oCSS.rel = 'stylesheet';
-            oCSS.type = 'text/css';
-            oCSS.href = fileName;
-            oCSS.media = media;
-            oHead.appendChild(oCSS);
-        }
-
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.style.remove
-
-    Locate and remove a LINK reference from the current document's HEAD.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    remove: function(fileName, media) {
-        var oDoc = jaxon.config.baseDocument;
-        var oHeads = oDoc.getElementsByTagName('head');
-        var oHead = oHeads[0];
-        var oLinks = oHead.getElementsByTagName('link');
-
-        var i = 0;
-        while (i < oLinks.length)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                oHead.removeChild(oLinks[i]);
-            else ++i;
-
-        return true;
-    },
-
-    /*
-    Function: jaxon.cmd.style.waitForCSS
-
-    Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
-    in the HEAD of the current document.
-
-    Parameters:
-
-    args - (object):  The response command object which will contain the following:
-        - args.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
-
-    Returns:
-
-    true - The .css files appear to be loaded.
-    false - The .css files do not appear to be loaded and the timeout has not expired.
-    */
-    waitForCSS: function(args) {
-        var oDocSS = jaxon.config.baseDocument.styleSheets;
-        var ssEnabled = [];
-        var iLen = oDocSS.length;
-        for (var i = 0; i < iLen; ++i) {
-            ssEnabled[i] = 0;
-            try {
-                ssEnabled[i] = oDocSS[i].cssRules.length;
-            } catch (e) {
-                try {
-                    ssEnabled[i] = oDocSS[i].rules.length;
-                } catch (e) {}
-            }
-        }
-
-        var ssLoaded = true;
-        var iLen = ssEnabled.length;
-        for (var i = 0; i < iLen; ++i)
-            if (0 == ssEnabled[i])
-                ssLoaded = false;
-
-        if (false == ssLoaded) {
-            // inject a delay in the queue processing
-            // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
-                jaxon.ajax.response.setWakeup(jaxon.response, 10);
-                return false;
-            }
-            // give up, continue processing queue
-        }
-        return true;
-    }
-};
-
-jaxon.cmd.tree = {
-    startResponse: function(args) {
-        jxnElm = [];
-    },
-
-    createElement: function(args) {
-        eval(
-            [args.tgt, ' = document.createElement(args.data)']
-            .join('')
-        );
-    },
-
-    setAttribute: function(args) {
-        args.context.jaxonDelegateCall = function() {
-            eval(
-                [args.tgt, '.setAttribute(args.key, args.data)']
-                .join('')
-            );
-        }
-        args.context.jaxonDelegateCall();
-    },
-
-    appendChild: function(args) {
-        args.context.jaxonDelegateCall = function() {
-            eval(
-                [args.par, '.appendChild(', args.data, ')']
-                .join('')
-            );
-        }
-        args.context.jaxonDelegateCall();
-    },
-
-    insertBefore: function(args) {
-        args.context.jaxonDelegateCall = function() {
-            eval(
-                [args.tgt, '.parentNode.insertBefore(', args.data, ', ', args.tgt, ')']
-                .join('')
-            );
-        }
-        args.context.jaxonDelegateCall();
-    },
-
-    insertAfter: function(args) {
-        args.context.jaxonDelegateCall = function() {
-            eval(
-                [args.tgt, 'parentNode.insertBefore(', args.data, ', ', args.tgt, '.nextSibling)']
-                .join('')
-            );
-        }
-        args.context.jaxonDelegateCall();
-    },
-
-    appendText: function(args) {
-        args.context.jaxonDelegateCall = function() {
-            eval(
-                [args.par, '.appendChild(document.createTextNode(args.data))']
-                .join('')
-            );
-        }
-        args.context.jaxonDelegateCall();
-    },
-
-    removeChildren: function(args) {
-        var skip = args.skip || 0;
-        var remove = args.remove || -1;
-        var element = null;
-        args.context.jaxonDelegateCall = function() {
-            eval(['element = ', args.data].join(''));
-        }
-        args.context.jaxonDelegateCall();
-        var children = element.childNodes;
-        for (var i in children) {
-            if (isNaN(i) == false && children[i].nodeType == 1) {
-                if (skip > 0) skip = skip - 1;
-                else if (remove != 0) {
-                    if (remove > 0)
-                        remove = remove - 1;
-                    element.removeChild(children[i]);
-                }
-            }
-        }
-    },
-
-    endResponse: function(args) {
-        jxnElm = [];
-    }
-};
 
 /**
  * Class: jaxon.dom

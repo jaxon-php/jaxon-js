@@ -23,8 +23,8 @@ var folders = {
             core: [
                 folders.src + 'config.js',
                 folders.src + 'tools/*.js',
-                folders.src + 'ajax/*.js',
                 folders.src + 'cmd/*.js',
+                folders.src + 'ajax/*.js',
                 folders.src + 'ready.js',
                 folders.src + 'jaxon.js',
                 folders.src + 'compat.js'
