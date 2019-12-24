@@ -1,13 +1,13 @@
 /*
     File: jaxon.js
-    
+
     This file contains the definition of the main jaxon javascript core.
-    
+
     This is the client side code which runs on the web browser or similar web enabled application.
     Include this in the HEAD of each page for which you wish to use jaxon.
-    
+
     Title: jaxon core javascript library
-    
+
     Please see <copyright.inc.php> for a detailed description, copyright and license information.
 */
 
@@ -87,3 +87,13 @@ Boolean: jaxon.isLoaded
 true - jaxon module is loaded.
 */
 jaxon.isLoaded = true;
+
+/*
+Object: jaxon.ajax.request.q
+
+The queues that hold synchronous requests as they are sent and processed.
+*/
+jaxon.ajax.request.q = {
+    send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
+    recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
+};
