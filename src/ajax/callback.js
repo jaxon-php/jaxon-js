@@ -27,6 +27,7 @@ jaxon.ajax.callback = {
             arguments[1] :
             xc.defaultExpirationTime);
 
+        oCB.onPrepare = null;
         oCB.onRequest = null;
         oCB.onResponseDelay = null;
         oCB.onExpiration = null;

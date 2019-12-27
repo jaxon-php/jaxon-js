@@ -45,6 +45,7 @@ jaxon.ajax.request = {
         oRequest.set('maxObjectSize', xc.maxObjectSize);
         oRequest.set('context', window);
         oRequest.set('upload', false);
+        oRequest.set('ignore', false);
 
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
@@ -58,6 +59,7 @@ jaxon.ajax.request = {
             delete frm[opt];
         };
 
+        lcb.take(oRequest, 'onPrepare');
         lcb.take(oRequest, 'onRequest');
         lcb.take(oRequest, 'onResponseDelay');
         lcb.take(oRequest, 'onExpiration');
@@ -116,7 +118,7 @@ jaxon.ajax.request = {
         {
             return null;
         }
-        if(jaxon.tools.queue.peek(oQueue).mode != 'asynchronous')
+        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
         {
             return null;
         }
@@ -141,6 +143,16 @@ jaxon.ajax.request = {
     prepare: function(oRequest) {
         var xx = jaxon;
         var xt = xx.tools;
+        var xcb = xx.ajax.callback;
+        var gcb = xx.callback;
+        var lcb = oRequest.callback;
+
+        xcb.execute([gcb, lcb], 'onPrepare', oRequest);
+
+        // Check if the request must be ignored
+        if(oRequest.ignore == true) {
+            return false;
+        }
 
         oRequest.request = xt.ajax.createRequest();
 
