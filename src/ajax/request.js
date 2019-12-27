@@ -68,10 +68,16 @@ jaxon.ajax.request = {
         lcb.take(oRequest, 'onComplete');
 
         if('undefined' != typeof oRequest.callback) {
-            if(lcb.hasEvents)
+            // Add the timers attribute, if it is not defined.
+            if('undefined' == typeof oRequest.callback.timers) {
+                oRequest.callback.timers = [];
+            }
+            if(lcb.hasEvents) {
                 oRequest.callback = [oRequest.callback, lcb];
-        } else
+            }
+        } else {
             oRequest.callback = lcb;
+        }
 
         oRequest.status = (oRequest.statusMessages) ?
             xc.status.update() :
@@ -92,7 +98,7 @@ jaxon.ajax.request = {
 
         delete oRequest['append'];
         delete oRequest['set'];
-        delete oRequest['take'];
+        delete lcb['take'];
 
         if('undefined' == typeof oRequest.URI)
             throw { code: 10005 };
