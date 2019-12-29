@@ -79,6 +79,25 @@ jaxon.ajax.response = {
         delete oRequest['status'];
         delete oRequest['cursor'];
         delete oRequest['challengeResponse'];
+
+        if('synchronous' == oRequest.mode) {
+            let gar = jaxon.ajax.request;
+            // Process the request and remove it from the send and recv queues.
+            jaxon.tools.queue.pop(jaxon.ajax.request.q.send);
+            jaxon.tools.queue.pop(jaxon.ajax.request.q.recv);
+            // Process the asynchronous requests received while waiting.
+            while((recvRequest = gar.popAsyncRequest(jaxon.ajax.request.q.recv)) != null) {
+                jaxon.ajax.response.received(recvRequest);
+            }
+            // Submit the asynchronous requests sent while waiting.
+            while((nextRequest = gar.popAsyncRequest(jaxon.ajax.request.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+            // Submit the next synchronous request, if there's any.
+            if((nextRequest = jaxon.tools.queue.peek(jaxon.ajax.request.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+        }
     },
 
     /*

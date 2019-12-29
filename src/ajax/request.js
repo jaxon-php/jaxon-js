@@ -186,28 +186,10 @@ jaxon.ajax.request = {
             if(oRequest.request.readyState != 4) {
                 return;
             }
-            let gar = jaxon.ajax.request;
-            // Process synchronous request
-            if('synchronous' == oRequest.mode) {
-                // Process the request and remove it from the send and recv queues.
-                jaxon.ajax.response.received(oRequest);
-                jaxon.tools.queue.pop(jaxon.ajax.request.q.send);
-                jaxon.tools.queue.pop(jaxon.ajax.request.q.recv);
-                // Process the asynchronous requests received while waiting.
-                while((recvRequest = gar.popAsyncRequest(jaxon.ajax.request.q.recv)) != null) {
-                    jaxon.ajax.response.received(recvRequest);
-                }
-                // Submit the asynchronous requests sent while waiting.
-                while((nextRequest = gar.popAsyncRequest(jaxon.ajax.request.q.send)) != null) {
-                    jaxon.ajax.request.submit(nextRequest);
-                }
-                // Submit the next synchronous request, if there's any.
-                if((nextRequest = jaxon.tools.queue.peek(jaxon.ajax.request.q.send)) != null) {
-                    jaxon.ajax.request.submit(nextRequest);
-                }
-            }
-            // Process asynchronous request
-            else if(jaxon.tools.queue.empty(jaxon.ajax.request.q.send)) {
+            // Synchronous request are processed immediately.
+            // Asynchronous request are processed only if the queue is empty.
+            if(jaxon.tools.queue.empty(jaxon.ajax.request.q.send) ||
+                'synchronous' == oRequest.mode) {
                 jaxon.ajax.response.received(oRequest);
             }
             else {

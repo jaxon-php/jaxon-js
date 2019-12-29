@@ -40,7 +40,7 @@ jaxon.ajax.handler = {
             }
             // process the command
             if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(jaxon.response, command);
+                jaxon.tools.queue.pushFront(command.response, command);
                 return false;
             }
         }
