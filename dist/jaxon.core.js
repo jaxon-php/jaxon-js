@@ -361,32 +361,6 @@ jaxon.tools.ajax = {
         // this would seem to cause an infinite loop, however, the function should
         // be reassigned by now and therefore, it will not loop.
         return jaxon.tools.ajax.createRequest();
-    },
-
-    /*
-    Function: jaxon.tools.ajax.retry
-
-    Maintains a retry counter for the given object.
-
-    Parameters:
-    obj - (object):
-        The object to track the retry count for.
-    count - (integer):
-        The number of times the operation should be attempted before a failure is indicated.
-
-    Returns:
-    true - The object has not exhausted all the retries.
-    false - The object has exhausted the retry count specified.
-    */
-    retry: function(obj, count) {
-        var retries = obj.retries;
-        if(retries) {
-            --retries;
-            if(1 > retries)
-                return false;
-        } else retries = count;
-        obj.retries = retries;
-        return true;
     }
 };
 
@@ -707,44 +681,44 @@ jaxon.tools.queue = {
     /**
      * Check id a queue is empty.
      *
-     * @param object theQ The queue to check.
+     * @param object oQueue The queue to check.
      *
      * @returns boolean
      */
-    empty: function(theQ) {
-        return (theQ.count <= 0);
+    empty: function(oQueue) {
+        return (oQueue.count <= 0);
     },
 
     /**
      * Check id a queue is empty.
      *
-     * @param object theQ The queue to check.
+     * @param object oQueue The queue to check.
      *
      * @returns boolean
      */
-    full: function(theQ) {
-        return (theQ.count >= theQ.size);
+    full: function(oQueue) {
+        return (oQueue.count >= oQueue.size);
     },
 
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *
-     * @param object theQ   The queue in which you would like the object stored.
+     * @param object oQueue The queue in which you would like the object stored.
      * @param object obj    The object you would like stored in the queue.
      *
      * @returns integer The number of entries in the queue.
      */
-    push: function(theQ, obj) {
+    push: function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(theQ)) {
+        if(jaxon.tools.queue.full(oQueue)) {
             throw { code: 10003 };
         }
 
-        theQ.elements[theQ.end] = obj;
-        if(++theQ.end >= theQ.size) {
-            theQ.end = 0;
+        oQueue.elements[oQueue.end] = obj;
+        if(++oQueue.end >= oQueue.size) {
+            oQueue.end = 0;
         }
-        return ++theQ.count;
+        return ++oQueue.count;
     },
 
     /**
@@ -752,63 +726,63 @@ jaxon.tools.queue = {
      *
      * This effectively pushes an object to the front of the queue... it will be processed first.
      *
-     * @param object theQ   The queue in which you would like the object stored.
+     * @param object oQueue The queue in which you would like the object stored.
      * @param object obj    The object you would like stored in the queue.
      *
      * @returns integer The number of entries in the queue.
      */
-    pushFront: function(theQ, obj) {
+    pushFront: function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(theQ)) {
+        if(jaxon.tools.queue.full(oQueue)) {
             throw { code: 10003 };
         }
 
         // Simply push if the queue is empty
-        if(jaxon.tools.queue.empty(theQ)) {
-            return jaxon.tools.queue.push(theQ, obj);
+        if(jaxon.tools.queue.empty(oQueue)) {
+            return jaxon.tools.queue.push(oQueue, obj);
         }
 
         // Put the object one position back.
-        if(--theQ.start < 0) {
-            theQ.start = theQ.size - 1;
+        if(--oQueue.start < 0) {
+            oQueue.start = oQueue.size - 1;
         }
-        theQ.elements[theQ.start] = obj;
-        return ++theQ.count;
+        oQueue.elements[oQueue.start] = obj;
+        return ++oQueue.count;
     },
 
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object theQ   The queue object you would like to modify.
+     * @param object oQueue The queue object you would like to modify.
      *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
+     * @returns object|null
      */
-    pop: function(theQ) {
-        if(jaxon.tools.queue.empty(theQ)) {
+    pop: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
             return null;
         }
 
-        let obj = theQ.elements[theQ.start];
-        delete theQ.elements[theQ.start];
-        if(++theQ.start >= theQ.size) {
-            theQ.start = 0;
+        let obj = oQueue.elements[oQueue.start];
+        delete oQueue.elements[oQueue.start];
+        if(++oQueue.start >= oQueue.size) {
+            oQueue.start = 0;
         }
-        theQ.count--;
+        oQueue.count--;
         return obj;
     },
 
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object theQ   The queue object you would like to modify.
+     * @param object oQueue The queue object you would like to modify.
      *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
+     * @returns object|null
      */
-    peek: function(theQ) {
-        if(jaxon.tools.queue.empty(theQ)) {
+    peek: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
             return null;
         }
-        return theQ.elements[theQ.start];
+        return oQueue.elements[oQueue.start];
     }
 };
 
@@ -1001,6 +975,71 @@ jaxon.tools.upload = {
                 'content-type': oRequest.contentType
             });
         }
+    }
+};
+
+
+jaxon.cmd.delay = {
+    /**
+     * Attempt to pop the next asynchronous request.
+     *
+     * @param object oQueue The queue object you would like to modify.
+     *
+     * @returns object|null
+     */
+    popAsyncRequest: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue))
+        {
+            return null;
+        }
+        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
+        {
+            return null;
+        }
+        return jaxon.tools.queue.pop(oQueue);
+    },
+
+    /**
+     * Maintains a retry counter for the given object.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param count integer     The number of times the operation should be attempted before a failure is indicated.
+     *
+     * @returns boolean
+     *      true - The object has not exhausted all the retries.
+     *      false - The object has exhausted the retry count specified.
+     */
+    retry: function(command, count) {
+        var retries = command.retries;
+        if(retries) {
+            --retries;
+            if(1 > retries) {
+                return false;
+            }
+        } else {
+            retries = count;
+        }
+        command.retries = retries;
+        return true;
+    },
+
+    /**
+     * Set or reset a timeout that is used to restart processing of the queue.
+     *
+     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
+     * to process pending events, like loading files)
+     *
+     * @param response object   The queue to process upon timeout.
+     * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
+     */
+    setWakeup: function(response, when) {
+        if (null != response.timeout) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
+        }
+        response.timout = setTimeout(function() {
+            jaxon.ajax.response.process(response);
+        }, when);
     }
 };
 
@@ -1732,8 +1771,8 @@ jaxon.cmd.script = {
         command.fullName = 'sleep';
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.tools.ajax.retry(command, command.prop)) {
-            jaxon.ajax.response.setWakeup(command.response, 100);
+        if (jaxon.cmd.delay.retry(command, command.prop)) {
+            jaxon.cmd.delay.setWakeup(command.response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -1831,8 +1870,8 @@ jaxon.cmd.script = {
         if (false == bResult) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.ajax.retry(command, command.prop)) {
-                jaxon.ajax.response.setWakeup(command.response, 100);
+            if (jaxon.cmd.delay.retry(command, command.prop)) {
+                jaxon.cmd.delay.setWakeup(command.response, 100);
                 return false;
             }
             // give up, continue processing queue
@@ -2132,8 +2171,8 @@ jaxon.cmd.style = {
         if (false == ssLoaded) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.ajax.retry(command, command.prop)) {
-                jaxon.ajax.response.setWakeup(command.response, 10);
+            if (jaxon.cmd.delay.retry(command, command.prop)) {
+                jaxon.cmd.delay.setWakeup(command.response, 10);
                 return false;
             }
             // give up, continue processing queue
@@ -2398,7 +2437,7 @@ jaxon.ajax.handler = {
             }
             // process the command
             if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(jaxon.response, command);
+                jaxon.tools.queue.pushFront(command.response, command);
                 return false;
             }
         }
@@ -2972,25 +3011,6 @@ jaxon.ajax.request = {
             throw { code: 10005 };
     },
 
-    /**
-     * Attempt to pop the next asynchronous request.
-     *
-     * @param object oQueue   The queue object you would like to modify.
-     *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
-     */
-    popAsyncRequest: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue))
-        {
-            return null;
-        }
-        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
-        {
-            return null;
-        }
-        return jaxon.tools.queue.pop(oQueue);
-    },
-
     /*
     Function: jaxon.ajax.request.prepare
 
@@ -3052,32 +3072,14 @@ jaxon.ajax.request = {
             if(oRequest.request.readyState != 4) {
                 return;
             }
-            let gar = jaxon.ajax.request;
-            // Process synchronous request
-            if('synchronous' == oRequest.mode) {
-                // Process the request and remove it from the send and recv queues.
-                jaxon.ajax.response.received(oRequest);
-                jaxon.tools.queue.pop(jaxon.ajax.request.q.send);
-                jaxon.tools.queue.pop(jaxon.ajax.request.q.recv);
-                // Process the asynchronous requests received while waiting.
-                while((recvRequest = gar.popAsyncRequest(jaxon.ajax.request.q.recv)) != null) {
-                    jaxon.ajax.response.received(recvRequest);
-                }
-                // Submit the asynchronous requests sent while waiting.
-                while((nextRequest = gar.popAsyncRequest(jaxon.ajax.request.q.send)) != null) {
-                    jaxon.ajax.request.submit(nextRequest);
-                }
-                // Submit the next synchronous request, if there's any.
-                if((nextRequest = jaxon.tools.queue.peek(jaxon.ajax.request.q.send)) != null) {
-                    jaxon.ajax.request.submit(nextRequest);
-                }
-            }
-            // Process asynchronous request
-            else if(jaxon.tools.queue.empty(jaxon.ajax.request.q.send)) {
+            // Synchronous request are processed immediately.
+            // Asynchronous request are processed only if the queue is empty.
+            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
+                'synchronous' == oRequest.mode) {
                 jaxon.ajax.response.received(oRequest);
             }
             else {
-                jaxon.tools.queue.push(jaxon.ajax.request.q.recv, oRequest);
+                jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
             }
         };
         oRequest.finishRequest = function() {
@@ -3124,15 +3126,15 @@ jaxon.ajax.request = {
         }
 
         // No request is submitted while there are pending requests in the outgoing queue.
-        let submitRequest = jaxon.tools.queue.empty(jaxon.ajax.request.q.send);
+        let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
         if('synchronous' == oRequest.mode) {
             // Synchronous requests are always queued, in both send and recv queues.
-            jaxon.tools.queue.push(jaxon.ajax.request.q.send, oRequest);
-            jaxon.tools.queue.push(jaxon.ajax.request.q.recv, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
         }
         else if(!submitRequest) {
             // Asynchronous requests are queued in send queue only if they are not submitted.
-            jaxon.tools.queue.push(jaxon.ajax.request.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
         }
         return submitRequest;
     },
@@ -3284,7 +3286,7 @@ jaxon.ajax.response = {
         }
 
         // Create a response queue for this request.
-        oRequest.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
+        oRequest.response = xx.tools.queue.create(xx.config.responseQueueSize);
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
@@ -3344,6 +3346,27 @@ jaxon.ajax.response = {
         delete oRequest['status'];
         delete oRequest['cursor'];
         delete oRequest['challengeResponse'];
+
+        // All the requests queued while waiting must now be processed.
+        if('synchronous' == oRequest.mode) {
+            let jq = jaxon.tools.queue;
+            let jd = jaxon.cmd.delay;
+            // Remove the current request from the send and recv queues.
+            jq.pop(jd.q.send);
+            jq.pop(jd.q.recv);
+            // Process the asynchronous requests received while waiting.
+            while((recvRequest = jd.popAsyncRequest(jd.q.recv)) != null) {
+                jaxon.ajax.response.received(recvRequest);
+            }
+            // Submit the asynchronous requests sent while waiting.
+            while((nextRequest = jd.popAsyncRequest(jd.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+            // Submit the next synchronous request, if there's any.
+            if((nextRequest = jq.peek(jd.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+        }
     },
 
     /*
@@ -3364,7 +3387,7 @@ jaxon.ajax.response = {
 
     Note:
 
-    - Use <jaxon.ajax.response.setWakeup> or call this function to cause the queue processing to continue.
+    - Use <jaxon.cmd.delay.setWakeup> or call this function to cause the queue processing to continue.
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
@@ -3373,43 +3396,18 @@ jaxon.ajax.response = {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
-        var obj = null;
-        while ((obj = jaxon.tools.queue.pop(response)) != null) {
+        var command = null;
+        while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
-                if (false == jaxon.ajax.handler.execute(obj)) {
+                if (false == jaxon.ajax.handler.execute(command)) {
                     return false;
                 }
             } catch (e) {
                 console.log(e);
             }
-            delete obj;
+            delete command;
         }
         return true;
-    },
-
-    /*
-    Function: jaxon.ajax.response.setWakeup
-
-    Set or reset a timeout that is used to restart processing of the queue.
-    This allows the queue to asynchronously wait for an event to occur (giving the browser time
-    to process pending events, like loading files)
-
-    Parameters:
-
-    response - (object):
-        The queue to process upon timeout.
-
-    when - (integer):
-        The number of milliseconds to wait before starting/restarting the processing of the queue.
-    */
-    setWakeup: function(response, when) {
-        if (null != response.timeout) {
-            clearTimeout(response.timeout);
-            response.timeout = null;
-        }
-        response.timout = setTimeout(function() {
-            jaxon.ajax.response.process(response);
-        }, when);
     },
 
     /*
@@ -3822,11 +3820,11 @@ true - jaxon module is loaded.
 jaxon.isLoaded = true;
 
 /*
-Object: jaxon.ajax.request.q
+Object: jaxon.cmd.delay.q
 
 The queues that hold synchronous requests as they are sent and processed.
 */
-jaxon.ajax.request.q = {
+jaxon.cmd.delay.q = {
     send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
     recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
 };
