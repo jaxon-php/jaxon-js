@@ -117,8 +117,8 @@ jaxon.cmd.script = {
         command.fullName = 'sleep';
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.tools.ajax.retry(command, command.prop)) {
-            jaxon.ajax.response.setWakeup(command.response, 100);
+        if (jaxon.cmd.delay.retry(command, command.prop)) {
+            jaxon.cmd.delay.setWakeup(command.response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -216,8 +216,8 @@ jaxon.cmd.script = {
         if (false == bResult) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.ajax.retry(command, command.prop)) {
-                jaxon.ajax.response.setWakeup(command.response, 100);
+            if (jaxon.cmd.delay.retry(command, command.prop)) {
+                jaxon.cmd.delay.setWakeup(command.response, 100);
                 return false;
             }
             // give up, continue processing queue

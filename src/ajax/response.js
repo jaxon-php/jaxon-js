@@ -99,7 +99,7 @@ jaxon.ajax.response = {
 
     Note:
 
-    - Use <jaxon.ajax.response.setWakeup> or call this function to cause the queue processing to continue.
+    - Use <jaxon.cmd.delay.setWakeup> or call this function to cause the queue processing to continue.
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
@@ -120,31 +120,6 @@ jaxon.ajax.response = {
             delete obj;
         }
         return true;
-    },
-
-    /*
-    Function: jaxon.ajax.response.setWakeup
-
-    Set or reset a timeout that is used to restart processing of the queue.
-    This allows the queue to asynchronously wait for an event to occur (giving the browser time
-    to process pending events, like loading files)
-
-    Parameters:
-
-    response - (object):
-        The queue to process upon timeout.
-
-    when - (integer):
-        The number of milliseconds to wait before starting/restarting the processing of the queue.
-    */
-    setWakeup: function(response, when) {
-        if (null != response.timeout) {
-            clearTimeout(response.timeout);
-            response.timeout = null;
-        }
-        response.timout = setTimeout(function() {
-            jaxon.ajax.response.process(response);
-        }, when);
     },
 
     /*

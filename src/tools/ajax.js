@@ -43,31 +43,5 @@ jaxon.tools.ajax = {
         // this would seem to cause an infinite loop, however, the function should
         // be reassigned by now and therefore, it will not loop.
         return jaxon.tools.ajax.createRequest();
-    },
-
-    /*
-    Function: jaxon.tools.ajax.retry
-
-    Maintains a retry counter for the given object.
-
-    Parameters:
-    obj - (object):
-        The object to track the retry count for.
-    count - (integer):
-        The number of times the operation should be attempted before a failure is indicated.
-
-    Returns:
-    true - The object has not exhausted all the retries.
-    false - The object has exhausted the retry count specified.
-    */
-    retry: function(obj, count) {
-        var retries = obj.retries;
-        if(retries) {
-            --retries;
-            if(1 > retries)
-                return false;
-        } else retries = count;
-        obj.retries = retries;
-        return true;
     }
 };
