@@ -45,7 +45,7 @@ jaxon.ajax.request = {
         oRequest.set('maxObjectSize', xc.maxObjectSize);
         oRequest.set('context', window);
         oRequest.set('upload', false);
-        oRequest.set('ignore', false);
+        oRequest.set('aborted', false);
 
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
@@ -149,8 +149,8 @@ jaxon.ajax.request = {
 
         xcb.execute([gcb, lcb], 'onPrepare', oRequest);
 
-        // Check if the request must be ignored
-        if(oRequest.ignore == true) {
+        // Check if the request must be aborted
+        if(oRequest.aborted == true) {
             return false;
         }
 
