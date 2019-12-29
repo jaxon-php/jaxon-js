@@ -156,7 +156,7 @@ jaxon.cmd.node = {
     Parameters:
 
     element - (string or object):  The name of, or the element itself which will be deleted.
-        
+
     Returns:
 
     true - The operation completed successfully.
@@ -182,7 +182,7 @@ jaxon.cmd.node = {
         which will contain the new element.
     sTag - (string):  The tag name for the new element.
     sId - (string):  The value to be assigned to the id attribute of the new element.
-        
+
     Returns:
 
     true - The operation completed successfully.
@@ -254,30 +254,30 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to assign.
-        - args.data: (string or object):  The value to assign to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to assign.
+        - command.data: (string or object):  The value to assign to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextAssign: function(args) {
-        args.fullName = 'context assign';
+    contextAssign: function(command) {
+        command.fullName = 'context assign';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' = data;');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     },
 
@@ -288,30 +288,30 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to append to.
-        - args.data: (string or object):  The value to append to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to append to.
+        - command.data: (string or object):  The value to append to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextAppend: function(args) {
-        args.fullName = 'context append';
+    contextAppend: function(command) {
+        command.fullName = 'context append';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' += data;');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     },
 
@@ -322,32 +322,32 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to prepend to.
-        - args.data: (string or object):  The value to prepend to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to prepend to.
+        - command.data: (string or object):  The value to prepend to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextPrepend: function(args) {
-        args.fullName = 'context prepend';
+    contextPrepend: function(command) {
+        command.fullName = 'context prepend';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' = data + this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(';');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     }
 };

@@ -73,15 +73,15 @@ jaxon.cmd.style = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the following:
-        - args.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
+    command - (object):  The response command object which will contain the following:
+        - command.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
 
     Returns:
 
     true - The .css files appear to be loaded.
     false - The .css files do not appear to be loaded and the timeout has not expired.
     */
-    waitForCSS: function(args) {
+    waitForCSS: function(command) {
         var oDocSS = jaxon.config.baseDocument.styleSheets;
         var ssEnabled = [];
         var iLen = oDocSS.length;
@@ -105,7 +105,7 @@ jaxon.cmd.style = {
         if (false == ssLoaded) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.ajax.retry(args, args.prop)) {
+            if (jaxon.tools.ajax.retry(command, command.prop)) {
                 jaxon.ajax.response.setWakeup(jaxon.response, 10);
                 return false;
             }

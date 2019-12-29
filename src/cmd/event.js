@@ -17,27 +17,27 @@ jaxon.cmd.event = {
     */
     setEvent: function(command) {
         command.fullName = 'setEvent';
-        var element = command.id;
+        var target = command.id;
         var sEvent = command.prop;
         var code = command.data;
-        //force to get the element 
-        if ('string' == typeof element)
-            element = jaxon.$(element);
+        // force to get the target
+        if ('string' == typeof target)
+            target = jaxon.$(target);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
-        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        eval('target.' + sEvent + ' = function(e) { ' + code + '; }');
         return true;
     },
 
     /*
     Function: jaxon.cmd.event.addHandler
 
-    Add an event handler to the specified element.
+    Add an event handler to the specified target.
 
     Parameters:
 
     command - (object): Response command object.
-    - id: The id of, or the element itself
+    - id: The id of, or the target itself
     - prop: The name of the event.
     - data: The name of the function to be called
 
@@ -49,25 +49,25 @@ jaxon.cmd.event = {
         if (window.addEventListener) {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -77,12 +77,12 @@ jaxon.cmd.event = {
     /*
     Function: jaxon.cmd.event.removeHandler
 
-    Remove an event handler from an element.
+    Remove an event handler from an target.
 
     Parameters:
 
     command - (object): Response command object.
-    - id: The id of, or the element itself
+    - id: The id of, or the target itself
     - prop: The name of the event.
     - data: The name of the function to be removed
 
@@ -94,25 +94,25 @@ jaxon.cmd.event = {
         if (window.removeEventListener) {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }

@@ -83,10 +83,10 @@ jaxon.cmd.script = {
             if (script.src) {
                 if (0 <= script.src.indexOf(fileName)) {
                     if ('undefined' != typeof unload) {
-                        var args = {};
-                        args.data = unload;
-                        args.context = window;
-                        jaxon.cmd.script.execute(args);
+                        var _command = {};
+                        _command.data = unload;
+                        _command.context = window;
+                        jaxon.cmd.script.execute(_command);
                     }
                     var parent = script.parentNode;
                     parent.removeChild(script);
@@ -105,9 +105,8 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - (object):  The response command containing the following
-        parameters.
-        - args.prop: The number of 10ths of a second to sleep.
+    command - (object):  The response command containing the following parameters.
+        - command.prop: The number of 10ths of a second to sleep.
 
     Returns:
 
@@ -161,23 +160,23 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
-        - args.data: (string):  The javascript to be evaluated.
-        - args.context: (object):  The javascript object that to be referenced as 'this' in the script.
+    command - The response command object containing the following:
+        - command.data: (string):  The javascript to be evaluated.
+        - command.context: (object):  The javascript object that to be referenced as 'this' in the script.
 
     Returns:
 
     unknown - A value set by the script using 'returnValue = '
     true - If the script does not set a returnValue.
     */
-    execute: function(args) {
-        args.fullName = 'execute Javascript';
+    execute: function(command) {
+        command.fullName = 'execute Javascript';
         var returnValue = true;
-        args.context = args.context ? args.context : {};
-        args.context.jaxonDelegateCall = function() {
-            eval(args.data);
+        command.context = command.context ? command.context : {};
+        command.context.jaxonDelegateCall = function() {
+            eval(command.data);
         };
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return returnValue;
     },
 
@@ -189,11 +188,11 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
+    command - The response command object containing the following:
 
-        - args.data: (string):  The javascript to evaluate.
-        - args.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
-        - args.context: (object):  The current script context object which is accessable in
+        - command.data: (string):  The javascript to evaluate.
+        - command.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
+        - command.context: (object):  The current script context object which is accessable in
             the javascript being evaulated via the 'this' keyword.
 
     Returns:
@@ -201,23 +200,23 @@ jaxon.cmd.script = {
     false - The condition evaulates to false and the sleep time has not expired.
     true - The condition evaluates to true or the sleep time has expired.
     */
-    waitFor: function(args) {
-        args.fullName = 'waitFor';
+    waitFor: function(command) {
+        command.fullName = 'waitFor';
 
         var bResult = false;
         var cmdToEval = 'bResult = (';
-        cmdToEval += args.data;
+        cmdToEval += command.data;
         cmdToEval += ');';
         try {
-            args.context.jaxonDelegateCall = function() {
+            command.context.jaxonDelegateCall = function() {
                 eval(cmdToEval);
             }
-            args.context.jaxonDelegateCall();
+            command.context.jaxonDelegateCall();
         } catch (e) {}
         if (false == bResult) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.ajax.retry(args, args.prop)) {
+            if (jaxon.tools.ajax.retry(command, command.prop)) {
                 jaxon.ajax.response.setWakeup(jaxon.response, 100);
                 return false;
             }
@@ -233,23 +232,23 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
-        - args.data: (array):  The parameters to pass to the function.
-        - args.func: (string):  The name of the function to call.
-        - args.context: (object):  The current script context object which is accessable in the
+    command - The response command object containing the following:
+        - command.data: (array):  The parameters to pass to the function.
+        - command.func: (string):  The name of the function to call.
+        - command.context: (object):  The current script context object which is accessable in the
             function name via the 'this keyword.
 
     Returns:
 
     true - The call completed successfully.
     */
-    call: function(args) {
-        args.fullName = 'call js function';
+    call: function(command) {
+        command.fullName = 'call js function';
 
-        var parameters = args.data;
+        var parameters = command.data;
 
         var scr = new Array();
-        scr.push(args.func);
+        scr.push(command.func);
         scr.push('(');
         if ('undefined' != typeof parameters) {
             if ('object' == typeof parameters) {
@@ -262,10 +261,10 @@ jaxon.cmd.script = {
             }
         }
         scr.push(');');
-        args.context.jaxonDelegateCall = function() {
+        command.context.jaxonDelegateCall = function() {
             eval(scr.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
@@ -276,38 +275,38 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object which contains the following:
+    command - The response command object which contains the following:
 
-        - args.func: (string):  The name of the function to construct.
-        - args.data: (string):  The script that will be the function body.
-        - args.context: (object):  The current script context object
+        - command.func: (string):  The name of the function to construct.
+        - command.data: (string):  The script that will be the function body.
+        - command.context: (object):  The current script context object
             which is accessable in the script name via the 'this' keyword.
 
     Returns:
 
     true - The function was constructed successfully.
     */
-    setFunction: function(args) {
-        args.fullName = 'setFunction';
+    setFunction: function(command) {
+        command.fullName = 'setFunction';
 
         var code = new Array();
-        code.push(args.func);
+        code.push(command.func);
         code.push(' = function(');
-        if ('object' == typeof args.prop) {
+        if ('object' == typeof command.prop) {
             var separator = '';
-            for (var m in args.prop) {
+            for (var m in command.prop) {
                 code.push(separator);
-                code.push(args.prop[m]);
+                code.push(command.prop[m]);
                 separator = ',';
             }
-        } else code.push(args.prop);
+        } else code.push(command.prop);
         code.push(') { ');
-        code.push(args.data);
+        code.push(command.data);
         code.push(' }');
-        args.context.jaxonDelegateCall = function() {
+        command.context.jaxonDelegateCall = function() {
             eval(code.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
@@ -319,32 +318,31 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain
-        the following:
+    command - (object):  The response command object which will contain the following:
 
-        - args.func: (string):  The name of the function to be wrapped.
-        - args.prop: (string):  List of parameters used when calling the function.
-        - args.data: (array):  The portions of code to be called before, after
+        - command.func: (string):  The name of the function to be wrapped.
+        - command.prop: (string):  List of parameters used when calling the function.
+        - command.data: (array):  The portions of code to be called before, after
             or even between calls to the original function.
-        - args.context: (object):  The current script context object which is
+        - command.context: (object):  The current script context object which is
             accessable in the function name and body via the 'this' keyword.
 
     Returns:
 
     true - The wrapper function was constructed successfully.
     */
-    wrapFunction: function(args) {
-        args.fullName = 'wrapFunction';
+    wrapFunction: function(command) {
+        command.fullName = 'wrapFunction';
 
         var code = new Array();
-        code.push(args.func);
+        code.push(command.func);
         code.push(' = jaxon.cmd.script.makeWrapper(');
-        code.push(args.func);
-        code.push(', args.prop, args.data, args.type, args.context);');
-        args.context.jaxonDelegateCall = function() {
+        code.push(command.func);
+        code.push(', command.prop, command.data, command.type, command.context);');
+        command.context.jaxonDelegateCall = function() {
             eval(code.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
