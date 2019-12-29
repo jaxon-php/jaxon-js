@@ -106,25 +106,6 @@ jaxon.ajax.request = {
             throw { code: 10005 };
     },
 
-    /**
-     * Attempt to pop the next asynchronous request.
-     *
-     * @param object oQueue   The queue object you would like to modify.
-     *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
-     */
-    popAsyncRequest: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue))
-        {
-            return null;
-        }
-        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
-        {
-            return null;
-        }
-        return jaxon.tools.queue.pop(oQueue);
-    },
-
     /*
     Function: jaxon.ajax.request.prepare
 
@@ -188,12 +169,12 @@ jaxon.ajax.request = {
             }
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
-            if(jaxon.tools.queue.empty(jaxon.ajax.request.q.send) ||
+            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
                 'synchronous' == oRequest.mode) {
                 jaxon.ajax.response.received(oRequest);
             }
             else {
-                jaxon.tools.queue.push(jaxon.ajax.request.q.recv, oRequest);
+                jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
             }
         };
         oRequest.finishRequest = function() {
@@ -240,15 +221,15 @@ jaxon.ajax.request = {
         }
 
         // No request is submitted while there are pending requests in the outgoing queue.
-        let submitRequest = jaxon.tools.queue.empty(jaxon.ajax.request.q.send);
+        let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
         if('synchronous' == oRequest.mode) {
             // Synchronous requests are always queued, in both send and recv queues.
-            jaxon.tools.queue.push(jaxon.ajax.request.q.send, oRequest);
-            jaxon.tools.queue.push(jaxon.ajax.request.q.recv, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
         }
         else if(!submitRequest) {
             // Asynchronous requests are queued in send queue only if they are not submitted.
-            jaxon.tools.queue.push(jaxon.ajax.request.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
         }
         return submitRequest;
     },

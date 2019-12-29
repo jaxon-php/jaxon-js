@@ -20,44 +20,44 @@ jaxon.tools.queue = {
     /**
      * Check id a queue is empty.
      *
-     * @param object theQ The queue to check.
+     * @param object oQueue The queue to check.
      *
      * @returns boolean
      */
-    empty: function(theQ) {
-        return (theQ.count <= 0);
+    empty: function(oQueue) {
+        return (oQueue.count <= 0);
     },
 
     /**
      * Check id a queue is empty.
      *
-     * @param object theQ The queue to check.
+     * @param object oQueue The queue to check.
      *
      * @returns boolean
      */
-    full: function(theQ) {
-        return (theQ.count >= theQ.size);
+    full: function(oQueue) {
+        return (oQueue.count >= oQueue.size);
     },
 
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *
-     * @param object theQ   The queue in which you would like the object stored.
+     * @param object oQueue The queue in which you would like the object stored.
      * @param object obj    The object you would like stored in the queue.
      *
      * @returns integer The number of entries in the queue.
      */
-    push: function(theQ, obj) {
+    push: function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(theQ)) {
+        if(jaxon.tools.queue.full(oQueue)) {
             throw { code: 10003 };
         }
 
-        theQ.elements[theQ.end] = obj;
-        if(++theQ.end >= theQ.size) {
-            theQ.end = 0;
+        oQueue.elements[oQueue.end] = obj;
+        if(++oQueue.end >= oQueue.size) {
+            oQueue.end = 0;
         }
-        return ++theQ.count;
+        return ++oQueue.count;
     },
 
     /**
@@ -65,62 +65,62 @@ jaxon.tools.queue = {
      *
      * This effectively pushes an object to the front of the queue... it will be processed first.
      *
-     * @param object theQ   The queue in which you would like the object stored.
+     * @param object oQueue The queue in which you would like the object stored.
      * @param object obj    The object you would like stored in the queue.
      *
      * @returns integer The number of entries in the queue.
      */
-    pushFront: function(theQ, obj) {
+    pushFront: function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(theQ)) {
+        if(jaxon.tools.queue.full(oQueue)) {
             throw { code: 10003 };
         }
 
         // Simply push if the queue is empty
-        if(jaxon.tools.queue.empty(theQ)) {
-            return jaxon.tools.queue.push(theQ, obj);
+        if(jaxon.tools.queue.empty(oQueue)) {
+            return jaxon.tools.queue.push(oQueue, obj);
         }
 
         // Put the object one position back.
-        if(--theQ.start < 0) {
-            theQ.start = theQ.size - 1;
+        if(--oQueue.start < 0) {
+            oQueue.start = oQueue.size - 1;
         }
-        theQ.elements[theQ.start] = obj;
-        return ++theQ.count;
+        oQueue.elements[oQueue.start] = obj;
+        return ++oQueue.count;
     },
 
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object theQ   The queue object you would like to modify.
+     * @param object oQueue The queue object you would like to modify.
      *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
+     * @returns object|null
      */
-    pop: function(theQ) {
-        if(jaxon.tools.queue.empty(theQ)) {
+    pop: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
             return null;
         }
 
-        let obj = theQ.elements[theQ.start];
-        delete theQ.elements[theQ.start];
-        if(++theQ.start >= theQ.size) {
-            theQ.start = 0;
+        let obj = oQueue.elements[oQueue.start];
+        delete oQueue.elements[oQueue.start];
+        if(++oQueue.start >= oQueue.size) {
+            oQueue.start = 0;
         }
-        theQ.count--;
+        oQueue.count--;
         return obj;
     },
 
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object theQ   The queue object you would like to modify.
+     * @param object oQueue The queue object you would like to modify.
      *
-     * @returns object|null The object that was at the head of the queue or null if the queue was empty.
+     * @returns object|null
      */
-    peek: function(theQ) {
-        if(jaxon.tools.queue.empty(theQ)) {
+    peek: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
             return null;
         }
-        return theQ.elements[theQ.start];
+        return oQueue.elements[oQueue.start];
     }
 };

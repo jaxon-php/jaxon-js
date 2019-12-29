@@ -89,11 +89,11 @@ true - jaxon module is loaded.
 jaxon.isLoaded = true;
 
 /*
-Object: jaxon.ajax.request.q
+Object: jaxon.cmd.delay.q
 
 The queues that hold synchronous requests as they are sent and processed.
 */
-jaxon.ajax.request.q = {
+jaxon.cmd.delay.q = {
     send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
     recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
 };

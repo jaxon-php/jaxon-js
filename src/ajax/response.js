@@ -19,7 +19,7 @@ jaxon.ajax.response = {
         }
 
         // Create a response queue for this request.
-        oRequest.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
+        oRequest.response = xx.tools.queue.create(xx.config.responseQueueSize);
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
@@ -80,21 +80,23 @@ jaxon.ajax.response = {
         delete oRequest['cursor'];
         delete oRequest['challengeResponse'];
 
+        // All the requests queued while waiting must now be processed.
         if('synchronous' == oRequest.mode) {
-            let gar = jaxon.ajax.request;
-            // Process the request and remove it from the send and recv queues.
-            jaxon.tools.queue.pop(jaxon.ajax.request.q.send);
-            jaxon.tools.queue.pop(jaxon.ajax.request.q.recv);
+            let jq = jaxon.tools.queue;
+            let jd = jaxon.cmd.delay;
+            // Remove the current request from the send and recv queues.
+            jq.pop(jd.q.send);
+            jq.pop(jd.q.recv);
             // Process the asynchronous requests received while waiting.
-            while((recvRequest = gar.popAsyncRequest(jaxon.ajax.request.q.recv)) != null) {
+            while((recvRequest = jd.popAsyncRequest(jd.q.recv)) != null) {
                 jaxon.ajax.response.received(recvRequest);
             }
             // Submit the asynchronous requests sent while waiting.
-            while((nextRequest = gar.popAsyncRequest(jaxon.ajax.request.q.send)) != null) {
+            while((nextRequest = jd.popAsyncRequest(jd.q.send)) != null) {
                 jaxon.ajax.request.submit(nextRequest);
             }
             // Submit the next synchronous request, if there's any.
-            if((nextRequest = jaxon.tools.queue.peek(jaxon.ajax.request.q.send)) != null) {
+            if((nextRequest = jq.peek(jd.q.send)) != null) {
                 jaxon.ajax.request.submit(nextRequest);
             }
         }
@@ -127,16 +129,16 @@ jaxon.ajax.response = {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
-        var obj = null;
-        while ((obj = jaxon.tools.queue.pop(response)) != null) {
+        var command = null;
+        while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
-                if (false == jaxon.ajax.handler.execute(obj)) {
+                if (false == jaxon.ajax.handler.execute(command)) {
                     return false;
                 }
             } catch (e) {
                 console.log(e);
             }
-            delete obj;
+            delete command;
         }
         return true;
     },
