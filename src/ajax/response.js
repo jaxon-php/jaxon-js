@@ -13,10 +13,13 @@ jaxon.ajax.response = {
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
         var lcb = oRequest.callback;
-        // sometimes the responseReceived gets called when the
-        // request is aborted
-        if (oRequest.aborted)
-            return;
+        // sometimes the responseReceived gets called when the request is aborted
+        if (oRequest.aborted) {
+            return null;
+        }
+
+        // Create a response queue for this request.
+        oRequest.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
@@ -64,6 +67,7 @@ jaxon.ajax.response = {
         delete oRequest['requestData'];
         delete oRequest['requestRetry'];
         delete oRequest['request'];
+        delete oRequest['response'];
         delete oRequest['set'];
         delete oRequest['open'];
         delete oRequest['setRequestHeaders'];
@@ -85,7 +89,7 @@ jaxon.ajax.response = {
 
     Parameters:
 
-    theQ - (object): The queue object to process.
+    response - (object): The response, which is a queue containing the commands to execute.
     This should have been created by calling <jaxon.tools.queue.create>.
 
     Returns:
@@ -99,22 +103,21 @@ jaxon.ajax.response = {
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
-    process: function(theQ) {
-        if (null != theQ.timeout) {
-            clearTimeout(theQ.timeout);
-            theQ.timeout = null;
+    process: function(response) {
+        if (null != response.timeout) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
         }
-        var obj = jaxon.tools.queue.pop(theQ);
-        while (null != obj) {
+        var obj = null;
+        while ((obj = jaxon.tools.queue.pop(response)) != null) {
             try {
-                if (false == jaxon.ajax.handler.execute(obj))
+                if (false == jaxon.ajax.handler.execute(obj)) {
                     return false;
+                }
             } catch (e) {
                 console.log(e);
             }
             delete obj;
-
-            obj = jaxon.tools.queue.pop(theQ);
         }
         return true;
     },
@@ -128,18 +131,61 @@ jaxon.ajax.response = {
 
     Parameters:
 
-    theQ - (object):
+    response - (object):
         The queue to process upon timeout.
 
     when - (integer):
         The number of milliseconds to wait before starting/restarting the processing of the queue.
     */
-    setWakeup: function(theQ, when) {
-        if (null != theQ.timeout) {
-            clearTimeout(theQ.timeout);
-            theQ.timeout = null;
+    setWakeup: function(response, when) {
+        if (null != response.timeout) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
         }
-        theQ.timout = setTimeout(function() { jaxon.ajax.response.process(theQ); }, when);
+        response.timout = setTimeout(function() {
+            jaxon.ajax.response.process(response);
+        }, when);
+    },
+
+    /*
+    Function: jaxon.ajax.response.processFragment
+
+    Parse the JSON response into a series of commands.
+
+    Parameters:
+    oRequest - (object):  The request context object.
+    */
+    processFragment: function(nodes, seq, oRet, oRequest) {
+        var xx = jaxon;
+        var xt = xx.tools;
+        for (nodeName in nodes) {
+            if ('jxnobj' == nodeName) {
+                for (a in nodes[nodeName]) {
+                    /*
+                    prevents from using not numbered indexes of 'jxnobj'
+                    nodes[nodeName][a]= "0" is an valid jaxon response stack item
+                    nodes[nodeName][a]= "pop" is an method from somewhere but not from jxnobj
+                    */
+                    if (parseInt(a) != a) continue;
+
+                    var command = nodes[nodeName][a];
+                    command.fullName = '*unknown*';
+                    command.sequence = seq;
+                    command.response = oRequest.response;
+                    command.request = oRequest;
+                    command.context = oRequest.context;
+                    xt.queue.push(oRequest.response, command);
+                    ++seq;
+                }
+            } else if ('jxnrv' == nodeName) {
+                oRet = nodes[nodeName];
+            } else if ('debugmsg' == nodeName) {
+                txt = nodes[nodeName];
+            } else {
+                throw { code: 10004, data: command.fullName };
+            }
+        }
+        return oRet;
     },
 
     /*
@@ -202,20 +248,21 @@ jaxon.ajax.response = {
                 }
                 if (('object' == typeof responseJSON) && ('object' == typeof responseJSON.jxnobj)) {
                     oRequest.status.onProcessing();
-                    oRet = xt.ajax.processFragment(responseJSON, seq, oRet, oRequest);
+                    oRet = xx.ajax.response.processFragment(responseJSON, seq, oRet, oRequest);
                 } else {}
             }
-            var obj = {};
-            obj.fullName = 'Response Complete';
-            obj.sequence = seq;
-            obj.request = oRequest;
-            obj.context = oRequest.context;
-            obj.cmd = 'rcmplt';
-            xt.queue.push(xx.response, obj);
+            var command = {};
+            command.fullName = 'Response Complete';
+            command.sequence = seq;
+            command.request = oRequest;
+            command.context = oRequest.context;
+            command.cmd = 'rcmplt';
+            xt.queue.push(oRequest.response, command);
 
             // do not re-start the queue if a timeout is set
-            if (null == xx.response.timeout)
-                xx.ajax.response.process(xx.response);
+            if (null == oRequest.response.timeout) {
+                xx.ajax.response.process(oRequest.response);
+            }
         } else if (xt.array.is_in(xx.ajax.response.redirectCodes, oRequest.request.status)) {
             xcb.execute([gcb, lcb], 'onRedirect', oRequest);
             window.location = oRequest.request.getResponseHeader('location');

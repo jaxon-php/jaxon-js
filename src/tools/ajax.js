@@ -46,45 +46,6 @@ jaxon.tools.ajax = {
     },
 
     /*
-    Function: jaxon.tools.ajax.processFragment
-
-    Parse the JSON response into a series of commands.
-
-    Parameters:
-    oRequest - (object):  The request context object.
-    */
-    processFragment: function(nodes, seq, oRet, oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
-        for (nodeName in nodes) {
-            if ('jxnobj' == nodeName) {
-                for (a in nodes[nodeName]) {
-                    /*
-                    prevents from using not numbered indexes of 'jxnobj'
-                    nodes[nodeName][a]= "0" is an valid jaxon response stack item
-                    nodes[nodeName][a]= "pop" is an method from somewhere but not from jxnobj
-                    */
-                    if (parseInt(a) != a) continue;
-
-                    var obj = nodes[nodeName][a];
-                    obj.fullName = '*unknown*';
-                    obj.sequence = seq;
-                    obj.request = oRequest;
-                    obj.context = oRequest.context;
-                    xt.queue.push(xx.response, obj);
-                    ++seq;
-                }
-            } else if ('jxnrv' == nodeName) {
-                oRet = nodes[nodeName];
-            } else if ('debugmsg' == nodeName) {
-                txt = nodes[nodeName];
-            } else
-                throw { code: 10004, data: obj.fullName }
-        }
-        return oRet;
-    },
-
-    /*
     Function: jaxon.tools.ajax.retry
 
     Maintains a retry counter for the given object.

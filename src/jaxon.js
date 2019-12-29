@@ -43,7 +43,7 @@ Object: jaxon.response
 The response queue that holds response commands, once received
 from the server, until they are processed.
 */
-jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
+// jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
 
 /*
 Function: jaxon.register

@@ -118,7 +118,7 @@ jaxon.cmd.script = {
         // inject a delay in the queue processing
         // handle retry counter
         if (jaxon.tools.ajax.retry(command, command.prop)) {
-            jaxon.ajax.response.setWakeup(jaxon.response, 100);
+            jaxon.ajax.response.setWakeup(command.response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -146,7 +146,7 @@ jaxon.cmd.script = {
         var numberOfCommands = command.id;
         if (false == confirm(msg)) {
             while (0 < numberOfCommands) {
-                jaxon.tools.queue.pop(jaxon.response);
+                jaxon.tools.queue.pop(command.response);
                 --numberOfCommands;
             }
         }
@@ -217,7 +217,7 @@ jaxon.cmd.script = {
             // inject a delay in the queue processing
             // handle retry counter
             if (jaxon.tools.ajax.retry(command, command.prop)) {
-                jaxon.ajax.response.setWakeup(jaxon.response, 100);
+                jaxon.ajax.response.setWakeup(command.response, 100);
                 return false;
             }
             // give up, continue processing queue
