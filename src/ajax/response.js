@@ -26,14 +26,6 @@ jaxon.ajax.response = {
 
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
-        var challenge = oRequest.request.getResponseHeader('challenge');
-        if (challenge) {
-            oRequest.challengeResponse = challenge;
-            if(xx.ajax.request.prepare(oRequest)) {
-                return xx.ajax.request.submit(oRequest);
-            }
-        }
-
         var fProc = xx.ajax.response.processor(oRequest);
         if ('undefined' == typeof fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
@@ -78,7 +70,6 @@ jaxon.ajax.response = {
         delete oRequest['finishRequest'];
         delete oRequest['status'];
         delete oRequest['cursor'];
-        delete oRequest['challengeResponse'];
 
         // All the requests queued while waiting must now be processed.
         if('synchronous' == oRequest.mode) {

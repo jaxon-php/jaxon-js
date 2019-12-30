@@ -145,8 +145,6 @@ jaxon.ajax.request = {
         };
         oRequest.setCommonRequestHeaders = function() {
             this.setRequestHeaders(this.commonHeaders);
-            if(this.challengeResponse)
-                this.request.setRequestHeader('challenge-response', this.challengeResponse);
         };
         oRequest.setPostRequestHeaders = function() {
             this.setRequestHeaders(this.postHeaders);
