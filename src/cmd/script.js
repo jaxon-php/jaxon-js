@@ -128,8 +128,8 @@ jaxon.cmd.script = {
     /*
     Function: jaxon.cmd.script.confirmCommands
 
-    Prompt the user with the specified text, if the user responds by clicking cancel, then skip
-    the specified number of commands in the response command queue.
+    Prompt the user with the specified question, if the user responds by clicking cancel,
+    then skip the specified number of commands in the response command queue.
     If the user clicks Ok, the command processing resumes normal operation.
 
     Parameters:
@@ -142,15 +142,8 @@ jaxon.cmd.script = {
     */
     confirmCommands: function(command) {
         command.fullName = 'confirmCommands';
-        var msg = command.data;
-        var numberOfCommands = command.id;
-        if (false == confirm(msg)) {
-            while (0 < numberOfCommands) {
-                jaxon.tools.queue.pop(command.response);
-                --numberOfCommands;
-            }
-        }
-        return true;
+        jaxon.cmd.delay.confirm(command, command.id, command.data);
+        return false;
     },
 
     /*

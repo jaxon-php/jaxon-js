@@ -39,10 +39,7 @@ jaxon.ajax.handler = {
                 command.target = jaxon.$(command.id);
             }
             // process the command
-            if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(command.response, command);
-                return false;
-            }
+            return jaxon.ajax.handler.call(command);
         }
         return true;
     },

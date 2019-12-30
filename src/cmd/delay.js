@@ -39,6 +39,8 @@ jaxon.cmd.delay = {
             retries = count;
         }
         command.retries = retries;
+        // This command must be processed again.
+        command.requeue = true;
         return true;
     },
 
@@ -48,7 +50,7 @@ jaxon.cmd.delay = {
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param response object   The queue to process upon timeout.
+     * @param response object   The queue to process.
      * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
      */
     setWakeup: function(response, when) {
@@ -59,5 +61,60 @@ jaxon.cmd.delay = {
         response.timout = setTimeout(function() {
             jaxon.ajax.response.process(response);
         }, when);
+    },
+
+    /**
+     * The function to run after the confirm question, for the comfirmCommands.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param count integer     The number of commands to skip.
+     * @param skip boolean      Skip the commands or not.
+     *
+     * @returns boolean
+     */
+    confirmCallback: function(command, count, skip) {
+        if(skip == true) {
+            // The last entry in the queue is not a user command.
+            // Thus it cannot be skipped.
+            while (count > 0 && command.response.count > 1 &&
+                jaxon.tools.queue.pop(command.response) != null) {
+                --count;
+            }
+        }
+        // Run a different command depending on whether this callback executes
+        // before of after the confirm function returns;
+        if(command.requeue == true) {
+            // Before => the processing is delayed.
+            console.log('Before => the processing is delayed.');
+            jaxon.cmd.delay.setWakeup(command.response, 30);
+        } else {
+            // After => the processing is executed.
+            console.log('After => the processing is executed.');
+            jaxon.ajax.response.process(command.response);
+        }
+    },
+
+    /**
+     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     *
+     * The processing of the queue after the question is delayed so it occurs after this function returns.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param question string   The question to ask to the user.
+     * @param count integer     The number of commands to skip.
+     *
+     * @returns boolean
+     */
+    confirm: function(command, count, question) {
+        // Used to determine if the callbacks are called before or after this function returns.
+        command.requeue = true;
+        jaxon.ajax.message.confirm(question, '', function() {
+            jaxon.cmd.delay.confirmCallback(command, count, true);
+        }, function() {
+            jaxon.cmd.delay.confirmCallback(command, count, false);
+        });
+        // This command must not be processed again.
+        command.requeue = false;
+        return false;
     }
 };

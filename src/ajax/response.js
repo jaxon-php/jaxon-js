@@ -133,6 +133,11 @@ jaxon.ajax.response = {
         while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
                 if (false == jaxon.ajax.handler.execute(command)) {
+                    if(command.requeue == true) {
+                        jaxon.tools.queue.pushFront(response, command);
+                    } else {
+                        delete command;
+                    }
                     return false;
                 }
             } catch (e) {
