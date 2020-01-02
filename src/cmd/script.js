@@ -140,9 +140,9 @@ jaxon.cmd.script = {
 
     true - The operation completed successfully.
     */
-    confirmCommands: function(command) {
-        command.fullName = 'confirmCommands';
-        jaxon.cmd.delay.confirm(command, command.id, command.data);
+    confirm: function(command) {
+        command.fullName = 'confirm';
+        jaxon.cmd.delay.confirm(command, command.count, command.data);
         return false;
     },
 

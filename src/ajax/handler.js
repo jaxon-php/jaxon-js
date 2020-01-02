@@ -199,7 +199,7 @@ jaxon.ajax.handler.register('al', function(command) {
     alert(command.data);
     return true;
 });
-jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirmCommands);
+jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
 jaxon.ajax.handler.register('ii', jaxon.cmd.form.insertInput);
