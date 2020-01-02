@@ -126,7 +126,26 @@ jaxon.cmd.script = {
     },
 
     /*
-    Function: jaxon.cmd.script.confirmCommands
+    Function: jaxon.cmd.script.alert
+
+    Show the specified message.
+
+    Parameters:
+
+    command (object) - jaxon response object
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    alert: function(command) {
+        command.fullName = 'alert';
+        jaxon.ajax.message.info(command.data);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.confirm
 
     Prompt the user with the specified question, if the user responds by clicking cancel,
     then skip the specified number of commands in the response command queue.
@@ -138,7 +157,7 @@ jaxon.cmd.script = {
 
     Returns:
 
-    true - The operation completed successfully.
+    false - Stop the processing of the command queue until the user answers the question.
     */
     confirm: function(command) {
         command.fullName = 'confirm';

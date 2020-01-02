@@ -194,11 +194,7 @@ jaxon.ajax.handler.register('js', jaxon.cmd.script.execute);
 jaxon.ajax.handler.register('jc', jaxon.cmd.script.call);
 jaxon.ajax.handler.register('sf', jaxon.cmd.script.setFunction);
 jaxon.ajax.handler.register('wpf', jaxon.cmd.script.wrapFunction);
-jaxon.ajax.handler.register('al', function(command) {
-    command.fullName = 'alert';
-    alert(command.data);
-    return true;
-});
+jaxon.ajax.handler.register('al', jaxon.cmd.script.alert);
 jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
