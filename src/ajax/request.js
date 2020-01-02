@@ -170,8 +170,7 @@ jaxon.ajax.request = {
             if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
                 'synchronous' == oRequest.mode) {
                 jaxon.ajax.response.received(oRequest);
-            }
-            else {
+            } else {
                 jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
             }
         };
@@ -224,8 +223,7 @@ jaxon.ajax.request = {
             // Synchronous requests are always queued, in both send and recv queues.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
             jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
-        }
-        else if(!submitRequest) {
+        } else if(!submitRequest) {
             // Asynchronous requests are queued in send queue only if they are not submitted.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
         }

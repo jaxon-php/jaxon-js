@@ -4,34 +4,36 @@ Class: jaxon.command
 This class is defined for compatibility with previous versions,
 since its functions are used in other packages.
 */
-jaxon.command = {};
+jaxon.command = {
+    /*
+    Class: jaxon.command.handler
+    */
+    handler: {},
 
-/*
-Class: jaxon.command.handler
-*/
-jaxon.command.handler = {};
+    /*
+    Function: jaxon.command.handler.register
 
-/*
-Function: jaxon.command.handler.register
+    Registers a new command handler.
+    */
+    handler: {
+        register: jaxon.ajax.handler.register
+    },
 
-Registers a new command handler.
-*/
-jaxon.command.handler.register = jaxon.ajax.handler.register;
+    /*
+    Function: jaxon.command.create
 
-/*
-Function: jaxon.command.create
-
-Creates a new command (object) that will be populated with
-command parameters and eventually passed to the command handler.
-*/
-jaxon.command.create = function(sequence, request, context) {
-    var newCmd = {};
-    newCmd.cmd = '*';
-    newCmd.fullName = '* unknown command name *';
-    newCmd.sequence = sequence;
-    newCmd.request = request;
-    newCmd.context = context;
-    return newCmd;
+    Creates a new command (object) that will be populated with
+    command parameters and eventually passed to the command handler.
+    */
+    create: function(sequence, request, context) {
+        return {
+            cmd: '*',
+            fullName: '* unknown command name *',
+            sequence: sequence,
+            request: request,
+            context: context
+        };
+    }
 };
 
 /*
@@ -39,20 +41,20 @@ Class: jxn
 
 Contains shortcut's to frequently used functions.
 */
-var jxn = {};
+var jxn = {
+    /*
+    Function: jxn.$
 
-/*
-Function: jxn.$
+    Shortcut to <jaxon.tools.dom.$>.
+    */
+    $: jaxon.tools.dom.$,
 
-Shortcut to <jaxon.tools.dom.$>.
-*/
-jxn.$ = jaxon.tools.dom.$;
+    /*
+    Function: jxn.getFormValues
 
-/*
-Function: jxn.getFormValues
+    Shortcut to <jaxon.tools.form.getValues>.
+    */
+    getFormValues: jaxon.tools.form.getValues,
 
-Shortcut to <jaxon.tools.form.getValues>.
-*/
-jxn.getFormValues = jaxon.tools.form.getValues;
-
-jxn.request = jaxon.request;
+    request: jaxon.request
+};

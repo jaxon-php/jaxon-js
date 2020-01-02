@@ -23,14 +23,14 @@ jaxon.config = {};
 /*
 Class: jaxon.debug
 */
-jaxon.debug = {};
-
-/*
+jaxon.debug = {
+    /*
     Class: jaxon.debug.verbose
 
     Provide a high level of detail which can be used to debug hard to find problems.
-*/
-jaxon.debug.verbose = {}
+    */
+    verbose: {}
+};
 
 /*
 Class: jaxon.ajax
@@ -235,10 +235,10 @@ customize the status bar messages prior to sending jaxon requests.
 */
 jaxon.config.status = {
     /*
-        Function: update
+    Function: update
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to set the status bar messages.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to set the status bar messages.
     */
     update: function() {
         return {
@@ -257,11 +257,11 @@ jaxon.config.status = {
         }
     },
     /*
-        Function: dontUpdate
+    Function: dontUpdate
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework where status bar updates
-        would normally occur.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework where status bar updates
+    would normally occur.
     */
     dontUpdate: function() {
         return {
@@ -283,11 +283,11 @@ prior to submitting requests.
 */
 jaxon.config.cursor = {
     /*
-        Function: update
+    Function: update
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to effect the status of the
-        cursor during requests.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to effect the status of the
+    cursor during requests.
     */
     update: function() {
         return {
@@ -301,11 +301,11 @@ jaxon.config.cursor = {
         }
     },
     /*
-        Function: dontUpdate
+    Function: dontUpdate
 
-        Constructs and returns a set of event handlers that will
-        be called by the jaxon framework where cursor status changes
-        would typically be made during the handling of requests.
+    Constructs and returns a set of event handlers that will
+    be called by the jaxon framework where cursor status changes
+    would typically be made during the handling of requests.
     */
     dontUpdate: function() {
         return {

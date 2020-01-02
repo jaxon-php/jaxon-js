@@ -63,11 +63,10 @@ jaxon.ajax.message = {
         noCallback - (Function): The function to call if the user answers no.
     */
     confirm: function(question, title, yesCallback, noCallback) {
-        if(noCallback == undefined)
-            noCallback = function(){};
-        if(confirm(question))
+        if(confirm(question)) {
             yesCallback();
-        else
+        } else if(noCallback != undefined) {
             noCallback();
+        }
     }
 };
