@@ -23,14 +23,14 @@ jaxon.config = {};
 /*
 Class: jaxon.debug
 */
-jaxon.debug = {};
-
-/*
+jaxon.debug = {
+    /*
     Class: jaxon.debug.verbose
 
     Provide a high level of detail which can be used to debug hard to find problems.
-*/
-jaxon.debug.verbose = {}
+    */
+    verbose: {}
+};
 
 /*
 Class: jaxon.ajax
@@ -235,10 +235,10 @@ customize the status bar messages prior to sending jaxon requests.
 */
 jaxon.config.status = {
     /*
-        Function: update
+    Function: update
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to set the status bar messages.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to set the status bar messages.
     */
     update: function() {
         return {
@@ -257,11 +257,11 @@ jaxon.config.status = {
         }
     },
     /*
-        Function: dontUpdate
+    Function: dontUpdate
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework where status bar updates
-        would normally occur.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework where status bar updates
+    would normally occur.
     */
     dontUpdate: function() {
         return {
@@ -283,11 +283,11 @@ prior to submitting requests.
 */
 jaxon.config.cursor = {
     /*
-        Function: update
+    Function: update
 
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to effect the status of the
-        cursor during requests.
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to effect the status of the
+    cursor during requests.
     */
     update: function() {
         return {
@@ -301,11 +301,11 @@ jaxon.config.cursor = {
         }
     },
     /*
-        Function: dontUpdate
+    Function: dontUpdate
 
-        Constructs and returns a set of event handlers that will
-        be called by the jaxon framework where cursor status changes
-        would typically be made during the handling of requests.
+    Constructs and returns a set of event handlers that will
+    be called by the jaxon framework where cursor status changes
+    would typically be made during the handling of requests.
     */
     dontUpdate: function() {
         return {
@@ -1020,6 +1020,8 @@ jaxon.cmd.delay = {
             retries = count;
         }
         command.retries = retries;
+        // This command must be processed again.
+        command.requeue = true;
         return true;
     },
 
@@ -1029,7 +1031,7 @@ jaxon.cmd.delay = {
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param response object   The queue to process upon timeout.
+     * @param response object   The queue to process.
      * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
      */
     setWakeup: function(response, when) {
@@ -1040,6 +1042,62 @@ jaxon.cmd.delay = {
         response.timout = setTimeout(function() {
             jaxon.ajax.response.process(response);
         }, when);
+    },
+
+    /**
+     * The function to run after the confirm question, for the comfirmCommands.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param count integer     The number of commands to skip.
+     * @param skip boolean      Skip the commands or not.
+     *
+     * @returns boolean
+     */
+    confirmCallback: function(command, count, skip) {
+        if(skip == true) {
+            // The last entry in the queue is not a user command.
+            // Thus it cannot be skipped.
+            while (count > 0 && command.response.count > 1 &&
+                jaxon.tools.queue.pop(command.response) != null) {
+                --count;
+            }
+        }
+        // Run a different command depending on whether this callback executes
+        // before of after the confirm function returns;
+        if(command.requeue == true) {
+            // Before => the processing is delayed.
+            jaxon.cmd.delay.setWakeup(command.response, 30);
+        } else {
+            // After => the processing is executed.
+            jaxon.ajax.response.process(command.response);
+        }
+    },
+
+    /**
+     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     *
+     * The processing of the queue after the question is delayed so it occurs after this function returns.
+     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
+     * before (when using the blocking confirm() function) or after this function returns.
+     * @see confirmCallback
+     *
+     * @param command object    The object to track the retry count for.
+     * @param question string   The question to ask to the user.
+     * @param count integer     The number of commands to skip.
+     *
+     * @returns boolean
+     */
+    confirm: function(command, count, question) {
+        // This will be checked in the callback.
+        command.requeue = true;
+        jaxon.ajax.message.confirm(question, '', function() {
+            jaxon.cmd.delay.confirmCallback(command, count, false);
+        }, function() {
+            jaxon.cmd.delay.confirmCallback(command, count, true);
+        });
+        // This command must not be processed again.
+        command.requeue = false;
+        return false;
     }
 };
 
@@ -1782,8 +1840,8 @@ jaxon.cmd.script = {
     /*
     Function: jaxon.cmd.script.confirmCommands
 
-    Prompt the user with the specified text, if the user responds by clicking cancel, then skip
-    the specified number of commands in the response command queue.
+    Prompt the user with the specified question, if the user responds by clicking cancel,
+    then skip the specified number of commands in the response command queue.
     If the user clicks Ok, the command processing resumes normal operation.
 
     Parameters:
@@ -1794,17 +1852,10 @@ jaxon.cmd.script = {
 
     true - The operation completed successfully.
     */
-    confirmCommands: function(command) {
-        command.fullName = 'confirmCommands';
-        var msg = command.data;
-        var numberOfCommands = command.id;
-        if (false == confirm(msg)) {
-            while (0 < numberOfCommands) {
-                jaxon.tools.queue.pop(command.response);
-                --numberOfCommands;
-            }
-        }
-        return true;
+    confirm: function(command) {
+        command.fullName = 'confirm';
+        jaxon.cmd.delay.confirm(command, command.count, command.data);
+        return false;
     },
 
     /*
@@ -2436,10 +2487,7 @@ jaxon.ajax.handler = {
                 command.target = jaxon.$(command.id);
             }
             // process the command
-            if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(command.response, command);
-                return false;
-            }
+            return jaxon.ajax.handler.call(command);
         }
         return true;
     },
@@ -2599,7 +2647,7 @@ jaxon.ajax.handler.register('al', function(command) {
     alert(command.data);
     return true;
 });
-jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirmCommands);
+jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
 jaxon.ajax.handler.register('ii', jaxon.cmd.form.insertInput);
@@ -2682,14 +2730,14 @@ jaxon.ajax.message = {
         noCallback - (Function): The function to call if the user answers no.
     */
     confirm: function(question, title, yesCallback, noCallback) {
-        if(noCallback == undefined)
-            noCallback = function(){};
-        if(confirm(question))
+        if(confirm(question)) {
             yesCallback();
-        else
+        } else if(noCallback != undefined) {
             noCallback();
+        }
     }
 };
+
 
 jaxon.ajax.parameters = {
     /*
@@ -3050,8 +3098,6 @@ jaxon.ajax.request = {
         };
         oRequest.setCommonRequestHeaders = function() {
             this.setRequestHeaders(this.commonHeaders);
-            if(this.challengeResponse)
-                this.request.setRequestHeader('challenge-response', this.challengeResponse);
         };
         oRequest.setPostRequestHeaders = function() {
             this.setRequestHeaders(this.postHeaders);
@@ -3077,8 +3123,7 @@ jaxon.ajax.request = {
             if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
                 'synchronous' == oRequest.mode) {
                 jaxon.ajax.response.received(oRequest);
-            }
-            else {
+            } else {
                 jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
             }
         };
@@ -3131,8 +3176,7 @@ jaxon.ajax.request = {
             // Synchronous requests are always queued, in both send and recv queues.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
             jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
-        }
-        else if(!submitRequest) {
+        } else if(!submitRequest) {
             // Asynchronous requests are queued in send queue only if they are not submitted.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
         }
@@ -3293,14 +3337,6 @@ jaxon.ajax.response = {
 
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
-        var challenge = oRequest.request.getResponseHeader('challenge');
-        if (challenge) {
-            oRequest.challengeResponse = challenge;
-            if(xx.ajax.request.prepare(oRequest)) {
-                return xx.ajax.request.submit(oRequest);
-            }
-        }
-
         var fProc = xx.ajax.response.processor(oRequest);
         if ('undefined' == typeof fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
@@ -3345,7 +3381,6 @@ jaxon.ajax.response = {
         delete oRequest['finishRequest'];
         delete oRequest['status'];
         delete oRequest['cursor'];
-        delete oRequest['challengeResponse'];
 
         // All the requests queued while waiting must now be processed.
         if('synchronous' == oRequest.mode) {
@@ -3400,6 +3435,11 @@ jaxon.ajax.response = {
         while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
                 if (false == jaxon.ajax.handler.execute(command)) {
+                    if(command.requeue == true) {
+                        jaxon.tools.queue.pushFront(response, command);
+                    } else {
+                        delete command;
+                    }
                     return false;
                 }
             } catch (e) {
@@ -3836,34 +3876,36 @@ Class: jaxon.command
 This class is defined for compatibility with previous versions,
 since its functions are used in other packages.
 */
-jaxon.command = {};
+jaxon.command = {
+    /*
+    Class: jaxon.command.handler
+    */
+    handler: {},
 
-/*
-Class: jaxon.command.handler
-*/
-jaxon.command.handler = {};
+    /*
+    Function: jaxon.command.handler.register
 
-/*
-Function: jaxon.command.handler.register
+    Registers a new command handler.
+    */
+    handler: {
+        register: jaxon.ajax.handler.register
+    },
 
-Registers a new command handler.
-*/
-jaxon.command.handler.register = jaxon.ajax.handler.register;
+    /*
+    Function: jaxon.command.create
 
-/*
-Function: jaxon.command.create
-
-Creates a new command (object) that will be populated with
-command parameters and eventually passed to the command handler.
-*/
-jaxon.command.create = function(sequence, request, context) {
-    var newCmd = {};
-    newCmd.cmd = '*';
-    newCmd.fullName = '* unknown command name *';
-    newCmd.sequence = sequence;
-    newCmd.request = request;
-    newCmd.context = context;
-    return newCmd;
+    Creates a new command (object) that will be populated with
+    command parameters and eventually passed to the command handler.
+    */
+    create: function(sequence, request, context) {
+        return {
+            cmd: '*',
+            fullName: '* unknown command name *',
+            sequence: sequence,
+            request: request,
+            context: context
+        };
+    }
 };
 
 /*
@@ -3871,20 +3913,20 @@ Class: jxn
 
 Contains shortcut's to frequently used functions.
 */
-var jxn = {};
+var jxn = {
+    /*
+    Function: jxn.$
 
-/*
-Function: jxn.$
+    Shortcut to <jaxon.tools.dom.$>.
+    */
+    $: jaxon.tools.dom.$,
 
-Shortcut to <jaxon.tools.dom.$>.
-*/
-jxn.$ = jaxon.tools.dom.$;
+    /*
+    Function: jxn.getFormValues
 
-/*
-Function: jxn.getFormValues
+    Shortcut to <jaxon.tools.form.getValues>.
+    */
+    getFormValues: jaxon.tools.form.getValues,
 
-Shortcut to <jaxon.tools.form.getValues>.
-*/
-jxn.getFormValues = jaxon.tools.form.getValues;
-
-jxn.request = jaxon.request;
+    request: jaxon.request
+};
