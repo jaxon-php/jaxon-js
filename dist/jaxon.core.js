@@ -1838,7 +1838,26 @@ jaxon.cmd.script = {
     },
 
     /*
-    Function: jaxon.cmd.script.confirmCommands
+    Function: jaxon.cmd.script.alert
+
+    Show the specified message.
+
+    Parameters:
+
+    command (object) - jaxon response object
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    alert: function(command) {
+        command.fullName = 'alert';
+        jaxon.ajax.message.info(command.data);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.confirm
 
     Prompt the user with the specified question, if the user responds by clicking cancel,
     then skip the specified number of commands in the response command queue.
@@ -1850,7 +1869,7 @@ jaxon.cmd.script = {
 
     Returns:
 
-    true - The operation completed successfully.
+    false - Stop the processing of the command queue until the user answers the question.
     */
     confirm: function(command) {
         command.fullName = 'confirm';
@@ -2642,11 +2661,7 @@ jaxon.ajax.handler.register('js', jaxon.cmd.script.execute);
 jaxon.ajax.handler.register('jc', jaxon.cmd.script.call);
 jaxon.ajax.handler.register('sf', jaxon.cmd.script.setFunction);
 jaxon.ajax.handler.register('wpf', jaxon.cmd.script.wrapFunction);
-jaxon.ajax.handler.register('al', function(command) {
-    command.fullName = 'alert';
-    alert(command.data);
-    return true;
-});
+jaxon.ajax.handler.register('al', jaxon.cmd.script.alert);
 jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
