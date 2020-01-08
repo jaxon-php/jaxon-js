@@ -3349,11 +3349,10 @@ jaxon.ajax.response = {
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
-
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
         var fProc = xx.ajax.response.processor(oRequest);
-        if ('undefined' == typeof fProc) {
+        if (null == fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
             xx.ajax.response.complete(oRequest);
             return;
@@ -3521,19 +3520,36 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     processor: function(oRequest) {
-        var fProc;
-
-        if ('undefined' == typeof oRequest.responseProcessor) {
-            var cTyp = oRequest.request.getResponseHeader('content-type');
-            if (cTyp) {
-                if (0 <= cTyp.indexOf('application/json')) {
-                    fProc = jaxon.ajax.response.json;
-                }
-            }
-        } else {
-            fProc = oRequest.responseProcessor;
+        if ('undefined' != typeof oRequest.responseProcessor) {
+            return oRequest.responseProcessor;
         }
-        return fProc;
+
+        let cTyp = oRequest.request.getResponseHeader('content-type');
+        if(!cTyp) {
+            return null;
+        }
+        let responseText = '';
+        if(0 <= cTyp.indexOf('application/json')) {
+            responseText = oRequest.request.responseText;
+        }
+        else if(0 <= cTyp.indexOf('text/html')) {
+            responseText = oRequest.request.responseText;
+            // Verify if there is any other output before the Jaxon response.
+            let jsonStart = responseText.indexOf('{"jxnobj"');
+            if(jsonStart < 0) { // No jaxon data in the response
+                return null;
+            }
+            if(jsonStart > 0) {
+                responseText = responseText.substr(jsonStart);
+            }
+        }
+
+        try {
+            oRequest.request.responseJSON = JSON.parse(responseText);
+            return jaxon.ajax.response.json;
+        } catch (ex) {
+            return null; // Cannot decode JSON response
+        }
     },
 
     /*
@@ -3557,18 +3573,14 @@ jaxon.ajax.response = {
 
         if (xt.array.is_in(xx.ajax.response.successCodes, oRequest.request.status)) {
             xcb.execute([gcb, lcb], 'onSuccess', oRequest);
+
             var seq = 0;
-            if (oRequest.request.responseText) {
-                try {
-                    var responseJSON = eval('(' + oRequest.request.responseText + ')');
-                } catch (ex) {
-                    throw (ex);
-                }
-                if (('object' == typeof responseJSON) && ('object' == typeof responseJSON.jxnobj)) {
-                    oRequest.status.onProcessing();
-                    oRet = xx.ajax.response.processFragment(responseJSON, seq, oRet, oRequest);
-                } else {}
-            }
+            if ('object' == typeof oRequest.request.responseJSON &&
+                'object' == typeof oRequest.request.responseJSON.jxnobj) {
+                oRequest.status.onProcessing();
+                oRet = xx.ajax.response.processFragment(oRequest.request.responseJSON, seq, oRet, oRequest);
+            } else {}
+
             var command = {};
             command.fullName = 'Response Complete';
             command.sequence = seq;
