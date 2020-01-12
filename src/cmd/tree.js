@@ -1,73 +1,73 @@
 jaxon.cmd.tree = {
-    startResponse: function(args) {
+    startResponse: function(command) {
         jxnElm = [];
     },
 
-    createElement: function(args) {
+    createElement: function(command) {
         eval(
-            [args.tgt, ' = document.createElement(args.data)']
+            [command.tgt, ' = document.createElement(command.data)']
             .join('')
         );
     },
 
-    setAttribute: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    setAttribute: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, '.setAttribute(args.key, args.data)']
+                [command.tgt, '.setAttribute(command.key, command.data)']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    appendChild: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    appendChild: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.par, '.appendChild(', args.data, ')']
+                [command.par, '.appendChild(', command.data, ')']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    insertBefore: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    insertBefore: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, '.parentNode.insertBefore(', args.data, ', ', args.tgt, ')']
+                [command.tgt, '.parentNode.insertBefore(', command.data, ', ', command.tgt, ')']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    insertAfter: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    insertAfter: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, 'parentNode.insertBefore(', args.data, ', ', args.tgt, '.nextSibling)']
+                [command.tgt, 'parentNode.insertBefore(', command.data, ', ', command.tgt, '.nextSibling)']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    appendText: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    appendText: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.par, '.appendChild(document.createTextNode(args.data))']
+                [command.par, '.appendChild(document.createTextNode(command.data))']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    removeChildren: function(args) {
-        var skip = args.skip || 0;
-        var remove = args.remove || -1;
+    removeChildren: function(command) {
+        var skip = command.skip || 0;
+        var remove = command.remove || -1;
         var element = null;
-        args.context.jaxonDelegateCall = function() {
-            eval(['element = ', args.data].join(''));
+        command.context.jaxonDelegateCall = function() {
+            eval(['element = ', command.data].join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         var children = element.childNodes;
         for (var i in children) {
             if (isNaN(i) == false && children[i].nodeType == 1) {
@@ -81,7 +81,7 @@ jaxon.cmd.tree = {
         }
     },
 
-    endResponse: function(args) {
+    endResponse: function(command) {
         jxnElm = [];
     }
 };

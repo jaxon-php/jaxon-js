@@ -16,10 +16,10 @@ jaxon.ajax.request = {
         var xc = xx.config;
 
         oRequest.append = function(opt, def) {
-            if ('undefined' == typeof this[opt])
+            if('undefined' == typeof this[opt])
                 this[opt] = {};
             for (var itmName in def)
-                if ('undefined' == typeof this[opt][itmName])
+                if('undefined' == typeof this[opt][itmName])
                     this[opt][itmName] = def[itmName];
         };
 
@@ -28,7 +28,7 @@ jaxon.ajax.request = {
         oRequest.append('getHeaders', xc.getHeaders);
 
         oRequest.set = function(option, defaultValue) {
-            if ('undefined' == typeof this[option])
+            if('undefined' == typeof this[option])
                 this[option] = defaultValue;
         };
 
@@ -45,19 +45,21 @@ jaxon.ajax.request = {
         oRequest.set('maxObjectSize', xc.maxObjectSize);
         oRequest.set('context', window);
         oRequest.set('upload', false);
+        oRequest.set('aborted', false);
 
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
         var lcb = xcb.create();
 
         lcb.take = function(frm, opt) {
-            if ('undefined' != typeof frm[opt]) {
+            if('undefined' != typeof frm[opt]) {
                 lcb[opt] = frm[opt];
                 lcb.hasEvents = true;
             }
             delete frm[opt];
         };
 
+        lcb.take(oRequest, 'onPrepare');
         lcb.take(oRequest, 'onRequest');
         lcb.take(oRequest, 'onResponseDelay');
         lcb.take(oRequest, 'onExpiration');
@@ -67,11 +69,17 @@ jaxon.ajax.request = {
         lcb.take(oRequest, 'onSuccess');
         lcb.take(oRequest, 'onComplete');
 
-        if ('undefined' != typeof oRequest.callback) {
-            if (lcb.hasEvents)
+        if('undefined' != typeof oRequest.callback) {
+            // Add the timers attribute, if it is not defined.
+            if('undefined' == typeof oRequest.callback.timers) {
+                oRequest.callback.timers = [];
+            }
+            if(lcb.hasEvents) {
                 oRequest.callback = [oRequest.callback, lcb];
-        } else
+            }
+        } else {
             oRequest.callback = lcb;
+        }
 
         oRequest.status = (oRequest.statusMessages) ?
             xc.status.update() :
@@ -82,7 +90,7 @@ jaxon.ajax.request = {
             xc.cursor.dontUpdate();
 
         oRequest.method = oRequest.method.toUpperCase();
-        if ('GET' != oRequest.method)
+        if('GET' != oRequest.method)
             oRequest.method = 'POST'; // W3C: Method is case sensitive
 
         oRequest.requestRetry = oRequest.retry;
@@ -92,9 +100,9 @@ jaxon.ajax.request = {
 
         delete oRequest['append'];
         delete oRequest['set'];
-        delete oRequest['take'];
+        delete lcb['take'];
 
-        if ('undefined' == typeof oRequest.URI)
+        if('undefined' == typeof oRequest.URI)
             throw { code: 10005 };
     },
 
@@ -109,26 +117,34 @@ jaxon.ajax.request = {
         which already contains the necessary parameters and temporary variables
         needed to initiate and process a jaxon request.
 
-    Note: 
+    Note:
     This is called each time a request object is being prepared for a call to the server.
     If the request is retried, the request must be prepared again.
     */
     prepare: function(oRequest) {
         var xx = jaxon;
         var xt = xx.tools;
+        var xcb = xx.ajax.callback;
+        var gcb = xx.callback;
+        var lcb = oRequest.callback;
+
+        xcb.execute([gcb, lcb], 'onPrepare', oRequest);
+
+        // Check if the request must be aborted
+        if(oRequest.aborted == true) {
+            return false;
+        }
 
         oRequest.request = xt.ajax.createRequest();
 
         oRequest.setRequestHeaders = function(headers) {
-            if ('object' == typeof headers) {
+            if('object' == typeof headers) {
                 for (var optionName in headers)
                     this.request.setRequestHeader(optionName, headers[optionName]);
             }
         };
         oRequest.setCommonRequestHeaders = function() {
             this.setRequestHeaders(this.commonHeaders);
-            if (this.challengeResponse)
-                this.request.setRequestHeader('challenge-response', this.challengeResponse);
         };
         oRequest.setPostRequestHeaders = function() {
             this.setRequestHeaders(this.postHeaders);
@@ -137,29 +153,37 @@ jaxon.ajax.request = {
             this.setRequestHeaders(this.getHeaders);
         };
 
-        if ('asynchronous' == oRequest.mode) {
+        // if('asynchronous' == oRequest.mode) {
             // references inside this function should be expanded
             // IOW, don't use shorthand references like xx for jaxon
-            oRequest.request.onreadystatechange = function() {
-                if (oRequest.request.readyState != 4)
-                    return;
-                jaxon.ajax.response.received(oRequest);
-            };
-            oRequest.finishRequest = function() {
-                return this.returnValue;
-            };
-        } else {
+        /*} else {
             oRequest.finishRequest = function() {
                 return jaxon.ajax.response.received(oRequest);
             };
-        }
+        }*/
+        oRequest.request.onreadystatechange = function() {
+            if(oRequest.request.readyState != 4) {
+                return;
+            }
+            // Synchronous request are processed immediately.
+            // Asynchronous request are processed only if the queue is empty.
+            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
+                'synchronous' == oRequest.mode) {
+                jaxon.ajax.response.received(oRequest);
+            } else {
+                jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
+            }
+        };
+        oRequest.finishRequest = function() {
+            return this.returnValue;
+        };
 
-        if ('undefined' != typeof oRequest.userName && 'undefined' != typeof oRequest.password) {
+        if('undefined' != typeof oRequest.userName && 'undefined' != typeof oRequest.password) {
             oRequest.open = function() {
                 this.request.open(
                     this.method,
                     this.requestURI,
-                    'asynchronous' == this.mode,
+                    true, // 'asynchronous' == this.mode,
                     oRequest.userName,
                     oRequest.password);
             };
@@ -168,11 +192,11 @@ jaxon.ajax.request = {
                 this.request.open(
                     this.method,
                     this.requestURI,
-                    'asynchronous' == this.mode);
+                    true); // 'asynchronous' == this.mode);
             };
         }
 
-        if ('POST' == oRequest.method) { // W3C: Method is case sensitive
+        if('POST' == oRequest.method) { // W3C: Method is case sensitive
             oRequest.applyRequestHeaders = function() {
                 this.setCommonRequestHeaders();
                 try {
@@ -182,7 +206,7 @@ jaxon.ajax.request = {
                     this.requestURI += this.requestURI.indexOf('?') == -1 ? '?' : '&';
                     this.requestURI += this.requestData;
                     this.requestData = '';
-                    if (0 == this.requestRetry) this.requestRetry = 1;
+                    if(0 == this.requestRetry) this.requestRetry = 1;
                     throw e;
                 }
             }
@@ -192,6 +216,18 @@ jaxon.ajax.request = {
                 this.setGetRequestHeaders();
             };
         }
+
+        // No request is submitted while there are pending requests in the outgoing queue.
+        let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
+        if('synchronous' == oRequest.mode) {
+            // Synchronous requests are always queued, in both send and recv queues.
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
+        } else if(!submitRequest) {
+            // Asynchronous requests are queued in send queue only if they are not submitted.
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+        }
+        return submitRequest;
     },
 
     /*
@@ -222,12 +258,12 @@ jaxon.ajax.request = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        if (oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
+        if(oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
             // The request will be sent after the files are uploaded
             oRequest.upload.iframe.onload = function() {
-                    jaxon.ajax.response.upload(oRequest);
-                }
-                // Submit the upload form
+                jaxon.ajax.response.upload(oRequest);
+            }
+            // Submit the upload form
             oRequest.upload.form.submit();
         } else {
             jaxon.ajax.request._send(oRequest);
@@ -275,8 +311,8 @@ jaxon.ajax.request = {
 
     functionName - (object):  An object containing the name of the function to execute
     on the server. The standard request is: {jxnfun:'function_name'}
-        
-    oRequest - (object, optional):  A request object which 
+
+    oRequest - (object, optional):  A request object which
         may contain call specific parameters.  This object will be
         used by jaxon to store all the request parameters as well
         as temporary variables needed during the processing of the
@@ -285,11 +321,11 @@ jaxon.ajax.request = {
     */
     execute: function() {
         var numArgs = arguments.length;
-        if (0 == numArgs)
+        if(0 == numArgs)
             return false;
 
         var oRequest = {};
-        if (1 < numArgs)
+        if(1 < numArgs)
             oRequest = arguments[1];
 
         oRequest.functionName = arguments[0];
@@ -300,16 +336,19 @@ jaxon.ajax.request = {
         xx.ajax.parameters.process(oRequest);
         while (0 < oRequest.requestRetry) {
             try {
-                --oRequest.requestRetry;
-                xx.ajax.request.prepare(oRequest);
-                return xx.ajax.request.submit(oRequest);
+                if(xx.ajax.request.prepare(oRequest))
+                {
+                    --oRequest.requestRetry;
+                    return xx.ajax.request.submit(oRequest);
+                }
+                return null;
             } catch (e) {
                 jaxon.ajax.callback.execute(
                     [jaxon.callback, oRequest.callback],
                     'onFailure',
                     oRequest
                 );
-                if (0 == oRequest.requestRetry)
+                if(0 == oRequest.requestRetry)
                     throw e;
             }
         }

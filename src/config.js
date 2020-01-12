@@ -1,6 +1,6 @@
 /*
     Class: jaxon.config
-    
+
     This class contains all the default configuration settings.  These
     are application level settings; however, they can be overridden
     by including a jaxon.config definition prior to including the
@@ -11,7 +11,7 @@ var jaxon = {};
 
 /*
     Class: jaxon.config
-    
+
     This class contains all the default configuration settings.  These
     are application level settings; however, they can be overridden
     by including a jaxon.config definition prior to including the
@@ -23,14 +23,14 @@ jaxon.config = {};
 /*
 Class: jaxon.debug
 */
-jaxon.debug = {};
-
-/*
+jaxon.debug = {
+    /*
     Class: jaxon.debug.verbose
-    
+
     Provide a high level of detail which can be used to debug hard to find problems.
-*/
-jaxon.debug.verbose = {}
+    */
+    verbose: {}
+};
 
 /*
 Class: jaxon.ajax
@@ -148,7 +148,7 @@ jaxon.config.setDefault('defaultMode', 'asynchronous');
 /*
 String: defaultHttpVersion
 
-The Hyper Text Transport Protocol version designated in the 
+The Hyper Text Transport Protocol version designated in the
 header of the request.
 */
 jaxon.config.setDefault('defaultHttpVersion', 'HTTP/1.1');
@@ -163,7 +163,7 @@ jaxon.config.setDefault('defaultContentType', 'application/x-www-form-urlencoded
 /*
 Integer: defaultResponseDelayTime
 
-The delay time, in milliseconds, associated with the 
+The delay time, in milliseconds, associated with the
 <jaxon.callback.onRequestDelay> event.
 */
 jaxon.config.setDefault('defaultResponseDelayTime', 1000);
@@ -223,6 +223,8 @@ jaxon.config.setDefault('maxObjectSize', 2000);
 
 jaxon.config.setDefault('responseQueueSize', 1000);
 
+jaxon.config.setDefault('requestQueueSize', 1000);
+
 /*
 Class: jaxon.config.status
 
@@ -233,10 +235,10 @@ customize the status bar messages prior to sending jaxon requests.
 */
 jaxon.config.status = {
     /*
-        Function: update
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to set the status bar messages.
+    Function: update
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to set the status bar messages.
     */
     update: function() {
         return {
@@ -255,11 +257,11 @@ jaxon.config.status = {
         }
     },
     /*
-        Function: dontUpdate
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework where status bar updates
-        would normally occur.
+    Function: dontUpdate
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework where status bar updates
+    would normally occur.
     */
     dontUpdate: function() {
         return {
@@ -276,16 +278,16 @@ Class: jaxon.config.cursor
 
 Provides the base functionality for updating the browser's cursor
 during requests.  By splitting this functionalityh into an object
-of it's own, jaxon developers can now customize the functionality 
+of it's own, jaxon developers can now customize the functionality
 prior to submitting requests.
 */
 jaxon.config.cursor = {
     /*
-        Function: update
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to effect the status of the 
-        cursor during requests.
+    Function: update
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to effect the status of the
+    cursor during requests.
     */
     update: function() {
         return {
@@ -299,11 +301,11 @@ jaxon.config.cursor = {
         }
     },
     /*
-        Function: dontUpdate
-        
-        Constructs and returns a set of event handlers that will
-        be called by the jaxon framework where cursor status changes
-        would typically be made during the handling of requests.
+    Function: dontUpdate
+
+    Constructs and returns a set of event handlers that will
+    be called by the jaxon framework where cursor status changes
+    would typically be made during the handling of requests.
     */
     dontUpdate: function() {
         return {

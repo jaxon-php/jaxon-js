@@ -1,6 +1,6 @@
 /*
     Class: jaxon.config
-    
+
     This class contains all the default configuration settings.  These
     are application level settings; however, they can be overridden
     by including a jaxon.config definition prior to including the
@@ -11,7 +11,7 @@ var jaxon = {};
 
 /*
     Class: jaxon.config
-    
+
     This class contains all the default configuration settings.  These
     are application level settings; however, they can be overridden
     by including a jaxon.config definition prior to including the
@@ -23,14 +23,14 @@ jaxon.config = {};
 /*
 Class: jaxon.debug
 */
-jaxon.debug = {};
-
-/*
+jaxon.debug = {
+    /*
     Class: jaxon.debug.verbose
-    
+
     Provide a high level of detail which can be used to debug hard to find problems.
-*/
-jaxon.debug.verbose = {}
+    */
+    verbose: {}
+};
 
 /*
 Class: jaxon.ajax
@@ -148,7 +148,7 @@ jaxon.config.setDefault('defaultMode', 'asynchronous');
 /*
 String: defaultHttpVersion
 
-The Hyper Text Transport Protocol version designated in the 
+The Hyper Text Transport Protocol version designated in the
 header of the request.
 */
 jaxon.config.setDefault('defaultHttpVersion', 'HTTP/1.1');
@@ -163,7 +163,7 @@ jaxon.config.setDefault('defaultContentType', 'application/x-www-form-urlencoded
 /*
 Integer: defaultResponseDelayTime
 
-The delay time, in milliseconds, associated with the 
+The delay time, in milliseconds, associated with the
 <jaxon.callback.onRequestDelay> event.
 */
 jaxon.config.setDefault('defaultResponseDelayTime', 1000);
@@ -223,6 +223,8 @@ jaxon.config.setDefault('maxObjectSize', 2000);
 
 jaxon.config.setDefault('responseQueueSize', 1000);
 
+jaxon.config.setDefault('requestQueueSize', 1000);
+
 /*
 Class: jaxon.config.status
 
@@ -233,10 +235,10 @@ customize the status bar messages prior to sending jaxon requests.
 */
 jaxon.config.status = {
     /*
-        Function: update
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to set the status bar messages.
+    Function: update
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to set the status bar messages.
     */
     update: function() {
         return {
@@ -255,11 +257,11 @@ jaxon.config.status = {
         }
     },
     /*
-        Function: dontUpdate
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework where status bar updates
-        would normally occur.
+    Function: dontUpdate
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework where status bar updates
+    would normally occur.
     */
     dontUpdate: function() {
         return {
@@ -276,16 +278,16 @@ Class: jaxon.config.cursor
 
 Provides the base functionality for updating the browser's cursor
 during requests.  By splitting this functionalityh into an object
-of it's own, jaxon developers can now customize the functionality 
+of it's own, jaxon developers can now customize the functionality
 prior to submitting requests.
 */
 jaxon.config.cursor = {
     /*
-        Function: update
-        
-        Constructs and returns a set of event handlers that will be
-        called by the jaxon framework to effect the status of the 
-        cursor during requests.
+    Function: update
+
+    Constructs and returns a set of event handlers that will be
+    called by the jaxon framework to effect the status of the
+    cursor during requests.
     */
     update: function() {
         return {
@@ -299,11 +301,11 @@ jaxon.config.cursor = {
         }
     },
     /*
-        Function: dontUpdate
-        
-        Constructs and returns a set of event handlers that will
-        be called by the jaxon framework where cursor status changes
-        would typically be made during the handling of requests.
+    Function: dontUpdate
+
+    Constructs and returns a set of event handlers that will
+    be called by the jaxon framework where cursor status changes
+    would typically be made during the handling of requests.
     */
     dontUpdate: function() {
         return {
@@ -312,6 +314,7 @@ jaxon.config.cursor = {
         }
     }
 };
+
 
 jaxon.tools.ajax = {
     /*
@@ -358,47 +361,9 @@ jaxon.tools.ajax = {
         // this would seem to cause an infinite loop, however, the function should
         // be reassigned by now and therefore, it will not loop.
         return jaxon.tools.ajax.createRequest();
-    },
-
-    /*
-    Function: jaxon.tools.ajax.processFragment
-
-    Parse the JSON response into a series of commands.
-
-    Parameters: 
-    oRequest - (object):  The request context object.
-    */
-    processFragment: function(nodes, seq, oRet, oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
-        for (nodeName in nodes) {
-            if ('jxnobj' == nodeName) {
-                for (a in nodes[nodeName]) {
-                    /*
-                    prevents from using not numbered indexes of 'jxnobj'
-                    nodes[nodeName][a]= "0" is an valid jaxon response stack item
-                    nodes[nodeName][a]= "pop" is an method from somewhere but not from jxnobj
-                    */
-                    if (parseInt(a) != a) continue;
-
-                    var obj = nodes[nodeName][a];
-                    obj.fullName = '*unknown*';
-                    obj.sequence = seq;
-                    obj.request = oRequest;
-                    obj.context = oRequest.context;
-                    xt.queue.push(xx.response, obj);
-                    ++seq;
-                }
-            } else if ('jxnrv' == nodeName) {
-                oRet = nodes[nodeName];
-            } else if ('debugmsg' == nodeName) {
-                txt = nodes[nodeName];
-            } else
-                throw { code: 10004, data: obj.fullName }
-        }
-        return oRet;
     }
 };
+
 
 jaxon.tools.array = {
     /*
@@ -695,132 +660,132 @@ jaxon.tools.form = {
 
 
 jaxon.tools.queue = {
-    /*
-    Function: create
-
-    Construct and return a new queue object.
-
-    Parameters: 
-    size - (integer):
-        The number of entries the queue will be able to hold.
-    */
+    /**
+     * Construct and return a new queue object.
+     *
+     * @param integer size The number of entries the queue will be able to hold.
+     *
+     * @returns object
+     */
     create: function(size) {
         return {
             start: 0,
+            count: 0,
             size: size,
             end: 0,
-            commands: [],
+            elements: [],
             timeout: null
         }
     },
 
-    /*
-    Function: jaxon.tools.queue.retry
-
-    Maintains a retry counter for the given object.
-
-    Parameters: 
-    obj - (object):
-        The object to track the retry count for.
-    count - (integer):
-        The number of times the operation should be attempted before a failure is indicated.
-        
-    Returns:
-    true - The object has not exhausted all the retries.
-    false - The object has exhausted the retry count specified.
-    */
-    retry: function(obj, count) {
-        var retries = obj.retries;
-        if (retries) {
-            --retries;
-            if (1 > retries)
-                return false;
-        } else retries = count;
-        obj.retries = retries;
-        return true;
+    /**
+     * Check id a queue is empty.
+     *
+     * @param object oQueue The queue to check.
+     *
+     * @returns boolean
+     */
+    empty: function(oQueue) {
+        return (oQueue.count <= 0);
     },
 
-    /*
-    Function: jaxon.tools.queue.rewind
-
-    Rewind the buffer head pointer, effectively reinserting the last retrieved object into the buffer.
-
-    Parameters: 
-    theQ - (object):
-        The queue to be rewound.
-    */
-    rewind: function(theQ) {
-        if (0 < theQ.start)
-            --theQ.start;
-        else
-            theQ.start = theQ.size;
+    /**
+     * Check id a queue is empty.
+     *
+     * @param object oQueue The queue to check.
+     *
+     * @returns boolean
+     */
+    full: function(oQueue) {
+        return (oQueue.count >= oQueue.size);
     },
 
-    /*
-    Function: jaxon.tools.queue.push
+    /**
+     * Push a new object into the tail of the buffer maintained by the specified queue object.
+     *
+     * @param object oQueue The queue in which you would like the object stored.
+     * @param object obj    The object you would like stored in the queue.
+     *
+     * @returns integer The number of entries in the queue.
+     */
+    push: function(oQueue, obj) {
+        // No push if the queue is full.
+        if(jaxon.tools.queue.full(oQueue)) {
+            throw { code: 10003 };
+        }
 
-    Push a new object into the tail of the buffer maintained by the specified queue object.
-
-    Parameters: 
-    theQ - (object):
-        The queue in which you would like the object stored.
-    obj - (object):
-        The object you would like stored in the queue.
-    */
-    push: function(theQ, obj) {
-        var next = theQ.end + 1;
-        if (next > theQ.size)
-            next = 0;
-        if (next != theQ.start) {
-            theQ.commands[theQ.end] = obj;
-            theQ.end = next;
-        } else
-            throw { code: 10003 }
+        oQueue.elements[oQueue.end] = obj;
+        if(++oQueue.end >= oQueue.size) {
+            oQueue.end = 0;
+        }
+        return ++oQueue.count;
     },
 
-    /*
-    Function: jaxon.tools.queue.pushFront
+    /**
+     * Push a new object into the head of the buffer maintained by the specified queue object.
+     *
+     * This effectively pushes an object to the front of the queue... it will be processed first.
+     *
+     * @param object oQueue The queue in which you would like the object stored.
+     * @param object obj    The object you would like stored in the queue.
+     *
+     * @returns integer The number of entries in the queue.
+     */
+    pushFront: function(oQueue, obj) {
+        // No push if the queue is full.
+        if(jaxon.tools.queue.full(oQueue)) {
+            throw { code: 10003 };
+        }
 
-    Push a new object into the head of the buffer maintained by the specified queue object.
-    This effectively pushes an object to the front of the queue... it will be processed first.
+        // Simply push if the queue is empty
+        if(jaxon.tools.queue.empty(oQueue)) {
+            return jaxon.tools.queue.push(oQueue, obj);
+        }
 
-    Parameters: 
-    theQ - (object):
-        The queue in which you would like the object stored.
-    obj - (object):
-        The object you would like stored in the queue.
-    */
-    pushFront: function(theQ, obj) {
-        jaxon.tools.queue.rewind(theQ);
-        theQ.commands[theQ.start] = obj;
+        // Put the object one position back.
+        if(--oQueue.start < 0) {
+            oQueue.start = oQueue.size - 1;
+        }
+        oQueue.elements[oQueue.start] = obj;
+        return ++oQueue.count;
     },
 
-    /*
-    Function: jaxon.tools.queue.pop
-
-    Attempt to pop an object off the head of the queue.
-
-    Parameters: 
-    theQ - (object):
-        The queue object you would like to modify.
-        
-    Returns:
-    object - The object that was at the head of the queue or
-        null if the queue was empty.
-    */
-    pop: function(theQ) {
-        var next = theQ.start;
-        if (next == theQ.end)
+    /**
+     * Attempt to pop an object off the head of the queue.
+     *
+     * @param object oQueue The queue object you would like to modify.
+     *
+     * @returns object|null
+     */
+    pop: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
             return null;
-        next++;
-        if (next > theQ.size)
-            next = 0;
-        var obj = theQ.commands[theQ.start];
-        delete theQ.commands[theQ.start];
-        theQ.start = next;
+        }
+
+        let obj = oQueue.elements[oQueue.start];
+        delete oQueue.elements[oQueue.start];
+        if(++oQueue.start >= oQueue.size) {
+            oQueue.start = 0;
+        }
+        oQueue.count--;
         return obj;
+    },
+
+    /**
+     * Attempt to pop an object off the head of the queue.
+     *
+     * @param object oQueue The queue object you would like to modify.
+     *
+     * @returns object|null
+     */
+    peek: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue)) {
+            return null;
+        }
+        return oQueue.elements[oQueue.start];
     }
 };
+
 
 jaxon.tools.string = {
     /*
@@ -1014,6 +979,129 @@ jaxon.tools.upload = {
 };
 
 
+jaxon.cmd.delay = {
+    /**
+     * Attempt to pop the next asynchronous request.
+     *
+     * @param object oQueue The queue object you would like to modify.
+     *
+     * @returns object|null
+     */
+    popAsyncRequest: function(oQueue) {
+        if(jaxon.tools.queue.empty(oQueue))
+        {
+            return null;
+        }
+        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
+        {
+            return null;
+        }
+        return jaxon.tools.queue.pop(oQueue);
+    },
+
+    /**
+     * Maintains a retry counter for the given object.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param count integer     The number of times the operation should be attempted before a failure is indicated.
+     *
+     * @returns boolean
+     *      true - The object has not exhausted all the retries.
+     *      false - The object has exhausted the retry count specified.
+     */
+    retry: function(command, count) {
+        var retries = command.retries;
+        if(retries) {
+            --retries;
+            if(1 > retries) {
+                return false;
+            }
+        } else {
+            retries = count;
+        }
+        command.retries = retries;
+        // This command must be processed again.
+        command.requeue = true;
+        return true;
+    },
+
+    /**
+     * Set or reset a timeout that is used to restart processing of the queue.
+     *
+     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
+     * to process pending events, like loading files)
+     *
+     * @param response object   The queue to process.
+     * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
+     */
+    setWakeup: function(response, when) {
+        if (null != response.timeout) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
+        }
+        response.timout = setTimeout(function() {
+            jaxon.ajax.response.process(response);
+        }, when);
+    },
+
+    /**
+     * The function to run after the confirm question, for the comfirmCommands.
+     *
+     * @param command object    The object to track the retry count for.
+     * @param count integer     The number of commands to skip.
+     * @param skip boolean      Skip the commands or not.
+     *
+     * @returns boolean
+     */
+    confirmCallback: function(command, count, skip) {
+        if(skip == true) {
+            // The last entry in the queue is not a user command.
+            // Thus it cannot be skipped.
+            while (count > 0 && command.response.count > 1 &&
+                jaxon.tools.queue.pop(command.response) != null) {
+                --count;
+            }
+        }
+        // Run a different command depending on whether this callback executes
+        // before of after the confirm function returns;
+        if(command.requeue == true) {
+            // Before => the processing is delayed.
+            jaxon.cmd.delay.setWakeup(command.response, 30);
+        } else {
+            // After => the processing is executed.
+            jaxon.ajax.response.process(command.response);
+        }
+    },
+
+    /**
+     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     *
+     * The processing of the queue after the question is delayed so it occurs after this function returns.
+     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
+     * before (when using the blocking confirm() function) or after this function returns.
+     * @see confirmCallback
+     *
+     * @param command object    The object to track the retry count for.
+     * @param question string   The question to ask to the user.
+     * @param count integer     The number of commands to skip.
+     *
+     * @returns boolean
+     */
+    confirm: function(command, count, question) {
+        // This will be checked in the callback.
+        command.requeue = true;
+        jaxon.ajax.message.confirm(question, '', function() {
+            jaxon.cmd.delay.confirmCallback(command, count, false);
+        }, function() {
+            jaxon.cmd.delay.confirmCallback(command, count, true);
+        });
+        // This command must not be processed again.
+        command.requeue = false;
+        return false;
+    }
+};
+
+
 jaxon.cmd.event = {
     /*
     Function: jaxon.cmd.event.setEvent
@@ -1033,27 +1121,27 @@ jaxon.cmd.event = {
     */
     setEvent: function(command) {
         command.fullName = 'setEvent';
-        var element = command.id;
+        var target = command.id;
         var sEvent = command.prop;
         var code = command.data;
-        //force to get the element 
-        if ('string' == typeof element)
-            element = jaxon.$(element);
+        // force to get the target
+        if ('string' == typeof target)
+            target = jaxon.$(target);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
-        eval('element.' + sEvent + ' = function(e) { ' + code + '; }');
+        eval('target.' + sEvent + ' = function(e) { ' + code + '; }');
         return true;
     },
 
     /*
     Function: jaxon.cmd.event.addHandler
 
-    Add an event handler to the specified element.
+    Add an event handler to the specified target.
 
     Parameters:
 
     command - (object): Response command object.
-    - id: The id of, or the element itself
+    - id: The id of, or the target itself
     - prop: The name of the event.
     - data: The name of the function to be called
 
@@ -1065,25 +1153,25 @@ jaxon.cmd.event = {
         if (window.addEventListener) {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -1093,12 +1181,12 @@ jaxon.cmd.event = {
     /*
     Function: jaxon.cmd.event.removeHandler
 
-    Remove an event handler from an element.
+    Remove an event handler from an target.
 
     Parameters:
 
     command - (object): Response command object.
-    - id: The id of, or the element itself
+    - id: The id of, or the target itself
     - prop: The name of the event.
     - data: The name of the function to be removed
 
@@ -1110,31 +1198,32 @@ jaxon.cmd.event = {
         if (window.removeEventListener) {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('element.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var element = command.id;
+                var target = command.id;
                 var sEvent = command.prop;
                 var sFuncName = command.data;
-                if ('string' == typeof element)
-                    element = jaxon.$(element);
+                if ('string' == typeof target)
+                    target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('element.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                eval('target.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
         return jaxon.cmd.event.removeHandler(command);
     }
 };
+
 
 jaxon.cmd.form = {
     /*
@@ -1424,7 +1513,7 @@ jaxon.cmd.node = {
     Parameters:
 
     element - (string or object):  The name of, or the element itself which will be deleted.
-        
+
     Returns:
 
     true - The operation completed successfully.
@@ -1450,7 +1539,7 @@ jaxon.cmd.node = {
         which will contain the new element.
     sTag - (string):  The tag name for the new element.
     sId - (string):  The value to be assigned to the id attribute of the new element.
-        
+
     Returns:
 
     true - The operation completed successfully.
@@ -1522,30 +1611,30 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to assign.
-        - args.data: (string or object):  The value to assign to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to assign.
+        - command.data: (string or object):  The value to assign to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextAssign: function(args) {
-        args.fullName = 'context assign';
+    contextAssign: function(command) {
+        command.fullName = 'context assign';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' = data;');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     },
 
@@ -1556,30 +1645,30 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to append to.
-        - args.data: (string or object):  The value to append to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to append to.
+        - command.data: (string or object):  The value to append to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextAppend: function(args) {
-        args.fullName = 'context append';
+    contextAppend: function(command) {
+        command.fullName = 'context append';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' += data;');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     },
 
@@ -1590,35 +1679,36 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the
+    command - (object):  The response command object which will contain the
         following:
-        
-        - args.prop: (string):  The name of the member to prepend to.
-        - args.data: (string or object):  The value to prepend to the member.
-        - args.context: (object):  The current script context object which
+
+        - command.prop: (string):  The name of the member to prepend to.
+        - command.data: (string or object):  The value to prepend to the member.
+        - command.context: (object):  The current script context object which
             is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    contextPrepend: function(args) {
-        args.fullName = 'context prepend';
+    contextPrepend: function(command) {
+        command.fullName = 'context prepend';
 
         var code = [];
         code.push('this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(' = data + this.');
-        code.push(args.prop);
+        code.push(command.prop);
         code.push(';');
         code = code.join('');
-        args.context.jaxonDelegateCall = function(data) {
+        command.context.jaxonDelegateCall = function(data) {
             eval(code);
         }
-        args.context.jaxonDelegateCall(args.data);
+        command.context.jaxonDelegateCall(command.data);
         return true;
     }
 };
+
 
 jaxon.cmd.script = {
     /*
@@ -1628,7 +1718,7 @@ jaxon.cmd.script = {
 
     This will effecitvely cause the script file to be loaded in the browser.
 
-    Parameters: 
+    Parameters:
 
     fileName - (string):  The URI of the file.
 
@@ -1659,7 +1749,7 @@ jaxon.cmd.script = {
     Adds a SCRIPT tag referencing the specified file.
     This effectively causes the script to be loaded in the browser.
 
-    Parameters: 
+    Parameters:
 
     command (object) - Xajax response object
 
@@ -1685,10 +1775,10 @@ jaxon.cmd.script = {
 
     Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
 
-    Parameters: 
+    Parameters:
 
     command (object) - Xajax response object
-            
+
     Returns:
 
     true - The script was not found or was removed.
@@ -1705,10 +1795,10 @@ jaxon.cmd.script = {
             if (script.src) {
                 if (0 <= script.src.indexOf(fileName)) {
                     if ('undefined' != typeof unload) {
-                        var args = {};
-                        args.data = unload;
-                        args.context = window;
-                        jaxon.cmd.script.execute(args);
+                        var _command = {};
+                        _command.data = unload;
+                        _command.context = window;
+                        jaxon.cmd.script.execute(_command);
                     }
                     var parent = script.parentNode;
                     parent.removeChild(script);
@@ -1727,9 +1817,8 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - (object):  The response command containing the following
-        parameters.
-        - args.prop: The number of 10ths of a second to sleep.
+    command - (object):  The response command containing the following parameters.
+        - command.prop: The number of 10ths of a second to sleep.
 
     Returns:
 
@@ -1740,8 +1829,8 @@ jaxon.cmd.script = {
         command.fullName = 'sleep';
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.tools.queue.retry(command, command.prop)) {
-            jaxon.ajax.response.setWakeup(jaxon.response, 100);
+        if (jaxon.cmd.delay.retry(command, command.prop)) {
+            jaxon.cmd.delay.setWakeup(command.response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -1749,31 +1838,43 @@ jaxon.cmd.script = {
     },
 
     /*
-    Function: jaxon.cmd.script.confirmCommands
+    Function: jaxon.cmd.script.alert
 
-    Prompt the user with the specified text, if the user responds by clicking cancel, then skip
-    the specified number of commands in the response command queue.
+    Show the specified message.
+
+    Parameters:
+
+    command (object) - jaxon response object
+
+    Returns:
+
+    true - The operation completed successfully.
+    */
+    alert: function(command) {
+        command.fullName = 'alert';
+        jaxon.ajax.message.info(command.data);
+        return true;
+    },
+
+    /*
+    Function: jaxon.cmd.script.confirm
+
+    Prompt the user with the specified question, if the user responds by clicking cancel,
+    then skip the specified number of commands in the response command queue.
     If the user clicks Ok, the command processing resumes normal operation.
 
     Parameters:
 
     command (object) - jaxon response object
-        
+
     Returns:
 
-    true - The operation completed successfully.
+    false - Stop the processing of the command queue until the user answers the question.
     */
-    confirmCommands: function(command) {
-        command.fullName = 'confirmCommands';
-        var msg = command.data;
-        var numberOfCommands = command.id;
-        if (false == confirm(msg)) {
-            while (0 < numberOfCommands) {
-                jaxon.tools.queue.pop(jaxon.response);
-                --numberOfCommands;
-            }
-        }
-        return true;
+    confirm: function(command) {
+        command.fullName = 'confirm';
+        jaxon.cmd.delay.confirm(command, command.count, command.data);
+        return false;
     },
 
     /*
@@ -1783,23 +1884,23 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
-        - args.data: (string):  The javascript to be evaluated.
-        - args.context: (object):  The javascript object that to be referenced as 'this' in the script.
-            
+    command - The response command object containing the following:
+        - command.data: (string):  The javascript to be evaluated.
+        - command.context: (object):  The javascript object that to be referenced as 'this' in the script.
+
     Returns:
 
     unknown - A value set by the script using 'returnValue = '
     true - If the script does not set a returnValue.
     */
-    execute: function(args) {
-        args.fullName = 'execute Javascript';
+    execute: function(command) {
+        command.fullName = 'execute Javascript';
         var returnValue = true;
-        args.context = args.context ? args.context : {};
-        args.context.jaxonDelegateCall = function() {
-            eval(args.data);
+        command.context = command.context ? command.context : {};
+        command.context.jaxonDelegateCall = function() {
+            eval(command.data);
         };
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return returnValue;
     },
 
@@ -1811,11 +1912,11 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
+    command - The response command object containing the following:
 
-        - args.data: (string):  The javascript to evaluate.
-        - args.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
-        - args.context: (object):  The current script context object which is accessable in
+        - command.data: (string):  The javascript to evaluate.
+        - command.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
+        - command.context: (object):  The current script context object which is accessable in
             the javascript being evaulated via the 'this' keyword.
 
     Returns:
@@ -1823,24 +1924,24 @@ jaxon.cmd.script = {
     false - The condition evaulates to false and the sleep time has not expired.
     true - The condition evaluates to true or the sleep time has expired.
     */
-    waitFor: function(args) {
-        args.fullName = 'waitFor';
+    waitFor: function(command) {
+        command.fullName = 'waitFor';
 
         var bResult = false;
         var cmdToEval = 'bResult = (';
-        cmdToEval += args.data;
+        cmdToEval += command.data;
         cmdToEval += ');';
         try {
-            args.context.jaxonDelegateCall = function() {
+            command.context.jaxonDelegateCall = function() {
                 eval(cmdToEval);
             }
-            args.context.jaxonDelegateCall();
+            command.context.jaxonDelegateCall();
         } catch (e) {}
         if (false == bResult) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
-                jaxon.ajax.response.setWakeup(jaxon.response, 100);
+            if (jaxon.cmd.delay.retry(command, command.prop)) {
+                jaxon.cmd.delay.setWakeup(command.response, 100);
                 return false;
             }
             // give up, continue processing queue
@@ -1855,23 +1956,23 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object containing the following:
-        - args.data: (array):  The parameters to pass to the function.
-        - args.func: (string):  The name of the function to call.
-        - args.context: (object):  The current script context object which is accessable in the
+    command - The response command object containing the following:
+        - command.data: (array):  The parameters to pass to the function.
+        - command.func: (string):  The name of the function to call.
+        - command.context: (object):  The current script context object which is accessable in the
             function name via the 'this keyword.
-            
+
     Returns:
 
     true - The call completed successfully.
     */
-    call: function(args) {
-        args.fullName = 'call js function';
+    call: function(command) {
+        command.fullName = 'call js function';
 
-        var parameters = args.data;
+        var parameters = command.data;
 
         var scr = new Array();
-        scr.push(args.func);
+        scr.push(command.func);
         scr.push('(');
         if ('undefined' != typeof parameters) {
             if ('object' == typeof parameters) {
@@ -1884,10 +1985,10 @@ jaxon.cmd.script = {
             }
         }
         scr.push(');');
-        args.context.jaxonDelegateCall = function() {
+        command.context.jaxonDelegateCall = function() {
             eval(scr.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
@@ -1898,38 +1999,38 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - The response command object which contains the following:
+    command - The response command object which contains the following:
 
-        - args.func: (string):  The name of the function to construct.
-        - args.data: (string):  The script that will be the function body.
-        - args.context: (object):  The current script context object
+        - command.func: (string):  The name of the function to construct.
+        - command.data: (string):  The script that will be the function body.
+        - command.context: (object):  The current script context object
             which is accessable in the script name via the 'this' keyword.
-            
+
     Returns:
 
     true - The function was constructed successfully.
     */
-    setFunction: function(args) {
-        args.fullName = 'setFunction';
+    setFunction: function(command) {
+        command.fullName = 'setFunction';
 
         var code = new Array();
-        code.push(args.func);
+        code.push(command.func);
         code.push(' = function(');
-        if ('object' == typeof args.prop) {
+        if ('object' == typeof command.prop) {
             var separator = '';
-            for (var m in args.prop) {
+            for (var m in command.prop) {
                 code.push(separator);
-                code.push(args.prop[m]);
+                code.push(command.prop[m]);
                 separator = ',';
             }
-        } else code.push(args.prop);
+        } else code.push(command.prop);
         code.push(') { ');
-        code.push(args.data);
+        code.push(command.data);
         code.push(' }');
-        args.context.jaxonDelegateCall = function() {
+        command.context.jaxonDelegateCall = function() {
             eval(code.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
@@ -1941,32 +2042,31 @@ jaxon.cmd.script = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain 
-        the following:
-        
-        - args.func: (string):  The name of the function to be wrapped.
-        - args.prop: (string):  List of parameters used when calling the function.
-        - args.data: (array):  The portions of code to be called before, after
+    command - (object):  The response command object which will contain the following:
+
+        - command.func: (string):  The name of the function to be wrapped.
+        - command.prop: (string):  List of parameters used when calling the function.
+        - command.data: (array):  The portions of code to be called before, after
             or even between calls to the original function.
-        - args.context: (object):  The current script context object which is 
+        - command.context: (object):  The current script context object which is
             accessable in the function name and body via the 'this' keyword.
-            
+
     Returns:
 
     true - The wrapper function was constructed successfully.
     */
-    wrapFunction: function(args) {
-        args.fullName = 'wrapFunction';
+    wrapFunction: function(command) {
+        command.fullName = 'wrapFunction';
 
         var code = new Array();
-        code.push(args.func);
+        code.push(command.func);
         code.push(' = jaxon.cmd.script.makeWrapper(');
-        code.push(args.func);
-        code.push(', args.prop, args.data, args.type, args.context);');
-        args.context.jaxonDelegateCall = function() {
+        code.push(command.func);
+        code.push(', command.prop, command.data, command.type, command.context);');
+        command.context.jaxonDelegateCall = function() {
             eval(code.join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         return true;
     },
 
@@ -1976,7 +2076,7 @@ jaxon.cmd.script = {
 
     Helper function used in the wrapping of an existing javascript function.
 
-    Parameters:    
+    Parameters:
 
     origFun - (string):  The name of the original function.
     args - (string):  The list of parameters used when calling the function.
@@ -1986,7 +2086,7 @@ jaxon.cmd.script = {
         return value from the call to the original function.
     context - (object):  The current script context object which is accessable
         in the function name and body via the 'this' keyword.
-        
+
     Returns:
 
     object - The complete wrapper function.
@@ -2032,6 +2132,7 @@ jaxon.cmd.script = {
         return wrapper;
     }
 };
+
 
 jaxon.cmd.style = {
     /*
@@ -2108,15 +2209,15 @@ jaxon.cmd.style = {
 
     Parameters:
 
-    args - (object):  The response command object which will contain the following:
-        - args.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
+    command - (object):  The response command object which will contain the following:
+        - command.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
 
     Returns:
 
     true - The .css files appear to be loaded.
     false - The .css files do not appear to be loaded and the timeout has not expired.
     */
-    waitForCSS: function(args) {
+    waitForCSS: function(command) {
         var oDocSS = jaxon.config.baseDocument.styleSheets;
         var ssEnabled = [];
         var iLen = oDocSS.length;
@@ -2140,8 +2241,8 @@ jaxon.cmd.style = {
         if (false == ssLoaded) {
             // inject a delay in the queue processing
             // handle retry counter
-            if (jaxon.tools.queue.retry(args, args.prop)) {
-                jaxon.ajax.response.setWakeup(jaxon.response, 10);
+            if (jaxon.cmd.delay.retry(command, command.prop)) {
+                jaxon.cmd.delay.setWakeup(command.response, 10);
                 return false;
             }
             // give up, continue processing queue
@@ -2150,76 +2251,77 @@ jaxon.cmd.style = {
     }
 };
 
+
 jaxon.cmd.tree = {
-    startResponse: function(args) {
+    startResponse: function(command) {
         jxnElm = [];
     },
 
-    createElement: function(args) {
+    createElement: function(command) {
         eval(
-            [args.tgt, ' = document.createElement(args.data)']
+            [command.tgt, ' = document.createElement(command.data)']
             .join('')
         );
     },
 
-    setAttribute: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    setAttribute: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, '.setAttribute(args.key, args.data)']
+                [command.tgt, '.setAttribute(command.key, command.data)']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    appendChild: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    appendChild: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.par, '.appendChild(', args.data, ')']
+                [command.par, '.appendChild(', command.data, ')']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    insertBefore: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    insertBefore: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, '.parentNode.insertBefore(', args.data, ', ', args.tgt, ')']
+                [command.tgt, '.parentNode.insertBefore(', command.data, ', ', command.tgt, ')']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    insertAfter: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    insertAfter: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.tgt, 'parentNode.insertBefore(', args.data, ', ', args.tgt, '.nextSibling)']
+                [command.tgt, 'parentNode.insertBefore(', command.data, ', ', command.tgt, '.nextSibling)']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    appendText: function(args) {
-        args.context.jaxonDelegateCall = function() {
+    appendText: function(command) {
+        command.context.jaxonDelegateCall = function() {
             eval(
-                [args.par, '.appendChild(document.createTextNode(args.data))']
+                [command.par, '.appendChild(document.createTextNode(command.data))']
                 .join('')
             );
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
     },
 
-    removeChildren: function(args) {
-        var skip = args.skip || 0;
-        var remove = args.remove || -1;
+    removeChildren: function(command) {
+        var skip = command.skip || 0;
+        var remove = command.remove || -1;
         var element = null;
-        args.context.jaxonDelegateCall = function() {
-            eval(['element = ', args.data].join(''));
+        command.context.jaxonDelegateCall = function() {
+            eval(['element = ', command.data].join(''));
         }
-        args.context.jaxonDelegateCall();
+        command.context.jaxonDelegateCall();
         var children = element.childNodes;
         for (var i in children) {
             if (isNaN(i) == false && children[i].nodeType == 1) {
@@ -2233,10 +2335,11 @@ jaxon.cmd.tree = {
         }
     },
 
-    endResponse: function(args) {
+    endResponse: function(command) {
         jxnElm = [];
     }
 };
+
 
 jaxon.ajax.callback = {
     /*
@@ -2267,6 +2370,7 @@ jaxon.ajax.callback = {
             arguments[1] :
             xc.defaultExpirationTime);
 
+        oCB.onPrepare = null;
         oCB.onRequest = null;
         oCB.onResponseDelay = null;
         oCB.onExpiration = null;
@@ -2310,14 +2414,16 @@ jaxon.ajax.callback = {
         with the timer to be cleared.
     */
     clearTimer: function(oCallback, sFunction) {
-        if ('undefined' != typeof oCallback.timers) {
-            if ('undefined' != typeof oCallback.timers[sFunction]) {
-                clearTimeout(oCallback.timers[sFunction].timer);
-            }
-        } else if ('object' == typeof oCallback) {
-            var iLen = oCallback.length;
-            for (var i = 0; i < iLen; ++i)
+        // The callback object is recognized by the presence of the timers attribute.
+        if ('undefined' == typeof oCallback.timers) {
+            for (var i = 0; i < oCallback.length; ++i) {
                 jaxon.ajax.callback.clearTimer(oCallback[i], sFunction);
+            }
+            return;
+        }
+
+        if ('undefined' != typeof oCallback.timers[sFunction]) {
+            clearTimeout(oCallback.timers[sFunction].timer);
         }
     },
 
@@ -2328,30 +2434,36 @@ jaxon.ajax.callback = {
 
     Parameters:
 
-    oCallback - (object):  The callback object (or objects) which 
+    oCallback - (object):  The callback object (or objects) which
         contain the event handlers to be executed.
     sFunction - (string):  The name of the event to be triggered.
     args - (object):  The request object for this request.
     */
     execute: function(oCallback, sFunction, args) {
-        if ('undefined' != typeof oCallback[sFunction]) {
-            var func = oCallback[sFunction];
-            if ('function' == typeof func) {
-                if ('undefined' != typeof oCallback.timers[sFunction]) {
-                    oCallback.timers[sFunction].timer = setTimeout(function() {
-                        func(args);
-                    }, oCallback.timers[sFunction].delay);
-                } else {
-                    func(args);
-                }
-            }
-        } else if ('object' == typeof oCallback) {
-            var iLen = oCallback.length;
-            for (var i = 0; i < iLen; ++i)
+        // The callback object is recognized by the presence of the timers attribute.
+        if ('undefined' == typeof oCallback.timers) {
+            for (let i = 0; i < oCallback.length; ++i) {
                 jaxon.ajax.callback.execute(oCallback[i], sFunction, args);
+            }
+            return;
+        }
+
+        if ('undefined' == typeof oCallback[sFunction] ||
+            'function' != typeof oCallback[sFunction]) {
+            return;
+        }
+
+        let func = oCallback[sFunction];
+        if ('undefined' != typeof oCallback.timers[sFunction]) {
+            oCallback.timers[sFunction].timer = setTimeout(function() {
+                func(args);
+            }, oCallback.timers[sFunction].delay);
+        } else {
+            func(args);
         }
     }
 };
+
 
 jaxon.ajax.handler = {
     /*
@@ -2390,13 +2502,11 @@ jaxon.ajax.handler = {
         if (jaxon.ajax.handler.isRegistered(command)) {
             // it is important to grab the element here as the previous command
             // might have just created the element
-            if (command.id)
+            if (command.id) {
                 command.target = jaxon.$(command.id);
-            // process the command
-            if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(jaxon.response, command);
-                return false;
             }
+            // process the command
+            return jaxon.ajax.handler.call(command);
         }
         return true;
     },
@@ -2467,65 +2577,65 @@ jaxon.ajax.handler = {
     }
 };
 
-jaxon.ajax.handler.register('rcmplt', function(args) {
-    jaxon.ajax.response.complete(args.request);
+jaxon.ajax.handler.register('rcmplt', function(command) {
+    jaxon.ajax.response.complete(command.request);
     return true;
 });
 
-jaxon.ajax.handler.register('css', function(args) {
-    args.fullName = 'includeCSS';
-    if ('undefined' == typeof args.media)
-        args.media = 'screen';
-    return jaxon.cmd.style.add(args.data, args.media);
+jaxon.ajax.handler.register('css', function(command) {
+    command.fullName = 'includeCSS';
+    if ('undefined' == typeof command.media)
+        command.media = 'screen';
+    return jaxon.cmd.style.add(command.data, command.media);
 });
-jaxon.ajax.handler.register('rcss', function(args) {
-    args.fullName = 'removeCSS';
-    if ('undefined' == typeof args.media)
-        args.media = 'screen';
-    return jaxon.cmd.style.remove(args.data, args.media);
+jaxon.ajax.handler.register('rcss', function(command) {
+    command.fullName = 'removeCSS';
+    if ('undefined' == typeof command.media)
+        command.media = 'screen';
+    return jaxon.cmd.style.remove(command.data, command.media);
 });
-jaxon.ajax.handler.register('wcss', function(args) {
-    args.fullName = 'waitForCSS';
-    return jaxon.cmd.style.waitForCSS(args);
+jaxon.ajax.handler.register('wcss', function(command) {
+    command.fullName = 'waitForCSS';
+    return jaxon.cmd.style.waitForCSS(command);
 });
 
-jaxon.ajax.handler.register('as', function(args) {
-    args.fullName = 'assign/clear';
+jaxon.ajax.handler.register('as', function(command) {
+    command.fullName = 'assign/clear';
     try {
-        return jaxon.cmd.node.assign(args.target, args.prop, args.data);
+        return jaxon.cmd.node.assign(command.target, command.prop, command.data);
     } catch (e) {
         // do nothing, if the debug module is installed it will
         // catch and handle the exception
     }
     return true;
 });
-jaxon.ajax.handler.register('ap', function(args) {
-    args.fullName = 'append';
-    return jaxon.cmd.node.append(args.target, args.prop, args.data);
+jaxon.ajax.handler.register('ap', function(command) {
+    command.fullName = 'append';
+    return jaxon.cmd.node.append(command.target, command.prop, command.data);
 });
-jaxon.ajax.handler.register('pp', function(args) {
-    args.fullName = 'prepend';
-    return jaxon.cmd.node.prepend(args.target, args.prop, args.data);
+jaxon.ajax.handler.register('pp', function(command) {
+    command.fullName = 'prepend';
+    return jaxon.cmd.node.prepend(command.target, command.prop, command.data);
 });
-jaxon.ajax.handler.register('rp', function(args) {
-    args.fullName = 'replace';
-    return jaxon.cmd.node.replace(args.id, args.prop, args.data);
+jaxon.ajax.handler.register('rp', function(command) {
+    command.fullName = 'replace';
+    return jaxon.cmd.node.replace(command.id, command.prop, command.data);
 });
-jaxon.ajax.handler.register('rm', function(args) {
-    args.fullName = 'remove';
-    return jaxon.cmd.node.remove(args.id);
+jaxon.ajax.handler.register('rm', function(command) {
+    command.fullName = 'remove';
+    return jaxon.cmd.node.remove(command.id);
 });
-jaxon.ajax.handler.register('ce', function(args) {
-    args.fullName = 'create';
-    return jaxon.cmd.node.create(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ce', function(command) {
+    command.fullName = 'create';
+    return jaxon.cmd.node.create(command.id, command.data, command.prop);
 });
-jaxon.ajax.handler.register('ie', function(args) {
-    args.fullName = 'insert';
-    return jaxon.cmd.node.insert(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ie', function(command) {
+    command.fullName = 'insert';
+    return jaxon.cmd.node.insert(command.id, command.data, command.prop);
 });
-jaxon.ajax.handler.register('ia', function(args) {
-    args.fullName = 'insertAfter';
-    return jaxon.cmd.node.insertAfter(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ia', function(command) {
+    command.fullName = 'insertAfter';
+    return jaxon.cmd.node.insertAfter(command.id, command.data, command.prop);
 });
 
 jaxon.ajax.handler.register('DSR', jaxon.cmd.tree.startResponse);
@@ -2551,12 +2661,8 @@ jaxon.ajax.handler.register('js', jaxon.cmd.script.execute);
 jaxon.ajax.handler.register('jc', jaxon.cmd.script.call);
 jaxon.ajax.handler.register('sf', jaxon.cmd.script.setFunction);
 jaxon.ajax.handler.register('wpf', jaxon.cmd.script.wrapFunction);
-jaxon.ajax.handler.register('al', function(args) {
-    args.fullName = 'alert';
-    alert(args.data);
-    return true;
-});
-jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirmCommands);
+jaxon.ajax.handler.register('al', jaxon.cmd.script.alert);
+jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
 jaxon.ajax.handler.register('ii', jaxon.cmd.form.insertInput);
@@ -2567,9 +2673,9 @@ jaxon.ajax.handler.register('ev', jaxon.cmd.event.setEvent);
 jaxon.ajax.handler.register('ah', jaxon.cmd.event.addHandler);
 jaxon.ajax.handler.register('rh', jaxon.cmd.event.removeHandler);
 
-jaxon.ajax.handler.register('dbg', function(args) {
-    args.fullName = 'debug message';
-    console.log(args.data);
+jaxon.ajax.handler.register('dbg', function(command) {
+    command.fullName = 'debug message';
+    console.log(command.data);
     return true;
 });
 
@@ -2639,14 +2745,14 @@ jaxon.ajax.message = {
         noCallback - (Function): The function to call if the user answers no.
     */
     confirm: function(question, title, yesCallback, noCallback) {
-        if(noCallback == undefined)
-            noCallback = function(){};
-        if(confirm(question))
+        if(confirm(question)) {
             yesCallback();
-        else
+        } else if(noCallback != undefined) {
             noCallback();
+        }
     }
 };
+
 
 jaxon.ajax.parameters = {
     /*
@@ -2878,10 +2984,10 @@ jaxon.ajax.request = {
         var xc = xx.config;
 
         oRequest.append = function(opt, def) {
-            if ('undefined' == typeof this[opt])
+            if('undefined' == typeof this[opt])
                 this[opt] = {};
             for (var itmName in def)
-                if ('undefined' == typeof this[opt][itmName])
+                if('undefined' == typeof this[opt][itmName])
                     this[opt][itmName] = def[itmName];
         };
 
@@ -2890,7 +2996,7 @@ jaxon.ajax.request = {
         oRequest.append('getHeaders', xc.getHeaders);
 
         oRequest.set = function(option, defaultValue) {
-            if ('undefined' == typeof this[option])
+            if('undefined' == typeof this[option])
                 this[option] = defaultValue;
         };
 
@@ -2907,19 +3013,21 @@ jaxon.ajax.request = {
         oRequest.set('maxObjectSize', xc.maxObjectSize);
         oRequest.set('context', window);
         oRequest.set('upload', false);
+        oRequest.set('aborted', false);
 
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
         var lcb = xcb.create();
 
         lcb.take = function(frm, opt) {
-            if ('undefined' != typeof frm[opt]) {
+            if('undefined' != typeof frm[opt]) {
                 lcb[opt] = frm[opt];
                 lcb.hasEvents = true;
             }
             delete frm[opt];
         };
 
+        lcb.take(oRequest, 'onPrepare');
         lcb.take(oRequest, 'onRequest');
         lcb.take(oRequest, 'onResponseDelay');
         lcb.take(oRequest, 'onExpiration');
@@ -2929,11 +3037,17 @@ jaxon.ajax.request = {
         lcb.take(oRequest, 'onSuccess');
         lcb.take(oRequest, 'onComplete');
 
-        if ('undefined' != typeof oRequest.callback) {
-            if (lcb.hasEvents)
+        if('undefined' != typeof oRequest.callback) {
+            // Add the timers attribute, if it is not defined.
+            if('undefined' == typeof oRequest.callback.timers) {
+                oRequest.callback.timers = [];
+            }
+            if(lcb.hasEvents) {
                 oRequest.callback = [oRequest.callback, lcb];
-        } else
+            }
+        } else {
             oRequest.callback = lcb;
+        }
 
         oRequest.status = (oRequest.statusMessages) ?
             xc.status.update() :
@@ -2944,7 +3058,7 @@ jaxon.ajax.request = {
             xc.cursor.dontUpdate();
 
         oRequest.method = oRequest.method.toUpperCase();
-        if ('GET' != oRequest.method)
+        if('GET' != oRequest.method)
             oRequest.method = 'POST'; // W3C: Method is case sensitive
 
         oRequest.requestRetry = oRequest.retry;
@@ -2954,9 +3068,9 @@ jaxon.ajax.request = {
 
         delete oRequest['append'];
         delete oRequest['set'];
-        delete oRequest['take'];
+        delete lcb['take'];
 
-        if ('undefined' == typeof oRequest.URI)
+        if('undefined' == typeof oRequest.URI)
             throw { code: 10005 };
     },
 
@@ -2971,26 +3085,34 @@ jaxon.ajax.request = {
         which already contains the necessary parameters and temporary variables
         needed to initiate and process a jaxon request.
 
-    Note: 
+    Note:
     This is called each time a request object is being prepared for a call to the server.
     If the request is retried, the request must be prepared again.
     */
     prepare: function(oRequest) {
         var xx = jaxon;
         var xt = xx.tools;
+        var xcb = xx.ajax.callback;
+        var gcb = xx.callback;
+        var lcb = oRequest.callback;
+
+        xcb.execute([gcb, lcb], 'onPrepare', oRequest);
+
+        // Check if the request must be aborted
+        if(oRequest.aborted == true) {
+            return false;
+        }
 
         oRequest.request = xt.ajax.createRequest();
 
         oRequest.setRequestHeaders = function(headers) {
-            if ('object' == typeof headers) {
+            if('object' == typeof headers) {
                 for (var optionName in headers)
                     this.request.setRequestHeader(optionName, headers[optionName]);
             }
         };
         oRequest.setCommonRequestHeaders = function() {
             this.setRequestHeaders(this.commonHeaders);
-            if (this.challengeResponse)
-                this.request.setRequestHeader('challenge-response', this.challengeResponse);
         };
         oRequest.setPostRequestHeaders = function() {
             this.setRequestHeaders(this.postHeaders);
@@ -2999,29 +3121,37 @@ jaxon.ajax.request = {
             this.setRequestHeaders(this.getHeaders);
         };
 
-        if ('asynchronous' == oRequest.mode) {
+        // if('asynchronous' == oRequest.mode) {
             // references inside this function should be expanded
             // IOW, don't use shorthand references like xx for jaxon
-            oRequest.request.onreadystatechange = function() {
-                if (oRequest.request.readyState != 4)
-                    return;
-                jaxon.ajax.response.received(oRequest);
-            };
-            oRequest.finishRequest = function() {
-                return this.returnValue;
-            };
-        } else {
+        /*} else {
             oRequest.finishRequest = function() {
                 return jaxon.ajax.response.received(oRequest);
             };
-        }
+        }*/
+        oRequest.request.onreadystatechange = function() {
+            if(oRequest.request.readyState != 4) {
+                return;
+            }
+            // Synchronous request are processed immediately.
+            // Asynchronous request are processed only if the queue is empty.
+            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
+                'synchronous' == oRequest.mode) {
+                jaxon.ajax.response.received(oRequest);
+            } else {
+                jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
+            }
+        };
+        oRequest.finishRequest = function() {
+            return this.returnValue;
+        };
 
-        if ('undefined' != typeof oRequest.userName && 'undefined' != typeof oRequest.password) {
+        if('undefined' != typeof oRequest.userName && 'undefined' != typeof oRequest.password) {
             oRequest.open = function() {
                 this.request.open(
                     this.method,
                     this.requestURI,
-                    'asynchronous' == this.mode,
+                    true, // 'asynchronous' == this.mode,
                     oRequest.userName,
                     oRequest.password);
             };
@@ -3030,11 +3160,11 @@ jaxon.ajax.request = {
                 this.request.open(
                     this.method,
                     this.requestURI,
-                    'asynchronous' == this.mode);
+                    true); // 'asynchronous' == this.mode);
             };
         }
 
-        if ('POST' == oRequest.method) { // W3C: Method is case sensitive
+        if('POST' == oRequest.method) { // W3C: Method is case sensitive
             oRequest.applyRequestHeaders = function() {
                 this.setCommonRequestHeaders();
                 try {
@@ -3044,7 +3174,7 @@ jaxon.ajax.request = {
                     this.requestURI += this.requestURI.indexOf('?') == -1 ? '?' : '&';
                     this.requestURI += this.requestData;
                     this.requestData = '';
-                    if (0 == this.requestRetry) this.requestRetry = 1;
+                    if(0 == this.requestRetry) this.requestRetry = 1;
                     throw e;
                 }
             }
@@ -3054,6 +3184,18 @@ jaxon.ajax.request = {
                 this.setGetRequestHeaders();
             };
         }
+
+        // No request is submitted while there are pending requests in the outgoing queue.
+        let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
+        if('synchronous' == oRequest.mode) {
+            // Synchronous requests are always queued, in both send and recv queues.
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
+        } else if(!submitRequest) {
+            // Asynchronous requests are queued in send queue only if they are not submitted.
+            jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
+        }
+        return submitRequest;
     },
 
     /*
@@ -3084,12 +3226,12 @@ jaxon.ajax.request = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        if (oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
+        if(oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
             // The request will be sent after the files are uploaded
             oRequest.upload.iframe.onload = function() {
-                    jaxon.ajax.response.upload(oRequest);
-                }
-                // Submit the upload form
+                jaxon.ajax.response.upload(oRequest);
+            }
+            // Submit the upload form
             oRequest.upload.form.submit();
         } else {
             jaxon.ajax.request._send(oRequest);
@@ -3137,8 +3279,8 @@ jaxon.ajax.request = {
 
     functionName - (object):  An object containing the name of the function to execute
     on the server. The standard request is: {jxnfun:'function_name'}
-        
-    oRequest - (object, optional):  A request object which 
+
+    oRequest - (object, optional):  A request object which
         may contain call specific parameters.  This object will be
         used by jaxon to store all the request parameters as well
         as temporary variables needed during the processing of the
@@ -3147,11 +3289,11 @@ jaxon.ajax.request = {
     */
     execute: function() {
         var numArgs = arguments.length;
-        if (0 == numArgs)
+        if(0 == numArgs)
             return false;
 
         var oRequest = {};
-        if (1 < numArgs)
+        if(1 < numArgs)
             oRequest = arguments[1];
 
         oRequest.functionName = arguments[0];
@@ -3162,21 +3304,25 @@ jaxon.ajax.request = {
         xx.ajax.parameters.process(oRequest);
         while (0 < oRequest.requestRetry) {
             try {
-                --oRequest.requestRetry;
-                xx.ajax.request.prepare(oRequest);
-                return xx.ajax.request.submit(oRequest);
+                if(xx.ajax.request.prepare(oRequest))
+                {
+                    --oRequest.requestRetry;
+                    return xx.ajax.request.submit(oRequest);
+                }
+                return null;
             } catch (e) {
                 jaxon.ajax.callback.execute(
                     [jaxon.callback, oRequest.callback],
                     'onFailure',
                     oRequest
                 );
-                if (0 == oRequest.requestRetry)
+                if(0 == oRequest.requestRetry)
                     throw e;
             }
         }
     }
 };
+
 
 jaxon.ajax.response = {
     /*
@@ -3193,25 +3339,20 @@ jaxon.ajax.response = {
         var xcb = xx.ajax.callback;
         var gcb = xx.callback;
         var lcb = oRequest.callback;
-        // sometimes the responseReceived gets called when the
-        // request is aborted
-        if (oRequest.aborted)
-            return;
+        // sometimes the responseReceived gets called when the request is aborted
+        if (oRequest.aborted) {
+            return null;
+        }
+
+        // Create a response queue for this request.
+        oRequest.response = xx.tools.queue.create(xx.config.responseQueueSize);
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
-
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
-        var challenge = oRequest.request.getResponseHeader('challenge');
-        if (challenge) {
-            oRequest.challengeResponse = challenge;
-            xx.ajax.request.prepare(oRequest);
-            return xx.ajax.request.submit(oRequest);
-        }
-
         var fProc = xx.ajax.response.processor(oRequest);
-        if ('undefined' == typeof fProc) {
+        if (null == fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
             xx.ajax.response.complete(oRequest);
             return;
@@ -3243,6 +3384,7 @@ jaxon.ajax.response = {
         delete oRequest['requestData'];
         delete oRequest['requestRetry'];
         delete oRequest['request'];
+        delete oRequest['response'];
         delete oRequest['set'];
         delete oRequest['open'];
         delete oRequest['setRequestHeaders'];
@@ -3253,7 +3395,27 @@ jaxon.ajax.response = {
         delete oRequest['finishRequest'];
         delete oRequest['status'];
         delete oRequest['cursor'];
-        delete oRequest['challengeResponse'];
+
+        // All the requests queued while waiting must now be processed.
+        if('synchronous' == oRequest.mode) {
+            let jq = jaxon.tools.queue;
+            let jd = jaxon.cmd.delay;
+            // Remove the current request from the send and recv queues.
+            jq.pop(jd.q.send);
+            jq.pop(jd.q.recv);
+            // Process the asynchronous requests received while waiting.
+            while((recvRequest = jd.popAsyncRequest(jd.q.recv)) != null) {
+                jaxon.ajax.response.received(recvRequest);
+            }
+            // Submit the asynchronous requests sent while waiting.
+            while((nextRequest = jd.popAsyncRequest(jd.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+            // Submit the next synchronous request, if there's any.
+            if((nextRequest = jq.peek(jd.q.send)) != null) {
+                jaxon.ajax.request.submit(nextRequest);
+            }
+        }
     },
 
     /*
@@ -3262,63 +3424,85 @@ jaxon.ajax.response = {
     While entries exist in the queue, pull and entry out and process it's command.
     When a command returns false, the processing is halted.
 
-    Parameters: 
+    Parameters:
 
-    theQ - (object): The queue object to process.
-    This should have been crated by calling <jaxon.tools.queue.create>.
+    response - (object): The response, which is a queue containing the commands to execute.
+    This should have been created by calling <jaxon.tools.queue.create>.
 
     Returns:
 
     true - The queue was fully processed and is now empty.
     false - The queue processing was halted before the queue was fully processed.
-        
+
     Note:
 
-    - Use <jaxon.ajax.response.setWakeup> or call this function to cause the queue processing to continue.
+    - Use <jaxon.cmd.delay.setWakeup> or call this function to cause the queue processing to continue.
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
-    process: function(theQ) {
-        if (null != theQ.timeout) {
-            clearTimeout(theQ.timeout);
-            theQ.timeout = null;
+    process: function(response) {
+        if (null != response.timeout) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
         }
-        var obj = jaxon.tools.queue.pop(theQ);
-        while (null != obj) {
+        var command = null;
+        while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
-                if (false == jaxon.ajax.handler.execute(obj))
+                if (false == jaxon.ajax.handler.execute(command)) {
+                    if(command.requeue == true) {
+                        jaxon.tools.queue.pushFront(response, command);
+                    } else {
+                        delete command;
+                    }
                     return false;
+                }
             } catch (e) {
                 console.log(e);
             }
-            delete obj;
-
-            obj = jaxon.tools.queue.pop(theQ);
+            delete command;
         }
         return true;
     },
 
     /*
-    Function: jaxon.ajax.response.setWakeup
+    Function: jaxon.ajax.response.processFragment
 
-    Set or reset a timeout that is used to restart processing of the queue.
-    This allows the queue to asynchronously wait for an event to occur (giving the browser time
-    to process pending events, like loading files)
+    Parse the JSON response into a series of commands.
 
-    Parameters: 
-
-    theQ - (object):
-        The queue to process upon timeout.
-        
-    when - (integer):
-        The number of milliseconds to wait before starting/restarting the processing of the queue.
+    Parameters:
+    oRequest - (object):  The request context object.
     */
-    setWakeup: function(theQ, when) {
-        if (null != theQ.timeout) {
-            clearTimeout(theQ.timeout);
-            theQ.timeout = null;
+    processFragment: function(nodes, seq, oRet, oRequest) {
+        var xx = jaxon;
+        var xt = xx.tools;
+        for (nodeName in nodes) {
+            if ('jxnobj' == nodeName) {
+                for (a in nodes[nodeName]) {
+                    /*
+                    prevents from using not numbered indexes of 'jxnobj'
+                    nodes[nodeName][a]= "0" is an valid jaxon response stack item
+                    nodes[nodeName][a]= "pop" is an method from somewhere but not from jxnobj
+                    */
+                    if (parseInt(a) != a) continue;
+
+                    var command = nodes[nodeName][a];
+                    command.fullName = '*unknown*';
+                    command.sequence = seq;
+                    command.response = oRequest.response;
+                    command.request = oRequest;
+                    command.context = oRequest.context;
+                    xt.queue.push(oRequest.response, command);
+                    ++seq;
+                }
+            } else if ('jxnrv' == nodeName) {
+                oRet = nodes[nodeName];
+            } else if ('debugmsg' == nodeName) {
+                txt = nodes[nodeName];
+            } else {
+                throw { code: 10004, data: command.fullName };
+            }
         }
-        theQ.timout = setTimeout(function() { jaxon.ajax.response.process(theQ); }, when);
+        return oRet;
     },
 
     /*
@@ -3336,19 +3520,36 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     processor: function(oRequest) {
-        var fProc;
-
-        if ('undefined' == typeof oRequest.responseProcessor) {
-            var cTyp = oRequest.request.getResponseHeader('content-type');
-            if (cTyp) {
-                if (0 <= cTyp.indexOf('application/json')) {
-                    fProc = jaxon.ajax.response.json;
-                }
-            }
-        } else {
-            fProc = oRequest.responseProcessor;
+        if ('undefined' != typeof oRequest.responseProcessor) {
+            return oRequest.responseProcessor;
         }
-        return fProc;
+
+        let cTyp = oRequest.request.getResponseHeader('content-type');
+        if(!cTyp) {
+            return null;
+        }
+        let responseText = '';
+        if(0 <= cTyp.indexOf('application/json')) {
+            responseText = oRequest.request.responseText;
+        }
+        else if(0 <= cTyp.indexOf('text/html')) {
+            responseText = oRequest.request.responseText;
+            // Verify if there is any other output before the Jaxon response.
+            let jsonStart = responseText.indexOf('{"jxnobj"');
+            if(jsonStart < 0) { // No jaxon data in the response
+                return null;
+            }
+            if(jsonStart > 0) {
+                responseText = responseText.substr(jsonStart);
+            }
+        }
+
+        try {
+            oRequest.request.responseJSON = JSON.parse(responseText);
+            return jaxon.ajax.response.json;
+        } catch (ex) {
+            return null; // Cannot decode JSON response
+        }
     },
 
     /*
@@ -3372,29 +3573,26 @@ jaxon.ajax.response = {
 
         if (xt.array.is_in(xx.ajax.response.successCodes, oRequest.request.status)) {
             xcb.execute([gcb, lcb], 'onSuccess', oRequest);
+
             var seq = 0;
-            if (oRequest.request.responseText) {
-                try {
-                    var responseJSON = eval('(' + oRequest.request.responseText + ')');
-                } catch (ex) {
-                    throw (ex);
-                }
-                if (('object' == typeof responseJSON) && ('object' == typeof responseJSON.jxnobj)) {
-                    oRequest.status.onProcessing();
-                    oRet = xt.ajax.processFragment(responseJSON, seq, oRet, oRequest);
-                } else {}
-            }
-            var obj = {};
-            obj.fullName = 'Response Complete';
-            obj.sequence = seq;
-            obj.request = oRequest;
-            obj.context = oRequest.context;
-            obj.cmd = 'rcmplt';
-            xt.queue.push(xx.response, obj);
+            if ('object' == typeof oRequest.request.responseJSON &&
+                'object' == typeof oRequest.request.responseJSON.jxnobj) {
+                oRequest.status.onProcessing();
+                oRet = xx.ajax.response.processFragment(oRequest.request.responseJSON, seq, oRet, oRequest);
+            } else {}
+
+            var command = {};
+            command.fullName = 'Response Complete';
+            command.sequence = seq;
+            command.request = oRequest;
+            command.context = oRequest.context;
+            command.cmd = 'rcmplt';
+            xt.queue.push(oRequest.response, command);
 
             // do not re-start the queue if a timeout is set
-            if (null == xx.response.timeout)
-                xx.ajax.response.process(xx.response);
+            if (null == oRequest.response.timeout) {
+                xx.ajax.response.process(oRequest.response);
+            }
         } else if (xt.array.is_in(xx.ajax.response.redirectCodes, oRequest.request.status)) {
             xcb.execute([gcb, lcb], 'onRedirect', oRequest);
             window.location = oRequest.request.getResponseHeader('location');
@@ -3515,6 +3713,7 @@ jaxon.ajax.response = {
     redirectCodes: ['301', '302', '307']
 };
 
+
 /**
  * Class: jaxon.dom
  */
@@ -3599,14 +3798,14 @@ jaxon.dom = {};
 
 /*
     File: jaxon.js
-    
+
     This file contains the definition of the main jaxon javascript core.
-    
+
     This is the client side code which runs on the web browser or similar web enabled application.
     Include this in the HEAD of each page for which you wish to use jaxon.
-    
+
     Title: jaxon core javascript library
-    
+
     Please see <copyright.inc.php> for a detailed description, copyright and license information.
 */
 
@@ -3642,7 +3841,7 @@ Object: jaxon.response
 The response queue that holds response commands, once received
 from the server, until they are processed.
 */
-jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
+// jaxon.response = jaxon.tools.queue.create(jaxon.config.responseQueueSize);
 
 /*
 Function: jaxon.register
@@ -3688,39 +3887,52 @@ true - jaxon module is loaded.
 jaxon.isLoaded = true;
 
 /*
+Object: jaxon.cmd.delay.q
+
+The queues that hold synchronous requests as they are sent and processed.
+*/
+jaxon.cmd.delay.q = {
+    send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
+    recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
+};
+
+
+/*
 Class: jaxon.command
 
 This class is defined for compatibility with previous versions,
 since its functions are used in other packages.
 */
-jaxon.command = {};
+jaxon.command = {
+    /*
+    Class: jaxon.command.handler
+    */
+    handler: {},
 
-/*
-Class: jaxon.command.handler
-*/
-jaxon.command.handler = {};
+    /*
+    Function: jaxon.command.handler.register
 
-/*
-Function: jaxon.command.handler.register
+    Registers a new command handler.
+    */
+    handler: {
+        register: jaxon.ajax.handler.register
+    },
 
-Registers a new command handler.
-*/
-jaxon.command.handler.register = jaxon.ajax.handler.register;
+    /*
+    Function: jaxon.command.create
 
-/*
-Function: jaxon.command.create
-
-Creates a new command (object) that will be populated with
-command parameters and eventually passed to the command handler.
-*/
-jaxon.command.create = function(sequence, request, context) {
-    var newCmd = {};
-    newCmd.cmd = '*';
-    newCmd.fullName = '* unknown command name *';
-    newCmd.sequence = sequence;
-    newCmd.request = request;
-    newCmd.context = context;
-    return newCmd;
+    Creates a new command (object) that will be populated with
+    command parameters and eventually passed to the command handler.
+    */
+    create: function(sequence, request, context) {
+        return {
+            cmd: '*',
+            fullName: '* unknown command name *',
+            sequence: sequence,
+            request: request,
+            context: context
+        };
+    }
 };
 
 /*
@@ -3728,20 +3940,20 @@ Class: jxn
 
 Contains shortcut's to frequently used functions.
 */
-var jxn = {};
+var jxn = {
+    /*
+    Function: jxn.$
 
-/*
-Function: jxn.$
+    Shortcut to <jaxon.tools.dom.$>.
+    */
+    $: jaxon.tools.dom.$,
 
-Shortcut to <jaxon.tools.dom.$>.
-*/
-jxn.$ = jaxon.tools.dom.$;
+    /*
+    Function: jxn.getFormValues
 
-/*
-Function: jxn.getFormValues
+    Shortcut to <jaxon.tools.form.getValues>.
+    */
+    getFormValues: jaxon.tools.form.getValues,
 
-Shortcut to <jaxon.tools.form.getValues>.
-*/
-jxn.getFormValues = jaxon.tools.form.getValues;
-
-jxn.request = jaxon.request;
+    request: jaxon.request
+};

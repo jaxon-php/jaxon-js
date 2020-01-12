@@ -35,13 +35,11 @@ jaxon.ajax.handler = {
         if (jaxon.ajax.handler.isRegistered(command)) {
             // it is important to grab the element here as the previous command
             // might have just created the element
-            if (command.id)
+            if (command.id) {
                 command.target = jaxon.$(command.id);
-            // process the command
-            if (false == jaxon.ajax.handler.call(command)) {
-                jaxon.tools.queue.pushFront(jaxon.response, command);
-                return false;
             }
+            // process the command
+            return jaxon.ajax.handler.call(command);
         }
         return true;
     },
@@ -112,65 +110,65 @@ jaxon.ajax.handler = {
     }
 };
 
-jaxon.ajax.handler.register('rcmplt', function(args) {
-    jaxon.ajax.response.complete(args.request);
+jaxon.ajax.handler.register('rcmplt', function(command) {
+    jaxon.ajax.response.complete(command.request);
     return true;
 });
 
-jaxon.ajax.handler.register('css', function(args) {
-    args.fullName = 'includeCSS';
-    if ('undefined' == typeof args.media)
-        args.media = 'screen';
-    return jaxon.cmd.style.add(args.data, args.media);
+jaxon.ajax.handler.register('css', function(command) {
+    command.fullName = 'includeCSS';
+    if ('undefined' == typeof command.media)
+        command.media = 'screen';
+    return jaxon.cmd.style.add(command.data, command.media);
 });
-jaxon.ajax.handler.register('rcss', function(args) {
-    args.fullName = 'removeCSS';
-    if ('undefined' == typeof args.media)
-        args.media = 'screen';
-    return jaxon.cmd.style.remove(args.data, args.media);
+jaxon.ajax.handler.register('rcss', function(command) {
+    command.fullName = 'removeCSS';
+    if ('undefined' == typeof command.media)
+        command.media = 'screen';
+    return jaxon.cmd.style.remove(command.data, command.media);
 });
-jaxon.ajax.handler.register('wcss', function(args) {
-    args.fullName = 'waitForCSS';
-    return jaxon.cmd.style.waitForCSS(args);
+jaxon.ajax.handler.register('wcss', function(command) {
+    command.fullName = 'waitForCSS';
+    return jaxon.cmd.style.waitForCSS(command);
 });
 
-jaxon.ajax.handler.register('as', function(args) {
-    args.fullName = 'assign/clear';
+jaxon.ajax.handler.register('as', function(command) {
+    command.fullName = 'assign/clear';
     try {
-        return jaxon.cmd.node.assign(args.target, args.prop, args.data);
+        return jaxon.cmd.node.assign(command.target, command.prop, command.data);
     } catch (e) {
         // do nothing, if the debug module is installed it will
         // catch and handle the exception
     }
     return true;
 });
-jaxon.ajax.handler.register('ap', function(args) {
-    args.fullName = 'append';
-    return jaxon.cmd.node.append(args.target, args.prop, args.data);
+jaxon.ajax.handler.register('ap', function(command) {
+    command.fullName = 'append';
+    return jaxon.cmd.node.append(command.target, command.prop, command.data);
 });
-jaxon.ajax.handler.register('pp', function(args) {
-    args.fullName = 'prepend';
-    return jaxon.cmd.node.prepend(args.target, args.prop, args.data);
+jaxon.ajax.handler.register('pp', function(command) {
+    command.fullName = 'prepend';
+    return jaxon.cmd.node.prepend(command.target, command.prop, command.data);
 });
-jaxon.ajax.handler.register('rp', function(args) {
-    args.fullName = 'replace';
-    return jaxon.cmd.node.replace(args.id, args.prop, args.data);
+jaxon.ajax.handler.register('rp', function(command) {
+    command.fullName = 'replace';
+    return jaxon.cmd.node.replace(command.id, command.prop, command.data);
 });
-jaxon.ajax.handler.register('rm', function(args) {
-    args.fullName = 'remove';
-    return jaxon.cmd.node.remove(args.id);
+jaxon.ajax.handler.register('rm', function(command) {
+    command.fullName = 'remove';
+    return jaxon.cmd.node.remove(command.id);
 });
-jaxon.ajax.handler.register('ce', function(args) {
-    args.fullName = 'create';
-    return jaxon.cmd.node.create(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ce', function(command) {
+    command.fullName = 'create';
+    return jaxon.cmd.node.create(command.id, command.data, command.prop);
 });
-jaxon.ajax.handler.register('ie', function(args) {
-    args.fullName = 'insert';
-    return jaxon.cmd.node.insert(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ie', function(command) {
+    command.fullName = 'insert';
+    return jaxon.cmd.node.insert(command.id, command.data, command.prop);
 });
-jaxon.ajax.handler.register('ia', function(args) {
-    args.fullName = 'insertAfter';
-    return jaxon.cmd.node.insertAfter(args.id, args.data, args.prop);
+jaxon.ajax.handler.register('ia', function(command) {
+    command.fullName = 'insertAfter';
+    return jaxon.cmd.node.insertAfter(command.id, command.data, command.prop);
 });
 
 jaxon.ajax.handler.register('DSR', jaxon.cmd.tree.startResponse);
@@ -196,12 +194,8 @@ jaxon.ajax.handler.register('js', jaxon.cmd.script.execute);
 jaxon.ajax.handler.register('jc', jaxon.cmd.script.call);
 jaxon.ajax.handler.register('sf', jaxon.cmd.script.setFunction);
 jaxon.ajax.handler.register('wpf', jaxon.cmd.script.wrapFunction);
-jaxon.ajax.handler.register('al', function(args) {
-    args.fullName = 'alert';
-    alert(args.data);
-    return true;
-});
-jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirmCommands);
+jaxon.ajax.handler.register('al', jaxon.cmd.script.alert);
+jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
 
 jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
 jaxon.ajax.handler.register('ii', jaxon.cmd.form.insertInput);
@@ -212,8 +206,8 @@ jaxon.ajax.handler.register('ev', jaxon.cmd.event.setEvent);
 jaxon.ajax.handler.register('ah', jaxon.cmd.event.addHandler);
 jaxon.ajax.handler.register('rh', jaxon.cmd.event.removeHandler);
 
-jaxon.ajax.handler.register('dbg', function(args) {
-    args.fullName = 'debug message';
-    console.log(args.data);
+jaxon.ajax.handler.register('dbg', function(command) {
+    command.fullName = 'debug message';
+    console.log(command.data);
     return true;
 });

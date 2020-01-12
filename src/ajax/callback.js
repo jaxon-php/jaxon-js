@@ -27,6 +27,7 @@ jaxon.ajax.callback = {
             arguments[1] :
             xc.defaultExpirationTime);
 
+        oCB.onPrepare = null;
         oCB.onRequest = null;
         oCB.onResponseDelay = null;
         oCB.onExpiration = null;
@@ -70,14 +71,16 @@ jaxon.ajax.callback = {
         with the timer to be cleared.
     */
     clearTimer: function(oCallback, sFunction) {
-        if ('undefined' != typeof oCallback.timers) {
-            if ('undefined' != typeof oCallback.timers[sFunction]) {
-                clearTimeout(oCallback.timers[sFunction].timer);
-            }
-        } else if ('object' == typeof oCallback) {
-            var iLen = oCallback.length;
-            for (var i = 0; i < iLen; ++i)
+        // The callback object is recognized by the presence of the timers attribute.
+        if ('undefined' == typeof oCallback.timers) {
+            for (var i = 0; i < oCallback.length; ++i) {
                 jaxon.ajax.callback.clearTimer(oCallback[i], sFunction);
+            }
+            return;
+        }
+
+        if ('undefined' != typeof oCallback.timers[sFunction]) {
+            clearTimeout(oCallback.timers[sFunction].timer);
         }
     },
 
@@ -88,27 +91,32 @@ jaxon.ajax.callback = {
 
     Parameters:
 
-    oCallback - (object):  The callback object (or objects) which 
+    oCallback - (object):  The callback object (or objects) which
         contain the event handlers to be executed.
     sFunction - (string):  The name of the event to be triggered.
     args - (object):  The request object for this request.
     */
     execute: function(oCallback, sFunction, args) {
-        if ('undefined' != typeof oCallback[sFunction]) {
-            var func = oCallback[sFunction];
-            if ('function' == typeof func) {
-                if ('undefined' != typeof oCallback.timers[sFunction]) {
-                    oCallback.timers[sFunction].timer = setTimeout(function() {
-                        func(args);
-                    }, oCallback.timers[sFunction].delay);
-                } else {
-                    func(args);
-                }
-            }
-        } else if ('object' == typeof oCallback) {
-            var iLen = oCallback.length;
-            for (var i = 0; i < iLen; ++i)
+        // The callback object is recognized by the presence of the timers attribute.
+        if ('undefined' == typeof oCallback.timers) {
+            for (let i = 0; i < oCallback.length; ++i) {
                 jaxon.ajax.callback.execute(oCallback[i], sFunction, args);
+            }
+            return;
+        }
+
+        if ('undefined' == typeof oCallback[sFunction] ||
+            'function' != typeof oCallback[sFunction]) {
+            return;
+        }
+
+        let func = oCallback[sFunction];
+        if ('undefined' != typeof oCallback.timers[sFunction]) {
+            oCallback.timers[sFunction].timer = setTimeout(function() {
+                func(args);
+            }, oCallback.timers[sFunction].delay);
+        } else {
+            func(args);
         }
     }
 };
