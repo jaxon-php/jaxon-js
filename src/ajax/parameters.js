@@ -1,29 +1,39 @@
 jaxon.ajax.parameters = {
     /*
-    Function: jaxon.ajax.parameters.upload
+    Function: jaxon.ajax.parameters.stringify
 
-    Create a parameter of type upload.
-
-    Parameters:
-
-    id - The id od the upload form element
-    */
-    /*upload: function(id) {
-        return {upload: {id: id}};
-    },*/
-
-    /*
-    Function: jaxon.ajax.parameters.isUpload
-
-    Check if a parameter is of type upload.
+    Stringify a parameter of an ajax call.
 
     Parameters:
 
-    parameter - A parameter passed to an Ajax function
+    oVal - The value to be stringified
     */
-    /*isUpload: function(parameter) {
-        return (parameter != null && typeof parameter == 'object' && typeof parameter.upload == 'object');
-    },*/
+    stringify: function(oVal) {
+        if (oVal === undefined ||  oVal === null) {
+            return '*';
+        }
+        const sType = typeof oVal;
+        if (sType === 'object') {
+            try {
+                return encodeURIComponent(JSON.stringify(oVal));
+            } catch (e) {
+                oVal = '';
+                // do nothing, if the debug module is installed
+                // it will catch the exception and handle it
+            }
+        }
+        oVal = encodeURIComponent(oVal);
+        if (sType === 'string') {
+            return 'S' + oVal;
+        }
+        if (sType === 'boolean') {
+            return 'B' + oVal;
+        }
+        if (sType === 'number') {
+            return 'N' + oVal;
+        }
+        return oVal;
+    },
 
     /*
     Function: jaxon.ajax.parameters.toFormData
@@ -36,58 +46,19 @@ jaxon.ajax.parameters = {
     */
     toFormData: function(oRequest) {
         const rd = new FormData();
+        rd.append('jxnr', oRequest.dNow.getTime());
+
+        // Files to upload
         const input = oRequest.upload.input;
-        for (let i = 0, n = input.files.length; i < n; i++) {
-            rd.append(input.name, input.files[i]);
-        }
+        input.files.forEach(file => rd.append(input.name, file));
 
         for (let sCommand in oRequest.functionName) {
-            if ('constructor' != sCommand) {
-                rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand]));
-            }
+            rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand]));
         }
-        let dNow = new Date();
-        rd.append('jxnr', dNow.getTime());
-        delete dNow;
 
         if (oRequest.parameters) {
-            let i = 0;
-            const iLen = oRequest.parameters.length;
-            while (i < iLen) {
-                let oVal = oRequest.parameters[i];
-                // Don't include upload parameter
-                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
-                    continue;
-                }*/
-                if ('object' == typeof oVal && null != oVal) {
-                    try {
-                        oVal = JSON.stringify(oVal);
-                    } catch (e) {
-                        oVal = '';
-                        // do nothing, if the debug module is installed
-                        // it will catch the exception and handle it
-                    }
-                    oVal = encodeURIComponent(oVal);
-                    rd.append('jxnargs[]', oVal);
-                    ++i;
-                } else {
-                    if ('undefined' == typeof oVal || null == oVal) {
-                        rd.append('jxnargs[]', '*');
-                    } else {
-                        let sPrefix = '';
-                        const sType = typeof oVal;
-                        if ('string' === sType)
-                            sPrefix = 'S';
-                        else if ('boolean' === sType)
-                            sPrefix = 'B';
-                        else if ('number' === sType)
-                            sPrefix = 'N';
-                        oVal = encodeURIComponent(oVal);
-                        rd.append('jxnargs[]', sPrefix + oVal);
-                    }
-                    ++i;
-                }
-            }
+            oRequest.parameters.forEach(oVal =>
+                rd.append('jxnargs[]', jaxon.ajax.parameters.stringify(oVal)));
         }
 
         oRequest.requestURI = oRequest.URI;
@@ -105,78 +76,26 @@ jaxon.ajax.parameters = {
     */
     toUrlEncoded: function(oRequest) {
         const rd = [];
-        let separator = '';
+        rd.push('jxnr=' + oRequest.dNow.getTime());
+
         for (let sCommand in oRequest.functionName) {
-            if ('constructor' != sCommand) {
-                rd.push(separator);
-                rd.push(sCommand);
-                rd.push('=');
-                rd.push(encodeURIComponent(oRequest.functionName[sCommand]));
-                separator = '&';
-            }
+            rd.push(sCommand + '=' + encodeURIComponent(oRequest.functionName[sCommand]));
         }
-        let dNow = new Date();
-        rd.push('&jxnr=');
-        rd.push(dNow.getTime());
-        delete dNow;
 
         if (oRequest.parameters) {
-            let i = 0;
-            const iLen = oRequest.parameters.length;
-            while (i < iLen) {
-                let oVal = oRequest.parameters[i];
-                // Don't include upload parameter
-                /*if(jaxon.ajax.parameters.isUpload(oVal)) {
-                    continue;
-                }*/
-                if ('object' == typeof oVal && null != oVal) {
-                    try {
-                        // const oGuard = {};
-                        // oGuard.depth = 0;
-                        // oGuard.maxDepth = oRequest.maxObjectDepth;
-                        // oGuard.size = 0;
-                        // oGuard.maxSize = oRequest.maxObjectSize;
-                        // oVal = xt._objectToXML(oVal, oGuard);
-                        oVal = JSON.stringify(oVal);
-                    } catch (e) {
-                        oVal = '';
-                        // do nothing, if the debug module is installed
-                        // it will catch the exception and handle it
-                    }
-                    rd.push('&jxnargs[]=');
-                    oVal = encodeURIComponent(oVal);
-                    rd.push(oVal);
-                    ++i;
-                } else {
-                    rd.push('&jxnargs[]=');
-
-                    if ('undefined' == typeof oVal || null == oVal) {
-                        rd.push('*');
-                    } else {
-                        const sType = typeof oVal;
-                        if ('string' == sType)
-                            rd.push('S');
-                        else if ('boolean' == sType)
-                            rd.push('B');
-                        else if ('number' == sType)
-                            rd.push('N');
-                        oVal = encodeURIComponent(oVal);
-                        rd.push(oVal);
-                    }
-                    ++i;
-                }
-            }
+            oRequest.parameters.forEach(oVal =>
+                rd.push('jxnargs[]=' + jaxon.ajax.parameters.stringify(oVal)));
         }
 
         oRequest.requestURI = oRequest.URI;
 
-        if ('GET' == oRequest.method) {
-            oRequest.requestURI += oRequest.requestURI.indexOf('?') == -1 ? '?' : '&';
-            oRequest.requestURI += rd.join('');
+        if ('GET' === oRequest.method) {
+            oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
+            oRequest.requestURI += rd.join('&');
             rd = [];
         }
 
-        oRequest.requestData = rd.join('');
+        oRequest.requestData = rd.join('&');
     },
 
     /*
@@ -194,10 +113,11 @@ jaxon.ajax.parameters = {
     will not be called for additional retries.
     */
     process: function(oRequest) {
+        const func = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
+            jaxon.ajax.parameters.toFormData : jaxon.ajax.parameters.toUrlEncoded;
         // Make request parameters.
-        if (oRequest.upload != false && oRequest.upload.ajax && oRequest.upload.input)
-            jaxon.ajax.parameters.toFormData(oRequest);
-        else
-            jaxon.ajax.parameters.toUrlEncoded(oRequest);
+        oRequest.dNow = new Date();
+        func(oRequest);
+        delete oRequest.dNow;
     }
 };

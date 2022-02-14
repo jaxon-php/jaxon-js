@@ -311,20 +311,19 @@ jaxon.ajax.request = {
     functionName - (object):  An object containing the name of the function to execute
     on the server. The standard request is: {jxnfun:'function_name'}
 
-    oRequest - (object, optional):  A request object which
+    functionArgs - (object, optional):  A request object which
         may contain call specific parameters.  This object will be
         used by jaxon to store all the request parameters as well
         as temporary variables needed during the processing of the
         request.
 
     */
-    execute: function() {
-        const numArgs = arguments.length;
-        if(0 === numArgs)
+    execute: function(functionName, functionArgs) {
+        if(functionName === undefined)
             return false;
 
-        const oRequest = (1 < numArgs) ? arguments[1] : {};
-        oRequest.functionName = arguments[0];
+        const oRequest = functionArgs ?? {};
+        oRequest.functionName = functionName;
 
         const xx = jaxon;
         xx.ajax.request.initialize(oRequest);

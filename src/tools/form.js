@@ -15,7 +15,7 @@ jaxon.tools.form = {
     getValues: function(parent) {
         const submitDisabledElements = (arguments.length > 1 && arguments[1] == true);
 
-        const prefix = (arguments.length > 2) ? arguments[2] = '';
+        const prefix = (arguments.length > 2) ? arguments[2] : '';
 
         if ('string' == typeof parent)
             parent = jaxon.$(parent);

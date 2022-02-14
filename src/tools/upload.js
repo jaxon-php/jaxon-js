@@ -27,25 +27,25 @@ jaxon.tools.upload = {
     Check upload data and initialize the request.
     */
     _initialize: function(oRequest) {
-        if (oRequest.upload == false) {
+        if (!oRequest.upload) {
             return false;
         }
         oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
 
         const input = jaxon.tools.dom.$(oRequest.upload.id);
-        if (input == null) {
+        if (!input) {
             console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
             return false;
         }
-        if (input.type != 'file') {
+        if (input.type !== 'file') {
             console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
             return false;
         }
-        if (input.files.length == 0) {
+        if (input.files.length === 0) {
             console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
-        if (typeof input.name == 'undefined') {
+        if (typeof input.name === 'undefined') {
             console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
             return false;
         }
@@ -86,7 +86,7 @@ jaxon.tools.upload = {
 
         // The content type is not set when uploading a file with FormData.
         // It will be set by the browser.
-        if (oRequest.upload == false || !oRequest.upload.ajax || !oRequest.upload.input) {
+        if (!oRequest.upload || !oRequest.upload.ajax || !oRequest.upload.input) {
             oRequest.append('postHeaders', {
                 'content-type': oRequest.contentType
             });
