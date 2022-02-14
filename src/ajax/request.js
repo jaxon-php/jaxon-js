@@ -18,7 +18,7 @@ jaxon.ajax.request = {
         oRequest.append = function(opt, def) {
             if('undefined' == typeof this[opt])
                 this[opt] = {};
-            for (let itmName in def)
+            for (const itmName in def)
                 if('undefined' == typeof this[opt][itmName])
                     this[opt][itmName] = def[itmName];
         };
@@ -329,7 +329,7 @@ jaxon.ajax.request = {
         xx.ajax.request.initialize(oRequest);
         xx.ajax.parameters.process(oRequest);
 
-        while (0 < oRequest.requestRetry) {
+        while (oRequest.requestRetry > 0) {
             try {
                 if(xx.ajax.request.prepare(oRequest))
                 {
@@ -339,7 +339,7 @@ jaxon.ajax.request = {
                 return null;
             } catch (e) {
                 jaxon.ajax.callback.execute([jaxon.callback, oRequest.callback], 'onFailure', oRequest);
-                if(0 == oRequest.requestRetry)
+                if(oRequest.requestRetry === 0)
                     throw e;
             }
         }
