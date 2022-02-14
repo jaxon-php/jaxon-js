@@ -61,15 +61,15 @@ jaxon.cmd.tree = {
     },
 
     removeChildren: function(command) {
-        var skip = command.skip || 0;
-        var remove = command.remove || -1;
-        var element = null;
+        let skip = command.skip || 0;
+        let remove = command.remove || -1;
+        let element = null;
         command.context.jaxonDelegateCall = function() {
             eval(['element = ', command.data].join(''));
         }
         command.context.jaxonDelegateCall();
-        var children = element.childNodes;
-        for (var i in children) {
+        const children = element.childNodes;
+        for (let i in children) {
             if (isNaN(i) == false && children[i].nodeType == 1) {
                 if (skip > 0) skip = skip - 1;
                 else if (remove != 0) {

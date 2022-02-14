@@ -36,7 +36,7 @@ jaxon.tools.string = {
     Detect, and if found, remove the prefix 'on' from the specified string.
     This is used while working with event handlers.
 
-    Parameters: 
+    Parameters:
     sEventName - (string): The string to be modified.
 
     Returns:
@@ -56,7 +56,7 @@ jaxon.tools.string = {
     Detect, and add if not found, the prefix 'on' from the specified string.
     This is used while working with event handlers.
 
-    Parameters: 
+    Parameters:
     sEventName - (string): The string to be modified.
 
     Returns:
@@ -86,7 +86,7 @@ if (!String.prototype.supplant) {
         return this.replace(
             /\{([^{}]*)\}/g,
             function(a, b) {
-                var r = o[b];
+                const r = o[b];
                 return typeof r === 'string' || typeof r === 'number' ? r : a;
             }
         );

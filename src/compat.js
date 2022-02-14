@@ -41,7 +41,7 @@ Class: jxn
 
 Contains shortcut's to frequently used functions.
 */
-var jxn = {
+const jxn = {
     /*
     Function: jxn.$
 

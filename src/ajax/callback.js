@@ -10,22 +10,17 @@ jaxon.ajax.callback = {
     object - The callback object.
     */
     create: function() {
-        var xx = jaxon;
-        var xc = xx.config;
-        var xcb = xx.ajax.callback;
+        const xc = jaxon.config;
+        const xcb = jaxon.ajax.callback;
 
-        var oCB = {}
+        const oCB = {}
         oCB.timers = {};
 
-        oCB.timers.onResponseDelay = xcb.setupTimer(
-            (arguments.length > 0) ?
-            arguments[0] :
-            xc.defaultResponseDelayTime);
+        oCB.timers.onResponseDelay = xcb.setupTimer((arguments.length > 0) ?
+            arguments[0] : xc.defaultResponseDelayTime);
 
-        oCB.timers.onExpiration = xcb.setupTimer(
-            (arguments.length > 1) ?
-            arguments[1] :
-            xc.defaultExpirationTime);
+        oCB.timers.onExpiration = xcb.setupTimer((arguments.length > 1) ?
+            arguments[1] : xc.defaultExpirationTime);
 
         oCB.onPrepare = null;
         oCB.onRequest = null;
@@ -73,7 +68,7 @@ jaxon.ajax.callback = {
     clearTimer: function(oCallback, sFunction) {
         // The callback object is recognized by the presence of the timers attribute.
         if ('undefined' == typeof oCallback.timers) {
-            for (var i = 0; i < oCallback.length; ++i) {
+            for (let i = 0; i < oCallback.length; ++i) {
                 jaxon.ajax.callback.clearTimer(oCallback[i], sFunction);
             }
             return;

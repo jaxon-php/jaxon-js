@@ -9,10 +9,10 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     received: function(oRequest) {
-        var xx = jaxon;
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = oRequest.callback;
+        const xx = jaxon;
+        const xcb = xx.ajax.callback;
+        const gcb = xx.callback;
+        const lcb = oRequest.callback;
         // sometimes the responseReceived gets called when the request is aborted
         if (oRequest.aborted) {
             return null;
@@ -25,7 +25,7 @@ jaxon.ajax.response = {
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
-        var fProc = xx.ajax.response.processor(oRequest);
+        const fProc = xx.ajax.response.processor(oRequest);
         if (null == fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
             xx.ajax.response.complete(oRequest);
@@ -119,7 +119,7 @@ jaxon.ajax.response = {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
-        var command = null;
+        let command = null;
         while ((command = jaxon.tools.queue.pop(response)) != null) {
             try {
                 if (false == jaxon.ajax.handler.execute(command)) {
@@ -147,8 +147,8 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     processFragment: function(nodes, seq, oRet, oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
+        const xx = jaxon;
+        const xt = xx.tools;
         for (nodeName in nodes) {
             if ('jxnobj' == nodeName) {
                 for (a in nodes[nodeName]) {
@@ -159,7 +159,7 @@ jaxon.ajax.response = {
                     */
                     if (parseInt(a) != a) continue;
 
-                    var command = nodes[nodeName][a];
+                    const command = nodes[nodeName][a];
                     command.fullName = '*unknown*';
                     command.sequence = seq;
                     command.response = oRequest.response;
@@ -237,25 +237,25 @@ jaxon.ajax.response = {
     */
     json: function(oRequest) {
 
-        var xx = jaxon;
-        var xt = xx.tools;
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = oRequest.callback;
+        const xx = jaxon;
+        const xt = xx.tools;
+        const xcb = xx.ajax.callback;
+        const gcb = xx.callback;
+        const lcb = oRequest.callback;
 
-        var oRet = oRequest.returnValue;
+        let oRet = oRequest.returnValue;
 
         if (xt.array.is_in(xx.ajax.response.successCodes, oRequest.request.status)) {
             xcb.execute([gcb, lcb], 'onSuccess', oRequest);
 
-            var seq = 0;
+            let seq = 0;
             if ('object' == typeof oRequest.request.responseJSON &&
                 'object' == typeof oRequest.request.responseJSON.jxnobj) {
                 oRequest.status.onProcessing();
                 oRet = xx.ajax.response.processFragment(oRequest.request.responseJSON, seq, oRet, oRequest);
             } else {}
 
-            var command = {};
+            const command = {};
             command.fullName = 'Response Complete';
             command.sequence = seq;
             command.request = oRequest;
@@ -289,19 +289,19 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     upload: function(oRequest) {
-        var xx = jaxon;
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = oRequest.callback;
+        const xx = jaxon;
+        const xcb = xx.ajax.callback;
+        const gcb = xx.callback;
+        const lcb = oRequest.callback;
 
-        var endRequest = false;
-        var res = oRequest.upload.iframe.contentWindow.res;
+        let endRequest = false;
+        const res = oRequest.upload.iframe.contentWindow.res;
         if (!res || !res.code) {
             // Show the error message with the selected dialog library
             jaxon.ajax.message.error('The server returned an invalid response');
             // End the request
             endRequest = true;
-        } else if (res.code == 'error') {
+        } else if (res.code === 'error') {
             // Todo: show the error message with the selected dialog library
             jaxon.ajax.message.error(res.msg);
             // End the request
@@ -317,7 +317,7 @@ jaxon.ajax.response = {
             return;
         }
 
-        if (res.code = 'success') {
+        if (res.code === 'success') {
             oRequest.requestData += '&jxnupl=' + encodeURIComponent(res.upl);
             jaxon.ajax.request._send(oRequest);
         }

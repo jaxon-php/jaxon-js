@@ -11,13 +11,13 @@ jaxon.dom = {};
     "use strict";
     // The public function name defaults to window.docReady
     // but you can modify the last line of this function to pass in a different object or method name
-    // if you want to put them in a different namespace and those will be used instead of 
+    // if you want to put them in a different namespace and those will be used instead of
     // window.docReady(...)
     funcName = funcName || "docReady";
     baseObj = baseObj || window;
-    var readyList = [];
-    var readyFired = false;
-    var readyEventHandlersInstalled = false;
+    let readyList = [];
+    let readyFired = false;
+    let readyEventHandlersInstalled = false;
 
     // call this when the document is ready
     // this function protects itself against being called more than once
@@ -25,7 +25,7 @@ jaxon.dom = {};
         if (!readyFired) {
             // this must be set to true before we start calling callbacks
             readyFired = true;
-            for (var i = 0; i < readyList.length; i++) {
+            for (let i = 0; i < readyList.length; i++) {
                 // if a callback here happens to add new ready handlers,
                 // the docReady() function will see that it already fired
                 // and will schedule the callback to run right after

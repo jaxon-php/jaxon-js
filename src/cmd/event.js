@@ -17,11 +17,11 @@ jaxon.cmd.event = {
     */
     setEvent: function(command) {
         command.fullName = 'setEvent';
-        var target = command.id;
-        var sEvent = command.prop;
-        var code = command.data;
+        const target = command.id;
+        const sEvent = command.prop;
+        const code = command.data;
         // force to get the target
-        if ('string' == typeof target)
+        if (typeof target === 'string')
             target = jaxon.$(target);
         sEvent = jaxon.tools.string.addOnPrefix(sEvent);
         code = jaxon.tools.string.doubleQuotes(code);
@@ -49,10 +49,10 @@ jaxon.cmd.event = {
         if (window.addEventListener) {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var target = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof target)
+                const target = command.id;
+                const sEvent = command.prop;
+                const sFuncName = command.data;
+                if (typeof target === 'string')
                     target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
                 eval('target.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
@@ -61,10 +61,10 @@ jaxon.cmd.event = {
         } else {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                var target = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof target)
+                const target = command.id;
+                const sEvent = command.prop;
+                const sFuncName = command.data;
+                if (typeof target === 'string')
                     target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
                 eval('target.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
@@ -94,10 +94,10 @@ jaxon.cmd.event = {
         if (window.removeEventListener) {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var target = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof target)
+                const target = command.id;
+                const sEvent = command.prop;
+                const sFuncName = command.data;
+                if (typeof target === 'string')
                     target = jaxon.$(target);
                 sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
                 eval('target.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
@@ -106,10 +106,10 @@ jaxon.cmd.event = {
         } else {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                var target = command.id;
-                var sEvent = command.prop;
-                var sFuncName = command.data;
-                if ('string' == typeof target)
+                const target = command.id;
+                const sEvent = command.prop;
+                const sFuncName = command.data;
+                if (typeof target === 'string')
                     target = jaxon.$(target);
                 sEvent = jaxon.tools.string.addOnPrefix(sEvent);
                 eval('target.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');

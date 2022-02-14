@@ -65,7 +65,7 @@ jaxon.ajax.handler = {
         func - (function): The unregistered function.
     */
     unregister: function(shortName) {
-        var func = jaxon.ajax.handler.handlers[shortName];
+        const func = jaxon.ajax.handler.handlers[shortName];
         delete jaxon.ajax.handler.handlers[shortName];
         return func;
     },
@@ -85,10 +85,7 @@ jaxon.ajax.handler = {
 
     */
     isRegistered: function(command) {
-        var shortName = command.cmd;
-        if (jaxon.ajax.handler.handlers[shortName])
-            return true;
-        return false;
+        return (jaxon.ajax.handler.handlers[command.cmd]) ? true : false;
     },
 
     /*
@@ -105,8 +102,7 @@ jaxon.ajax.handler = {
         true - (boolean) :
     */
     call: function(command) {
-        var shortName = command.cmd;
-        return jaxon.ajax.handler.handlers[shortName](command);
+        return jaxon.ajax.handler.handlers[command.cmd](command);
     }
 };
 

@@ -21,8 +21,8 @@ jaxon.cmd.form = {
             }
         } else {
             jaxon.cmd.form.getInput = function(type, name, id) {
-                var oDoc = jaxon.config.baseDocument;
-                var Obj = oDoc.createElement('input');
+                const oDoc = jaxon.config.baseDocument;
+                const Obj = oDoc.createElement('input');
                 Obj.setAttribute('type', type);
                 Obj.setAttribute('name', name);
                 Obj.setAttribute('id', id);
@@ -51,14 +51,14 @@ jaxon.cmd.form = {
     */
     createInput: function(command) {
         command.fullName = 'createInput';
-        var objParent = command.id;
+        const objParent = command.id;
 
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
+        const sType = command.type;
+        const sName = command.data;
+        const sId = command.prop;
         if ('string' == typeof objParent)
             objParent = jaxon.$(objParent);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
         }
@@ -84,13 +84,13 @@ jaxon.cmd.form = {
     */
     insertInput: function(command) {
         command.fullName = 'insertInput';
-        var objSibling = command.id;
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
+        const objSibling = command.id;
+        const sType = command.type;
+        const sName = command.data;
+        const sId = command.prop;
         if ('string' == typeof objSibling)
             objSibling = jaxon.$(objSibling);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling);
         return true;
@@ -115,13 +115,13 @@ jaxon.cmd.form = {
     */
     insertInputAfter: function(command) {
         command.fullName = 'insertInputAfter';
-        var objSibling = command.id;
-        var sType = command.type;
-        var sName = command.data;
-        var sId = command.prop;
+        const objSibling = command.id;
+        const sType = command.type;
+        const sName = command.data;
+        const sId = command.prop;
         if ('string' == typeof objSibling)
             objSibling = jaxon.$(objSibling);
-        var target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
         return true;

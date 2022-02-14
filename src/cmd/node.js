@@ -24,9 +24,9 @@ jaxon.cmd.node = {
                 break;
             case 'outerHTML':
                 if ('undefined' == typeof element.outerHTML) {
-                    var r = jaxon.config.baseDocument.createRange();
+                    const r = jaxon.config.baseDocument.createRange();
                     r.setStartBefore(element);
-                    var df = r.createContextualFragment(data);
+                    const df = r.createContextualFragment(data);
                     element.parentNode.replaceChild(df, element);
                 } else element.outerHTML = data;
                 break;
@@ -109,28 +109,26 @@ jaxon.cmd.node = {
     true - The operation completed successfully.
     */
     replace: function(element, sAttribute, aData) {
-        var sSearch = aData['s'];
-        var sReplace = aData['r'];
+        const sReplace = aData['r'];
+        const sSearch = (sAttribute === 'innerHTML') ?
+            jaxon.tools.dom.getBrowserHTML(aData['s']) : aData['s'];
 
-        if (sAttribute == 'innerHTML')
-            sSearch = jaxon.tools.dom.getBrowserHTML(sSearch);
-
-        if ('string' == typeof element)
+        if (typeof element === 'string')
             element = jaxon.$(element);
 
-        eval('var txt = element.' + sAttribute);
+        eval('let txt = element.' + sAttribute);
 
-        var bFunction = false;
-        if ('function' == typeof txt) {
+        let bFunction = false;
+        if (typeof txt === 'function') {
             txt = txt.join('');
             bFunction = true;
         }
 
-        var start = txt.indexOf(sSearch);
+        let start = txt.indexOf(sSearch);
         if (start > -1) {
-            var newTxt = [];
+            const newTxt = [];
             while (start > -1) {
-                var end = start + sSearch.length;
+                const end = start + sSearch.length;
                 newTxt.push(txt.substr(0, start));
                 newTxt.push(sReplace);
                 txt = txt.substr(end, txt.length - end);
@@ -190,7 +188,7 @@ jaxon.cmd.node = {
     create: function(objParent, sTag, sId) {
         if ('string' == typeof objParent)
             objParent = jaxon.$(objParent);
-        var target = jaxon.config.baseDocument.createElement(sTag);
+        const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         if (objParent)
             objParent.appendChild(target);
@@ -216,7 +214,7 @@ jaxon.cmd.node = {
     insert: function(objSibling, sTag, sId) {
         if ('string' == typeof objSibling)
             objSibling = jaxon.$(objSibling);
-        var target = jaxon.config.baseDocument.createElement(sTag);
+        const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         objSibling.parentNode.insertBefore(target, objSibling);
         return true;
@@ -241,7 +239,7 @@ jaxon.cmd.node = {
     insertAfter: function(objSibling, sTag, sId) {
         if ('string' == typeof objSibling)
             objSibling = jaxon.$(objSibling);
-        var target = jaxon.config.baseDocument.createElement(sTag);
+        const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
         return true;
@@ -269,7 +267,7 @@ jaxon.cmd.node = {
     contextAssign: function(command) {
         command.fullName = 'context assign';
 
-        var code = [];
+        const code = [];
         code.push('this.');
         code.push(command.prop);
         code.push(' = data;');
@@ -303,7 +301,7 @@ jaxon.cmd.node = {
     contextAppend: function(command) {
         command.fullName = 'context append';
 
-        var code = [];
+        const code = [];
         code.push('this.');
         code.push(command.prop);
         code.push(' += data;');
@@ -337,7 +335,7 @@ jaxon.cmd.node = {
     contextPrepend: function(command) {
         command.fullName = 'context prepend';
 
-        var code = [];
+        const code = [];
         code.push('this.');
         code.push(command.prop);
         code.push(' = data + this.');

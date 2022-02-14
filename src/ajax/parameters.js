@@ -35,30 +35,26 @@ jaxon.ajax.parameters = {
     oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
     */
     toFormData: function(oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
-
-        var rd = new FormData();
-        var input = oRequest.upload.input;
-        for (var i = 0, n = input.files.length; i < n; i++) {
+        const rd = new FormData();
+        const input = oRequest.upload.input;
+        for (let i = 0, n = input.files.length; i < n; i++) {
             rd.append(input.name, input.files[i]);
         }
 
-        var separator = '';
-        for (var sCommand in oRequest.functionName) {
+        for (let sCommand in oRequest.functionName) {
             if ('constructor' != sCommand) {
                 rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand]));
             }
         }
-        var dNow = new Date();
+        let dNow = new Date();
         rd.append('jxnr', dNow.getTime());
         delete dNow;
 
         if (oRequest.parameters) {
-            var i = 0;
-            var iLen = oRequest.parameters.length;
+            let i = 0;
+            const iLen = oRequest.parameters.length;
             while (i < iLen) {
-                var oVal = oRequest.parameters[i];
+                let oVal = oRequest.parameters[i];
                 // Don't include upload parameter
                 /*if(jaxon.ajax.parameters.isUpload(oVal)) {
                     continue;
@@ -78,13 +74,13 @@ jaxon.ajax.parameters = {
                     if ('undefined' == typeof oVal || null == oVal) {
                         rd.append('jxnargs[]', '*');
                     } else {
-                        var sPrefix = '';
-                        var sType = typeof oVal;
-                        if ('string' == sType)
+                        let sPrefix = '';
+                        const sType = typeof oVal;
+                        if ('string' === sType)
                             sPrefix = 'S';
-                        else if ('boolean' == sType)
+                        else if ('boolean' === sType)
                             sPrefix = 'B';
-                        else if ('number' == sType)
+                        else if ('number' === sType)
                             sPrefix = 'N';
                         oVal = encodeURIComponent(oVal);
                         rd.append('jxnargs[]', sPrefix + oVal);
@@ -108,13 +104,9 @@ jaxon.ajax.parameters = {
     oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
     */
     toUrlEncoded: function(oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
-
-        var rd = [];
-
-        var separator = '';
-        for (var sCommand in oRequest.functionName) {
+        const rd = [];
+        let separator = '';
+        for (let sCommand in oRequest.functionName) {
             if ('constructor' != sCommand) {
                 rd.push(separator);
                 rd.push(sCommand);
@@ -123,23 +115,23 @@ jaxon.ajax.parameters = {
                 separator = '&';
             }
         }
-        var dNow = new Date();
+        let dNow = new Date();
         rd.push('&jxnr=');
         rd.push(dNow.getTime());
         delete dNow;
 
         if (oRequest.parameters) {
-            var i = 0;
-            var iLen = oRequest.parameters.length;
+            let i = 0;
+            const iLen = oRequest.parameters.length;
             while (i < iLen) {
-                var oVal = oRequest.parameters[i];
+                let oVal = oRequest.parameters[i];
                 // Don't include upload parameter
                 /*if(jaxon.ajax.parameters.isUpload(oVal)) {
                     continue;
                 }*/
                 if ('object' == typeof oVal && null != oVal) {
                     try {
-                        // var oGuard = {};
+                        // const oGuard = {};
                         // oGuard.depth = 0;
                         // oGuard.maxDepth = oRequest.maxObjectDepth;
                         // oGuard.size = 0;
@@ -161,7 +153,7 @@ jaxon.ajax.parameters = {
                     if ('undefined' == typeof oVal || null == oVal) {
                         rd.push('*');
                     } else {
-                        var sType = typeof oVal;
+                        const sType = typeof oVal;
                         if ('string' == sType)
                             rd.push('S');
                         else if ('boolean' == sType)
@@ -190,7 +182,7 @@ jaxon.ajax.parameters = {
     /*
     Function: jaxon.ajax.parameters.process
 
-    Processes request specific parameters and generates the temporary 
+    Processes request specific parameters and generates the temporary
     variables needed by jaxon to initiate and process the request.
 
     Parameters:
@@ -198,7 +190,7 @@ jaxon.ajax.parameters = {
     oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
 
     Note:
-    This is called once per request; upon a request failure, this 
+    This is called once per request; upon a request failure, this
     will not be called for additional retries.
     */
     process: function(oRequest) {

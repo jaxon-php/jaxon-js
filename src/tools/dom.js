@@ -8,7 +8,7 @@ jaxon.tools.dom = {
     sId - (string):
         The unique name of the element (specified by the ID attribute), not to be confused
         with the name attribute on form elements.
-        
+
     Returns:
     object - The element found or null.
 
@@ -26,9 +26,9 @@ jaxon.tools.dom = {
         if (typeof sId != 'string')
             return sId;
 
-        var oDoc = jaxon.config.baseDocument;
+        const oDoc = jaxon.config.baseDocument;
 
-        var obj = oDoc.getElementById(sId);
+        const obj = oDoc.getElementById(sId);
         if (obj)
             return obj;
 
@@ -47,16 +47,16 @@ jaxon.tools.dom = {
     Parameters:
     sValue - (string):
         A block of html code or text to be inserted into the browser's document.
-        
+
     Returns:
     The (potentially modified) html code or text.
     */
     getBrowserHTML: function(sValue) {
-        var oDoc = jaxon.config.baseDocument;
+        const oDoc = jaxon.config.baseDocument;
         if (!oDoc.body)
             return '';
 
-        var elWorkspace = jaxon.$('jaxon_temp_workspace');
+        const elWorkspace = jaxon.$('jaxon_temp_workspace');
         if (!elWorkspace) {
             elWorkspace = oDoc.createElement('div');
             elWorkspace.setAttribute('id', 'jaxon_temp_workspace');
@@ -65,7 +65,7 @@ jaxon.tools.dom = {
             oDoc.body.appendChild(elWorkspace);
         }
         elWorkspace.innerHTML = sValue;
-        var browserHTML = elWorkspace.innerHTML;
+        const browserHTML = elWorkspace.innerHTML;
         elWorkspace.innerHTML = '';
 
         return browserHTML;
@@ -76,14 +76,14 @@ jaxon.tools.dom = {
 
     Tests to see if the specified data is the same as the current value of the element's attribute.
 
-    Parameters: 
+    Parameters:
     element - (string or object):
         The element or it's unique name (specified by the ID attribute)
     attribute - (string):
         The name of the attribute.
     newData - (string):
         The value to be compared with the current value of the specified element.
-        
+
     Returns:
     true - The specified value differs from the current attribute value.
     false - The specified value is the same as the current value.
@@ -92,8 +92,9 @@ jaxon.tools.dom = {
         if ('string' == typeof element)
             element = jaxon.$(element);
         if (element) {
-            var oldData;
-            eval('oldData=element.' + attribute);
+            let oldData;
+            // eval('oldData=element.' + attribute);
+            oldData = element[attribute];
             return (newData != oldData);
         }
         return false;
@@ -104,16 +105,16 @@ jaxon.tools.dom = {
 
     Find a function using its name as a string.
 
-    Parameters: 
+    Parameters:
     sFuncName - (string): The name of the function to find.
 
     Returns:
     Functiion - The function with the given name.
     */
     findFunction: function (sFuncName) {
-        var context = window;
-        var namespaces = sFuncName.split(".");
-        for(var i = 0; i < namespaces.length && context != undefined; i++) {
+        let context = window;
+        const namespaces = sFuncName.split(".");
+        for(const i = 0; i < namespaces.length && context != undefined; i++) {
             context = context[namespaces[i]];
         }
         return context;

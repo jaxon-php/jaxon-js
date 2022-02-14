@@ -11,7 +11,7 @@ jaxon.cmd.delay = {
         {
             return null;
         }
-        if(jaxon.tools.queue.peek(oQueue).mode == 'synchronous')
+        if(jaxon.tools.queue.peek(oQueue).mode === 'synchronous')
         {
             return null;
         }
@@ -29,7 +29,7 @@ jaxon.cmd.delay = {
      *      false - The object has exhausted the retry count specified.
      */
     retry: function(command, count) {
-        var retries = command.retries;
+        let retries = command.retries;
         if(retries) {
             --retries;
             if(1 > retries) {
@@ -54,7 +54,7 @@ jaxon.cmd.delay = {
      * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
      */
     setWakeup: function(response, when) {
-        if (null != response.timeout) {
+        if (response.timeout !== null) {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
@@ -73,17 +73,17 @@ jaxon.cmd.delay = {
      * @returns boolean
      */
     confirmCallback: function(command, count, skip) {
-        if(skip == true) {
+        if(skip === true) {
             // The last entry in the queue is not a user command.
             // Thus it cannot be skipped.
             while (count > 0 && command.response.count > 1 &&
-                jaxon.tools.queue.pop(command.response) != null) {
+                jaxon.tools.queue.pop(command.response) !== null) {
                 --count;
             }
         }
         // Run a different command depending on whether this callback executes
         // before of after the confirm function returns;
-        if(command.requeue == true) {
+        if(command.requeue === true) {
             // Before => the processing is delayed.
             jaxon.cmd.delay.setWakeup(command.response, 30);
         } else {

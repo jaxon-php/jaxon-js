@@ -16,13 +16,13 @@ jaxon.cmd.script = {
     */
     includeScriptOnce: function(command) {
         command.fullName = 'includeScriptOnce';
-        var fileName = command.data;
+        const fileName = command.data;
         // Check for existing script tag for this file.
-        var oDoc = jaxon.config.baseDocument;
-        var loadedScripts = oDoc.getElementsByTagName('script');
-        var iLen = loadedScripts.length;
-        for (var i = 0; i < iLen; ++i) {
-            var script = loadedScripts[i];
+        const oDoc = jaxon.config.baseDocument;
+        const loadedScripts = oDoc.getElementsByTagName('script');
+        const iLen = loadedScripts.length;
+        for (let i = 0; i < iLen; ++i) {
+            const script = loadedScripts[i];
             if (script.src) {
                 if (0 <= script.src.indexOf(fileName))
                     return true;
@@ -47,9 +47,9 @@ jaxon.cmd.script = {
     */
     includeScript: function(command) {
         command.fullName = 'includeScript';
-        var oDoc = jaxon.config.baseDocument;
-        var objHead = oDoc.getElementsByTagName('head');
-        var objScript = oDoc.createElement('script');
+        const oDoc = jaxon.config.baseDocument;
+        const objHead = oDoc.getElementsByTagName('head');
+        const objScript = oDoc.createElement('script');
         objScript.src = command.data;
         if ('undefined' == typeof command.type) objScript.type = 'text/javascript';
         else objScript.type = command.type;
@@ -73,22 +73,22 @@ jaxon.cmd.script = {
     */
     removeScript: function(command) {
         command.fullName = 'removeScript';
-        var fileName = command.data;
-        var unload = command.unld;
-        var oDoc = jaxon.config.baseDocument;
-        var loadedScripts = oDoc.getElementsByTagName('script');
-        var iLen = loadedScripts.length;
-        for (var i = 0; i < iLen; ++i) {
-            var script = loadedScripts[i];
+        const fileName = command.data;
+        const unload = command.unld;
+        const oDoc = jaxon.config.baseDocument;
+        const loadedScripts = oDoc.getElementsByTagName('script');
+        const iLen = loadedScripts.length;
+        for (let i = 0; i < iLen; ++i) {
+            const script = loadedScripts[i];
             if (script.src) {
                 if (0 <= script.src.indexOf(fileName)) {
                     if ('undefined' != typeof unload) {
-                        var _command = {};
+                        const _command = {};
                         _command.data = unload;
                         _command.context = window;
                         jaxon.cmd.script.execute(_command);
                     }
-                    var parent = script.parentNode;
+                    const parent = script.parentNode;
                     parent.removeChild(script);
                 }
             }
@@ -183,7 +183,7 @@ jaxon.cmd.script = {
     */
     execute: function(command) {
         command.fullName = 'execute Javascript';
-        var returnValue = true;
+        const returnValue = true;
         command.context = command.context ? command.context : {};
         command.context.jaxonDelegateCall = function() {
             eval(command.data);
@@ -215,8 +215,8 @@ jaxon.cmd.script = {
     waitFor: function(command) {
         command.fullName = 'waitFor';
 
-        var bResult = false;
-        var cmdToEval = 'bResult = (';
+        let bResult = false;
+        const cmdToEval = 'bResult = (';
         cmdToEval += command.data;
         cmdToEval += ');';
         try {
@@ -257,17 +257,17 @@ jaxon.cmd.script = {
     call: function(command) {
         command.fullName = 'call js function';
 
-        var parameters = command.data;
+        const parameters = command.data;
 
-        var scr = new Array();
+        const scr = new Array();
         scr.push(command.func);
         scr.push('(');
         if ('undefined' != typeof parameters) {
             if ('object' == typeof parameters) {
-                var iLen = parameters.length;
+                const iLen = parameters.length;
                 if (0 < iLen) {
                     scr.push('parameters[0]');
-                    for (var i = 1; i < iLen; ++i)
+                    for (let i = 1; i < iLen; ++i)
                         scr.push(', parameters[' + i + ']');
                 }
             }
@@ -301,12 +301,12 @@ jaxon.cmd.script = {
     setFunction: function(command) {
         command.fullName = 'setFunction';
 
-        var code = new Array();
+        const code = new Array();
         code.push(command.func);
         code.push(' = function(');
         if ('object' == typeof command.prop) {
-            var separator = '';
-            for (var m in command.prop) {
+            let separator = '';
+            for (let m in command.prop) {
                 code.push(separator);
                 code.push(command.prop[m]);
                 separator = ',';
@@ -346,7 +346,7 @@ jaxon.cmd.script = {
     wrapFunction: function(command) {
         command.fullName = 'wrapFunction';
 
-        var code = new Array();
+        const code = new Array();
         code.push(command.func);
         code.push(' = jaxon.cmd.script.makeWrapper(');
         code.push(command.func);
@@ -380,39 +380,26 @@ jaxon.cmd.script = {
     object - The complete wrapper function.
     */
     makeWrapper: function(origFun, args, codeBlocks, returnVariable, context) {
-        var originalCall = '';
-        if (0 < returnVariable.length) {
-            originalCall += returnVariable;
-            originalCall += ' = ';
-        }
-        var originalCall = 'origFun(';
-        originalCall += args;
-        originalCall += '); ';
+        const originalCall = (returnVariable.length > 0 ? returnVariable + ' = ' : '') +
+            origFun + '(' + args + '); ';
 
-        var code = 'wrapper = function(';
-        code += args;
-        code += ') { ';
+        let code = 'wrapper = function(' + args + ') { ';
 
-        if (0 < returnVariable.length) {
-            code += ' var ';
-            code += returnVariable;
-            code += ' = null;';
+        if (returnVariable.length > 0) {
+            code += ' let ' + returnVariable + ' = null;';
         }
-        var separator = '';
-        var bLen = codeBlocks.length;
-        for (var b = 0; b < bLen; ++b) {
-            code += separator;
-            code += codeBlocks[b];
+        let separator = '';
+        const bLen = codeBlocks.length;
+        for (let b = 0; b < bLen; ++b) {
+            code += separator + codeBlocks[b];
             separator = originalCall;
         }
-        if (0 < returnVariable.length) {
-            code += ' return ';
-            code += returnVariable;
-            code += ';';
+        if (returnVariable.length > 0) {
+            code += ' return ' + returnVariable + ';';
         }
         code += ' } ';
 
-        var wrapper = null;
+        let wrapper = null;
         context.jaxonDelegateCall = function() {
             eval(code);
         }

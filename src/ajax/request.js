@@ -12,13 +12,13 @@ jaxon.ajax.request = {
         values.  This includes temporary values used internally by jaxon.
     */
     initialize: function(oRequest) {
-        var xx = jaxon;
-        var xc = xx.config;
+        const xx = jaxon;
+        const xc = xx.config;
 
         oRequest.append = function(opt, def) {
             if('undefined' == typeof this[opt])
                 this[opt] = {};
-            for (var itmName in def)
+            for (let itmName in def)
                 if('undefined' == typeof this[opt][itmName])
                     this[opt][itmName] = def[itmName];
         };
@@ -47,9 +47,8 @@ jaxon.ajax.request = {
         oRequest.set('upload', false);
         oRequest.set('aborted', false);
 
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = xcb.create();
+        const xcb = xx.ajax.callback;
+        const lcb = xcb.create();
 
         lcb.take = function(frm, opt) {
             if('undefined' != typeof frm[opt]) {
@@ -122,24 +121,24 @@ jaxon.ajax.request = {
     If the request is retried, the request must be prepared again.
     */
     prepare: function(oRequest) {
-        var xx = jaxon;
-        var xt = xx.tools;
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = oRequest.callback;
+        const xx = jaxon;
+        const xt = xx.tools;
+        const xcb = xx.ajax.callback;
+        const gcb = xx.callback;
+        const lcb = oRequest.callback;
 
         xcb.execute([gcb, lcb], 'onPrepare', oRequest);
 
         // Check if the request must be aborted
-        if(oRequest.aborted == true) {
+        if(oRequest.aborted === true) {
             return false;
         }
 
         oRequest.request = xt.ajax.createRequest();
 
         oRequest.setRequestHeaders = function(headers) {
-            if('object' == typeof headers) {
-                for (var optionName in headers)
+            if('object' === typeof headers) {
+                for (let optionName in headers)
                     this.request.setRequestHeader(optionName, headers[optionName]);
             }
         };
@@ -162,7 +161,7 @@ jaxon.ajax.request = {
             };
         }*/
         oRequest.request.onreadystatechange = function() {
-            if(oRequest.request.readyState != 4) {
+            if(oRequest.request.readyState !== 4) {
                 return;
             }
             // Synchronous request are processed immediately.
@@ -178,7 +177,7 @@ jaxon.ajax.request = {
             return this.returnValue;
         };
 
-        if('undefined' != typeof oRequest.userName && 'undefined' != typeof oRequest.password) {
+        if('undefined' !== typeof oRequest.userName && 'undefined' !== typeof oRequest.password) {
             oRequest.open = function() {
                 this.request.open(
                     this.method,
@@ -219,7 +218,7 @@ jaxon.ajax.request = {
 
         // No request is submitted while there are pending requests in the outgoing queue.
         let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
-        if('synchronous' == oRequest.mode) {
+        if('synchronous' === oRequest.mode) {
             // Synchronous requests are always queued, in both send and recv queues.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
             jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
@@ -243,10 +242,10 @@ jaxon.ajax.request = {
     submit: function(oRequest) {
         oRequest.status.onRequest();
 
-        var xx = jaxon;
-        var xcb = xx.ajax.callback;
-        var gcb = xx.callback;
-        var lcb = oRequest.callback;
+        const xx = jaxon;
+        const xcb = xx.ajax.callback;
+        const gcb = xx.callback;
+        const lcb = oRequest.callback;
 
         xcb.execute([gcb, lcb], 'onResponseDelay', oRequest);
         xcb.execute([gcb, lcb], 'onExpiration', oRequest);
@@ -258,7 +257,7 @@ jaxon.ajax.request = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        if(oRequest.upload != false && !oRequest.upload.ajax && oRequest.upload.form) {
+        if(oRequest.upload !== false && !oRequest.upload.ajax && oRequest.upload.form) {
             // The request will be sent after the files are uploaded
             oRequest.upload.iframe.onload = function() {
                 jaxon.ajax.response.upload(oRequest);
@@ -320,20 +319,17 @@ jaxon.ajax.request = {
 
     */
     execute: function() {
-        var numArgs = arguments.length;
-        if(0 == numArgs)
+        const numArgs = arguments.length;
+        if(0 === numArgs)
             return false;
 
-        var oRequest = {};
-        if(1 < numArgs)
-            oRequest = arguments[1];
-
+        const oRequest = (1 < numArgs) ? arguments[1] : {};
         oRequest.functionName = arguments[0];
 
-        var xx = jaxon;
-
+        const xx = jaxon;
         xx.ajax.request.initialize(oRequest);
         xx.ajax.parameters.process(oRequest);
+
         while (0 < oRequest.requestRetry) {
             try {
                 if(xx.ajax.request.prepare(oRequest))
@@ -343,11 +339,7 @@ jaxon.ajax.request = {
                 }
                 return null;
             } catch (e) {
-                jaxon.ajax.callback.execute(
-                    [jaxon.callback, oRequest.callback],
-                    'onFailure',
-                    oRequest
-                );
+                jaxon.ajax.callback.execute([jaxon.callback, oRequest.callback], 'onFailure', oRequest);
                 if(0 == oRequest.requestRetry)
                     throw e;
             }

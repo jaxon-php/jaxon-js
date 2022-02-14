@@ -1,5 +1,6 @@
 # Do not commit Eclipse files
 .project
 .settings/*
+.idea/
 /node_modules/
 /package-lock.json

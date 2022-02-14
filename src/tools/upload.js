@@ -5,7 +5,7 @@ jaxon.tools.upload = {
     Create an iframe for file upload.
     */
     createIframe: function(oRequest) {
-        var target = 'jaxon_upload_' + oRequest.upload.id;
+        const target = 'jaxon_upload_' + oRequest.upload.id;
         // Delete the iframe, in the case it already exists
         jaxon.cmd.node.remove(target);
         // Create the iframe.
@@ -32,7 +32,7 @@ jaxon.tools.upload = {
         }
         oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
 
-        var input = jaxon.tools.dom.$(oRequest.upload.id);
+        const input = jaxon.tools.dom.$(oRequest.upload.id);
         if (input == null) {
             console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
             return false;
@@ -57,10 +57,10 @@ jaxon.tools.upload = {
         // For upload with iframe, we need to get the form too.
         if (!input.form) {
             // Find the input form
-            var form = input;
-            while (form != null && form.nodeName != 'FORM')
+            let form = input;
+            while (form !== null && form.nodeName !== 'FORM')
                 form = form.parentNode;
-            if (form == null) {
+            if (form === null) {
                 console.log('The upload input field with id ' + oRequest.upload.id + ' is not in a form');
                 return false;
             }

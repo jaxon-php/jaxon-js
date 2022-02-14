@@ -14,19 +14,19 @@ jaxon.cmd.style = {
     true - The operation completed successfully.
     */
     add: function(fileName, media) {
-        var oDoc = jaxon.config.baseDocument;
-        var oHeads = oDoc.getElementsByTagName('head');
-        var oHead = oHeads[0];
-        var oLinks = oHead.getElementsByTagName('link');
+        const oDoc = jaxon.config.baseDocument;
+        const oHeads = oDoc.getElementsByTagName('head');
+        const oHead = oHeads[0];
+        const oLinks = oHead.getElementsByTagName('link');
 
-        var found = false;
-        var iLen = oLinks.length;
-        for (var i = 0; i < iLen && false == found; ++i)
+        const found = false;
+        const iLen = oLinks.length;
+        for (let i = 0; i < iLen && false == found; ++i)
             if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
                 found = true;
 
         if (false == found) {
-            var oCSS = oDoc.createElement('link');
+            const oCSS = oDoc.createElement('link');
             oCSS.rel = 'stylesheet';
             oCSS.type = 'text/css';
             oCSS.href = fileName;
@@ -51,12 +51,12 @@ jaxon.cmd.style = {
     true - The operation completed successfully.
     */
     remove: function(fileName, media) {
-        var oDoc = jaxon.config.baseDocument;
-        var oHeads = oDoc.getElementsByTagName('head');
-        var oHead = oHeads[0];
-        var oLinks = oHead.getElementsByTagName('link');
+        const oDoc = jaxon.config.baseDocument;
+        const oHeads = oDoc.getElementsByTagName('head');
+        const oHead = oHeads[0];
+        const oLinks = oHead.getElementsByTagName('link');
 
-        var i = 0;
+        let i = 0;
         while (i < oLinks.length)
             if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
                 oHead.removeChild(oLinks[i]);
@@ -82,10 +82,10 @@ jaxon.cmd.style = {
     false - The .css files do not appear to be loaded and the timeout has not expired.
     */
     waitForCSS: function(command) {
-        var oDocSS = jaxon.config.baseDocument.styleSheets;
-        var ssEnabled = [];
-        var iLen = oDocSS.length;
-        for (var i = 0; i < iLen; ++i) {
+        const oDocSS = jaxon.config.baseDocument.styleSheets;
+        const ssEnabled = [];
+        let iLen = oDocSS.length;
+        for (let i = 0; i < iLen; ++i) {
             ssEnabled[i] = 0;
             try {
                 ssEnabled[i] = oDocSS[i].cssRules.length;
@@ -96,9 +96,9 @@ jaxon.cmd.style = {
             }
         }
 
-        var ssLoaded = true;
-        var iLen = ssEnabled.length;
-        for (var i = 0; i < iLen; ++i)
+        const ssLoaded = true;
+        iLen = ssEnabled.length;
+        for (let i = 0; i < iLen; ++i)
             if (0 == ssEnabled[i])
                 ssLoaded = false;
 
