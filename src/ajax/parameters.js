@@ -1,13 +1,17 @@
 jaxon.ajax.parameters = {
-    /*
-    Function: jaxon.ajax.parameters.stringify
+    /**
+     * The array of data bags
+     * @type {object}
+     */
+    bags: {},
 
-    Stringify a parameter of an ajax call.
-
-    Parameters:
-
-    oVal - The value to be stringified
-    */
+    /**
+     * Stringify a parameter of an ajax call.
+     *
+     * @param {*} oVal - The value to be stringified
+     *
+     * @returns {string}
+     */
     stringify: function(oVal) {
         if (oVal === undefined ||  oVal === null) {
             return '*';
@@ -50,15 +54,26 @@ jaxon.ajax.parameters = {
 
         // Files to upload
         const input = oRequest.upload.input;
-        input.files.forEach(file => rd.append(input.name, file));
+        for (const file of input.files) {
+            rd.append(input.name, file);
+        }
 
         for (let sCommand in oRequest.functionName) {
             rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand]));
         }
 
         if (oRequest.parameters) {
-            oRequest.parameters.forEach(oVal =>
-                rd.append('jxnargs[]', jaxon.ajax.parameters.stringify(oVal)));
+            for (const oVal of oRequest.parameters) {
+                rd.append('jxnargs[]', jaxon.ajax.parameters.stringify(oVal));
+            }
+        }
+
+        if (oRequest.bags) {
+            const oValues = {};
+            for (const sBag of oRequest.bags) {
+                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?? '*';
+            }
+            rd.append('jxnbags', jaxon.ajax.parameters.stringify(oValues));
         }
 
         oRequest.requestURI = oRequest.URI;
@@ -78,13 +93,22 @@ jaxon.ajax.parameters = {
         const rd = [];
         rd.push('jxnr=' + oRequest.dNow.getTime());
 
-        for (let sCommand in oRequest.functionName) {
+        for (const sCommand in oRequest.functionName) {
             rd.push(sCommand + '=' + encodeURIComponent(oRequest.functionName[sCommand]));
         }
 
         if (oRequest.parameters) {
-            oRequest.parameters.forEach(oVal =>
-                rd.push('jxnargs[]=' + jaxon.ajax.parameters.stringify(oVal)));
+            for (const oVal of oRequest.parameters) {
+                rd.push('jxnargs[]=' + jaxon.ajax.parameters.stringify(oVal));
+            }
+        }
+
+        if (oRequest.bags) {
+            const oValues = {};
+            for (const sBag of oRequest.bags) {
+                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?? '*';
+            }
+            rd.push('jxnbags=' + jaxon.ajax.parameters.stringify(oValues));
         }
 
         oRequest.requestURI = oRequest.URI;
