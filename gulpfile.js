@@ -1,99 +1,93 @@
 // Gulp.js configuration
 
 // Modules
-var gulp = require('gulp'),
-    concat = require('gulp-concat'),
-    // deporder = require('gulp-deporder'),
-    rename = require('gulp-rename'),
-    // stripdebug = require('gulp-strip-debug'),
-    terser = require('gulp-terser');
-
-// Development mode?
-var devBuild = (process.env.NODE_ENV !== 'production');
+const { src, dest, series } = require('gulp');
+const concat = require('gulp-concat');
+// const deporder = require('gulp-deporder');
+const rename = require('gulp-rename');
+// const stripdebug = require('gulp-strip-debug');
+const terser = require('gulp-terser');
 
 // Folders and files
-var folders = {
-        src: './src/',
-        dist: './dist/',
-        lang: './dist/lang/'
+const folders = {
+    src: './src/',
+    dist: './dist/',
+    lang: './dist/lang/'
+};
+const files = {
+    src: {
+        core: [
+            folders.src + 'config.js',
+            folders.src + 'tools/*.js',
+            folders.src + 'cmd/*.js',
+            folders.src + 'ajax/*.js',
+            folders.src + 'ready.js',
+            folders.src + 'jaxon.js',
+            folders.src + 'compat.js'
+        ]
     },
-
-    files = {
-        src: {
-            core: [
-                folders.src + 'config.js',
-                folders.src + 'tools/*.js',
-                folders.src + 'cmd/*.js',
-                folders.src + 'ajax/*.js',
-                folders.src + 'ready.js',
-                folders.src + 'jaxon.js',
-                folders.src + 'compat.js'
-            ]
-        },
-        dist: {
-            core: 'jaxon.core.js',
-            debug: 'jaxon.debug.js',
-            lang: [
-                folders.dist + 'lang/jaxon.bg.js',
-                folders.dist + 'lang/jaxon.de.js',
-                folders.dist + 'lang/jaxon.en.js',
-                folders.dist + 'lang/jaxon.es.js',
-                folders.dist + 'lang/jaxon.fr.js',
-                folders.dist + 'lang/jaxon.nl.js',
-                folders.dist + 'lang/jaxon.tr.js'
-            ]
-        },
-        min: {
-            core: 'jaxon.core.min.js',
-            debug: 'jaxon.debug.min.js'
-        }};
+    dist: {
+        core: 'jaxon.core.js',
+        debug: 'jaxon.debug.js',
+        lang: [
+            folders.dist + 'lang/jaxon.bg.js',
+            folders.dist + 'lang/jaxon.de.js',
+            folders.dist + 'lang/jaxon.en.js',
+            folders.dist + 'lang/jaxon.es.js',
+            folders.dist + 'lang/jaxon.fr.js',
+            folders.dist + 'lang/jaxon.nl.js',
+            folders.dist + 'lang/jaxon.tr.js'
+        ]
+    },
+    min: {
+        core: 'jaxon.core.min.js',
+        debug: 'jaxon.debug.min.js'
+    }
+};
 
 // Concat core library files
-gulp.task('js-core', function() {
-    var jsbuild = gulp.src(files.src.core)
+const js_core = () => {
+    const jsbuild = src(files.src.core)
         // .pipe(deporder())
-        .pipe(concat(files.dist.core, {newLine: '\n\n'}));
+        .pipe(concat(files.dist.core, {newLine: "\n\n"}));
 
-    /*if (!devBuild) {
+    // Development mode?
+    /*const devBuild = (process.env.NODE_ENV !== 'production');
+    if (!devBuild) {
         jsbuild = jsbuild
             .pipe(stripdebug())
             .pipe(terser());
     }*/
 
-    return jsbuild.pipe(gulp.dest(folders.dist));
-});
+    return jsbuild.pipe(dest(folders.dist));
+};
 
 // Concat and minify core library files
-gulp.task('js-core-min', ['js-core'], function() {
-    return gulp.src(folders.dist + files.dist.core)
-        // .pipe(stripdebug())
-        .pipe(terser())
-        .pipe(rename(files.min.core))
-        .pipe(gulp.dest(folders.dist));
-});
+const js_core_min = () => src(folders.dist + files.dist.core)
+    // .pipe(stripdebug())
+    .pipe(terser())
+    .pipe(rename(files.min.core))
+    .pipe(dest(folders.dist));
 
 // Minify the jaxon.debug.js file
-gulp.task('js-debug-min', function() {
-    return gulp.src(folders.dist + files.dist.debug)
-        // .pipe(stripdebug())
-        .pipe(terser())
-        .pipe(rename(files.min.debug))
-        .pipe(gulp.dest(folders.dist));
-});
+const js_debug_min = () => src(folders.dist + files.dist.debug)
+    // .pipe(stripdebug())
+    .pipe(terser())
+    .pipe(rename(files.min.debug))
+    .pipe(dest(folders.dist));
 
 // Minify the jaxon language files
-gulp.task('js-lang-min', function() {
-    return gulp.src(files.dist.lang)
-        // .pipe(stripdebug())
-        .pipe(terser())
-        .pipe(rename(function (path) {
-            // path.dirname = "";
-            path.basename += ".min";
-            // path.extname = ""
-        }))
-        .pipe(gulp.dest(folders.lang));
-});
+const js_lang_min = () => src(files.dist.lang)
+    // .pipe(stripdebug())
+    .pipe(terser())
+    .pipe(rename(path => {
+        // path.dirname = "";
+        path.basename += ".min";
+        // path.extname = ""
+    }))
+    .pipe(dest(folders.lang));
 
 // Minify all the files
-gulp.task('js-min', ['js-core-min', 'js-debug-min', 'js-lang-min']);
-gulp.task('default', ['js-min']);
+const js_min = series(js_core, js_core_min, js_debug_min, js_lang_min);
+
+exports.default = js_min;

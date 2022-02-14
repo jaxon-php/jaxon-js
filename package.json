@@ -22,11 +22,11 @@
   },
   "homepage": "https://github.com/jaxon-php/jaxon-js#readme",
   "devDependencies": {
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-concat": "^2.6.1",
-    "gulp-deporder": "^1.1.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-strip-debug": "^1.1.0",
-    "gulp-terser": "^1.2.0"
+    "gulp-deporder": "^1.2.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-strip-debug": "^4.0.0",
+    "gulp-terser": "^2.1.0"
   }
 }
