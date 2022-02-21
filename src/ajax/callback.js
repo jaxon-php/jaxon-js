@@ -13,7 +13,7 @@ jaxon.ajax.callback = {
         const xc = jaxon.config;
         const xcb = jaxon.ajax.callback;
 
-        const oCB = {}
+        const oCB = {};
         oCB.timers = {};
 
         oCB.timers.onResponseDelay = xcb.setupTimer((arguments.length > 0) ?
