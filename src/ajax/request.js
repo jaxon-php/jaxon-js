@@ -95,6 +95,7 @@ jaxon.ajax.request = {
         oRequest.requestRetry = oRequest.retry;
 
         // Look for upload parameter
+        oRequest.ajax = !!window.FormData;
         jaxon.tools.upload.initialize(oRequest);
 
         delete oRequest['append'];

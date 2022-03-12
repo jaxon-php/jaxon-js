@@ -30,7 +30,7 @@ jaxon.tools.upload = {
         if (!oRequest.upload) {
             return false;
         }
-        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
+        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: oRequest.ajax };
 
         const input = jaxon.tools.dom.$(oRequest.upload.id);
         if (!input) {
