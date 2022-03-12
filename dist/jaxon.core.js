@@ -914,7 +914,7 @@ jaxon.tools.upload = {
         if (!oRequest.upload) {
             return false;
         }
-        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: !!window.FormData };
+        oRequest.upload = { id: oRequest.upload, input: null, form: null, ajax: oRequest.ajax };
 
         const input = jaxon.tools.dom.$(oRequest.upload.id);
         if (!input) {
@@ -2342,7 +2342,7 @@ jaxon.ajax.callback = {
         const xc = jaxon.config;
         const xcb = jaxon.ajax.callback;
 
-        const oCB = {}
+        const oCB = {};
         oCB.timers = {};
 
         oCB.timers.onResponseDelay = xcb.setupTimer((arguments.length > 0) ?
@@ -2900,7 +2900,7 @@ jaxon.ajax.request = {
         oRequest.append = function(opt, def) {
             if('undefined' == typeof this[opt])
                 this[opt] = {};
-            for (let itmName in def)
+            for (const itmName in def)
                 if('undefined' == typeof this[opt][itmName])
                     this[opt][itmName] = def[itmName];
         };
@@ -2977,6 +2977,7 @@ jaxon.ajax.request = {
         oRequest.requestRetry = oRequest.retry;
 
         // Look for upload parameter
+        oRequest.ajax = !!window.FormData;
         jaxon.tools.upload.initialize(oRequest);
 
         delete oRequest['append'];
@@ -3211,7 +3212,7 @@ jaxon.ajax.request = {
         xx.ajax.request.initialize(oRequest);
         xx.ajax.parameters.process(oRequest);
 
-        while (0 < oRequest.requestRetry) {
+        while (oRequest.requestRetry > 0) {
             try {
                 if(xx.ajax.request.prepare(oRequest))
                 {
@@ -3221,7 +3222,7 @@ jaxon.ajax.request = {
                 return null;
             } catch (e) {
                 jaxon.ajax.callback.execute([jaxon.callback, oRequest.callback], 'onFailure', oRequest);
-                if(0 == oRequest.requestRetry)
+                if(oRequest.requestRetry === 0)
                     throw e;
             }
         }
