@@ -323,7 +323,7 @@ jaxon.ajax.request = {
         if(functionName === undefined)
             return false;
 
-        const oRequest = functionArgs ?? {};
+        const oRequest = functionArgs ? functionArgs : {};
         oRequest.functionName = functionName;
 
         const xx = jaxon;

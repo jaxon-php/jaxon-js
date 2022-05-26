@@ -71,7 +71,8 @@ jaxon.ajax.parameters = {
         if (oRequest.bags) {
             const oValues = {};
             for (const sBag of oRequest.bags) {
-                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?? '*';
+                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?
+                    jaxon.ajax.parameters.bags[sBag] : '*';
             }
             rd.append('jxnbags', jaxon.ajax.parameters.stringify(oValues));
         }
@@ -106,7 +107,8 @@ jaxon.ajax.parameters = {
         if (oRequest.bags) {
             const oValues = {};
             for (const sBag of oRequest.bags) {
-                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?? '*';
+                oValues[sBag] = jaxon.ajax.parameters.bags[sBag] ?
+                    jaxon.ajax.parameters.bags[sBag] : '*';
             }
             rd.push('jxnbags=' + jaxon.ajax.parameters.stringify(oValues));
         }
