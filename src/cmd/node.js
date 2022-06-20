@@ -126,7 +126,7 @@ jaxon.cmd.node = {
 
         let start = txt.indexOf(sSearch);
         if (start > -1) {
-            const newTxt = [];
+            let newTxt = [];
             while (start > -1) {
                 const end = start + sSearch.length;
                 newTxt.push(txt.substr(0, start));
