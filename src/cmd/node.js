@@ -116,7 +116,7 @@ jaxon.cmd.node = {
         if (typeof element === 'string')
             element = jaxon.$(element);
 
-        eval('let txt = element.' + sAttribute);
+        eval('var txt = element.' + sAttribute);
 
         let bFunction = false;
         if (typeof txt === 'function') {
