@@ -21,7 +21,7 @@ jaxon.cmd.event = {
         const sCode = jaxon.tools.string.doubleQuotes(command.data);
         // force to get the target
         const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-        eval('oTarget.' + sEvent + ' = function(e) { ' + sCode + '; }');
+        oTarget[sEvent] = new Function('e', sCode);
         return true;
     },
 
@@ -42,28 +42,12 @@ jaxon.cmd.event = {
     true - The operation completed successfully.
     */
     addHandler: function(command) {
-        if (window.addEventListener) {
-            jaxon.cmd.event.addHandler = function(command) {
-                command.fullName = 'addHandler';
-                const sFuncName = command.data;
-                const sEvent = jaxon.tools.string.stripOnPrefix(command.prop);
-                // force to get the target
-                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-                eval('oTarget.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        } else {
-            jaxon.cmd.event.addHandler = function(command) {
-                command.fullName = 'addHandler';
-                const sFuncName = command.data;
-                const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
-                // force to get the target
-                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-                eval('oTarget.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        }
-        return jaxon.cmd.event.addHandler(command);
+        command.fullName = 'addHandler';
+        const sFuncName = command.data;
+        const sEvent = jaxon.cmd.event.getName(command.prop);
+        // force to get the target
+        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+        return jaxon.cmd.event._addHandler(oTarget, sEvent, sFuncName);
     },
 
     /*
@@ -83,27 +67,41 @@ jaxon.cmd.event = {
     true - The operation completed successfully.
     */
     removeHandler: function(command) {
-        if (window.removeEventListener) {
-            jaxon.cmd.event.removeHandler = function(command) {
-                command.fullName = 'removeHandler';
-                const sFuncName = command.data;
-                const sEvent = jaxon.tools.string.stripOnPrefix(command.prop);
-                // force to get the target
-                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-                eval('oTarget.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        } else {
-            jaxon.cmd.event.removeHandler = function(command) {
-                command.fullName = 'removeHandler';
-                const sFuncName = command.data;
-                const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
-                // force to get the target
-                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-                eval('oTarget.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
-                return true;
-            }
-        }
-        return jaxon.cmd.event.removeHandler(command);
+        command.fullName = 'removeHandler';
+        const sFuncName = command.data;
+        const sEvent = jaxon.cmd.event.getName(command.prop);
+        // force to get the target
+        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+        return jaxon.cmd.event._removeHandler(oTarget, sEvent, sFuncName);
     }
 };
+
+if(window.addEventListener) {
+    jaxon.cmd.event.getName = function(event) {
+        return jaxon.tools.string.stripOnPrefix(event);
+    };
+
+    jaxon.cmd.event._addHandler = function(target, event, func) {
+        target.addEventListener(event, window[func], false);
+        return true;
+    };
+
+    jaxon.cmd.event._removeHandler = function(target, event, func) {
+        target.removeEventListener(event, window[func], false);
+        return true;
+    };
+} else {
+    jaxon.cmd.event.getName = function(event) {
+        return jaxon.tools.string.addOnPrefix(event);
+    };
+
+    jaxon.cmd.event._addHandler = function(target, event, func) {
+        target.attachEvent(event, window[func]);
+        return true;
+    };
+
+    jaxon.cmd.event._removeHandler = function(target, event, func) {
+        target.detachEvent(event, window[func]);
+        return true;
+    };
+}
