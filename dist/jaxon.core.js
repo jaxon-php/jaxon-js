@@ -1121,15 +1121,11 @@ jaxon.cmd.event = {
     */
     setEvent: function(command) {
         command.fullName = 'setEvent';
-        const target = command.id;
-        const sEvent = command.prop;
-        const code = command.data;
+        const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
+        const sCode = jaxon.tools.string.doubleQuotes(command.data);
         // force to get the target
-        if (typeof target === 'string')
-            target = jaxon.$(target);
-        sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-        code = jaxon.tools.string.doubleQuotes(code);
-        eval('target.' + sEvent + ' = function(e) { ' + code + '; }');
+        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+        eval('oTarget.' + sEvent + ' = function(e) { ' + sCode + '; }');
         return true;
     },
 
@@ -1153,25 +1149,21 @@ jaxon.cmd.event = {
         if (window.addEventListener) {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                const target = command.id;
-                const sEvent = command.prop;
                 const sFuncName = command.data;
-                if (typeof target === 'string')
-                    target = jaxon.$(target);
-                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('target.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                const sEvent = jaxon.tools.string.stripOnPrefix(command.prop);
+                // force to get the target
+                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+                eval('oTarget.addEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.addHandler = function(command) {
                 command.fullName = 'addHandler';
-                const target = command.id;
-                const sEvent = command.prop;
                 const sFuncName = command.data;
-                if (typeof target === 'string')
-                    target = jaxon.$(target);
-                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('target.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
+                // force to get the target
+                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+                eval('oTarget.attachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
@@ -1198,25 +1190,21 @@ jaxon.cmd.event = {
         if (window.removeEventListener) {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                const target = command.id;
-                const sEvent = command.prop;
                 const sFuncName = command.data;
-                if (typeof target === 'string')
-                    target = jaxon.$(target);
-                sEvent = jaxon.tools.string.stripOnPrefix(sEvent);
-                eval('target.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
+                const sEvent = jaxon.tools.string.stripOnPrefix(command.prop);
+                // force to get the target
+                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+                eval('oTarget.removeEventListener("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         } else {
             jaxon.cmd.event.removeHandler = function(command) {
                 command.fullName = 'removeHandler';
-                const target = command.id;
-                const sEvent = command.prop;
                 const sFuncName = command.data;
-                if (typeof target === 'string')
-                    target = jaxon.$(target);
-                sEvent = jaxon.tools.string.addOnPrefix(sEvent);
-                eval('target.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
+                const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
+                // force to get the target
+                const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+                eval('oTarget.detachEvent("' + sEvent + '", ' + sFuncName + ', false);');
                 return true;
             }
         }
