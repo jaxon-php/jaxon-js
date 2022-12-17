@@ -7,7 +7,7 @@
     <jaxon_core.js> file, or by specifying the appropriate configuration
     options on a per call basis.
 */
-const jaxon = {};
+var jaxon = {};
 
 /*
     Class: jaxon.config

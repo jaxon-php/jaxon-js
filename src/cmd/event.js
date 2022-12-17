@@ -1,20 +1,14 @@
 jaxon.cmd.event = {
-    /*
-    Function: jaxon.cmd.event.setEvent
-
-    Set an event handler.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: Element ID
-    - prop: Event
-    - data: Code
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     *  Set an event handler.
+     *
+     * @param {object} command - Response command object.
+     * - id: Element ID
+     * - prop: Event
+     * - data: Code
+     *
+     * @returns {true} - The operation completed successfully.
+     */
     setEvent: function(command) {
         command.fullName = 'setEvent';
         const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
@@ -25,22 +19,16 @@ jaxon.cmd.event = {
         return true;
     },
 
-    /*
-    Function: jaxon.cmd.event.addHandler
-
-    Add an event handler to the specified target.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: The id of, or the target itself
-    - prop: The name of the event.
-    - data: The name of the function to be called
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Add an event handler to the specified target.
+     *
+     * @param {object} command - Response command object.
+     * - id: The id of, or the target itself
+     * - prop: The name of the event.
+     * - data: The name of the function to be called
+     *
+     * @returns {true} - The operation completed successfully.
+     */
     addHandler: function(command) {
         command.fullName = 'addHandler';
         const sFuncName = command.data;
@@ -50,22 +38,16 @@ jaxon.cmd.event = {
         return jaxon.cmd.event._addHandler(oTarget, sEvent, sFuncName);
     },
 
-    /*
-    Function: jaxon.cmd.event.removeHandler
-
-    Remove an event handler from an target.
-
-    Parameters:
-
-    command - (object): Response command object.
-    - id: The id of, or the target itself
-    - prop: The name of the event.
-    - data: The name of the function to be removed
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Remove an event handler from an target.
+     *
+     * @param {object} command - Response command object.
+     * - id: The id of, or the target itself
+     * - prop: The name of the event.
+     * - data: The name of the function to be called
+     *
+     * @returns {true} - The operation completed successfully.
+     */
     removeHandler: function(command) {
         command.fullName = 'removeHandler';
         const sFuncName = command.data;
@@ -82,12 +64,12 @@ if(window.addEventListener) {
     };
 
     jaxon.cmd.event._addHandler = function(target, event, func) {
-        target.addEventListener(event, window[func], false);
+        target.addEventListener(event, jaxon.tools.dom.findFunction(func), false);
         return true;
     };
 
     jaxon.cmd.event._removeHandler = function(target, event, func) {
-        target.removeEventListener(event, window[func], false);
+        target.removeEventListener(event, jaxon.tools.dom.findFunction(func), false);
         return true;
     };
 } else {
@@ -96,12 +78,12 @@ if(window.addEventListener) {
     };
 
     jaxon.cmd.event._addHandler = function(target, event, func) {
-        target.attachEvent(event, window[func]);
+        target.attachEvent(event, jaxon.tools.dom.findFunction(func));
         return true;
     };
 
     jaxon.cmd.event._removeHandler = function(target, event, func) {
-        target.detachEvent(event, window[func]);
+        target.detachEvent(event, jaxon.tools.dom.findFunction(func));
         return true;
     };
 }
