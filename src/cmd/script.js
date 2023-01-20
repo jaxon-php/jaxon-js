@@ -216,9 +216,7 @@ jaxon.cmd.script = {
         command.fullName = 'waitFor';
 
         let bResult = false;
-        const cmdToEval = 'bResult = (';
-        cmdToEval += command.data;
-        cmdToEval += ');';
+        const cmdToEval = 'bResult = (' + command.data + ');';
         try {
             command.context.jaxonDelegateCall = function() {
                 eval(cmdToEval);
@@ -259,22 +257,22 @@ jaxon.cmd.script = {
 
         const parameters = command.data;
 
-        const scr = new Array();
-        scr.push(command.func);
-        scr.push('(');
+        const code = [];
+        code.push(command.func);
+        code.push('(');
         if ('undefined' != typeof parameters) {
             if ('object' == typeof parameters) {
                 const iLen = parameters.length;
                 if (0 < iLen) {
-                    scr.push('parameters[0]');
+                    code.push('parameters[0]');
                     for (let i = 1; i < iLen; ++i)
-                        scr.push(', parameters[' + i + ']');
+                        code.push(', parameters[' + i + ']');
                 }
             }
         }
-        scr.push(');');
+        code.push(');');
         command.context.jaxonDelegateCall = function() {
-            eval(scr.join(''));
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall();
         return true;
