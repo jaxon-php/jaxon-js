@@ -1233,13 +1233,10 @@ jaxon.cmd.form = {
     */
     createInput: function(command) {
         command.fullName = 'createInput';
-        const objParent = command.id;
-
+        const objParent = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objParent)
-            objParent = jaxon.$(objParent);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -1266,12 +1263,10 @@ jaxon.cmd.form = {
     */
     insertInput: function(command) {
         command.fullName = 'insertInput';
-        const objSibling = command.id;
+        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -1297,12 +1292,10 @@ jaxon.cmd.form = {
     */
     insertInputAfter: function(command) {
         command.fullName = 'insertInputAfter';
-        const objSibling = command.id;
+        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
@@ -1584,9 +1577,8 @@ jaxon.cmd.node = {
         code.push('this.');
         code.push(command.prop);
         code.push(' = data;');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;
@@ -1618,9 +1610,8 @@ jaxon.cmd.node = {
         code.push('this.');
         code.push(command.prop);
         code.push(' += data;');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;
@@ -1654,9 +1645,8 @@ jaxon.cmd.node = {
         code.push(' = data + this.');
         code.push(command.prop);
         code.push(';');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;
@@ -1849,7 +1839,7 @@ jaxon.cmd.script = {
     */
     execute: function(command) {
         command.fullName = 'execute Javascript';
-        const returnValue = true;
+        let returnValue = true;
         command.context = command.context ? command.context : {};
         command.context.jaxonDelegateCall = function() {
             eval(command.data);
@@ -2094,7 +2084,7 @@ jaxon.cmd.style = {
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
 
-        const found = false;
+        let found = false;
         const iLen = oLinks.length;
         for (let i = 0; i < iLen && false == found; ++i)
             if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
@@ -2171,7 +2161,7 @@ jaxon.cmd.style = {
             }
         }
 
-        const ssLoaded = true;
+        let ssLoaded = true;
         iLen = ssEnabled.length;
         for (let i = 0; i < iLen; ++i)
             if (0 == ssEnabled[i])
