@@ -51,13 +51,10 @@ jaxon.cmd.form = {
     */
     createInput: function(command) {
         command.fullName = 'createInput';
-        const objParent = command.id;
-
+        const objParent = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objParent)
-            objParent = jaxon.$(objParent);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -84,12 +81,10 @@ jaxon.cmd.form = {
     */
     insertInput: function(command) {
         command.fullName = 'insertInput';
-        const objSibling = command.id;
+        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -115,12 +110,10 @@ jaxon.cmd.form = {
     */
     insertInputAfter: function(command) {
         command.fullName = 'insertInputAfter';
-        const objSibling = command.id;
+        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
         const target = jaxon.cmd.form.getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);

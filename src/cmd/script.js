@@ -183,7 +183,7 @@ jaxon.cmd.script = {
     */
     execute: function(command) {
         command.fullName = 'execute Javascript';
-        const returnValue = true;
+        let returnValue = true;
         command.context = command.context ? command.context : {};
         command.context.jaxonDelegateCall = function() {
             eval(command.data);

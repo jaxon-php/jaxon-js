@@ -271,9 +271,8 @@ jaxon.cmd.node = {
         code.push('this.');
         code.push(command.prop);
         code.push(' = data;');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;
@@ -305,9 +304,8 @@ jaxon.cmd.node = {
         code.push('this.');
         code.push(command.prop);
         code.push(' += data;');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;
@@ -341,9 +339,8 @@ jaxon.cmd.node = {
         code.push(' = data + this.');
         code.push(command.prop);
         code.push(';');
-        code = code.join('');
         command.context.jaxonDelegateCall = function(data) {
-            eval(code);
+            eval(code.join(''));
         }
         command.context.jaxonDelegateCall(command.data);
         return true;

@@ -19,7 +19,7 @@ jaxon.cmd.style = {
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
 
-        const found = false;
+        let found = false;
         const iLen = oLinks.length;
         for (let i = 0; i < iLen && false == found; ++i)
             if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
@@ -96,7 +96,7 @@ jaxon.cmd.style = {
             }
         }
 
-        const ssLoaded = true;
+        let ssLoaded = true;
         iLen = ssEnabled.length;
         for (let i = 0; i < iLen; ++i)
             if (0 == ssEnabled[i])
