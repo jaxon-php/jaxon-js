@@ -81,8 +81,9 @@ jaxon.tools.dom = {
      * @returns {false} - The specified value is the same as the current value.
      */
     willChange: function(element, attribute, newData) {
-        if ('string' === typeof element)
+        if ('string' === typeof element) {
             element = jaxon.$(element);
+        }
         if (!element) {
             return false;
         }
@@ -97,13 +98,37 @@ jaxon.tools.dom = {
      * @returns {object} - The function
      */
     findFunction: function (sFuncName) {
-        let context = window;
         const names = sFuncName.split(".");
         const length = names.length;
-
+        let context = window;
         for(let i = 0; i < length && (context); i++) {
             context = context[names[i]];
         }
         return context;
+    },
+
+    /**
+     * Given an element and an attribute with 0 or more dots,
+     * get the inner object and the corresponding attribute name.
+     *
+     * @param {object} xElement - The outer element.
+     * @param {string} attribute - The attribute name.
+     *
+     * @returns {array} The inner object and the attribute name in an array.
+     */
+    getInnerObject: function(xElement, attribute) {
+        const attributes = attribute.split('.');
+        // Get the last element in the array.
+        attribute = attributes.pop();
+        // Move to the inner object.
+        for(let i = 0, len = attributes.length; i < len; i++) {
+            const attr = attributes[i];
+            // The real name for the "css" object is "style".
+            xElement = xElement[attr === 'css' ? 'style' : attr];
+            if(!xElement) {
+                return [null, null];
+            }
+        }
+        return [xElement, attribute];
     }
 };

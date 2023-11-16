@@ -15,26 +15,21 @@ jaxon.cmd.node = {
     true - The operation completed successfully.
     */
     assign: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        switch (property) {
-            case 'innerHTML':
-                element.innerHTML = data;
-                break;
-            case 'outerHTML':
-                if ('undefined' == typeof element.outerHTML) {
-                    const r = jaxon.config.baseDocument.createRange();
-                    r.setStartBefore(element);
-                    const df = r.createContextualFragment(data);
-                    element.parentNode.replaceChild(df, element);
-                } else element.outerHTML = data;
-                break;
-            default:
-                if (jaxon.tools.dom.willChange(element, property, data))
-                    eval('element.' + property + ' = data;');
-                break;
+        element = jaxon.$(element);
+        if (property === 'innerHTML') {
+            element.innerHTML = data;
+            return true;
         }
+        if (property === 'outerHTML') {
+            element.outerHTML = data;
+            return true;
+        }
+
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        if(!innerElement) {
+            return false;
+        }
+        innerElement[innerProperty] = data;
         return true;
     },
 
@@ -54,19 +49,21 @@ jaxon.cmd.node = {
     true - The operation completed successfully.
     */
     append: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
+        element = jaxon.$(element);
+        if (property === 'innerHTML') {
+            element.innerHTML = element.innerHTML + data;
+            return true;
+        }
+        if (property === 'outerHTML') {
+            element.outerHTML = element.outerHTML + data;
+            return true;
+        }
 
-        // Check if the insertAdjacentHTML() function is available
-        if((window.insertAdjacentHTML) || (element.insertAdjacentHTML))
-            if(property == 'innerHTML')
-                element.insertAdjacentHTML('beforeend', data);
-            else if(property == 'outerHTML')
-                element.insertAdjacentHTML('afterend', data);
-            else
-                element[property] += data;
-        else
-            eval('element.' + property + ' += data;');
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        if(!innerElement) {
+            return false;
+        }
+        innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
     },
 
@@ -86,10 +83,21 @@ jaxon.cmd.node = {
     true - The operation completed successfully.
     */
     prepend: function(element, property, data) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
+        element = jaxon.$(element);
+        if (property === 'innerHTML') {
+            element.innerHTML = data + element.innerHTML;
+            return true;
+        }
+        if (property === 'outerHTML') {
+            element.outerHTML = data + element.outerHTML;
+            return true;
+        }
 
-        eval('element.' + property + ' = data + element.' + property);
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        if(!innerElement) {
+            return false;
+        }
+        innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
     },
 
@@ -112,11 +120,12 @@ jaxon.cmd.node = {
         const sReplace = aData['r'];
         const sSearch = (sAttribute === 'innerHTML') ?
             jaxon.tools.dom.getBrowserHTML(aData['s']) : aData['s'];
-
-        if (typeof element === 'string')
-            element = jaxon.$(element);
-
-        eval('var txt = element.' + sAttribute);
+        element = jaxon.$(element);
+        const [innerElement, innerAttribute] = jaxon.tools.dom.getInnerObject(element, sAttribute);
+        if(!innerElement) {
+            return false;
+        }
+        let txt = innerElement[innerAttribute];
 
         let bFunction = false;
         if (typeof txt === 'function') {
@@ -137,10 +146,8 @@ jaxon.cmd.node = {
             newTxt.push(txt);
             newTxt = newTxt.join('');
 
-            if (bFunction) {
-                eval('element.' + sAttribute + '=newTxt;');
-            } else if (jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
-                eval('element.' + sAttribute + '=newTxt;');
+            if (bFunction || jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
+                innerElement[innerAttribute] = newTxt;
             }
         }
         return true;
@@ -160,12 +167,10 @@ jaxon.cmd.node = {
     true - The operation completed successfully.
     */
     remove: function(element) {
-        if ('string' == typeof element)
-            element = jaxon.$(element);
-
-        if (element && element.parentNode && element.parentNode.removeChild)
+        element = jaxon.$(element);
+        if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
-
+        }
         return true;
     },
 
@@ -176,7 +181,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    objParent - (string or object):  The name of, or the element itself
+    element - (string or object):  The name of, or the element itself
         which will contain the new element.
     sTag - (string):  The tag name for the new element.
     sId - (string):  The value to be assigned to the id attribute of the new element.
@@ -185,13 +190,14 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    create: function(objParent, sTag, sId) {
-        if ('string' == typeof objParent)
-            objParent = jaxon.$(objParent);
+    create: function(element, sTag, sId) {
+        element = jaxon.$(element);
+        if (!element) {
+            return false;
+        }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
-        if (objParent)
-            objParent.appendChild(target);
+        element.appendChild(target);
         return true;
     },
 
@@ -202,7 +208,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    objSibling - (string or object):  The name of, or the element itself
+    element - (string or object):  The name of, or the element itself
         that will be used as the reference point for insertion.
     sTag - (string):  The tag name for the new element.
     sId - (string):  The value that will be assigned to the new element's id attribute.
@@ -211,12 +217,14 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    insert: function(objSibling, sTag, sId) {
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
+    insert: function(element, sTag, sId) {
+        element = jaxon.$(element);
+        if (!element || !element.parentNode) {
+            return false;
+        }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
-        objSibling.parentNode.insertBefore(target, objSibling);
+        element.parentNode.insertBefore(target, element);
         return true;
     },
 
@@ -227,7 +235,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    objSibling - (string or object):  The name of, or the element itself
+    element - (string or object):  The name of, or the element itself
         that will be used as the reference point for insertion.
     sTag - (string):  The tag name for the new element.
     sId - (string):  The value that will be assigned to the new element's id attribute.
@@ -236,12 +244,14 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    insertAfter: function(objSibling, sTag, sId) {
-        if ('string' == typeof objSibling)
-            objSibling = jaxon.$(objSibling);
+    insertAfter: function(element, sTag, sId) {
+        element = jaxon.$(element);
+        if (!element || !element.parentNode) {
+            return false;
+        }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
-        objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
+        element.parentNode.insertBefore(target, element.nextSibling);
         return true;
     },
 
@@ -267,14 +277,11 @@ jaxon.cmd.node = {
     contextAssign: function(command) {
         command.fullName = 'context assign';
 
-        const code = [];
-        code.push('this.');
-        code.push(command.prop);
-        code.push(' = data;');
-        command.context.jaxonDelegateCall = function(data) {
-            eval(code.join(''));
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        if(!innerElement) {
+            return false;
         }
-        command.context.jaxonDelegateCall(command.data);
+        innerElement[innerProperty] = command.data;
         return true;
     },
 
@@ -300,14 +307,11 @@ jaxon.cmd.node = {
     contextAppend: function(command) {
         command.fullName = 'context append';
 
-        const code = [];
-        code.push('this.');
-        code.push(command.prop);
-        code.push(' += data;');
-        command.context.jaxonDelegateCall = function(data) {
-            eval(code.join(''));
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        if(!innerElement) {
+            return false;
         }
-        command.context.jaxonDelegateCall(command.data);
+        innerElement[innerProperty] = innerElement[innerProperty] + command.data;
         return true;
     },
 
@@ -333,16 +337,11 @@ jaxon.cmd.node = {
     contextPrepend: function(command) {
         command.fullName = 'context prepend';
 
-        const code = [];
-        code.push('this.');
-        code.push(command.prop);
-        code.push(' = data + this.');
-        code.push(command.prop);
-        code.push(';');
-        command.context.jaxonDelegateCall = function(data) {
-            eval(code.join(''));
+        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        if(!innerElement) {
+            return false;
         }
-        command.context.jaxonDelegateCall(command.data);
+        innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
     }
 };
