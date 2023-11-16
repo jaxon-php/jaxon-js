@@ -14,8 +14,9 @@ jaxon.cmd.event = {
         const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
         const sCode = jaxon.tools.string.doubleQuotes(command.data);
         // force to get the target
-        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
-        oTarget[sEvent] = new Function('e', sCode);
+        const oTarget = jaxon.$(command.id);
+        jaxon.tools.dom.createFunction(`(e) => { ${sCode} }`);
+        oTarget[sEvent] = jaxon.cmd.script.context.jaxonDelegateCall;
         return true;
     },
 
@@ -34,7 +35,7 @@ jaxon.cmd.event = {
         const sFuncName = command.data;
         const sEvent = jaxon.cmd.event.getName(command.prop);
         // force to get the target
-        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+        const oTarget = jaxon.$(command.id);
         return jaxon.cmd.event._addHandler(oTarget, sEvent, sFuncName);
     },
 
@@ -53,7 +54,7 @@ jaxon.cmd.event = {
         const sFuncName = command.data;
         const sEvent = jaxon.cmd.event.getName(command.prop);
         // force to get the target
-        const oTarget = (typeof command.id === 'string') ? jaxon.$(command.id) : command.id;
+        const oTarget = jaxon.$(command.id);
         return jaxon.cmd.event._removeHandler(oTarget, sEvent, sFuncName);
     }
 };
