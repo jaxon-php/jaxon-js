@@ -27,7 +27,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = data;
         return true;
@@ -61,7 +61,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
@@ -95,7 +95,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
@@ -123,7 +123,7 @@ jaxon.cmd.node = {
         element = jaxon.$(element);
         const [innerElement, innerAttribute] = jaxon.tools.dom.getInnerObject(element, sAttribute);
         if(!innerElement) {
-            return false;
+            return true;
         }
         let txt = innerElement[innerAttribute];
 
@@ -193,7 +193,7 @@ jaxon.cmd.node = {
     create: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -220,7 +220,7 @@ jaxon.cmd.node = {
     insert: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element || !element.parentNode) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -247,7 +247,7 @@ jaxon.cmd.node = {
     insertAfter: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element || !element.parentNode) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -279,7 +279,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = command.data;
         return true;
@@ -309,7 +309,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + command.data;
         return true;
@@ -339,7 +339,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
