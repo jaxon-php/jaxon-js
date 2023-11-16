@@ -91,3 +91,4 @@ const js_lang_min = () => src(files.dist.lang)
 const js_min = series(js_core, js_core_min, js_debug_min, js_lang_min);
 
 exports.default = js_min;
+exports.js_core = js_core;

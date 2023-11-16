@@ -497,6 +497,9 @@ jaxon.tools.dom = {
         let context = window;
         for (let i = 0; i < length && (context); i++) {
             context = context[names[i]];
+            if(!context) {
+                return null;
+            }
         }
         return context;
     },
@@ -1796,17 +1799,14 @@ jaxon.cmd.script = {
         const loadedScripts = oDoc.getElementsByTagName('script');
         // Find an existing script with the same file name
         const loaded = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
-        if (loaded) {
-            const unload = command.unld;
-            if (unload) {
-                const _command = {};
-                _command.data = unload;
-                _command.context = window;
-                jaxon.cmd.script.execute(_command);
-            }
-            const parent = script.parentNode;
-            parent.removeChild(script);
+        if (!loaded) {
+            return true;
         }
+        if (command.unld) {
+            // Execute the provided unload function.
+            jaxon.cmd.script.execute({ data: command.unld, context: window });
+        }
+        script.parentNode.removeChild(script);
         return true;
     },
 
@@ -2203,95 +2203,6 @@ jaxon.cmd.style = {
 };
 
 
-jaxon.cmd.tree = {
-    startResponse: function(command) {
-        jxnElm = [];
-    },
-
-    createElement: function(command) {
-        eval(
-            [command.tgt, ' = document.createElement(command.data)']
-            .join('')
-        );
-    },
-
-    setAttribute: function(command) {
-        command.context.jaxonDelegateCall = function() {
-            eval(
-                [command.tgt, '.setAttribute(command.key, command.data)']
-                .join('')
-            );
-        }
-        command.context.jaxonDelegateCall();
-    },
-
-    appendChild: function(command) {
-        command.context.jaxonDelegateCall = function() {
-            eval(
-                [command.par, '.appendChild(', command.data, ')']
-                .join('')
-            );
-        }
-        command.context.jaxonDelegateCall();
-    },
-
-    insertBefore: function(command) {
-        command.context.jaxonDelegateCall = function() {
-            eval(
-                [command.tgt, '.parentNode.insertBefore(', command.data, ', ', command.tgt, ')']
-                .join('')
-            );
-        }
-        command.context.jaxonDelegateCall();
-    },
-
-    insertAfter: function(command) {
-        command.context.jaxonDelegateCall = function() {
-            eval(
-                [command.tgt, 'parentNode.insertBefore(', command.data, ', ', command.tgt, '.nextSibling)']
-                .join('')
-            );
-        }
-        command.context.jaxonDelegateCall();
-    },
-
-    appendText: function(command) {
-        command.context.jaxonDelegateCall = function() {
-            eval(
-                [command.par, '.appendChild(document.createTextNode(command.data))']
-                .join('')
-            );
-        }
-        command.context.jaxonDelegateCall();
-    },
-
-    removeChildren: function(command) {
-        let skip = command.skip || 0;
-        let remove = command.remove || -1;
-        let element = null;
-        command.context.jaxonDelegateCall = function() {
-            eval(['element = ', command.data].join(''));
-        }
-        command.context.jaxonDelegateCall();
-        const children = element.childNodes;
-        for (let i in children) {
-            if (isNaN(i) == false && children[i].nodeType == 1) {
-                if (skip > 0) skip = skip - 1;
-                else if (remove != 0) {
-                    if (remove > 0)
-                        remove = remove - 1;
-                    element.removeChild(children[i]);
-                }
-            }
-        }
-    },
-
-    endResponse: function(command) {
-        jxnElm = [];
-    }
-};
-
-
 jaxon.ajax.callback = {
     /*
     Function: jaxon.ajax.callback.create
@@ -2579,16 +2490,6 @@ jaxon.ajax.handler.register('ia', function(command) {
     command.fullName = 'insertAfter';
     return jaxon.cmd.node.insertAfter(command.id, command.data, command.prop);
 });
-
-jaxon.ajax.handler.register('DSR', jaxon.cmd.tree.startResponse);
-jaxon.ajax.handler.register('DCE', jaxon.cmd.tree.createElement);
-jaxon.ajax.handler.register('DSA', jaxon.cmd.tree.setAttribute);
-jaxon.ajax.handler.register('DAC', jaxon.cmd.tree.appendChild);
-jaxon.ajax.handler.register('DIB', jaxon.cmd.tree.insertBefore);
-jaxon.ajax.handler.register('DIA', jaxon.cmd.tree.insertAfter);
-jaxon.ajax.handler.register('DAT', jaxon.cmd.tree.appendText);
-jaxon.ajax.handler.register('DRC', jaxon.cmd.tree.removeChildren);
-jaxon.ajax.handler.register('DER', jaxon.cmd.tree.endResponse);
 
 jaxon.ajax.handler.register('c:as', jaxon.cmd.node.contextAssign);
 jaxon.ajax.handler.register('c:ap', jaxon.cmd.node.contextAppend);

@@ -167,16 +167,6 @@ jaxon.ajax.handler.register('ia', function(command) {
     return jaxon.cmd.node.insertAfter(command.id, command.data, command.prop);
 });
 
-jaxon.ajax.handler.register('DSR', jaxon.cmd.tree.startResponse);
-jaxon.ajax.handler.register('DCE', jaxon.cmd.tree.createElement);
-jaxon.ajax.handler.register('DSA', jaxon.cmd.tree.setAttribute);
-jaxon.ajax.handler.register('DAC', jaxon.cmd.tree.appendChild);
-jaxon.ajax.handler.register('DIB', jaxon.cmd.tree.insertBefore);
-jaxon.ajax.handler.register('DIA', jaxon.cmd.tree.insertAfter);
-jaxon.ajax.handler.register('DAT', jaxon.cmd.tree.appendText);
-jaxon.ajax.handler.register('DRC', jaxon.cmd.tree.removeChildren);
-jaxon.ajax.handler.register('DER', jaxon.cmd.tree.endResponse);
-
 jaxon.ajax.handler.register('c:as', jaxon.cmd.node.contextAssign);
 jaxon.ajax.handler.register('c:ap', jaxon.cmd.node.contextAppend);
 jaxon.ajax.handler.register('c:pp', jaxon.cmd.node.contextPrepend);
