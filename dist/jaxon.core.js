@@ -495,7 +495,7 @@ jaxon.tools.dom = {
         const names = sFuncName.split(".");
         const length = names.length;
         let context = window;
-        for(let i = 0; i < length && (context); i++) {
+        for (let i = 0; i < length && (context); i++) {
             context = context[names[i]];
         }
         return context;
@@ -515,15 +515,53 @@ jaxon.tools.dom = {
         // Get the last element in the array.
         attribute = attributes.pop();
         // Move to the inner object.
-        for(let i = 0, len = attributes.length; i < len; i++) {
+        for (let i = 0, len = attributes.length; i < len; i++) {
             const attr = attributes[i];
             // The real name for the "css" object is "style".
             xElement = xElement[attr === 'css' ? 'style' : attr];
-            if(!xElement) {
+            if (!xElement) {
                 return [null, null];
             }
         }
         return [xElement, attribute];
+    },
+
+    /**
+     * Create a function by inserting its code in the page using a <script> tag.
+     *
+     * @param {string} funcCode
+     * @param {string|undefined} funcName
+     * 
+     * @returns {boolean}
+     */
+    createFunction(funcCode, funcName) {
+        if (!funcCode) {
+            return;
+        }
+
+        const removeTagAfter = funcName === undefined;
+        const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
+            'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
+        if (funcName === undefined) {
+            funcName = 'jaxon.cmd.script.context.jaxonDelegateCall';
+        }
+
+        // Remove the tag if it already exists.
+        jaxon.cmd.node.remove(scriptTagId);
+        // Create a new tag.
+        const scriptTag = jaxon.config.baseDocument.createElement('script');
+        scriptTag.setAttribute('id', scriptTagId);
+        scriptTag.textContent = `
+    ${funcName} = ${funcCode}
+`;
+        jaxon.config.baseDocument.body.appendChild(scriptTag);
+
+        // Since this js code saves the function in a var,
+        // the tag can be removed, and the function will still exist.
+        if (removeTagAfter) {
+            jaxon.cmd.node.remove(scriptTagId);
+        }
+        return true;
     }
 };
 
@@ -1358,7 +1396,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = data;
         return true;
@@ -1392,7 +1430,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
@@ -1426,7 +1464,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
@@ -1454,7 +1492,7 @@ jaxon.cmd.node = {
         element = jaxon.$(element);
         const [innerElement, innerAttribute] = jaxon.tools.dom.getInnerObject(element, sAttribute);
         if(!innerElement) {
-            return false;
+            return true;
         }
         let txt = innerElement[innerAttribute];
 
@@ -1524,7 +1562,7 @@ jaxon.cmd.node = {
     create: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -1551,7 +1589,7 @@ jaxon.cmd.node = {
     insert: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element || !element.parentNode) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -1578,7 +1616,7 @@ jaxon.cmd.node = {
     insertAfter: function(element, sTag, sId) {
         element = jaxon.$(element);
         if (!element || !element.parentNode) {
-            return false;
+            return true;
         }
         const target = jaxon.config.baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
@@ -1610,7 +1648,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = command.data;
         return true;
@@ -1640,7 +1678,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + command.data;
         return true;
@@ -1670,7 +1708,7 @@ jaxon.cmd.node = {
 
         const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
         if(!innerElement) {
-            return false;
+            return true;
         }
         innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
@@ -1696,17 +1734,15 @@ jaxon.cmd.script = {
     */
     includeScriptOnce: function(command) {
         command.fullName = 'includeScriptOnce';
+
         const fileName = command.data;
         // Check for existing script tag for this file.
         const oDoc = jaxon.config.baseDocument;
         const loadedScripts = oDoc.getElementsByTagName('script');
-        const iLen = loadedScripts.length;
-        for (let i = 0; i < iLen; ++i) {
-            const script = loadedScripts[i];
-            if (script.src) {
-                if (0 <= script.src.indexOf(fileName))
-                    return true;
-            }
+        // Find an existing script with the same file name
+        const loaded = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        if (loaded) {
+            return true;
         }
         return jaxon.cmd.script.includeScript(command);
     },
@@ -1727,13 +1763,15 @@ jaxon.cmd.script = {
     */
     includeScript: function(command) {
         command.fullName = 'includeScript';
+
         const oDoc = jaxon.config.baseDocument;
         const objHead = oDoc.getElementsByTagName('head');
         const objScript = oDoc.createElement('script');
         objScript.src = command.data;
-        if ('undefined' == typeof command.type) objScript.type = 'text/javascript';
-        else objScript.type = command.type;
-        if ('undefined' != typeof command.type) objScript.setAttribute('id', command.elm_id);
+        objScript.type = command.type || 'text/javascript';
+        if (command.elm_id) {
+            objScript.setAttribute('id', command.elm_id);
+        }
         objHead[0].appendChild(objScript);
         return true;
     },
@@ -1754,24 +1792,20 @@ jaxon.cmd.script = {
     removeScript: function(command) {
         command.fullName = 'removeScript';
         const fileName = command.data;
-        const unload = command.unld;
         const oDoc = jaxon.config.baseDocument;
         const loadedScripts = oDoc.getElementsByTagName('script');
-        const iLen = loadedScripts.length;
-        for (let i = 0; i < iLen; ++i) {
-            const script = loadedScripts[i];
-            if (script.src) {
-                if (0 <= script.src.indexOf(fileName)) {
-                    if ('undefined' != typeof unload) {
-                        const _command = {};
-                        _command.data = unload;
-                        _command.context = window;
-                        jaxon.cmd.script.execute(_command);
-                    }
-                    const parent = script.parentNode;
-                    parent.removeChild(script);
-                }
+        // Find an existing script with the same file name
+        const loaded = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        if (loaded) {
+            const unload = command.unld;
+            if (unload) {
+                const _command = {};
+                _command.data = unload;
+                _command.context = window;
+                jaxon.cmd.script.execute(_command);
             }
+            const parent = script.parentNode;
+            parent.removeChild(script);
         }
         return true;
     },
@@ -1846,6 +1880,34 @@ jaxon.cmd.script = {
     },
 
     /*
+    Function: jaxon.cmd.script.call
+
+    Call a javascript function with a series of parameters using the current script context.
+
+    Parameters:
+
+    command - The response command object containing the following:
+        - command.data: (array):  The parameters to pass to the function.
+        - command.func: (string):  The name of the function to call.
+        - command.context: (object):  The current script context object which is accessable in the
+            function name via the 'this keyword.
+
+    Returns:
+
+    true - The call completed successfully.
+    */
+    call: function(command) {
+        command.fullName = 'call js function';
+        jaxon.cmd.script.context = command.context ?? {};
+
+        const func = jaxon.tools.dom.findFunction(command.func);
+        if(!func) {
+            return true;
+        }
+        func.apply(jaxon.cmd.script.context, command.data);
+    },
+
+    /*
     Function: jaxon.cmd.script.execute
 
     Execute the specified string of javascript code, using the current script context.
@@ -1863,13 +1925,13 @@ jaxon.cmd.script = {
     */
     execute: function(command) {
         command.fullName = 'execute Javascript';
-        let returnValue = true;
-        command.context = command.context ? command.context : {};
-        command.context.jaxonDelegateCall = function() {
-            eval(command.data);
-        };
-        command.context.jaxonDelegateCall();
-        return returnValue;
+        jaxon.cmd.script.context = command.context ?? {};
+
+        const jsCode = `() => {
+    ${command.data}
+}`;
+        jaxon.tools.dom.createFunction(jsCode);
+        return jaxon.cmd.script.context.jaxonDelegateCall();
     },
 
     /*
@@ -1894,68 +1956,43 @@ jaxon.cmd.script = {
     */
     waitFor: function(command) {
         command.fullName = 'waitFor';
+        jaxon.cmd.script.context = command.context ?? {};
 
-        let bResult = false;
-        const cmdToEval = 'bResult = (' + command.data + ');';
         try {
-            command.context.jaxonDelegateCall = function() {
-                eval(cmdToEval);
+            const jsCode = `() => {
+    return (${command.data});
+}`;
+            jaxon.tools.dom.createFunction(jsCode);
+            const bResult = jaxon.cmd.script.context.jaxonDelegateCall();
+            if (!bResult) {
+                // inject a delay in the queue processing
+                // handle retry counter
+                if (jaxon.cmd.delay.retry(command, command.prop)) {
+                    jaxon.cmd.delay.setWakeup(command.response, 100);
+                    return false;
+                }
+                // give up, continue processing queue
             }
-            command.context.jaxonDelegateCall();
         } catch (e) {}
-        if (false == bResult) {
-            // inject a delay in the queue processing
-            // handle retry counter
-            if (jaxon.cmd.delay.retry(command, command.prop)) {
-                jaxon.cmd.delay.setWakeup(command.response, 100);
-                return false;
-            }
-            // give up, continue processing queue
-        }
         return true;
     },
 
-    /*
-    Function: jaxon.cmd.script.call
-
-    Call a javascript function with a series of parameters using the current script context.
-
-    Parameters:
-
-    command - The response command object containing the following:
-        - command.data: (array):  The parameters to pass to the function.
-        - command.func: (string):  The name of the function to call.
-        - command.context: (object):  The current script context object which is accessable in the
-            function name via the 'this keyword.
-
-    Returns:
-
-    true - The call completed successfully.
-    */
-    call: function(command) {
-        command.fullName = 'call js function';
-
-        const parameters = command.data;
-
-        const code = [];
-        code.push(command.func);
-        code.push('(');
-        if ('undefined' != typeof parameters) {
-            if ('object' == typeof parameters) {
-                const iLen = parameters.length;
-                if (0 < iLen) {
-                    code.push('parameters[0]');
-                    for (let i = 1; i < iLen; ++i)
-                        code.push(', parameters[' + i + ']');
-                }
-            }
+    /**
+     * Get function parameters as string
+     *
+     * @param {string|object} parameters 
+     */
+    getParameters: function(parameters) {
+        if (typeof parameters === 'undefined') {
+            return '';
         }
-        code.push(');');
-        command.context.jaxonDelegateCall = function() {
-            eval(code.join(''));
+        if (Array.isArray(parameters)) {
+            return parameters.join(', ');
         }
-        command.context.jaxonDelegateCall();
-        return true;
+        if (typeof parameters === 'object') {
+            return parameters.values().join(', ');
+        }
+        return parameters;
     },
 
     /*
@@ -1979,24 +2016,11 @@ jaxon.cmd.script = {
     setFunction: function(command) {
         command.fullName = 'setFunction';
 
-        const code = new Array();
-        code.push(command.func);
-        code.push(' = function(');
-        if ('object' == typeof command.prop) {
-            let separator = '';
-            for (let m in command.prop) {
-                code.push(separator);
-                code.push(command.prop[m]);
-                separator = ',';
-            }
-        } else code.push(command.prop);
-        code.push(') { ');
-        code.push(command.data);
-        code.push(' }');
-        command.context.jaxonDelegateCall = function() {
-            eval(code.join(''));
-        }
-        command.context.jaxonDelegateCall();
+        const funcParams = jaxon.cmd.script.getParameters(command.prop);
+        const jsCode = `(${funcParams}) => {
+    ${command.data}
+}`;
+        jaxon.tools.dom.createFunction(jsCode, command.func);
         return true;
     },
 
@@ -2021,68 +2045,42 @@ jaxon.cmd.script = {
 
     true - The wrapper function was constructed successfully.
     */
+    wrapped: {}, // Original wrapped functions will be saved here.
     wrapFunction: function(command) {
         command.fullName = 'wrapFunction';
+        jaxon.cmd.script.context = command.context ?? {};
 
-        const code = new Array();
-        code.push(command.func);
-        code.push(' = jaxon.cmd.script.makeWrapper(');
-        code.push(command.func);
-        code.push(', command.prop, command.data, command.type, command.context);');
-        command.context.jaxonDelegateCall = function() {
-            eval(code.join(''));
+        const func = jaxon.tools.dom.findFunction(command.func);
+        if(!func) {
+            return true;
         }
-        command.context.jaxonDelegateCall();
-        return true;
-    },
 
-    /*
-    Function: jaxon.cmd.script.makeWrapper
-
-
-    Helper function used in the wrapping of an existing javascript function.
-
-    Parameters:
-
-    origFun - (string):  The name of the original function.
-    args - (string):  The list of parameters used when calling the function.
-    codeBlocks - (array):  Array of strings of javascript code to be executed
-        before, after and perhaps between calls to the original function.
-    returnVariable - (string):  The name of the variable used to retain the
-        return value from the call to the original function.
-    context - (object):  The current script context object which is accessable
-        in the function name and body via the 'this' keyword.
-
-    Returns:
-
-    object - The complete wrapper function.
-    */
-    makeWrapper: function(origFun, args, codeBlocks, returnVariable, context) {
-        const originalCall = (returnVariable.length > 0 ? returnVariable + ' = ' : '') +
-            origFun + '(' + args + '); ';
-
-        let code = 'wrapper = function(' + args + ') { ';
-
-        if (returnVariable.length > 0) {
-            code += ' let ' + returnVariable + ' = null;';
+        // Save the existing function
+        const wrappedFuncName = command.func.toLowerCase().replaceAll('.', '_');
+        if (!jaxon.cmd.script.wrapped[wrappedFuncName]) {
+            jaxon.cmd.script.wrapped[wrappedFuncName] = func;
         }
-        let separator = '';
-        const bLen = codeBlocks.length;
-        for (let b = 0; b < bLen; ++b) {
-            code += separator + codeBlocks[b];
-            separator = originalCall;
-        }
-        if (returnVariable.length > 0) {
-            code += ' return ' + returnVariable + ';';
-        }
-        code += ' } ';
 
-        let wrapper = null;
-        context.jaxonDelegateCall = function() {
-            eval(code);
-        }
-        context.jaxonDelegateCall();
-        return wrapper;
+        const varDefine = command.type ? `let ${command.type} = null;` : '// No return value';
+        const varAssign = command.type ? `${command.type} = ` : '';
+        const varReturn = command.type ? `return ${command.type};` : '// No return value';
+        const funcParams = jaxon.cmd.script.getParameters(command.prop);
+        const funcCodeBefore = command.data[0];
+        const funcCodeAfter = command.data[1] || '// No call after';
+
+        const jsCode = `(${funcParams}) => {
+    ${varDefine}
+    ${funcCodeBefore}
+
+    const wrappedFuncName = "${command.func}".toLowerCase().replaceAll('.', '_');
+    // Call the wrapped function (saved in jaxon.cmd.script.wrapped) with the same parameters.
+    ${varAssign}jaxon.cmd.script.wrapped[wrappedFuncName](${funcParams});
+    ${funcCodeAfter}
+    ${varReturn}
+}`;
+
+        jaxon.tools.dom.createFunction(jsCode, command.func);
+        return jaxon.cmd.script.context.jaxonDelegateCall();
     }
 };
 

@@ -101,8 +101,11 @@ jaxon.tools.dom = {
         const names = sFuncName.split(".");
         const length = names.length;
         let context = window;
-        for(let i = 0; i < length && (context); i++) {
+        for (let i = 0; i < length && (context); i++) {
             context = context[names[i]];
+            if(!context) {
+                return null;
+            }
         }
         return context;
     },
@@ -121,14 +124,52 @@ jaxon.tools.dom = {
         // Get the last element in the array.
         attribute = attributes.pop();
         // Move to the inner object.
-        for(let i = 0, len = attributes.length; i < len; i++) {
+        for (let i = 0, len = attributes.length; i < len; i++) {
             const attr = attributes[i];
             // The real name for the "css" object is "style".
             xElement = xElement[attr === 'css' ? 'style' : attr];
-            if(!xElement) {
+            if (!xElement) {
                 return [null, null];
             }
         }
         return [xElement, attribute];
+    },
+
+    /**
+     * Create a function by inserting its code in the page using a <script> tag.
+     *
+     * @param {string} funcCode
+     * @param {string|undefined} funcName
+     * 
+     * @returns {boolean}
+     */
+    createFunction(funcCode, funcName) {
+        if (!funcCode) {
+            return;
+        }
+
+        const removeTagAfter = funcName === undefined;
+        const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
+            'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
+        if (funcName === undefined) {
+            funcName = 'jaxon.cmd.script.context.jaxonDelegateCall';
+        }
+
+        // Remove the tag if it already exists.
+        jaxon.cmd.node.remove(scriptTagId);
+        // Create a new tag.
+        const scriptTag = jaxon.config.baseDocument.createElement('script');
+        scriptTag.setAttribute('id', scriptTagId);
+        scriptTag.textContent = `
+    ${funcName} = ${funcCode}
+`;
+        jaxon.config.baseDocument.body.appendChild(scriptTag);
+
+        // Since this js code saves the function in a var,
+        // the tag can be removed, and the function will still exist.
+        if (removeTagAfter) {
+            jaxon.cmd.node.remove(scriptTagId);
+        }
+        return true;
     }
 };
