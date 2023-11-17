@@ -13,7 +13,6 @@ jaxon.tools.upload = {
             id: oRequest.upload,
             input: null,
             form: null,
-            ajax: oRequest.ajax,
         };
         const input = jaxon.tools.dom.$(oRequest.upload.id);
 
@@ -48,12 +47,10 @@ jaxon.tools.upload = {
     oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
     */
     initialize: function(oRequest) {
-        // The content type is not set when uploading a file with FormData.
+        // The content type shall not be set when uploading a file with FormData.
         // It will be set by the browser.
         if (!jaxon.tools.upload._initialize(oRequest)) {
-            oRequest.append('postHeaders', {
-                'content-type': oRequest.contentType
-            });
+            oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
 };

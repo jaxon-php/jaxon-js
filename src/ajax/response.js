@@ -63,7 +63,6 @@ jaxon.ajax.response = {
         delete oRequest['responseContent'];
         delete oRequest['response'];
         delete oRequest['sequence'];
-        delete oRequest['set'];
         delete oRequest['status'];
         delete oRequest['cursor'];
 

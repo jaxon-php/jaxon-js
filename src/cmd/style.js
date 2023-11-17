@@ -17,23 +17,18 @@ jaxon.cmd.style = {
         const oDoc = jaxon.config.baseDocument;
         const oHeads = oDoc.getElementsByTagName('head');
         const oHead = oHeads[0];
-        const oLinks = oHead.getElementsByTagName('link');
-
-        let found = false;
-        const iLen = oLinks.length;
-        for (let i = 0; i < iLen && false == found; ++i)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                found = true;
-
-        if (false == found) {
-            const oCSS = oDoc.createElement('link');
-            oCSS.rel = 'stylesheet';
-            oCSS.type = 'text/css';
-            oCSS.href = fileName;
-            oCSS.media = media;
-            oHead.appendChild(oCSS);
+        const found = oHead.getElementsByTagName('link')
+            .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
+        if (found) {
+            return true;
         }
 
+        const oCSS = oDoc.createElement('link');
+        oCSS.rel = 'stylesheet';
+        oCSS.type = 'text/css';
+        oCSS.href = fileName;
+        oCSS.media = media;
+        oHead.appendChild(oCSS);
         return true;
     },
 
@@ -55,13 +50,8 @@ jaxon.cmd.style = {
         const oHeads = oDoc.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
-
-        let i = 0;
-        while (i < oLinks.length)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                oHead.removeChild(oLinks[i]);
-            else ++i;
-
+        oLinks.filter(link = oLinks[i].href.indexOf(fileName) >= 0 && oLinks[i].media == media)
+            .forEach(link => oHead.removeChild(link));
         return true;
     },
 
@@ -83,34 +73,21 @@ jaxon.cmd.style = {
     */
     waitForCSS: function(command) {
         const oDocSS = jaxon.config.baseDocument.styleSheets;
-        const ssEnabled = [];
-        let iLen = oDocSS.length;
-        for (let i = 0; i < iLen; ++i) {
-            ssEnabled[i] = 0;
-            try {
-                ssEnabled[i] = oDocSS[i].cssRules.length;
-            } catch (e) {
-                try {
-                    ssEnabled[i] = oDocSS[i].rules.length;
-                } catch (e) {}
-            }
+        const ssLoaded = oDocSS
+            .map(oDoc => oDoc.cssRules.length ?? oDoc.rules.length ?? 0)
+            .every(enabled => enabled !== 0);
+        if (ssLoaded) {
+            return;
         }
 
-        let ssLoaded = true;
-        iLen = ssEnabled.length;
-        for (let i = 0; i < iLen; ++i)
-            if (0 == ssEnabled[i])
-                ssLoaded = false;
-
-        if (false == ssLoaded) {
-            // inject a delay in the queue processing
-            // handle retry counter
-            if (jaxon.cmd.delay.retry(command, command.prop)) {
-                jaxon.cmd.delay.setWakeup(command.response, 10);
-                return false;
-            }
-            // give up, continue processing queue
+        // inject a delay in the queue processing
+        // handle retry counter
+        if (jaxon.cmd.delay.retry(command, command.prop)) {
+            jaxon.cmd.delay.setWakeup(command.response, 10);
+            return false;
         }
+
+        // give up, continue processing queue
         return true;
     }
 };

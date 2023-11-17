@@ -14,55 +14,44 @@ jaxon.ajax.request = {
     initialize: function(oRequest) {
         const xx = jaxon;
         const xc = xx.config;
-
-        oRequest.append = function(opt, def) {
-            this[opt] = { ...def, ...this[opt] };
-        };
-
-        oRequest.append('commonHeaders', xc.commonHeaders);
-        oRequest.append('postHeaders', xc.postHeaders);
-        oRequest.append('getHeaders', xc.getHeaders);
-
-        oRequest.set = function(option, defaultValue) {
-            this[option] = this[option] ?? defaultValue;
-        };
-
-        oRequest.set('statusMessages', xc.statusMessages);
-        oRequest.set('waitCursor', xc.waitCursor);
-        oRequest.set('mode', xc.defaultMode);
-        oRequest.set('method', xc.defaultMethod);
-        oRequest.set('URI', xc.requestURI);
-        oRequest.set('httpVersion', xc.defaultHttpVersion);
-        oRequest.set('contentType', xc.defaultContentType);
-        oRequest.set('convertResponseToJson', xc.convertResponseToJson);
-        oRequest.set('retry', xc.defaultRetry);
-        oRequest.set('returnValue', xc.defaultReturnValue);
-        oRequest.set('maxObjectDepth', xc.maxObjectDepth);
-        oRequest.set('maxObjectSize', xc.maxObjectSize);
-        oRequest.set('context', window);
-        oRequest.set('upload', false);
-        oRequest.set('aborted', false);
-
         const xcb = xx.ajax.callback;
         const lcb = xcb.create();
 
-        lcb.take = function(frm, opt) {
-            if(frm[opt] !== undefined) {
-                lcb[opt] = frm[opt];
-                lcb.hasEvents = true;
-            }
-            delete frm[opt];
-        };
+        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
+        aHeaders.forEach(sHeader => {
+            oRequest[sHeader] = { ...xc[sHeader], ...oRequest[sHeader] };
+        });
 
-        lcb.take(oRequest, 'onPrepare');
-        lcb.take(oRequest, 'onRequest');
-        lcb.take(oRequest, 'onResponseDelay');
-        lcb.take(oRequest, 'onExpiration');
-        lcb.take(oRequest, 'beforeResponseProcessing');
-        lcb.take(oRequest, 'onFailure');
-        lcb.take(oRequest, 'onRedirect');
-        lcb.take(oRequest, 'onSuccess');
-        lcb.take(oRequest, 'onComplete');
+        const oOptions = {
+            statusMessages: xc.statusMessages,
+            waitCursor: xc.waitCursor,
+            mode: xc.defaultMode,
+            method: xc.defaultMethod,
+            URI: xc.requestURI,
+            httpVersion: xc.defaultHttpVersion,
+            contentType: xc.defaultContentType,
+            convertResponseToJson: xc.convertResponseToJson,
+            retry: xc.defaultRetry,
+            returnValue: xc.defaultReturnValue,
+            maxObjectDepth: xc.maxObjectDepth,
+            maxObjectSize: xc.maxObjectSize,
+            context: window,
+            upload: false,
+            aborted: false,
+        };
+        Object.keys(oOptions).forEach(sOption => {
+            oRequest[sOption] = oRequest[sOption] ?? oOptions[sOption];
+        });
+
+        const aCallbacks = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
+            'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+        aCallbacks.forEach(sCallback => {
+            if(oRequest[sCallback] !== undefined) {
+                lcb[sCallback] = oRequest[sCallback];
+                lcb.hasEvents = true;
+                delete oRequest[sCallback];
+            }
+        });
 
         if(oRequest.callback !== undefined) {
             // Add the timers attribute, if it is not defined.
@@ -91,12 +80,7 @@ jaxon.ajax.request = {
         oRequest.requestRetry = oRequest.retry;
 
         // Look for upload parameter
-        oRequest.ajax = !!window.FormData;
         jaxon.tools.upload.initialize(oRequest);
-
-        delete oRequest['append'];
-        delete oRequest['set'];
-        delete lcb['take'];
 
         if(oRequest.URI === undefined)
             throw { code: 10005 };

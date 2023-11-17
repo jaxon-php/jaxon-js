@@ -887,7 +887,6 @@ jaxon.tools.upload = {
             id: oRequest.upload,
             input: null,
             form: null,
-            ajax: oRequest.ajax,
         };
         const input = jaxon.tools.dom.$(oRequest.upload.id);
 
@@ -922,12 +921,10 @@ jaxon.tools.upload = {
     oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
     */
     initialize: function(oRequest) {
-        // The content type is not set when uploading a file with FormData.
+        // The content type shall not be set when uploading a file with FormData.
         // It will be set by the browser.
         if (!jaxon.tools.upload._initialize(oRequest)) {
-            oRequest.append('postHeaders', {
-                'content-type': oRequest.contentType
-            });
+            oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
 };
@@ -2007,23 +2004,18 @@ jaxon.cmd.style = {
         const oDoc = jaxon.config.baseDocument;
         const oHeads = oDoc.getElementsByTagName('head');
         const oHead = oHeads[0];
-        const oLinks = oHead.getElementsByTagName('link');
-
-        let found = false;
-        const iLen = oLinks.length;
-        for (let i = 0; i < iLen && false == found; ++i)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                found = true;
-
-        if (false == found) {
-            const oCSS = oDoc.createElement('link');
-            oCSS.rel = 'stylesheet';
-            oCSS.type = 'text/css';
-            oCSS.href = fileName;
-            oCSS.media = media;
-            oHead.appendChild(oCSS);
+        const found = oHead.getElementsByTagName('link')
+            .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
+        if (found) {
+            return true;
         }
 
+        const oCSS = oDoc.createElement('link');
+        oCSS.rel = 'stylesheet';
+        oCSS.type = 'text/css';
+        oCSS.href = fileName;
+        oCSS.media = media;
+        oHead.appendChild(oCSS);
         return true;
     },
 
@@ -2045,13 +2037,8 @@ jaxon.cmd.style = {
         const oHeads = oDoc.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
-
-        let i = 0;
-        while (i < oLinks.length)
-            if (0 <= oLinks[i].href.indexOf(fileName) && oLinks[i].media == media)
-                oHead.removeChild(oLinks[i]);
-            else ++i;
-
+        oLinks.filter(link = oLinks[i].href.indexOf(fileName) >= 0 && oLinks[i].media == media)
+            .forEach(link => oHead.removeChild(link));
         return true;
     },
 
@@ -2073,34 +2060,21 @@ jaxon.cmd.style = {
     */
     waitForCSS: function(command) {
         const oDocSS = jaxon.config.baseDocument.styleSheets;
-        const ssEnabled = [];
-        let iLen = oDocSS.length;
-        for (let i = 0; i < iLen; ++i) {
-            ssEnabled[i] = 0;
-            try {
-                ssEnabled[i] = oDocSS[i].cssRules.length;
-            } catch (e) {
-                try {
-                    ssEnabled[i] = oDocSS[i].rules.length;
-                } catch (e) {}
-            }
+        const ssLoaded = oDocSS
+            .map(oDoc => oDoc.cssRules.length ?? oDoc.rules.length ?? 0)
+            .every(enabled => enabled !== 0);
+        if (ssLoaded) {
+            return;
         }
 
-        let ssLoaded = true;
-        iLen = ssEnabled.length;
-        for (let i = 0; i < iLen; ++i)
-            if (0 == ssEnabled[i])
-                ssLoaded = false;
-
-        if (false == ssLoaded) {
-            // inject a delay in the queue processing
-            // handle retry counter
-            if (jaxon.cmd.delay.retry(command, command.prop)) {
-                jaxon.cmd.delay.setWakeup(command.response, 10);
-                return false;
-            }
-            // give up, continue processing queue
+        // inject a delay in the queue processing
+        // handle retry counter
+        if (jaxon.cmd.delay.retry(command, command.prop)) {
+            jaxon.cmd.delay.setWakeup(command.response, 10);
+            return false;
         }
+
+        // give up, continue processing queue
         return true;
     }
 };
@@ -2659,55 +2633,44 @@ jaxon.ajax.request = {
     initialize: function(oRequest) {
         const xx = jaxon;
         const xc = xx.config;
-
-        oRequest.append = function(opt, def) {
-            this[opt] = { ...def, ...this[opt] };
-        };
-
-        oRequest.append('commonHeaders', xc.commonHeaders);
-        oRequest.append('postHeaders', xc.postHeaders);
-        oRequest.append('getHeaders', xc.getHeaders);
-
-        oRequest.set = function(option, defaultValue) {
-            this[option] = this[option] ?? defaultValue;
-        };
-
-        oRequest.set('statusMessages', xc.statusMessages);
-        oRequest.set('waitCursor', xc.waitCursor);
-        oRequest.set('mode', xc.defaultMode);
-        oRequest.set('method', xc.defaultMethod);
-        oRequest.set('URI', xc.requestURI);
-        oRequest.set('httpVersion', xc.defaultHttpVersion);
-        oRequest.set('contentType', xc.defaultContentType);
-        oRequest.set('convertResponseToJson', xc.convertResponseToJson);
-        oRequest.set('retry', xc.defaultRetry);
-        oRequest.set('returnValue', xc.defaultReturnValue);
-        oRequest.set('maxObjectDepth', xc.maxObjectDepth);
-        oRequest.set('maxObjectSize', xc.maxObjectSize);
-        oRequest.set('context', window);
-        oRequest.set('upload', false);
-        oRequest.set('aborted', false);
-
         const xcb = xx.ajax.callback;
         const lcb = xcb.create();
 
-        lcb.take = function(frm, opt) {
-            if(frm[opt] !== undefined) {
-                lcb[opt] = frm[opt];
-                lcb.hasEvents = true;
-            }
-            delete frm[opt];
-        };
+        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
+        aHeaders.forEach(sHeader => {
+            oRequest[sHeader] = { ...xc[sHeader], ...oRequest[sHeader] };
+        });
 
-        lcb.take(oRequest, 'onPrepare');
-        lcb.take(oRequest, 'onRequest');
-        lcb.take(oRequest, 'onResponseDelay');
-        lcb.take(oRequest, 'onExpiration');
-        lcb.take(oRequest, 'beforeResponseProcessing');
-        lcb.take(oRequest, 'onFailure');
-        lcb.take(oRequest, 'onRedirect');
-        lcb.take(oRequest, 'onSuccess');
-        lcb.take(oRequest, 'onComplete');
+        const oOptions = {
+            statusMessages: xc.statusMessages,
+            waitCursor: xc.waitCursor,
+            mode: xc.defaultMode,
+            method: xc.defaultMethod,
+            URI: xc.requestURI,
+            httpVersion: xc.defaultHttpVersion,
+            contentType: xc.defaultContentType,
+            convertResponseToJson: xc.convertResponseToJson,
+            retry: xc.defaultRetry,
+            returnValue: xc.defaultReturnValue,
+            maxObjectDepth: xc.maxObjectDepth,
+            maxObjectSize: xc.maxObjectSize,
+            context: window,
+            upload: false,
+            aborted: false,
+        };
+        Object.keys(oOptions).forEach(sOption => {
+            oRequest[sOption] = oRequest[sOption] ?? oOptions[sOption];
+        });
+
+        const aCallbacks = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
+            'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+        aCallbacks.forEach(sCallback => {
+            if(oRequest[sCallback] !== undefined) {
+                lcb[sCallback] = oRequest[sCallback];
+                lcb.hasEvents = true;
+                delete oRequest[sCallback];
+            }
+        });
 
         if(oRequest.callback !== undefined) {
             // Add the timers attribute, if it is not defined.
@@ -2736,12 +2699,7 @@ jaxon.ajax.request = {
         oRequest.requestRetry = oRequest.retry;
 
         // Look for upload parameter
-        oRequest.ajax = !!window.FormData;
         jaxon.tools.upload.initialize(oRequest);
-
-        delete oRequest['append'];
-        delete oRequest['set'];
-        delete lcb['take'];
 
         if(oRequest.URI === undefined)
             throw { code: 10005 };
@@ -2973,7 +2931,6 @@ jaxon.ajax.response = {
         delete oRequest['responseContent'];
         delete oRequest['response'];
         delete oRequest['sequence'];
-        delete oRequest['set'];
         delete oRequest['status'];
         delete oRequest['cursor'];
 
