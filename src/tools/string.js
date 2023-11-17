@@ -11,7 +11,7 @@ jaxon.tools.string = {
     string - A new string with the modifications applied.
     */
     doubleQuotes: function(haystack) {
-        if (typeof haystack == 'undefined') return false;
+        if (haystack === undefined) return false;
         return haystack.replace(new RegExp("'", 'g'), '"');
     },
 
@@ -26,7 +26,7 @@ jaxon.tools.string = {
     string - A new string with the modification applied.
     */
     singleQuotes: function(haystack) {
-        if (typeof haystack == 'undefined') return false;
+        if (haystack === undefined) return false;
         return haystack.replace(new RegExp('"', 'g'), "'");
     },
 

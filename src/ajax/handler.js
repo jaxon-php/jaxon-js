@@ -113,13 +113,13 @@ jaxon.ajax.handler.register('rcmplt', function(command) {
 
 jaxon.ajax.handler.register('css', function(command) {
     command.fullName = 'includeCSS';
-    if ('undefined' == typeof command.media)
+    if (command.media === undefined)
         command.media = 'screen';
     return jaxon.cmd.style.add(command.data, command.media);
 });
 jaxon.ajax.handler.register('rcss', function(command) {
     command.fullName = 'removeCSS';
-    if ('undefined' == typeof command.media)
+    if (command.media === undefined)
         command.media = 'screen';
     return jaxon.cmd.style.remove(command.data, command.media);
 });

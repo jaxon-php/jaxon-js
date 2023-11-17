@@ -44,7 +44,7 @@ jaxon.tools.form = {
         const iLen = children.length;
         for (let i = 0; i < iLen; ++i) {
             const child = children[i];
-            if (('undefined' != typeof child.childNodes) && (child.type != 'select-one') && (child.type != 'select-multiple'))
+            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple')
                 jaxon.tools.form._getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
             jaxon.tools.form._getValue(aFormValues, child, submitDisabledElements, prefix);
         }
@@ -102,7 +102,7 @@ jaxon.tools.form = {
             let n = name;
             let k = n.substr(0, n.indexOf('['));
             let a = n.substr(n.indexOf('['));
-            if (typeof aFormValues[k] == 'undefined')
+            if (aFormValues[k] === undefined)
                 aFormValues[k] = {};
             let p = aFormValues; // pointer reset
             while (a.length != 0) {
@@ -122,12 +122,12 @@ jaxon.tools.form = {
                         k = p.length;
                     }
                 }
-                if (typeof k == 'undefined') {
+                if (k === undefined) {
                     /*check against the global aFormValues Stack wich is the next(last) usable index */
                     k = 0;
                     for (let i in lp[lk]) k++;
                 }
-                if (typeof p[k] == 'undefined') {
+                if (p[k] === undefined) {
 
                     p[k] = {};
                 }

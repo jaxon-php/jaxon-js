@@ -15,7 +15,7 @@ jaxon.cmd.form = {
     object - The new input element.
     */
     getInput: function(type, name, id) {
-        if ('undefined' == typeof window.addEventListener) {
+        if (window.addEventListener === undefined) {
             jaxon.cmd.form.getInput = function(type, name, id) {
                 return jaxon.config.baseDocument.createElement('<input type="' + type + '" name="' + name + '" id="' + id + '">');
             }

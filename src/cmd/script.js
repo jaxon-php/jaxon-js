@@ -264,7 +264,7 @@ jaxon.cmd.script = {
      * @param {string|object} parameters 
      */
     getParameters: function(parameters) {
-        if (typeof parameters === 'undefined') {
+        if (parameters === undefined) {
             return '';
         }
         if (Array.isArray(parameters)) {

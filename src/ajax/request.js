@@ -16,11 +16,7 @@ jaxon.ajax.request = {
         const xc = xx.config;
 
         oRequest.append = function(opt, def) {
-            if('undefined' == typeof this[opt])
-                this[opt] = {};
-            for (const itmName in def)
-                if('undefined' == typeof this[opt][itmName])
-                    this[opt][itmName] = def[itmName];
+            this[opt] = { ...def, ...this[opt] };
         };
 
         oRequest.append('commonHeaders', xc.commonHeaders);
@@ -28,8 +24,7 @@ jaxon.ajax.request = {
         oRequest.append('getHeaders', xc.getHeaders);
 
         oRequest.set = function(option, defaultValue) {
-            if('undefined' == typeof this[option])
-                this[option] = defaultValue;
+            this[option] = this[option] ?? defaultValue;
         };
 
         oRequest.set('statusMessages', xc.statusMessages);
@@ -52,7 +47,7 @@ jaxon.ajax.request = {
         const lcb = xcb.create();
 
         lcb.take = function(frm, opt) {
-            if('undefined' != typeof frm[opt]) {
+            if(frm[opt] !== undefined) {
                 lcb[opt] = frm[opt];
                 lcb.hasEvents = true;
             }
@@ -69,9 +64,9 @@ jaxon.ajax.request = {
         lcb.take(oRequest, 'onSuccess');
         lcb.take(oRequest, 'onComplete');
 
-        if('undefined' != typeof oRequest.callback) {
+        if(oRequest.callback !== undefined) {
             // Add the timers attribute, if it is not defined.
-            if('undefined' == typeof oRequest.callback.timers) {
+            if(oRequest.callback.timers === undefined) {
                 oRequest.callback.timers = [];
             }
             if(lcb.hasEvents) {
@@ -103,7 +98,7 @@ jaxon.ajax.request = {
         delete oRequest['set'];
         delete lcb['take'];
 
-        if('undefined' == typeof oRequest.URI)
+        if(oRequest.URI === undefined)
             throw { code: 10005 };
     },
 

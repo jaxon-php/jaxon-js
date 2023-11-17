@@ -13,13 +13,7 @@ jaxon.tools.array = {
         false : The value was not found in the specified array.
     */
     is_in: function(array, valueToCheck) {
-        let i = 0;
-        const l = array.length;
-        while (i < l) {
-            if (array[i] == valueToCheck)
-                return true;
-            ++i;
-        }
-        return false;
+        // It's important to have '==' and not '===' here.
+        return array.find(value => value == valueToCheck);
     }
 };

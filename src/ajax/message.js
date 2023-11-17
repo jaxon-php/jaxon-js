@@ -65,7 +65,9 @@ jaxon.ajax.message = {
     confirm: function(question, title, yesCallback, noCallback) {
         if(confirm(question)) {
             yesCallback();
-        } else if(noCallback != undefined) {
+            return;
+        }
+        if(noCallback !== undefined) {
             noCallback();
         }
     }

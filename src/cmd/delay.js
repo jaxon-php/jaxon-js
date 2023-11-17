@@ -7,11 +7,8 @@ jaxon.cmd.delay = {
      * @returns object|null
      */
     popAsyncRequest: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue))
-        {
-            return null;
-        }
-        if(jaxon.tools.queue.peek(oQueue).mode === 'synchronous')
+        if(jaxon.tools.queue.empty(oQueue) ||
+            jaxon.tools.queue.peek(oQueue).mode === 'synchronous')
         {
             return null;
         }
@@ -86,10 +83,10 @@ jaxon.cmd.delay = {
         if(command.requeue === true) {
             // Before => the processing is delayed.
             jaxon.cmd.delay.setWakeup(command.response, 30);
-        } else {
-            // After => the processing is executed.
-            jaxon.ajax.response.process(command.response);
+            return;
         }
+        // After => the processing is executed.
+        jaxon.ajax.response.process(command.response);
     },
 
     /**
@@ -114,6 +111,7 @@ jaxon.cmd.delay = {
         }, function() {
             jaxon.cmd.delay.confirmCallback(command, count, true);
         });
+
         // This command must not be processed again.
         command.requeue = false;
         return false;

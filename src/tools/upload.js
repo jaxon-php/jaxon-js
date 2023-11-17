@@ -29,7 +29,7 @@ jaxon.tools.upload = {
             console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
-        if (typeof input.name === 'undefined') {
+        if (input.name === undefined) {
             console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
             return false;
         }
