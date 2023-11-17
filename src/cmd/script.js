@@ -210,7 +210,7 @@ jaxon.cmd.script = {
     ${command.data}
 }`;
         jaxon.tools.dom.createFunction(jsCode);
-        return jaxon.cmd.script.context.jaxonDelegateCall();
+        return jaxon.cmd.script.context.delegateCall();
     },
 
     /*
@@ -242,7 +242,7 @@ jaxon.cmd.script = {
     return (${command.data});
 }`;
             jaxon.tools.dom.createFunction(jsCode);
-            const bResult = jaxon.cmd.script.context.jaxonDelegateCall();
+            const bResult = jaxon.cmd.script.context.delegateCall();
             if (!bResult) {
                 // inject a delay in the queue processing
                 // handle retry counter
@@ -359,6 +359,6 @@ jaxon.cmd.script = {
 }`;
 
         jaxon.tools.dom.createFunction(jsCode, command.func);
-        return jaxon.cmd.script.context.jaxonDelegateCall();
+        return jaxon.cmd.script.context.delegateCall();
     }
 };

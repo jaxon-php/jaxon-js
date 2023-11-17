@@ -152,7 +152,7 @@ jaxon.tools.dom = {
         const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
             'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
         if (funcName === undefined) {
-            funcName = 'jaxon.cmd.script.context.jaxonDelegateCall';
+            funcName = 'jaxon.cmd.script.context.delegateCall';
         }
 
         // Remove the tag if it already exists.

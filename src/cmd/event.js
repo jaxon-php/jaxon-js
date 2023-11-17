@@ -16,7 +16,7 @@ jaxon.cmd.event = {
         // force to get the target
         const oTarget = jaxon.$(command.id);
         jaxon.tools.dom.createFunction(`(e) => { ${sCode} }`);
-        oTarget[sEvent] = jaxon.cmd.script.context.jaxonDelegateCall;
+        oTarget[sEvent] = jaxon.cmd.script.context.delegateCall;
         return true;
     },
 
