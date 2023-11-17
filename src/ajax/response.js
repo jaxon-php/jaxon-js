@@ -280,50 +280,6 @@ jaxon.ajax.response = {
     },
 
     /*
-    Function: jaxon.ajax.response.upload
-
-    Process the file upload response received in an iframe.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
-    upload: function(oRequest) {
-        const xx = jaxon;
-        const xcb = xx.ajax.callback;
-        const gcb = xx.callback;
-        const lcb = oRequest.callback;
-
-        let endRequest = false;
-        const res = oRequest.upload.iframe.contentWindow.res;
-        if (!res || !res.code) {
-            // Show the error message with the selected dialog library
-            jaxon.ajax.message.error('The server returned an invalid response');
-            // End the request
-            endRequest = true;
-        } else if (res.code === 'error') {
-            // Todo: show the error message with the selected dialog library
-            jaxon.ajax.message.error(res.msg);
-            // End the request
-            endRequest = true;
-        }
-
-        if (endRequest) {
-            // End the request
-            xcb.clearTimer([gcb, lcb], 'onExpiration');
-            xcb.clearTimer([gcb, lcb], 'onResponseDelay');
-            xcb.execute([gcb, lcb], 'onFailure', oRequest);
-            jaxon.ajax.response.complete(oRequest);
-            return;
-        }
-
-        if (res.code === 'success') {
-            oRequest.requestData += '&jxnupl=' + encodeURIComponent(res.upl);
-            jaxon.ajax.request._send(oRequest);
-        }
-    },
-
-    /*
     Object: jaxon.ajax.response.successCodes
 
     This array contains a list of codes which will be returned from the server upon

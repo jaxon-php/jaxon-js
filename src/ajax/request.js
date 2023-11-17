@@ -258,16 +258,7 @@ jaxon.ajax.request = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        if(oRequest.upload !== false && !oRequest.upload.ajax && oRequest.upload.form) {
-            // The request will be sent after the files are uploaded
-            oRequest.upload.iframe.onload = function() {
-                jaxon.ajax.response.upload(oRequest);
-            }
-            // Submit the upload form
-            oRequest.upload.form.submit();
-        } else {
-            jaxon.ajax.request._send(oRequest);
-        }
+        jaxon.ajax.request._send(oRequest);
 
         // synchronous mode causes response to be processed immediately here
         return oRequest.finishRequest();
