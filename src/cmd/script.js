@@ -184,6 +184,7 @@ jaxon.cmd.script = {
             return true;
         }
         func.apply(jaxon.cmd.script.context, command.data);
+        return true;
     },
 
     /*
@@ -210,7 +211,8 @@ jaxon.cmd.script = {
     ${command.data}
 }`;
         jaxon.tools.dom.createFunction(jsCode);
-        return jaxon.cmd.script.context.delegateCall();
+        jaxon.cmd.script.context.delegateCall();
+        return true;
     },
 
     /*
@@ -359,6 +361,7 @@ jaxon.cmd.script = {
 }`;
 
         jaxon.tools.dom.createFunction(jsCode, command.func);
-        return jaxon.cmd.script.context.delegateCall();
+        jaxon.cmd.script.context.delegateCall();
+        return true;
     }
 };

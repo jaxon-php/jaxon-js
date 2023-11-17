@@ -39,6 +39,7 @@ jaxon.ajax.request = {
         oRequest.set('URI', xc.requestURI);
         oRequest.set('httpVersion', xc.defaultHttpVersion);
         oRequest.set('contentType', xc.defaultContentType);
+        oRequest.set('convertResponseToJson', xc.convertResponseToJson);
         oRequest.set('retry', xc.defaultRetry);
         oRequest.set('returnValue', xc.defaultReturnValue);
         oRequest.set('maxObjectDepth', xc.maxObjectDepth);
@@ -89,7 +90,7 @@ jaxon.ajax.request = {
             xc.cursor.dontUpdate();
 
         oRequest.method = oRequest.method.toUpperCase();
-        if('GET' != oRequest.method)
+        if(oRequest.method !== 'GET')
             oRequest.method = 'POST'; // W3C: Method is case sensitive
 
         oRequest.requestRetry = oRequest.retry;
@@ -123,7 +124,6 @@ jaxon.ajax.request = {
     */
     prepare: function(oRequest) {
         const xx = jaxon;
-        const xt = xx.tools;
         const xcb = xx.ajax.callback;
         const gcb = xx.callback;
         const lcb = oRequest.callback;
@@ -135,91 +135,20 @@ jaxon.ajax.request = {
             return false;
         }
 
-        oRequest.request = xt.ajax.createRequest();
-
-        oRequest.setRequestHeaders = function(headers) {
-            if('object' === typeof headers) {
-                for (let optionName in headers)
-                    this.request.setRequestHeader(optionName, headers[optionName]);
-            }
-        };
-        oRequest.setCommonRequestHeaders = function() {
-            this.setRequestHeaders(this.commonHeaders);
-        };
-        oRequest.setPostRequestHeaders = function() {
-            this.setRequestHeaders(this.postHeaders);
-        };
-        oRequest.setGetRequestHeaders = function() {
-            this.setRequestHeaders(this.getHeaders);
-        };
-
-        // if('asynchronous' == oRequest.mode) {
-            // references inside this function should be expanded
-            // IOW, don't use shorthand references like xx for jaxon
-        /*} else {
-            oRequest.finishRequest = function() {
-                return jaxon.ajax.response.received(oRequest);
-            };
-        }*/
-        oRequest.request.onreadystatechange = function() {
-            if(oRequest.request.readyState !== 4) {
-                return;
-            }
+        oRequest.responseHandler = function(responseContent) {
+            oRequest.responseContent = responseContent;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
-            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) ||
-                'synchronous' == oRequest.mode) {
+            if(jaxon.tools.queue.empty(jaxon.cmd.delay.q.send) || oRequest.mode === 'synchronous') {
                 jaxon.ajax.response.received(oRequest);
             } else {
                 jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
             }
         };
-        oRequest.finishRequest = function() {
-            return this.returnValue;
-        };
-
-        if('undefined' !== typeof oRequest.userName && 'undefined' !== typeof oRequest.password) {
-            oRequest.open = function() {
-                this.request.open(
-                    this.method,
-                    this.requestURI,
-                    true, // 'asynchronous' == this.mode,
-                    oRequest.userName,
-                    oRequest.password);
-            };
-        } else {
-            oRequest.open = function() {
-                this.request.open(
-                    this.method,
-                    this.requestURI,
-                    true); // 'asynchronous' == this.mode);
-            };
-        }
-
-        if('POST' == oRequest.method) { // W3C: Method is case sensitive
-            oRequest.applyRequestHeaders = function() {
-                this.setCommonRequestHeaders();
-                try {
-                    this.setPostRequestHeaders();
-                } catch (e) {
-                    this.method = 'GET';
-                    this.requestURI += this.requestURI.indexOf('?') == -1 ? '?' : '&';
-                    this.requestURI += this.requestData;
-                    this.requestData = '';
-                    if(0 == this.requestRetry) this.requestRetry = 1;
-                    throw e;
-                }
-            }
-        } else {
-            oRequest.applyRequestHeaders = function() {
-                this.setCommonRequestHeaders();
-                this.setGetRequestHeaders();
-            };
-        }
 
         // No request is submitted while there are pending requests in the outgoing queue.
-        let submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
-        if('synchronous' === oRequest.mode) {
+        const submitRequest = jaxon.tools.queue.empty(jaxon.cmd.delay.q.send);
+        if(oRequest.mode === 'synchronous') {
             // Synchronous requests are always queued, in both send and recv queues.
             jaxon.tools.queue.push(jaxon.cmd.delay.q.send, oRequest);
             jaxon.tools.queue.push(jaxon.cmd.delay.q.recv, oRequest);
@@ -252,30 +181,30 @@ jaxon.ajax.request = {
         xcb.execute([gcb, lcb], 'onExpiration', oRequest);
         xcb.execute([gcb, lcb], 'onRequest', oRequest);
 
-        oRequest.open();
-        oRequest.applyRequestHeaders();
-
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        jaxon.ajax.request._send(oRequest);
+        const headers = {
+            ...oRequest.commonHeaders,
+            ...(oRequest.method === 'POST' ? oRequest.postHeaders : oRequest.getHeaders),
+        };
 
-        // synchronous mode causes response to be processed immediately here
-        return oRequest.finishRequest();
-    },
+        fetch(oRequest.requestURI, {
+            method: oRequest.method,
+            mode: "cors", // no-cors, *cors, same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: "same-origin", // include, *same-origin, omit
+            redirect: "manual", // manual, *follow, error
+            headers,
+            body: oRequest.requestData,
+        }).then(response => {
+            // Save the reponse object
+            oRequest.response = response;
+            // Get the response content
+            return oRequest.convertResponseToJson ? response.json() : response.text();
+        }).then(oRequest.responseHandler);
 
-    /*
-    Function: jaxon.ajax.request._send
-
-    This function is used internally by jaxon to initiate a request to the server.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
-    _send: function(oRequest) {
-        // this may block if synchronous mode is selected
-        oRequest.request.send(oRequest.requestData);
+        return oRequest.returnValue;
     },
 
     /*
@@ -314,7 +243,7 @@ jaxon.ajax.request = {
         if(functionName === undefined)
             return false;
 
-        const oRequest = functionArgs ? functionArgs : {};
+        const oRequest = functionArgs ?? {};
         oRequest.functionName = functionName;
 
         const xx = jaxon;

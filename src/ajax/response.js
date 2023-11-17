@@ -13,20 +13,21 @@ jaxon.ajax.response = {
         const xcb = xx.ajax.callback;
         const gcb = xx.callback;
         const lcb = oRequest.callback;
+
         // sometimes the responseReceived gets called when the request is aborted
         if (oRequest.aborted) {
             return null;
         }
 
         // Create a response queue for this request.
-        oRequest.response = xx.tools.queue.create(xx.config.responseQueueSize);
+        oRequest.commandQueue = xx.tools.queue.create(xx.config.commandQueueSize);
 
         xcb.clearTimer([gcb, lcb], 'onExpiration');
         xcb.clearTimer([gcb, lcb], 'onResponseDelay');
         xcb.execute([gcb, lcb], 'beforeResponseProcessing', oRequest);
 
         const fProc = xx.ajax.response.processor(oRequest);
-        if (null == fProc) {
+        if (!fProc) {
             xcb.execute([gcb, lcb], 'onFailure', oRequest);
             xx.ajax.response.complete(oRequest);
             return;
@@ -58,22 +59,18 @@ jaxon.ajax.response = {
         delete oRequest['requestData'];
         delete oRequest['requestRetry'];
         delete oRequest['request'];
+        delete oRequest['responseHandler '];
+        delete oRequest['responseContent'];
         delete oRequest['response'];
+        delete oRequest['sequence'];
         delete oRequest['set'];
-        delete oRequest['open'];
-        delete oRequest['setRequestHeaders'];
-        delete oRequest['setCommonRequestHeaders'];
-        delete oRequest['setPostRequestHeaders'];
-        delete oRequest['setGetRequestHeaders'];
-        delete oRequest['applyRequestHeaders'];
-        delete oRequest['finishRequest'];
         delete oRequest['status'];
         delete oRequest['cursor'];
 
         // All the requests queued while waiting must now be processed.
-        if('synchronous' == oRequest.mode) {
-            let jq = jaxon.tools.queue;
-            let jd = jaxon.cmd.delay;
+        if(oRequest.mode === 'synchronous') {
+            const jq = jaxon.tools.queue;
+            const jd = jaxon.cmd.delay;
             // Remove the current request from the send and recv queues.
             jq.pop(jd.q.send);
             jq.pop(jd.q.recv);
@@ -114,22 +111,23 @@ jaxon.ajax.response = {
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
-    process: function(response) {
-        if (null != response.timeout) {
-            clearTimeout(response.timeout);
-            response.timeout = null;
+    processCommands: function(commandQueue) {
+        if (commandQueue.timeout !== null) {
+            clearTimeout(commandQueue.timeout);
+            commandQueue.timeout = null;
         }
+
         let command = null;
-        while ((command = jaxon.tools.queue.pop(response)) != null) {
+        while ((command = jaxon.tools.queue.pop(commandQueue)) != null) {
             try {
-                if (false == jaxon.ajax.handler.execute(command)) {
-                    if(command.requeue == true) {
-                        jaxon.tools.queue.pushFront(response, command);
-                    } else {
-                        delete command;
-                    }
-                    return false;
+                if (jaxon.ajax.handler.execute(command) !== false) {
+                    continue;
                 }
+                if(!command.requeue) {
+                    delete command;
+                }
+                jaxon.tools.queue.pushFront(commandQueue, command);
+                return false;
             } catch (e) {
                 console.log(e);
             }
@@ -139,44 +137,38 @@ jaxon.ajax.response = {
     },
 
     /*
-    Function: jaxon.ajax.response.processFragment
+    Function: jaxon.ajax.response.queueCommands
 
     Parse the JSON response into a series of commands.
 
     Parameters:
     oRequest - (object):  The request context object.
     */
-    processFragment: function(nodes, seq, oRet, oRequest) {
+    queueCommands: function(oRequest) {
+        const nodes = oRequest.responseContent;
+        if (!nodes || !nodes.jxnobj) {
+            return;
+        }
+
+        oRequest.status.onProcessing();
+
         const xx = jaxon;
         const xt = xx.tools;
-        for (nodeName in nodes) {
-            if ('jxnobj' == nodeName) {
-                for (a in nodes[nodeName]) {
-                    /*
-                    prevents from using not numbered indexes of 'jxnobj'
-                    nodes[nodeName][a]= "0" is an valid jaxon response stack item
-                    nodes[nodeName][a]= "pop" is an method from somewhere but not from jxnobj
-                    */
-                    if (parseInt(a) != a) continue;
 
-                    const command = nodes[nodeName][a];
-                    command.fullName = '*unknown*';
-                    command.sequence = seq;
-                    command.response = oRequest.response;
-                    command.request = oRequest;
-                    command.context = oRequest.context;
-                    xt.queue.push(oRequest.response, command);
-                    ++seq;
-                }
-            } else if ('jxnrv' == nodeName) {
-                oRet = nodes[nodeName];
-            } else if ('debugmsg' == nodeName) {
-                txt = nodes[nodeName];
-            } else {
-                throw { code: 10004, data: command.fullName };
-            }
+        if (nodes.jxnrv) {
+            oRequest.returnValue = nodes.jxnrv;
         }
-        return oRet;
+
+        nodes.debugmsg && console.log(nodes.debugmsg);
+
+        nodes.jxnobj.forEach(command => xt.queue.push(oRequest.commandQueue, {
+            ...command,
+            fullName: '*unknown*',
+            sequence: oRequest.sequence++,
+            response: oRequest.commandQueue,
+            request: oRequest,
+            context: oRequest.context,
+        }));
     },
 
     /*
@@ -194,36 +186,12 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     processor: function(oRequest) {
-        if ('undefined' != typeof oRequest.responseProcessor) {
+        if (oRequest.responseProcessor !== undefined) {
             return oRequest.responseProcessor;
         }
 
-        let cTyp = oRequest.request.getResponseHeader('content-type');
-        if(!cTyp) {
-            return null;
-        }
-        let responseText = '';
-        if(0 <= cTyp.indexOf('application/json')) {
-            responseText = oRequest.request.responseText;
-        }
-        else if(0 <= cTyp.indexOf('text/html')) {
-            responseText = oRequest.request.responseText;
-            // Verify if there is any other output before the Jaxon response.
-            let jsonStart = responseText.indexOf('{"jxnobj"');
-            if(jsonStart < 0) { // No jaxon data in the response
-                return null;
-            }
-            if(jsonStart > 0) {
-                responseText = responseText.substr(jsonStart);
-            }
-        }
-
-        try {
-            oRequest.request.responseJSON = JSON.parse(responseText);
-            return jaxon.ajax.response.json;
-        } catch (ex) {
-            return null; // Cannot decode JSON response
-        }
+        // By default, try to use the JSON processor
+        return jaxon.ajax.response.json;
     },
 
     /*
@@ -236,47 +204,49 @@ jaxon.ajax.response = {
     oRequest - (object):  The request context object.
     */
     json: function(oRequest) {
-
         const xx = jaxon;
         const xt = xx.tools;
         const xcb = xx.ajax.callback;
         const gcb = xx.callback;
         const lcb = oRequest.callback;
 
-        let oRet = oRequest.returnValue;
-
-        if (xt.array.is_in(xx.ajax.response.successCodes, oRequest.request.status)) {
+        if (xt.array.is_in(xx.ajax.response.successCodes, oRequest.response.status)) {
             xcb.execute([gcb, lcb], 'onSuccess', oRequest);
 
-            let seq = 0;
-            if ('object' == typeof oRequest.request.responseJSON &&
-                'object' == typeof oRequest.request.responseJSON.jxnobj) {
-                oRequest.status.onProcessing();
-                oRet = xx.ajax.response.processFragment(oRequest.request.responseJSON, seq, oRet, oRequest);
-            } else {}
+            oRequest.sequence = 0;
+            xx.ajax.response.queueCommands(oRequest)
 
-            const command = {};
-            command.fullName = 'Response Complete';
-            command.sequence = seq;
-            command.request = oRequest;
-            command.context = oRequest.context;
-            command.cmd = 'rcmplt';
-            xt.queue.push(oRequest.response, command);
+            // Queue a last command to clear the queue
+            xt.queue.push(oRequest.commandQueue, {
+                fullName: 'Response Complete',
+                sequence: oRequest.sequence,
+                request: oRequest,
+                context: oRequest.context,
+                cmd: 'rcmplt',
+            });
 
             // do not re-start the queue if a timeout is set
-            if (null == oRequest.response.timeout) {
-                xx.ajax.response.process(oRequest.response);
+            if (!oRequest.commandQueue.timeout) {
+                // Process the commands in the queue
+                xx.ajax.response.processCommands(oRequest.commandQueue);
             }
-        } else if (xt.array.is_in(xx.ajax.response.redirectCodes, oRequest.request.status)) {
+            return oRequest.returnValue;
+        }
+
+        if (xt.array.is_in(xx.ajax.response.redirectCodes, oRequest.response.status)) {
             xcb.execute([gcb, lcb], 'onRedirect', oRequest);
             window.location = oRequest.request.getResponseHeader('location');
             xx.ajax.response.complete(oRequest);
-        } else if (xt.array.is_in(xx.ajax.response.errorsForAlert, oRequest.request.status)) {
-            xcb.execute([gcb, lcb], 'onFailure', oRequest);
-            xx.ajax.response.complete(oRequest);
+            return oRequest.returnValue;
         }
 
-        return oRet;
+        if (xt.array.is_in(xx.ajax.response.errorsForAlert, oRequest.response.status)) {
+            xcb.execute([gcb, lcb], 'onFailure', oRequest);
+            xx.ajax.response.complete(oRequest);
+            return oRequest.returnValue;
+        }
+
+        return oRequest.returnValue;
     },
 
     /*
