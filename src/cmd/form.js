@@ -1,7 +1,9 @@
-jaxon.cmd.form = {
-    /*
-    Function: jaxon.cmd.form.getInput
+/**
+ * Class: jaxon.cmd.form
+ */
 
+(function(self, dom, baseDocument) {
+    /*
     Create and return a form input element with the specified parameters.
 
     Parameters:
@@ -14,23 +16,13 @@ jaxon.cmd.form = {
 
     object - The new input element.
     */
-    getInput: function(type, name, id) {
-        if (window.addEventListener === undefined) {
-            jaxon.cmd.form.getInput = function(type, name, id) {
-                return jaxon.config.baseDocument.createElement('<input type="' + type + '" name="' + name + '" id="' + id + '">');
-            }
-        } else {
-            jaxon.cmd.form.getInput = function(type, name, id) {
-                const oDoc = jaxon.config.baseDocument;
-                const Obj = oDoc.createElement('input');
-                Obj.setAttribute('type', type);
-                Obj.setAttribute('name', name);
-                Obj.setAttribute('id', id);
-                return Obj;
-            }
-        }
-        return jaxon.cmd.form.getInput(type, name, id);
-    },
+    const getInput = function(type, name, id) {
+        const oInput = baseDocument.createElement('input');
+        oInput.setAttribute('type', type);
+        oInput.setAttribute('name', name);
+        oInput.setAttribute('id', id);
+        return oInput;
+    };
 
     /*
     Function: jaxon.cmd.form.createInput
@@ -49,18 +41,18 @@ jaxon.cmd.form = {
 
     true - The operation completed successfully.
     */
-    createInput: function(command) {
+    self.createInput = function(command) {
         command.fullName = 'createInput';
-        const objParent = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
+        const objParent = dom.$(command.id);
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        const target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
         }
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.form.insertInput
@@ -79,17 +71,17 @@ jaxon.cmd.form = {
 
     true - The operation completed successfully.
     */
-    insertInput: function(command) {
+    self.insertInput = function(command) {
         command.fullName = 'insertInput';
-        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
+        const objSibling = dom.$(command.id);
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        const target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.form.insertInputAfter
@@ -108,15 +100,15 @@ jaxon.cmd.form = {
 
     true - The operation completed successfully.
     */
-    insertInputAfter: function(command) {
+    self.insertInputAfter = function(command) {
         command.fullName = 'insertInputAfter';
-        const objSibling = ('string' == typeof command.id) ? jaxon.$(command.id) : command.id;
+        const objSibling = dom.$(command.id);
         const sType = command.type;
         const sName = command.data;
         const sId = command.prop;
-        const target = jaxon.cmd.form.getInput(sType, sName, sId);
+        const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
         return true;
-    }
-};
+    };
+})(jaxon.cmd.form, jaxon.tools.dom, jaxon.config.baseDocument);

@@ -1,4 +1,8 @@
-jaxon.tools.queue = {
+/**
+ * Class: jaxon.tools.queue
+ */
+
+(function(self) {
     /**
      * Construct and return a new queue object.
      *
@@ -6,16 +10,14 @@ jaxon.tools.queue = {
      *
      * @returns object
      */
-    create: function(size) {
-        return {
-            start: 0,
-            count: 0,
-            size: size,
-            end: 0,
-            elements: [],
-            timeout: null
-        }
-    },
+    self.create = size => ({
+        start: 0,
+        count: 0,
+        size: size,
+        end: 0,
+        elements: [],
+        timeout: null
+    });
 
     /**
      * Check id a queue is empty.
@@ -24,9 +26,7 @@ jaxon.tools.queue = {
      *
      * @returns boolean
      */
-    empty: function(oQueue) {
-        return (oQueue.count <= 0);
-    },
+    self.empty = oQueue => oQueue.count <= 0;
 
     /**
      * Check id a queue is empty.
@@ -35,9 +35,7 @@ jaxon.tools.queue = {
      *
      * @returns boolean
      */
-    full: function(oQueue) {
-        return (oQueue.count >= oQueue.size);
-    },
+    self.full = oQueue => oQueue.count >= oQueue.size;
 
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
@@ -47,9 +45,9 @@ jaxon.tools.queue = {
      *
      * @returns integer The number of entries in the queue.
      */
-    push: function(oQueue, obj) {
+    self.push = function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(oQueue)) {
+        if(self.full(oQueue)) {
             throw { code: 10003 };
         }
 
@@ -58,7 +56,7 @@ jaxon.tools.queue = {
             oQueue.end = 0;
         }
         return ++oQueue.count;
-    },
+    };
 
     /**
      * Push a new object into the head of the buffer maintained by the specified queue object.
@@ -70,15 +68,15 @@ jaxon.tools.queue = {
      *
      * @returns integer The number of entries in the queue.
      */
-    pushFront: function(oQueue, obj) {
+    self.pushFront = function(oQueue, obj) {
         // No push if the queue is full.
-        if(jaxon.tools.queue.full(oQueue)) {
+        if(self.full(oQueue)) {
             throw { code: 10003 };
         }
 
         // Simply push if the queue is empty
-        if(jaxon.tools.queue.empty(oQueue)) {
-            return jaxon.tools.queue.push(oQueue, obj);
+        if(self.empty(oQueue)) {
+            return self.push(oQueue, obj);
         }
 
         // Put the object one position back.
@@ -87,7 +85,7 @@ jaxon.tools.queue = {
         }
         oQueue.elements[oQueue.start] = obj;
         return ++oQueue.count;
-    },
+    };
 
     /**
      * Attempt to pop an object off the head of the queue.
@@ -96,8 +94,8 @@ jaxon.tools.queue = {
      *
      * @returns object|null
      */
-    pop: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue)) {
+    self.pop = function(oQueue) {
+        if(self.empty(oQueue)) {
             return null;
         }
 
@@ -108,7 +106,7 @@ jaxon.tools.queue = {
         }
         oQueue.count--;
         return obj;
-    },
+    };
 
     /**
      * Attempt to pop an object off the head of the queue.
@@ -117,10 +115,10 @@ jaxon.tools.queue = {
      *
      * @returns object|null
      */
-    peek: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue)) {
+    self.peek = function(oQueue) {
+        if(self.empty(oQueue)) {
             return null;
         }
         return oQueue.elements[oQueue.start];
-    }
-};
+    };
+})(jaxon.tools.queue);

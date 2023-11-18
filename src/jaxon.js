@@ -20,30 +20,11 @@
 */
 
 /*
-Class: jaxon.callback
-
-The global callback object which is active for every request.
-*/
-jaxon.callback = jaxon.ajax.callback.create();
-
-/*
-Class: jaxon
-*/
-
-/*
 Function: jaxon.request
 
 Initiates a request to the server.
 */
 jaxon.request = jaxon.ajax.request.execute;
-
-/*
-Object: jaxon.response
-
-The response queue that holds response commands, once received
-from the server, until they are processed.
-*/
-// jaxon.response = jaxon.tools.queue.create(jaxon.config.commandQueueSize);
 
 /*
 Function: jaxon.register

@@ -1,11 +1,13 @@
-jaxon.ajax.handler = {
-    /*
-    Object: jaxon.ajax.handler.handlers
+/**
+ * Class: jaxon.ajax.handler
+ */
 
+(function(self, rsp, node, style, script, form, evt, dom, console) {
+    /*
     An array that is used internally in the jaxon.fn.handler object
     to keep track of command handlers that have been registered.
     */
-    handlers: [],
+    const handlers = [];
 
     /*
     Function: jaxon.ajax.handler.execute
@@ -31,27 +33,27 @@ jaxon.ajax.handler = {
     true - The command completed successfully.
     false - The command signalled that it needs to pause processing.
     */
-    execute: function(command) {
-        if (jaxon.ajax.handler.isRegistered(command)) {
+    self.execute = function(command) {
+        if (self.isRegistered(command)) {
             // it is important to grab the element here as the previous command
             // might have just created the element
             if (command.id) {
-                command.target = jaxon.$(command.id);
+                command.target = dom.$(command.id);
             }
             // process the command
-            return jaxon.ajax.handler.call(command);
+            return self.call(command);
         }
         return true;
-    },
+    };
 
     /*
     Function: jaxon.ajax.handler.register
 
     Registers a new command handler.
     */
-    register: function(shortName, func) {
-        jaxon.ajax.handler.handlers[shortName] = func;
-    },
+    self.register = function(shortName, func) {
+        handlers[shortName] = func;
+    };
 
     /*
     Function: jaxon.ajax.handler.unregister
@@ -64,19 +66,17 @@ jaxon.ajax.handler = {
     Returns:
         func - (function): The unregistered function.
     */
-    unregister: function(shortName) {
-        const func = jaxon.ajax.handler.handlers[shortName];
-        delete jaxon.ajax.handler.handlers[shortName];
+    self.unregister = function(shortName) {
+        const func = handlers[shortName];
+        delete handlers[shortName];
         return func;
-    },
+    };
 
     /*
     Function: jaxon.ajax.handler.isRegistered
 
-
     Parameters:
-        command - (object):
-            - cmd: The Name of the function.
+        command - (object): The Name of the function.
 
     Returns:
 
@@ -84,9 +84,9 @@ jaxon.ajax.handler = {
     been created for the specified command (object).
 
     */
-    isRegistered: function(command) {
-        return (jaxon.ajax.handler.handlers[command.cmd]) ? true : false;
-    },
+    self.isRegistered = function(command) {
+        return command.cmd !== undefined && handlers[command.cmd] !== undefined;
+    };
 
     /*
     Function: jaxon.ajax.handler.call
@@ -95,105 +95,105 @@ jaxon.ajax.handler = {
     (you should always check isRegistered before calling this function)
 
     Parameters:
-        command - (object):
-            - cmd: The Name of the function.
+        command - (object): The Name of the function.
 
     Returns:
         true - (boolean) :
     */
-    call: function(command) {
-        return jaxon.ajax.handler.handlers[command.cmd](command);
-    }
-};
+    self.call = function(command) {
+        return handlers[command.cmd](command);
+    };
 
-jaxon.ajax.handler.register('rcmplt', function(command) {
-    jaxon.ajax.response.complete(command.request);
-    return true;
-});
+    self.register('rcmplt', function(command) {
+        rsp.complete(command.request);
+        return true;
+    });
 
-jaxon.ajax.handler.register('css', function(command) {
-    command.fullName = 'includeCSS';
-    if (command.media === undefined)
-        command.media = 'screen';
-    return jaxon.cmd.style.add(command.data, command.media);
-});
-jaxon.ajax.handler.register('rcss', function(command) {
-    command.fullName = 'removeCSS';
-    if (command.media === undefined)
-        command.media = 'screen';
-    return jaxon.cmd.style.remove(command.data, command.media);
-});
-jaxon.ajax.handler.register('wcss', function(command) {
-    command.fullName = 'waitForCSS';
-    return jaxon.cmd.style.waitForCSS(command);
-});
+    self.register('css', function(command) {
+        command.fullName = 'includeCSS';
+        if (command.media === undefined)
+            command.media = 'screen';
+        return style.add(command.data, command.media);
+    });
+    self.register('rcss', function(command) {
+        command.fullName = 'removeCSS';
+        if (command.media === undefined)
+            command.media = 'screen';
+        return style.remove(command.data, command.media);
+    });
+    self.register('wcss', function(command) {
+        command.fullName = 'waitForCSS';
+        return style.waitForCSS(command);
+    });
 
-jaxon.ajax.handler.register('as', function(command) {
-    command.fullName = 'assign/clear';
-    try {
-        return jaxon.cmd.node.assign(command.target, command.prop, command.data);
-    } catch (e) {
-        // do nothing, if the debug module is installed it will
-        // catch and handle the exception
-    }
-    return true;
-});
-jaxon.ajax.handler.register('ap', function(command) {
-    command.fullName = 'append';
-    return jaxon.cmd.node.append(command.target, command.prop, command.data);
-});
-jaxon.ajax.handler.register('pp', function(command) {
-    command.fullName = 'prepend';
-    return jaxon.cmd.node.prepend(command.target, command.prop, command.data);
-});
-jaxon.ajax.handler.register('rp', function(command) {
-    command.fullName = 'replace';
-    return jaxon.cmd.node.replace(command.id, command.prop, command.data);
-});
-jaxon.ajax.handler.register('rm', function(command) {
-    command.fullName = 'remove';
-    return jaxon.cmd.node.remove(command.id);
-});
-jaxon.ajax.handler.register('ce', function(command) {
-    command.fullName = 'create';
-    return jaxon.cmd.node.create(command.id, command.data, command.prop);
-});
-jaxon.ajax.handler.register('ie', function(command) {
-    command.fullName = 'insert';
-    return jaxon.cmd.node.insert(command.id, command.data, command.prop);
-});
-jaxon.ajax.handler.register('ia', function(command) {
-    command.fullName = 'insertAfter';
-    return jaxon.cmd.node.insertAfter(command.id, command.data, command.prop);
-});
+    self.register('as', function(command) {
+        command.fullName = 'assign/clear';
+        try {
+            return node.assign(command.target, command.prop, command.data);
+        } catch (e) {
+            // do nothing, if the debug module is installed it will
+            // catch and handle the exception
+        }
+        return true;
+    });
+    self.register('ap', function(command) {
+        command.fullName = 'append';
+        return node.append(command.target, command.prop, command.data);
+    });
+    self.register('pp', function(command) {
+        command.fullName = 'prepend';
+        return node.prepend(command.target, command.prop, command.data);
+    });
+    self.register('rp', function(command) {
+        command.fullName = 'replace';
+        return node.replace(command.id, command.prop, command.data);
+    });
+    self.register('rm', function(command) {
+        command.fullName = 'remove';
+        return node.remove(command.id);
+    });
+    self.register('ce', function(command) {
+        command.fullName = 'create';
+        return node.create(command.id, command.data, command.prop);
+    });
+    self.register('ie', function(command) {
+        command.fullName = 'insert';
+        return node.insert(command.id, command.data, command.prop);
+    });
+    self.register('ia', function(command) {
+        command.fullName = 'insertAfter';
+        return node.insertAfter(command.id, command.data, command.prop);
+    });
 
-jaxon.ajax.handler.register('c:as', jaxon.cmd.node.contextAssign);
-jaxon.ajax.handler.register('c:ap', jaxon.cmd.node.contextAppend);
-jaxon.ajax.handler.register('c:pp', jaxon.cmd.node.contextPrepend);
+    self.register('c:as', node.contextAssign);
+    self.register('c:ap', node.contextAppend);
+    self.register('c:pp', node.contextPrepend);
 
-jaxon.ajax.handler.register('s', jaxon.cmd.script.sleep);
-jaxon.ajax.handler.register('ino', jaxon.cmd.script.includeScriptOnce);
-jaxon.ajax.handler.register('in', jaxon.cmd.script.includeScript);
-jaxon.ajax.handler.register('rjs', jaxon.cmd.script.removeScript);
-jaxon.ajax.handler.register('wf', jaxon.cmd.script.waitFor);
-jaxon.ajax.handler.register('js', jaxon.cmd.script.execute);
-jaxon.ajax.handler.register('jc', jaxon.cmd.script.call);
-jaxon.ajax.handler.register('sf', jaxon.cmd.script.setFunction);
-jaxon.ajax.handler.register('wpf', jaxon.cmd.script.wrapFunction);
-jaxon.ajax.handler.register('al', jaxon.cmd.script.alert);
-jaxon.ajax.handler.register('cc', jaxon.cmd.script.confirm);
+    self.register('s', script.sleep);
+    self.register('ino', script.includeScriptOnce);
+    self.register('in', script.includeScript);
+    self.register('rjs', script.removeScript);
+    self.register('wf', script.waitFor);
+    self.register('js', script.execute);
+    self.register('jc', script.call);
+    self.register('sf', script.setFunction);
+    self.register('wpf', script.wrapFunction);
+    self.register('al', script.alert);
+    self.register('cc', script.confirm);
 
-jaxon.ajax.handler.register('ci', jaxon.cmd.form.createInput);
-jaxon.ajax.handler.register('ii', jaxon.cmd.form.insertInput);
-jaxon.ajax.handler.register('iia', jaxon.cmd.form.insertInputAfter);
+    self.register('ci', form.createInput);
+    self.register('ii', form.insertInput);
+    self.register('iia', form.insertInputAfter);
 
-jaxon.ajax.handler.register('ev', jaxon.cmd.event.setEvent);
+    self.register('ev', evt.setEvent);
 
-jaxon.ajax.handler.register('ah', jaxon.cmd.event.addHandler);
-jaxon.ajax.handler.register('rh', jaxon.cmd.event.removeHandler);
+    self.register('ah', evt.addHandler);
+    self.register('rh', evt.removeHandler);
 
-jaxon.ajax.handler.register('dbg', function(command) {
-    command.fullName = 'debug message';
-    console.log(command.data);
-    return true;
-});
+    self.register('dbg', function(command) {
+        command.fullName = 'debug message';
+        console.log(command.data);
+        return true;
+    });
+})(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
+    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.tools.dom, console);

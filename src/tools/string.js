@@ -1,4 +1,8 @@
-jaxon.tools.string = {
+/**
+ * Class: jaxon.tools.string
+ */
+
+(function(self) {
     /*
     Function: jaxon.tools.string.doubleQuotes
 
@@ -10,10 +14,8 @@ jaxon.tools.string = {
     Returns:  false on error
     string - A new string with the modifications applied.
     */
-    doubleQuotes: function(haystack) {
-        if (haystack === undefined) return false;
-        return haystack.replace(new RegExp("'", 'g'), '"');
-    },
+    self.doubleQuotes = haystack =>
+        haystack === undefined ? false : haystack.replace(new RegExp("'", 'g'), '"');
 
     /*
     Function: jaxon.tools.string.singleQuotes
@@ -25,10 +27,8 @@ jaxon.tools.string = {
     Returns:
     string - A new string with the modification applied.
     */
-    singleQuotes: function(haystack) {
-        if (haystack === undefined) return false;
-        return haystack.replace(new RegExp('"', 'g'), "'");
-    },
+    self.singleQuotes = haystack =>
+        haystack === undefined ? false : haystack.replace(new RegExp('"', 'g'), "'");
 
     /*
     Function: jaxon.tools.string.stripOnPrefix
@@ -42,13 +42,10 @@ jaxon.tools.string = {
     Returns:
     string - The modified string.
     */
-    stripOnPrefix: function(sEventName) {
+    self.stripOnPrefix = function(sEventName) {
         sEventName = sEventName.toLowerCase();
-        if (0 == sEventName.indexOf('on'))
-            sEventName = sEventName.replace(/on/, '');
-
-        return sEventName;
-    },
+        return sEventName.indexOf('on') === 0 ? sEventName.replace(/on/, '') : sEventName;
+    };
 
     /*
     Function: jaxon.tools.string.addOnPrefix
@@ -62,33 +59,30 @@ jaxon.tools.string = {
     Returns:
     string - The modified string.
     */
-    addOnPrefix: function(sEventName) {
+    self.addOnPrefix = function(sEventName) {
         sEventName = sEventName.toLowerCase();
-        if (0 != sEventName.indexOf('on'))
-            sEventName = 'on' + sEventName;
-
-        return sEventName;
-    }
-};
-
-/**
- * String functions for Jaxon
- * See http://javascript.crockford.com/remedial.html for more explanation
- */
-
-/**
- * Substitute variables in the string
- *
- * @return string
- */
-if (!String.prototype.supplant) {
-    String.prototype.supplant = function(o) {
-        return this.replace(
-            /\{([^{}]*)\}/g,
-            function(a, b) {
-                const r = o[b];
-                return typeof r === 'string' || typeof r === 'number' ? r : a;
-            }
-        );
+        return sEventName.indexOf('on') !== 0 ? 'on' + sEventName : sEventName;
     };
-}
+
+    /**
+     * String functions for Jaxon
+     * See http://javascript.crockford.com/remedial.html for more explanation
+     */
+
+    /**
+     * Substitute variables in the string
+     *
+     * @return string
+     */
+    if (!String.prototype.supplant) {
+        String.prototype.supplant = function(o) {
+            return this.replace(
+                /\{([^{}]*)\}/g,
+                function(a, b) {
+                    const r = o[b];
+                    return typeof r === 'string' || typeof r === 'number' ? r : a;
+                }
+            );
+        };
+    }
+})(jaxon.tools.string);

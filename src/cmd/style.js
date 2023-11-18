@@ -1,4 +1,8 @@
-jaxon.cmd.style = {
+/**
+ * Class: jaxon.cmd.style
+ */
+
+(function(self, delay, baseDocument) {
     /*
     Function: jaxon.cmd.style.add
 
@@ -13,9 +17,8 @@ jaxon.cmd.style = {
 
     true - The operation completed successfully.
     */
-    add: function(fileName, media) {
-        const oDoc = jaxon.config.baseDocument;
-        const oHeads = oDoc.getElementsByTagName('head');
+    self.add = function(fileName, media) {
+        const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const found = oHead.getElementsByTagName('link')
             .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
@@ -23,14 +26,14 @@ jaxon.cmd.style = {
             return true;
         }
 
-        const oCSS = oDoc.createElement('link');
+        const oCSS = baseDocument.createElement('link');
         oCSS.rel = 'stylesheet';
         oCSS.type = 'text/css';
         oCSS.href = fileName;
         oCSS.media = media;
         oHead.appendChild(oCSS);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.style.remove
@@ -45,9 +48,8 @@ jaxon.cmd.style = {
 
     true - The operation completed successfully.
     */
-    remove: function(fileName, media) {
-        const oDoc = jaxon.config.baseDocument;
-        const oHeads = oDoc.getElementsByTagName('head');
+    self.remove = function(fileName, media) {
+        const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
         oLinks.filter(link = oLinks[i].href.indexOf(fileName) >= 0 && oLinks[i].media == media)
@@ -71,10 +73,10 @@ jaxon.cmd.style = {
     true - The .css files appear to be loaded.
     false - The .css files do not appear to be loaded and the timeout has not expired.
     */
-    waitForCSS: function(command) {
-        const oDocSS = jaxon.config.baseDocument.styleSheets;
+    self.waitForCSS = function(command) {
+        const oDocSS = baseDocument.styleSheets;
         const ssLoaded = oDocSS
-            .map(oDoc => oDoc.cssRules.length ?? oDoc.rules.length ?? 0)
+            .map(styleSheet => styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0)
             .every(enabled => enabled !== 0);
         if (ssLoaded) {
             return;
@@ -82,12 +84,11 @@ jaxon.cmd.style = {
 
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.cmd.delay.retry(command, command.prop)) {
-            jaxon.cmd.delay.setWakeup(command.response, 10);
+        if (delay.retry(command, command.prop)) {
+            delay.setWakeup(command.response, 10);
             return false;
         }
-
-        // give up, continue processing queue
+        // Give up, continue processing queue
         return true;
-    }
-};
+    };
+})(jaxon.cmd.style, jaxon.cmd.delay, jaxon.config.baseDocument);

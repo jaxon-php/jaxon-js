@@ -1,4 +1,84 @@
-jaxon.tools.form = {
+/**
+ * Class: jaxon.tools.form
+ */
+
+(function(self, dom) {
+    /*
+    Function: _getValue
+
+    Used internally by <_getValues> to extract a single form value.
+    This will detect the type of element (radio, checkbox, multi-select) and add it's value(s) to the form values array.
+
+    Modified version for multidimensional arrays
+    */
+    const _getValue = function(aFormValues, child, submitDisabledElements, prefix) {
+        if (!child.name || 'PARAM' === child.tagName)
+            return;
+        if (!submitDisabledElements && child.disabled)
+            return;
+        if (prefix !== child.name.substring(0, prefix.length))
+            return;
+        if ((child.type === 'radio' || child.type === 'checkbox') && !child.checked)
+            return;
+        if (child.type === 'file')
+            return;
+
+        const name = child.name;
+        const values = child.type !== 'select-multiple' ? child.value :
+            child.options.filter(option => option.selected).map(option => option.value);
+        const keyBegin = name.indexOf('[');
+
+        if (keyBegin < 0) {
+            aFormValues[name] = values;
+            return;
+        }
+
+        // Parse names into brackets
+        let k = name.substring(0, keyBegin);
+        let a = name.substring(keyBegin);
+        aFormValues[k] = aFormValues[k] || {};
+        let p = aFormValues; // pointer reset
+        while (a.length > 0) {
+            const sa = a.substring(0, a.indexOf(']') + 1);
+            const lastKey = k; //save last key
+            const lastRef = p; //save last pointer
+
+            a = a.substring(a.indexOf(']') + 1);
+            p = p[k];
+            k = sa.substring(1, sa.length - 2);
+            if (k === '') {
+                if ('select-multiple' === child.type) {
+                    k = lastKey; //restore last key
+                    p = lastRef;
+                } else {
+                    k = p.length;
+                }
+            }
+            if (k === undefined) {
+                /*check against the global aFormValues Stack wich is the next(last) usable index */
+                k = Object.keys(lastRef[lastKey]).length;
+            }
+            p[k] = p[k] || {};
+        }
+        p[k] = values;
+    };
+
+    /*
+    Function: _getValues
+
+    Used internally by <jaxon.tools.form.getValues> to recursively get the value
+    of form elements.  This function will extract all form element values
+    regardless of the depth of the element within the form.
+    */
+    const _getValues = function(aFormValues, children, submitDisabledElements, prefix) {
+        children.forEach(child => {
+            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
+                _getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
+            }
+           _getValue(aFormValues, child, submitDisabledElements, prefix);
+        });
+    };
+
     /*
     Function: jaxon.tools.form.getValues
 
@@ -12,129 +92,16 @@ jaxon.tools.form = {
     Returns:
     An associative array of form element id and value.
     */
-    getValues: function(parent) {
+    self.getValues = function(parent) {
         const submitDisabledElements = (arguments.length > 1 && arguments[1] == true);
-
         const prefix = (arguments.length > 2) ? arguments[2] : '';
-
-        if ('string' == typeof parent)
-            parent = jaxon.$(parent);
-
+        if (typeof parent === 'string') {
+            parent = dom.$(parent);
+        }
         const aFormValues = {};
-
-        //        JW: Removing these tests so that form values can be retrieved from a specified
-        //        container element like a DIV, regardless of whether they exist in a form or not.
-        //
-        //        if (parent.tagName)
-        //            if ('FORM' == parent.tagName.toUpperCase())
-        if (parent && parent.childNodes)
-            jaxon.tools.form._getValues(aFormValues, parent.childNodes, submitDisabledElements, prefix);
-
+        if (parent && parent.childNodes) {
+            _getValues(aFormValues, parent.childNodes, submitDisabledElements, prefix);
+        }
         return aFormValues;
-    },
-
-    /*
-    Function: jaxon.tools.form._getValues
-
-    Used internally by <jaxon.tools.form.getValues> to recursively get the value
-    of form elements.  This function will extract all form element values
-    regardless of the depth of the element within the form.
-    */
-    _getValues: function(aFormValues, children, submitDisabledElements, prefix) {
-        const iLen = children.length;
-        for (let i = 0; i < iLen; ++i) {
-            const child = children[i];
-            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple')
-                jaxon.tools.form._getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
-            jaxon.tools.form._getValue(aFormValues, child, submitDisabledElements, prefix);
-        }
-    },
-
-    /*
-    Function: jaxon.tools.form._getValue
-
-    Used internally by <jaxon.tools.form._getValues> to extract a single form value.
-    This will detect the type of element (radio, checkbox, multi-select) and add it's value(s) to the form values array.
-
-    Modified version for multidimensional arrays
-    */
-    _getValue: function(aFormValues, child, submitDisabledElements, prefix) {
-        if (!child.name)
-            return;
-
-        if ('PARAM' == child.tagName) return;
-
-        if (child.disabled)
-            if (true == child.disabled)
-                if (false == submitDisabledElements)
-                    return;
-
-        if (prefix != child.name.substring(0, prefix.length))
-            return;
-
-        if (child.type)
-        {
-            if (child.type == 'radio' || child.type == 'checkbox')
-                if (false == child.checked)
-                    return;
-            if (child.type == 'file')
-                return;
-        }
-
-        const name = child.name;
-
-        let values = [];
-
-        if ('select-multiple' == child.type) {
-            const jLen = child.length;
-            for (let j = 0; j < jLen; ++j) {
-                const option = child.options[j];
-                if (true == option.selected)
-                    values.push(option.value);
-            }
-        } else {
-            values = child.value;
-        }
-
-        const keyBegin = name.indexOf('[');
-        /* exists name/object before the Bracket?*/
-        if (0 <= keyBegin) {
-            let n = name;
-            let k = n.substr(0, n.indexOf('['));
-            let a = n.substr(n.indexOf('['));
-            if (aFormValues[k] === undefined)
-                aFormValues[k] = {};
-            let p = aFormValues; // pointer reset
-            while (a.length != 0) {
-                const sa = a.substr(0, a.indexOf(']') + 1);
-
-                const lk = k; //save last key
-                const lp = p; //save last pointer
-
-                a = a.substr(a.indexOf(']') + 1);
-                p = p[k];
-                k = sa.substr(1, sa.length - 2);
-                if (k == '') {
-                    if ('select-multiple' == child.type) {
-                        k = lk; //restore last key
-                        p = lp;
-                    } else {
-                        k = p.length;
-                    }
-                }
-                if (k === undefined) {
-                    /*check against the global aFormValues Stack wich is the next(last) usable index */
-                    k = 0;
-                    for (let i in lp[lk]) k++;
-                }
-                if (p[k] === undefined) {
-
-                    p[k] = {};
-                }
-            }
-            p[k] = values;
-        } else {
-            aFormValues[name] = values;
-        }
-    }
-};
+    };
+})(jaxon.tools.form, jaxon.tools.dom);

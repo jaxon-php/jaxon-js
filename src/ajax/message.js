@@ -1,4 +1,8 @@
-jaxon.ajax.message = {
+/**
+ * Class: jaxon.ajax.parameters
+ */
+
+(function(self) {
     /*
     Function: jaxon.ajax.message.success
 
@@ -8,9 +12,7 @@ jaxon.ajax.message = {
         content - (string):  The message content.
         title - (string):  The message title.
     */
-    success: function(content, title) {
-        alert(content);
-    },
+    self.success = (content, title) => alert(content);
 
     /*
     Function: jaxon.ajax.message.info
@@ -21,9 +23,7 @@ jaxon.ajax.message = {
         content - (string):  The message content.
         title - (string):  The message title.
     */
-    info: function(content, title) {
-        alert(content);
-    },
+    self.info = (content, title) => alert(content);
 
     /*
     Function: jaxon.ajax.message.warning
@@ -34,9 +34,7 @@ jaxon.ajax.message = {
         content - (string):  The message content.
         title - (string):  The message title.
     */
-    warning: function(content, title) {
-        alert(content);
-    },
+    self.warning = (content, title) => alert(content);
 
     /*
     Function: jaxon.ajax.message.error
@@ -47,9 +45,7 @@ jaxon.ajax.message = {
         content - (string):  The message content.
         title - (string):  The message title.
     */
-    error: function(content, title) {
-        alert(content);
-    },
+    self.error = (content, title) => alert(content);
 
     /*
     Function: jaxon.ajax.message.confirm
@@ -62,13 +58,11 @@ jaxon.ajax.message = {
         yesCallback - (Function): The function to call if the user answers yes.
         noCallback - (Function): The function to call if the user answers no.
     */
-    confirm: function(question, title, yesCallback, noCallback) {
+    self.confirm = function(question, title, yesCallback, noCallback) {
         if(confirm(question)) {
             yesCallback();
             return;
         }
-        if(noCallback !== undefined) {
-            noCallback();
-        }
-    }
-};
+        noCallback && noCallback();
+    };
+})(jaxon.ajax.message);

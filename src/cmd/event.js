@@ -1,4 +1,8 @@
-jaxon.cmd.event = {
+/**
+ * Class: jaxon.cmd.event
+ */
+
+(function(self, dom, str, script) {
     /**
      *  Set an event handler.
      *
@@ -9,16 +13,26 @@ jaxon.cmd.event = {
      *
      * @returns {true} - The operation completed successfully.
      */
-    setEvent: function(command) {
+    self.setEvent = function(command) {
         command.fullName = 'setEvent';
-        const sEvent = jaxon.tools.string.addOnPrefix(command.prop);
-        const sCode = jaxon.tools.string.doubleQuotes(command.data);
+        const sEvent = str.addOnPrefix(command.prop);
+        const sCode = str.doubleQuotes(command.data);
         // force to get the target
-        const oTarget = jaxon.$(command.id);
-        jaxon.tools.dom.createFunction(`(e) => { ${sCode} }`);
-        oTarget[sEvent] = jaxon.cmd.script.context.delegateCall;
+        const oTarget = dom.$(command.id);
+        dom.createFunction(`(e) => { ${sCode} }`);
+        oTarget[sEvent] = script.context.delegateCall;
         return true;
-    },
+    };
+
+    const getName = window.addEventListener ? str.stripOnPrefix : str.addOnPrefix;
+
+    const _addHandler = window.addEventListener ?
+        (target, event, func) => target.addEventListener(event, dom.findFunction(func), false) :
+        (target, event, func) => target.attachEvent(event, dom.findFunction(func));
+
+    const _removeHandler = window.addEventListener ?
+        (target, event, func) => target.removeEventListener(event, dom.findFunction(func), false) :
+        (target, event, func) => target.detachEvent(event, dom.findFunction(func));
 
     /**
      * Add an event handler to the specified target.
@@ -30,14 +44,14 @@ jaxon.cmd.event = {
      *
      * @returns {true} - The operation completed successfully.
      */
-    addHandler: function(command) {
+    self.addHandler = function(command) {
         command.fullName = 'addHandler';
         const sFuncName = command.data;
-        const sEvent = jaxon.cmd.event.getName(command.prop);
+        const sEvent = getName(command.prop);
         // force to get the target
-        const oTarget = jaxon.$(command.id);
-        return jaxon.cmd.event._addHandler(oTarget, sEvent, sFuncName);
-    },
+        const oTarget = dom.$(command.id);
+        return _addHandler(oTarget, sEvent, sFuncName);
+    };
 
     /**
      * Remove an event handler from an target.
@@ -49,42 +63,12 @@ jaxon.cmd.event = {
      *
      * @returns {true} - The operation completed successfully.
      */
-    removeHandler: function(command) {
+    self.removeHandler = function(command) {
         command.fullName = 'removeHandler';
         const sFuncName = command.data;
-        const sEvent = jaxon.cmd.event.getName(command.prop);
+        const sEvent = getName(command.prop);
         // force to get the target
-        const oTarget = jaxon.$(command.id);
-        return jaxon.cmd.event._removeHandler(oTarget, sEvent, sFuncName);
-    }
-};
-
-if(window.addEventListener) {
-    jaxon.cmd.event.getName = function(event) {
-        return jaxon.tools.string.stripOnPrefix(event);
+        const oTarget = dom.$(command.id);
+        return _removeHandler(oTarget, sEvent, sFuncName);
     };
-
-    jaxon.cmd.event._addHandler = function(target, event, func) {
-        target.addEventListener(event, jaxon.tools.dom.findFunction(func), false);
-        return true;
-    };
-
-    jaxon.cmd.event._removeHandler = function(target, event, func) {
-        target.removeEventListener(event, jaxon.tools.dom.findFunction(func), false);
-        return true;
-    };
-} else {
-    jaxon.cmd.event.getName = function(event) {
-        return jaxon.tools.string.addOnPrefix(event);
-    };
-
-    jaxon.cmd.event._addHandler = function(target, event, func) {
-        target.attachEvent(event, jaxon.tools.dom.findFunction(func));
-        return true;
-    };
-
-    jaxon.cmd.event._removeHandler = function(target, event, func) {
-        target.detachEvent(event, jaxon.tools.dom.findFunction(func));
-        return true;
-    };
-}
+})(jaxon.cmd.event, jaxon.tools.dom, jaxon.tools.string, jaxon.cmd.script);

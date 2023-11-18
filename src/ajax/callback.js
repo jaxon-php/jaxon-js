@@ -1,40 +1,9 @@
-jaxon.ajax.callback = {
+/**
+ * Class: jaxon.ajax.callback
+ */
+
+(function(self, config) {
     /*
-    Function: jaxon.ajax.callback.create
-
-    Create a blank callback object.
-    Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
-
-    Returns:
-
-    object - The callback object.
-    */
-    create: function() {
-        const xc = jaxon.config;
-        const xcb = jaxon.ajax.callback;
-
-        return {
-            timers: {
-                onResponseDelay: xcb.setupTimer((arguments.length > 0) ?
-                    arguments[0] : xc.defaultResponseDelayTime),
-                onExpiration: xcb.setupTimer((arguments.length > 1) ?
-                    arguments[1] : xc.defaultExpirationTime),
-            },
-            onPrepare: null,
-            onRequest: null,
-            onResponseDelay: null,
-            onExpiration: null,
-            beforeResponseProcessing: null,
-            onFailure: null,
-            onRedirect: null,
-            onSuccess: null,
-            onComplete: null,
-        };
-    },
-
-    /*
-    Function: jaxon.ajax.callback.setupTimer
-
     Create a timer to fire an event in the future.
     This will be used fire the onRequestDelay and onExpiration events.
 
@@ -46,33 +15,46 @@ jaxon.ajax.callback = {
 
     object - A callback timer object.
     */
-    setupTimer: function(iDelay) {
+    const setupTimer = function(iDelay) {
         return { timer: null, delay: iDelay };
-    },
+    };
 
     /*
-    Function: jaxon.ajax.callback.clearTimer
+    Function: jaxon.ajax.callback.create
 
-    Clear a callback timer for the specified function.
+    Create a blank callback object.
+    Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
 
-    Parameters:
+    Returns:
 
-    oCallback - (object):  The callback object (or objects) that
-        contain the specified function timer to be cleared.
-    sFunction - (string):  The name of the function associated
-        with the timer to be cleared.
+    object - The callback object.
     */
-    clearTimer: function(oCallback, sFunction) {
-        // The callback object is recognized by the presence of the timers attribute.
-        if (oCallback.timers === undefined) {
-            oCallback.forEach(oCb => jaxon.ajax.callback.clearTimer(oCb, sFunction));
-            return;
-        }
+    self.create = function() {
+        return {
+            timers: {
+                onResponseDelay: setupTimer((arguments.length > 0) ?
+                    arguments[0] : config.defaultResponseDelayTime),
+                onExpiration: setupTimer((arguments.length > 1) ?
+                    arguments[1] : config.defaultExpirationTime),
+            },
+            onPrepare: null,
+            onRequest: null,
+            onResponseDelay: null,
+            onExpiration: null,
+            beforeResponseProcessing: null,
+            onFailure: null,
+            onRedirect: null,
+            onSuccess: null,
+            onComplete: null,
+        };
+    };
 
-        if (oCallback.timers[sFunction] !== undefined) {
-            clearTimeout(oCallback.timers[sFunction].timer);
-        }
-    },
+    /*
+    Object: jaxon.ajax.callback.callback
+
+    The global callback object which is active for every request.
+    */
+    self.callback = self.create();
 
     /*
     Function: jaxon.ajax.callback.execute
@@ -86,10 +68,10 @@ jaxon.ajax.callback = {
     sFunction - (string):  The name of the event to be triggered.
     args - (object):  The request object for this request.
     */
-    execute: function(oCallback, sFunction, args) {
+    self.execute = function(oCallback, sFunction, args) {
         // The callback object is recognized by the presence of the timers attribute.
         if (oCallback.timers === undefined) {
-            oCallback.forEach(oCb => jaxon.ajax.callback.execute(oCb, sFunction, args));
+            oCallback.forEach(oCb => self.execute(oCb, sFunction, args));
             return;
         }
 
@@ -105,5 +87,29 @@ jaxon.ajax.callback = {
         oCallback.timers[sFunction].timer = setTimeout(function() {
             oCallback[sFunction](args);
         }, oCallback.timers[sFunction].delay);
-    }
-};
+    };
+
+    /*
+    Function: jaxon.ajax.callback.clearTimer
+
+    Clear a callback timer for the specified function.
+
+    Parameters:
+
+    oCallback - (object):  The callback object (or objects) that
+        contain the specified function timer to be cleared.
+    sFunction - (string):  The name of the function associated
+        with the timer to be cleared.
+    */
+    self.clearTimer = function(oCallback, sFunction) {
+        // The callback object is recognized by the presence of the timers attribute.
+        if (oCallback.timers === undefined) {
+            oCallback.forEach(oCb => self.clearTimer(oCb, sFunction));
+            return;
+        }
+
+        if (oCallback.timers[sFunction] !== undefined) {
+            clearTimeout(oCallback.timers[sFunction].timer);
+        }
+    };
+})(jaxon.ajax.callback, jaxon.config);

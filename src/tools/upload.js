@@ -1,10 +1,14 @@
-jaxon.tools.upload = {
-    /*
-    Function: jaxon.tools.upload._initialize
+/**
+ * Class: jaxon.tools.upload
+ */
 
-    Check upload data and initialize the request.
-    */
-    _initialize: function(oRequest) {
+(function(self, dom, console) {
+    /**
+     * @param {object} oRequest
+     *
+     * @return {bool}
+     */
+    const initRequest = function(oRequest) {
         if (!oRequest.upload) {
             return false;
         }
@@ -14,7 +18,7 @@ jaxon.tools.upload = {
             input: null,
             form: null,
         };
-        const input = jaxon.tools.dom.$(oRequest.upload.id);
+        const input = dom.$(oRequest.upload.id);
 
         if (!input) {
             console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
@@ -35,22 +39,20 @@ jaxon.tools.upload = {
         oRequest.upload.input = input;
         oRequest.upload.form = input.form;
         return true;
-    },
+    };
 
-    /*
-    Function: jaxon.tools.upload.initialize
-
-    Check upload data and initialize the request.
-
-    Parameters:
-
-    oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
-    */
-    initialize: function(oRequest) {
+    /**
+     * Check upload data and initialize the request.
+     *
+     * @param {object} oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     *
+     * @return {void}
+     */
+    self.initialize = function(oRequest) {
         // The content type shall not be set when uploading a file with FormData.
         // It will be set by the browser.
-        if (!jaxon.tools.upload._initialize(oRequest)) {
+        if (!initRequest(oRequest)) {
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-};
+})(jaxon.tools.upload, jaxon.tools.dom, console);

@@ -1,4 +1,8 @@
-jaxon.cmd.node = {
+/**
+ * Class: jaxon.cmd.node
+ */
+
+(function(self, dom, baseDocument) {
     /*
     Function: jaxon.cmd.node.assign
 
@@ -14,8 +18,8 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    assign: function(element, property, data) {
-        element = jaxon.$(element);
+    self.assign = function(element, property, data) {
+        element = dom.$(element);
         if (property === 'innerHTML') {
             element.innerHTML = data;
             return true;
@@ -25,13 +29,13 @@ jaxon.cmd.node = {
             return true;
         }
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = data;
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.append
@@ -48,8 +52,8 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    append: function(element, property, data) {
-        element = jaxon.$(element);
+    self.append = function(element, property, data) {
+        element = dom.$(element);
         if (property === 'innerHTML') {
             element.innerHTML = element.innerHTML + data;
             return true;
@@ -59,13 +63,13 @@ jaxon.cmd.node = {
             return true;
         }
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.prepend
@@ -82,8 +86,8 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    prepend: function(element, property, data) {
-        element = jaxon.$(element);
+    self.prepend = function(element, property, data) {
+        element = dom.$(element);
         if (property === 'innerHTML') {
             element.innerHTML = data + element.innerHTML;
             return true;
@@ -93,13 +97,13 @@ jaxon.cmd.node = {
             return true;
         }
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(element, property);
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.replace
@@ -116,12 +120,12 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    replace: function(element, sAttribute, aData) {
+    self.replace = function(element, sAttribute, aData) {
         const sReplace = aData['r'];
         const sSearch = (sAttribute === 'innerHTML') ?
-            jaxon.tools.dom.getBrowserHTML(aData['s']) : aData['s'];
-        element = jaxon.$(element);
-        const [innerElement, innerAttribute] = jaxon.tools.dom.getInnerObject(element, sAttribute);
+            dom.getBrowserHTML(aData['s']) : aData['s'];
+        element = dom.$(element);
+        const [innerElement, innerAttribute] = dom.getInnerObject(element, sAttribute);
         if(!innerElement) {
             return true;
         }
@@ -146,12 +150,12 @@ jaxon.cmd.node = {
             newTxt.push(txt);
             newTxt = newTxt.join('');
 
-            if (bFunction || jaxon.tools.dom.willChange(element, sAttribute, newTxt)) {
+            if (bFunction || dom.willChange(element, sAttribute, newTxt)) {
                 innerElement[innerAttribute] = newTxt;
             }
         }
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.remove
@@ -166,13 +170,13 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    remove: function(element) {
-        element = jaxon.$(element);
+    self.remove = function(element) {
+        element = dom.$(element);
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.create
@@ -190,16 +194,16 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    create: function(element, sTag, sId) {
-        element = jaxon.$(element);
+    self.create = function(element, sTag, sId) {
+        element = dom.$(element);
         if (!element) {
             return true;
         }
-        const target = jaxon.config.baseDocument.createElement(sTag);
+        const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.appendChild(target);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.insert
@@ -217,16 +221,16 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    insert: function(element, sTag, sId) {
-        element = jaxon.$(element);
+    self.insert = function(element, sTag, sId) {
+        element = dom.$(element);
         if (!element || !element.parentNode) {
             return true;
         }
-        const target = jaxon.config.baseDocument.createElement(sTag);
+        const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.parentNode.insertBefore(target, element);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.insertAfter
@@ -244,16 +248,16 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    insertAfter: function(element, sTag, sId) {
-        element = jaxon.$(element);
+    self.insertAfter = function(element, sTag, sId) {
+        element = dom.$(element);
         if (!element || !element.parentNode) {
             return true;
         }
-        const target = jaxon.config.baseDocument.createElement(sTag);
+        const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.parentNode.insertBefore(target, element.nextSibling);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.contextAssign
@@ -262,8 +266,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    command - (object):  The response command object which will contain the
-        following:
+    command - (object):  The response command object which will contain the following:
 
         - command.prop: (string):  The name of the member to assign.
         - command.data: (string or object):  The value to assign to the member.
@@ -274,16 +277,16 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    contextAssign: function(command) {
+    self.contextAssign = function(command) {
         command.fullName = 'context assign';
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = command.data;
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.contextAppend
@@ -292,8 +295,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    command - (object):  The response command object which will contain the
-        following:
+    command - (object):  The response command object which will contain the following:
 
         - command.prop: (string):  The name of the member to append to.
         - command.data: (string or object):  The value to append to the member.
@@ -304,16 +306,16 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    contextAppend: function(command) {
+    self.contextAppend = function(command) {
         command.fullName = 'context append';
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = innerElement[innerProperty] + command.data;
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.node.contextPrepend
@@ -322,8 +324,7 @@ jaxon.cmd.node = {
 
     Parameters:
 
-    command - (object):  The response command object which will contain the
-        following:
+    command - (object):  The response command object which will contain the following:
 
         - command.prop: (string):  The name of the member to prepend to.
         - command.data: (string or object):  The value to prepend to the member.
@@ -334,14 +335,14 @@ jaxon.cmd.node = {
 
     true - The operation completed successfully.
     */
-    contextPrepend: function(command) {
+    self.contextPrepend = function(command) {
         command.fullName = 'context prepend';
 
-        const [innerElement, innerProperty] = jaxon.tools.dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
         if(!innerElement) {
             return true;
         }
         innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
-    }
-};
+    };
+})(jaxon.cmd.node, jaxon.tools.dom, jaxon.config.baseDocument);

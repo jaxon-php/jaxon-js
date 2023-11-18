@@ -1,45 +1,77 @@
 /*
-    Class: jaxon.config
-
-    This class contains all the default configuration settings.  These
-    are application level settings; however, they can be overridden
-    by including a jaxon.config definition prior to including the
-    <jaxon_core.js> file, or by specifying the appropriate configuration
-    options on a per call basis.
+Class: jaxon
 */
-var jaxon = {};
-
-/*
-Class: jaxon.debug
-*/
-jaxon.debug = {
+var jaxon = {
     /*
-    Class: jaxon.debug.verbose
-
-    Provide a high level of detail which can be used to debug hard to find problems.
+    Class: jaxon.debug
     */
-    verbose: {}
+    debug: {
+        /*
+        Class: jaxon.debug.verbose
+
+        Provide a high level of detail which can be used to debug hard to find problems.
+        */
+        verbose: {},
+    },
+
+    /*
+    Class: jaxon.ajax
+    */
+    ajax: {
+        callback: {},
+
+        handler: {},
+
+        message: {},
+
+        parameters: {},
+
+        request: {},
+
+        response: {},
+    },
+
+    /*
+    Class: jaxon.cmd
+
+    Contains the functions for page content, layout, functions and events.
+    */
+    cmd: {
+        delay: {},
+
+        event: {},
+
+        form: {},
+
+        node: {},
+
+        script: {},
+
+        style: {},
+    },
+
+    /*
+    Class: jaxon.tools
+
+    This contains utility functions which are used throughout the jaxon core.
+    */
+    tools: {
+        dom: {},
+
+        form: {},
+
+        queue: {},
+
+        string: {},
+
+        upload: {},
+    },
+
+    /*
+    Class: jaxon.dom
+    */
+    dom: {},
 };
-
-/*
-Class: jaxon.ajax
-*/
-jaxon.ajax = {};
-
-/*
-Class: jaxon.tools
-
-This contains utility functions which are used throughout
-the jaxon core.
-*/
-jaxon.tools = {};
-
-/*
-Class: jaxon.cmd
-
-Contains the functions for page content, layout, functions and events.
-*/
-jaxon.cmd = {};
 
 /*
     Class: jaxon.config
@@ -189,8 +221,7 @@ jaxon.config = {
     Object: defaultReturnValue
 
     The value returned by <jaxon.request> when in asynchronous
-    mode, or when a syncrhonous call does not specify the
-    return value.
+    mode, or when a syncrhonous call does not specify the return value.
     */
     'defaultReturnValue': false,
 

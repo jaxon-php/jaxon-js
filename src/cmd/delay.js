@@ -1,4 +1,8 @@
-jaxon.cmd.delay = {
+/**
+ * Class: jaxon.cmd.delay
+ */
+
+(function(self, rsp, queue, msg) {
     /**
      * Attempt to pop the next asynchronous request.
      *
@@ -6,14 +10,9 @@ jaxon.cmd.delay = {
      *
      * @returns object|null
      */
-    popAsyncRequest: function(oQueue) {
-        if(jaxon.tools.queue.empty(oQueue) ||
-            jaxon.tools.queue.peek(oQueue).mode === 'synchronous')
-        {
-            return null;
-        }
-        return jaxon.tools.queue.pop(oQueue);
-    },
+    self.popAsyncRequest = oQueue =>
+        queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
+        null : queue.pop(oQueue);
 
     /**
      * Maintains a retry counter for the given object.
@@ -25,7 +24,7 @@ jaxon.cmd.delay = {
      *      true - The object has not exhausted all the retries.
      *      false - The object has exhausted the retry count specified.
      */
-    retry: function(command, count) {
+    self.retry = function(command, count) {
         let retries = command.retries;
         if(retries) {
             --retries;
@@ -39,7 +38,7 @@ jaxon.cmd.delay = {
         // This command must be processed again.
         command.requeue = true;
         return true;
-    },
+    };
 
     /**
      * Set or reset a timeout that is used to restart processing of the queue.
@@ -50,15 +49,15 @@ jaxon.cmd.delay = {
      * @param response object   The queue to process.
      * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
      */
-    setWakeup: function(response, when) {
+    self.setWakeup = function(response, when) {
         if (response.timeout !== null) {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
         response.timout = setTimeout(function() {
-            jaxon.ajax.response.process(response);
+            rsp.process(response);
         }, when);
-    },
+    };
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
@@ -69,12 +68,12 @@ jaxon.cmd.delay = {
      *
      * @returns boolean
      */
-    confirmCallback: function(command, count, skip) {
+    const confirmCallback = function(command, count, skip) {
         if(skip === true) {
             // The last entry in the queue is not a user command.
             // Thus it cannot be skipped.
             while (count > 0 && command.response.count > 1 &&
-                jaxon.tools.queue.pop(command.response) !== null) {
+                queue.pop(command.response) !== null) {
                 --count;
             }
         }
@@ -82,12 +81,12 @@ jaxon.cmd.delay = {
         // before of after the confirm function returns;
         if(command.requeue === true) {
             // Before => the processing is delayed.
-            jaxon.cmd.delay.setWakeup(command.response, 30);
+            self.setWakeup(command.response, 30);
             return;
         }
         // After => the processing is executed.
-        jaxon.ajax.response.process(command.response);
-    },
+        rsp.process(command.response);
+    };
 
     /**
      * Ask a confirm question and skip the specified number of commands if the answer is ok.
@@ -103,17 +102,17 @@ jaxon.cmd.delay = {
      *
      * @returns boolean
      */
-    confirm: function(command, count, question) {
+    self.confirm = function(command, count, question) {
         // This will be checked in the callback.
         command.requeue = true;
-        jaxon.ajax.message.confirm(question, '', function() {
-            jaxon.cmd.delay.confirmCallback(command, count, false);
+        msg.confirm(question, '', function() {
+            confirmCallback(command, count, false);
         }, function() {
-            jaxon.cmd.delay.confirmCallback(command, count, true);
+            confirmCallback(command, count, true);
         });
 
         // This command must not be processed again.
         command.requeue = false;
         return false;
-    }
-};
+    };
+})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.tools.queue, jaxon.ajax.message);

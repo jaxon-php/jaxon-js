@@ -1,4 +1,8 @@
-jaxon.cmd.script = {
+/**
+ * Class: jaxon.cmd.script
+ */
+
+(function(self, delay, msg, dom, baseDocument, window) {
     /*
     Function: jaxon.cmd.script.includeScriptOnce
 
@@ -14,20 +18,19 @@ jaxon.cmd.script = {
 
     true - The reference exists or was added.
     */
-    includeScriptOnce: function(command) {
+    self.includeScriptOnce = function(command) {
         command.fullName = 'includeScriptOnce';
 
         const fileName = command.data;
         // Check for existing script tag for this file.
-        const oDoc = jaxon.config.baseDocument;
-        const loadedScripts = oDoc.getElementsByTagName('script');
+        const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loaded = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
-        if (loaded) {
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        if (loadedScript) {
             return true;
         }
-        return jaxon.cmd.script.includeScript(command);
-    },
+        return self.includeScript(command);
+    };
 
     /*
     Function: jaxon.cmd.script.includeScript
@@ -43,12 +46,11 @@ jaxon.cmd.script = {
 
     true - The reference was added.
     */
-    includeScript: function(command) {
+    self.includeScript = function(command) {
         command.fullName = 'includeScript';
 
-        const oDoc = jaxon.config.baseDocument;
-        const objHead = oDoc.getElementsByTagName('head');
-        const objScript = oDoc.createElement('script');
+        const objHead = baseDocument.getElementsByTagName('head');
+        const objScript = baseDocument.createElement('script');
         objScript.src = command.data;
         objScript.type = command.type || 'text/javascript';
         if (command.elm_id) {
@@ -56,7 +58,7 @@ jaxon.cmd.script = {
         }
         objHead[0].appendChild(objScript);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.removeScript
@@ -71,23 +73,22 @@ jaxon.cmd.script = {
 
     true - The script was not found or was removed.
     */
-    removeScript: function(command) {
+    self.removeScript = function(command) {
         command.fullName = 'removeScript';
         const fileName = command.data;
-        const oDoc = jaxon.config.baseDocument;
-        const loadedScripts = oDoc.getElementsByTagName('script');
+        const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loaded = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
-        if (!loaded) {
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        if (!loadedScript) {
             return true;
         }
         if (command.unld) {
             // Execute the provided unload function.
-            jaxon.cmd.script.execute({ data: command.unld, context: window });
+            self.execute({ data: command.unld, context: window });
         }
-        script.parentNode.removeChild(script);
+        loadedScript.parentNode.removeChild(loadedScript);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.sleep
@@ -106,17 +107,17 @@ jaxon.cmd.script = {
     true - The sleep operation completed.
     false - The sleep time has not yet expired, continue sleeping.
     */
-    sleep: function(command) {
+    self.sleep = function(command) {
         command.fullName = 'sleep';
         // inject a delay in the queue processing
         // handle retry counter
-        if (jaxon.cmd.delay.retry(command, command.prop)) {
-            jaxon.cmd.delay.setWakeup(command.response, 100);
+        if (delay.retry(command, command.prop)) {
+            delay.setWakeup(command.response, 100);
             return false;
         }
         // wake up, continue processing queue
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.alert
@@ -131,11 +132,11 @@ jaxon.cmd.script = {
 
     true - The operation completed successfully.
     */
-    alert: function(command) {
+    self.alert = function(command) {
         command.fullName = 'alert';
-        jaxon.ajax.message.info(command.data);
+        msg.info(command.data);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.confirm
@@ -152,11 +153,11 @@ jaxon.cmd.script = {
 
     false - Stop the processing of the command queue until the user answers the question.
     */
-    confirm: function(command) {
+    self.confirm = function(command) {
         command.fullName = 'confirm';
-        jaxon.cmd.delay.confirm(command, command.count, command.data);
+        delay.confirm(command, command.count, command.data);
         return false;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.call
@@ -175,17 +176,17 @@ jaxon.cmd.script = {
 
     true - The call completed successfully.
     */
-    call: function(command) {
+    self.call = function(command) {
         command.fullName = 'call js function';
-        jaxon.cmd.script.context = command.context ?? {};
+        self.context = command.context ?? {};
 
-        const func = jaxon.tools.dom.findFunction(command.func);
+        const func = dom.findFunction(command.func);
         if(!func) {
             return true;
         }
-        func.apply(jaxon.cmd.script.context, command.data);
+        func.apply(self.context, command.data);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.execute
@@ -203,17 +204,17 @@ jaxon.cmd.script = {
     unknown - A value set by the script using 'returnValue = '
     true - If the script does not set a returnValue.
     */
-    execute: function(command) {
+    self.execute = function(command) {
         command.fullName = 'execute Javascript';
-        jaxon.cmd.script.context = command.context ?? {};
+        self.context = command.context ?? {};
 
         const jsCode = `() => {
     ${command.data}
 }`;
-        jaxon.tools.dom.createFunction(jsCode);
-        jaxon.cmd.script.context.delegateCall();
+        dom.createFunction(jsCode);
+        self.context.delegateCall();
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.waitFor
@@ -235,35 +236,35 @@ jaxon.cmd.script = {
     false - The condition evaulates to false and the sleep time has not expired.
     true - The condition evaluates to true or the sleep time has expired.
     */
-    waitFor: function(command) {
+    self.waitFor = function(command) {
         command.fullName = 'waitFor';
-        jaxon.cmd.script.context = command.context ?? {};
+        self.context = command.context ?? {};
 
         try {
             const jsCode = `() => {
     return (${command.data});
 }`;
-            jaxon.tools.dom.createFunction(jsCode);
-            const bResult = jaxon.cmd.script.context.delegateCall();
+            dom.createFunction(jsCode);
+            const bResult = self.context.delegateCall();
             if (!bResult) {
                 // inject a delay in the queue processing
                 // handle retry counter
-                if (jaxon.cmd.delay.retry(command, command.prop)) {
-                    jaxon.cmd.delay.setWakeup(command.response, 100);
+                if (delay.retry(command, command.prop)) {
+                    delay.setWakeup(command.response, 100);
                     return false;
                 }
                 // give up, continue processing queue
             }
         } catch (e) {}
         return true;
-    },
+    };
 
     /**
      * Get function parameters as string
      *
      * @param {string|object} parameters 
      */
-    getParameters: function(parameters) {
+    const getParameters = function(parameters) {
         if (parameters === undefined) {
             return '';
         }
@@ -274,7 +275,7 @@ jaxon.cmd.script = {
             return parameters.values().join(', ');
         }
         return parameters;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.setFunction
@@ -294,16 +295,16 @@ jaxon.cmd.script = {
 
     true - The function was constructed successfully.
     */
-    setFunction: function(command) {
+    self.setFunction = function(command) {
         command.fullName = 'setFunction';
 
-        const funcParams = jaxon.cmd.script.getParameters(command.prop);
+        const funcParams = getParameters(command.prop);
         const jsCode = `(${funcParams}) => {
     ${command.data}
 }`;
-        jaxon.tools.dom.createFunction(jsCode, command.func);
+        dom.createFunction(jsCode, command.func);
         return true;
-    },
+    };
 
     /*
     Function: jaxon.cmd.script.wrapFunction
@@ -326,26 +327,26 @@ jaxon.cmd.script = {
 
     true - The wrapper function was constructed successfully.
     */
-    wrapped: {}, // Original wrapped functions will be saved here.
-    wrapFunction: function(command) {
+    self.wrapped = {}; // Original wrapped functions will be saved here.
+    self.wrapFunction = function(command) {
         command.fullName = 'wrapFunction';
-        jaxon.cmd.script.context = command.context ?? {};
+        self.context = command.context ?? {};
 
-        const func = jaxon.tools.dom.findFunction(command.func);
+        const func = dom.findFunction(command.func);
         if(!func) {
             return true;
         }
 
         // Save the existing function
         const wrappedFuncName = command.func.toLowerCase().replaceAll('.', '_');
-        if (!jaxon.cmd.script.wrapped[wrappedFuncName]) {
-            jaxon.cmd.script.wrapped[wrappedFuncName] = func;
+        if (!self.wrapped[wrappedFuncName]) {
+            self.wrapped[wrappedFuncName] = func;
         }
 
         const varDefine = command.type ? `let ${command.type} = null;` : '// No return value';
         const varAssign = command.type ? `${command.type} = ` : '';
         const varReturn = command.type ? `return ${command.type};` : '// No return value';
-        const funcParams = jaxon.cmd.script.getParameters(command.prop);
+        const funcParams = getParameters(command.prop);
         const funcCodeBefore = command.data[0];
         const funcCodeAfter = command.data[1] || '// No call after';
 
@@ -360,8 +361,9 @@ jaxon.cmd.script = {
     ${varReturn}
 }`;
 
-        jaxon.tools.dom.createFunction(jsCode, command.func);
-        jaxon.cmd.script.context.delegateCall();
+        dom.createFunction(jsCode, command.func);
+        self.context.delegateCall();
         return true;
     }
-};
+})(jaxon.cmd.script, jaxon.cmd.delay, jaxon.ajax.message,
+    jaxon.tools.dom, jaxon.config.baseDocument, window);
