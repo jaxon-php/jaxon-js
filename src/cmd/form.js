@@ -111,4 +111,4 @@
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
         return true;
     };
-})(jaxon.cmd.form, jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.form, jaxon.utils.dom, jaxon.config.baseDocument);

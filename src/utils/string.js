@@ -1,10 +1,10 @@
 /**
- * Class: jaxon.tools.string
+ * Class: jaxon.utils.string
  */
 
 (function(self) {
     /*
-    Function: jaxon.tools.string.doubleQuotes
+    Function: jaxon.utils.string.doubleQuotes
 
     Replace all occurances of the single quote character with a double quote character.
 
@@ -18,7 +18,7 @@
         haystack === undefined ? false : haystack.replace(new RegExp("'", 'g'), '"');
 
     /*
-    Function: jaxon.tools.string.singleQuotes
+    Function: jaxon.utils.string.singleQuotes
 
     Replace all occurances of the double quote character with a single quote character.
 
@@ -31,7 +31,7 @@
         haystack === undefined ? false : haystack.replace(new RegExp('"', 'g'), "'");
 
     /*
-    Function: jaxon.tools.string.stripOnPrefix
+    Function: jaxon.utils.string.stripOnPrefix
 
     Detect, and if found, remove the prefix 'on' from the specified string.
     This is used while working with event handlers.
@@ -48,7 +48,7 @@
     };
 
     /*
-    Function: jaxon.tools.string.addOnPrefix
+    Function: jaxon.utils.string.addOnPrefix
 
     Detect, and add if not found, the prefix 'on' from the specified string.
     This is used while working with event handlers.
@@ -85,4 +85,4 @@
             );
         };
     }
-})(jaxon.tools.string);
+})(jaxon.utils.string);

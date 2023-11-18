@@ -269,4 +269,4 @@
         return fProc(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.tools.queue, jaxon.cmd.delay, window, console);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.cmd.delay, window, console);

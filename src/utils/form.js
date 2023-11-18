@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.tools.form
+ * Class: jaxon.utils.form
  */
 
 (function(self, dom) {
@@ -66,7 +66,7 @@
     /*
     Function: _getValues
 
-    Used internally by <jaxon.tools.form.getValues> to recursively get the value
+    Used internally by <jaxon.utils.form.getValues> to recursively get the value
     of form elements.  This function will extract all form element values
     regardless of the depth of the element within the form.
     */
@@ -80,7 +80,7 @@
     };
 
     /*
-    Function: jaxon.tools.form.getValues
+    Function: jaxon.utils.form.getValues
 
     Build an associative array of form elements and their values from the specified form.
 
@@ -104,4 +104,4 @@
         }
         return aFormValues;
     };
-})(jaxon.tools.form, jaxon.tools.dom);
+})(jaxon.utils.form, jaxon.utils.dom);

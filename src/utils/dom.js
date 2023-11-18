@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.tools.dom
+ * Class: jaxon.utils.dom
  */
 
 (function(self, baseDocument) {
@@ -145,4 +145,4 @@
         removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
-})(jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.utils.dom, jaxon.config.baseDocument);

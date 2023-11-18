@@ -18,7 +18,7 @@ const files = {
     src: {
         core: [
             folders.src + 'config.js',
-            folders.src + 'tools/*.js',
+            folders.src + 'utils/*.js',
             folders.src + 'cmd/*.js',
             folders.src + 'ajax/*.js',
             folders.src + 'ready.js',

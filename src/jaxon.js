@@ -37,16 +37,16 @@ jaxon.register = jaxon.ajax.handler.register;
 /*
 Function: jaxon.$
 
-Shortcut to <jaxon.tools.dom.$>.
+Shortcut to <jaxon.utils.dom.$>.
 */
-jaxon.$ = jaxon.tools.dom.$;
+jaxon.$ = jaxon.utils.dom.$;
 
 /*
 Function: jaxon.getFormValues
 
-Shortcut to <jaxon.tools.form.getValues>.
+Shortcut to <jaxon.utils.form.getValues>.
 */
-jaxon.getFormValues = jaxon.tools.form.getValues;
+jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /*
 Object: jaxon.msg
@@ -75,6 +75,6 @@ Object: jaxon.cmd.delay.q
 The queues that hold synchronous requests as they are sent and processed.
 */
 jaxon.cmd.delay.q = {
-    send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
-    recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
+    send: jaxon.utils.queue.create(jaxon.config.requestQueueSize),
+    recv: jaxon.utils.queue.create(jaxon.config.requestQueueSize * 2)
 };

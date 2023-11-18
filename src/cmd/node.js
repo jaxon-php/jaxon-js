@@ -345,4 +345,4 @@
         innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
     };
-})(jaxon.cmd.node, jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);

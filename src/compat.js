@@ -45,16 +45,16 @@ const jxn = {
     /*
     Function: jxn.$
 
-    Shortcut to <jaxon.tools.dom.$>.
+    Shortcut to <jaxon.utils.dom.$>.
     */
-    $: jaxon.tools.dom.$,
+    $: jaxon.utils.dom.$,
 
     /*
     Function: jxn.getFormValues
 
-    Shortcut to <jaxon.tools.form.getValues>.
+    Shortcut to <jaxon.utils.form.getValues>.
     */
-    getFormValues: jaxon.tools.form.getValues,
+    getFormValues: jaxon.utils.form.getValues,
 
     request: jaxon.request
 };

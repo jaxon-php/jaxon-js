@@ -254,4 +254,4 @@
         }
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.tools.upload, jaxon.tools.queue, jaxon.cmd.delay, window);
+    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.cmd.delay, window);

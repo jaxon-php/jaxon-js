@@ -71,4 +71,4 @@
         const oTarget = dom.$(command.id);
         return _removeHandler(oTarget, sEvent, sFuncName);
     };
-})(jaxon.cmd.event, jaxon.tools.dom, jaxon.tools.string, jaxon.cmd.script);
+})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);

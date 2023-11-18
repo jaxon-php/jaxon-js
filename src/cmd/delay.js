@@ -115,4 +115,4 @@
         command.requeue = false;
         return false;
     };
-})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.tools.queue, jaxon.ajax.message);
+})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.utils.queue, jaxon.ajax.message);

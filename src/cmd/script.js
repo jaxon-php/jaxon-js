@@ -366,4 +366,4 @@
         return true;
     }
 })(jaxon.cmd.script, jaxon.cmd.delay, jaxon.ajax.message,
-    jaxon.tools.dom, jaxon.config.baseDocument, window);
+    jaxon.utils.dom, jaxon.config.baseDocument, window);

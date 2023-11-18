@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.tools.queue
+ * Class: jaxon.utils.queue
  */
 
 (function(self) {
@@ -121,4 +121,4 @@
         }
         return oQueue.elements[oQueue.start];
     };
-})(jaxon.tools.queue);
+})(jaxon.utils.queue);

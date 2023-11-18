@@ -196,4 +196,4 @@
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
-    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.tools.dom, console);
+    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);

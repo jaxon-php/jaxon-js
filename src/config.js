@@ -51,11 +51,11 @@ var jaxon = {
     },
 
     /*
-    Class: jaxon.tools
+    Class: jaxon.utils
 
     This contains utility functions which are used throughout the jaxon core.
     */
-    tools: {
+    utils: {
         dom: {},
 
         form: {},
