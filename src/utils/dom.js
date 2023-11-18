@@ -125,7 +125,7 @@
             return;
         }
 
-        const removeTagAfter = funcName === undefined;
+        // const removeTagAfter = funcName === undefined;
         const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
             'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
         funcName = funcName ?? 'jaxon.cmd.script.context.delegateCall';
@@ -142,7 +142,7 @@
 
         // Since this js code saves the function in a var,
         // the tag can be removed, and the function will still exist.
-        removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
+        // removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);

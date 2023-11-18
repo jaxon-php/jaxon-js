@@ -51,11 +51,11 @@ var jaxon = {
     },
 
     /*
-    Class: jaxon.tools
+    Class: jaxon.utils
 
     This contains utility functions which are used throughout the jaxon core.
     */
-    tools: {
+    utils: {
         dom: {},
 
         form: {},
@@ -340,7 +340,7 @@ jaxon.config.cursor = {
 
 
 /**
- * Class: jaxon.tools.dom
+ * Class: jaxon.utils.dom
  */
 
 (function(self, baseDocument) {
@@ -466,7 +466,7 @@ jaxon.config.cursor = {
             return;
         }
 
-        const removeTagAfter = funcName === undefined;
+        // const removeTagAfter = funcName === undefined;
         const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
             'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
         funcName = funcName ?? 'jaxon.cmd.script.context.delegateCall';
@@ -483,14 +483,14 @@ jaxon.config.cursor = {
 
         // Since this js code saves the function in a var,
         // the tag can be removed, and the function will still exist.
-        removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
+        // removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
-})(jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.utils.dom, jaxon.config.baseDocument);
 
 
 /**
- * Class: jaxon.tools.form
+ * Class: jaxon.utils.form
  */
 
 (function(self, dom) {
@@ -557,7 +557,7 @@ jaxon.config.cursor = {
     /*
     Function: _getValues
 
-    Used internally by <jaxon.tools.form.getValues> to recursively get the value
+    Used internally by <jaxon.utils.form.getValues> to recursively get the value
     of form elements.  This function will extract all form element values
     regardless of the depth of the element within the form.
     */
@@ -571,7 +571,7 @@ jaxon.config.cursor = {
     };
 
     /*
-    Function: jaxon.tools.form.getValues
+    Function: jaxon.utils.form.getValues
 
     Build an associative array of form elements and their values from the specified form.
 
@@ -595,11 +595,11 @@ jaxon.config.cursor = {
         }
         return aFormValues;
     };
-})(jaxon.tools.form, jaxon.tools.dom);
+})(jaxon.utils.form, jaxon.utils.dom);
 
 
 /**
- * Class: jaxon.tools.queue
+ * Class: jaxon.utils.queue
  */
 
 (function(self) {
@@ -721,16 +721,16 @@ jaxon.config.cursor = {
         }
         return oQueue.elements[oQueue.start];
     };
-})(jaxon.tools.queue);
+})(jaxon.utils.queue);
 
 
 /**
- * Class: jaxon.tools.string
+ * Class: jaxon.utils.string
  */
 
 (function(self) {
     /*
-    Function: jaxon.tools.string.doubleQuotes
+    Function: jaxon.utils.string.doubleQuotes
 
     Replace all occurances of the single quote character with a double quote character.
 
@@ -744,7 +744,7 @@ jaxon.config.cursor = {
         haystack === undefined ? false : haystack.replace(new RegExp("'", 'g'), '"');
 
     /*
-    Function: jaxon.tools.string.singleQuotes
+    Function: jaxon.utils.string.singleQuotes
 
     Replace all occurances of the double quote character with a single quote character.
 
@@ -757,7 +757,7 @@ jaxon.config.cursor = {
         haystack === undefined ? false : haystack.replace(new RegExp('"', 'g'), "'");
 
     /*
-    Function: jaxon.tools.string.stripOnPrefix
+    Function: jaxon.utils.string.stripOnPrefix
 
     Detect, and if found, remove the prefix 'on' from the specified string.
     This is used while working with event handlers.
@@ -774,7 +774,7 @@ jaxon.config.cursor = {
     };
 
     /*
-    Function: jaxon.tools.string.addOnPrefix
+    Function: jaxon.utils.string.addOnPrefix
 
     Detect, and add if not found, the prefix 'on' from the specified string.
     This is used while working with event handlers.
@@ -811,11 +811,11 @@ jaxon.config.cursor = {
             );
         };
     }
-})(jaxon.tools.string);
+})(jaxon.utils.string);
 
 
 /**
- * Class: jaxon.tools.upload
+ * Class: jaxon.utils.upload
  */
 
 (function(self, dom, console) {
@@ -871,7 +871,7 @@ jaxon.config.cursor = {
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-})(jaxon.tools.upload, jaxon.tools.dom, console);
+})(jaxon.utils.upload, jaxon.utils.dom, console);
 
 
 /**
@@ -991,7 +991,7 @@ jaxon.config.cursor = {
         command.requeue = false;
         return false;
     };
-})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.tools.queue, jaxon.ajax.message);
+})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.utils.queue, jaxon.ajax.message);
 
 
 /**
@@ -1067,7 +1067,7 @@ jaxon.config.cursor = {
         const oTarget = dom.$(command.id);
         return _removeHandler(oTarget, sEvent, sFuncName);
     };
-})(jaxon.cmd.event, jaxon.tools.dom, jaxon.tools.string, jaxon.cmd.script);
+})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
 
 
 /**
@@ -1183,7 +1183,7 @@ jaxon.config.cursor = {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
         return true;
     };
-})(jaxon.cmd.form, jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.form, jaxon.utils.dom, jaxon.config.baseDocument);
 
 
 /**
@@ -1533,7 +1533,7 @@ jaxon.config.cursor = {
         innerElement[innerProperty] = command.data + innerElement[innerProperty];
         return true;
     };
-})(jaxon.cmd.node, jaxon.tools.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);
 
 
 /**
@@ -1904,7 +1904,7 @@ jaxon.config.cursor = {
         return true;
     }
 })(jaxon.cmd.script, jaxon.cmd.delay, jaxon.ajax.message,
-    jaxon.tools.dom, jaxon.config.baseDocument, window);
+    jaxon.utils.dom, jaxon.config.baseDocument, window);
 
 
 /**
@@ -2318,7 +2318,7 @@ jaxon.config.cursor = {
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
-    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.tools.dom, console);
+    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);
 
 
 /**
@@ -2788,7 +2788,7 @@ jaxon.config.cursor = {
         }
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.tools.upload, jaxon.tools.queue, jaxon.cmd.delay, window);
+    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.cmd.delay, window);
 
 
 /**
@@ -3062,7 +3062,7 @@ jaxon.config.cursor = {
         return fProc(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.tools.queue, jaxon.cmd.delay, window, console);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.cmd.delay, window, console);
 
 
 /**
@@ -3175,16 +3175,16 @@ jaxon.register = jaxon.ajax.handler.register;
 /*
 Function: jaxon.$
 
-Shortcut to <jaxon.tools.dom.$>.
+Shortcut to <jaxon.utils.dom.$>.
 */
-jaxon.$ = jaxon.tools.dom.$;
+jaxon.$ = jaxon.utils.dom.$;
 
 /*
 Function: jaxon.getFormValues
 
-Shortcut to <jaxon.tools.form.getValues>.
+Shortcut to <jaxon.utils.form.getValues>.
 */
-jaxon.getFormValues = jaxon.tools.form.getValues;
+jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /*
 Object: jaxon.msg
@@ -3213,8 +3213,8 @@ Object: jaxon.cmd.delay.q
 The queues that hold synchronous requests as they are sent and processed.
 */
 jaxon.cmd.delay.q = {
-    send: jaxon.tools.queue.create(jaxon.config.requestQueueSize),
-    recv: jaxon.tools.queue.create(jaxon.config.requestQueueSize * 2)
+    send: jaxon.utils.queue.create(jaxon.config.requestQueueSize),
+    recv: jaxon.utils.queue.create(jaxon.config.requestQueueSize * 2)
 };
 
 
@@ -3265,16 +3265,16 @@ const jxn = {
     /*
     Function: jxn.$
 
-    Shortcut to <jaxon.tools.dom.$>.
+    Shortcut to <jaxon.utils.dom.$>.
     */
-    $: jaxon.tools.dom.$,
+    $: jaxon.utils.dom.$,
 
     /*
     Function: jxn.getFormValues
 
-    Shortcut to <jaxon.tools.form.getValues>.
+    Shortcut to <jaxon.utils.form.getValues>.
     */
-    getFormValues: jaxon.tools.form.getValues,
+    getFormValues: jaxon.utils.form.getValues,
 
     request: jaxon.request
 };
