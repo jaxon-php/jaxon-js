@@ -16,7 +16,7 @@
      *
      * @returns {string}
      */
-    const stringify = function(oVal) {
+    const stringify = (oVal) => {
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
@@ -50,7 +50,7 @@
      *
      * @return {void}
      */
-    const toFormData = function(oRequest) {
+    const toFormData = (oRequest) => {
         const rd = new FormData();
         rd.append('jxnr', oRequest.dNow.getTime());
 
@@ -84,7 +84,7 @@
      *
      * @return {void}
      */
-    const toUrlEncoded = function(oRequest) {
+    const toUrlEncoded = (oRequest) => {
         const rd = [];
         rd.push('jxnr=' + oRequest.dNow.getTime());
 
@@ -128,7 +128,7 @@
      * Note:
      * This is called once per request; upon a request failure, this will not be called for additional retries.
      */
-    self.process = function(oRequest) {
+    self.process = (oRequest) => {
         const func = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
             toFormData : toUrlEncoded;
         // Make request parameters.

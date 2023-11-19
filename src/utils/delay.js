@@ -1,8 +1,8 @@
 /**
- * Class: jaxon.cmd.delay
+ * Class: jaxon.utils.delay
  */
 
-(function(self, rsp, queue, msg) {
+(function(self, queue, rsp, msg) {
     /**
      * Attempt to pop the next asynchronous request.
      *
@@ -24,7 +24,7 @@
      *      true - The object has not exhausted all the retries.
      *      false - The object has exhausted the retry count specified.
      */
-    self.retry = function(command, count) {
+    self.retry = (command, count) => {
         let retries = command.retries;
         if(retries) {
             --retries;
@@ -49,7 +49,7 @@
      * @param response object   The queue to process.
      * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
      */
-    self.setWakeup = function(response, when) {
+    self.setWakeup = (response, when) => {
         if (response.timeout !== null) {
             clearTimeout(response.timeout);
             response.timeout = null;
@@ -68,7 +68,7 @@
      *
      * @returns boolean
      */
-    const confirmCallback = function(command, count, skip) {
+    const confirmCallback = (command, count, skip) => {
         if(skip === true) {
             // The last entry in the queue is not a user command.
             // Thus it cannot be skipped.
@@ -102,7 +102,7 @@
      *
      * @returns boolean
      */
-    self.confirm = function(command, count, question) {
+    self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
         msg.confirm(question, '', function() {
@@ -115,4 +115,4 @@
         command.requeue = false;
         return false;
     };
-})(jaxon.cmd.delay, jaxon.ajax.response, jaxon.utils.queue, jaxon.ajax.message);
+})(jaxon.utils.delay, jaxon.utils.queue, jaxon.ajax.response, jaxon.ajax.message);

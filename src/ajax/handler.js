@@ -26,17 +26,16 @@
 
     Parameters:
 
-    obj - (object):  The response command to be executed.
+    command - (object):  The response command to be executed.
 
     Returns:
 
     true - The command completed successfully.
     false - The command signalled that it needs to pause processing.
     */
-    self.execute = function(command) {
+    self.execute = (command) => {
         if (self.isRegistered(command)) {
-            // it is important to grab the element here as the previous command
-            // might have just created the element
+            // If the command has an "id" attr, find the corresponding dom element.
             if (command.id) {
                 command.target = dom.$(command.id);
             }
@@ -51,9 +50,7 @@
 
     Registers a new command handler.
     */
-    self.register = function(shortName, func) {
-        handlers[shortName] = func;
-    };
+    self.register = (shortName, func) => handlers[shortName] = func;
 
     /*
     Function: jaxon.ajax.handler.unregister
@@ -66,7 +63,7 @@
     Returns:
         func - (function): The unregistered function.
     */
-    self.unregister = function(shortName) {
+    self.unregister = (shortName) => {
         const func = handlers[shortName];
         delete handlers[shortName];
         return func;
@@ -81,12 +78,10 @@
     Returns:
 
     boolean - (true or false): depending on whether a command handler has
-    been created for the specified command (object).
+        been registered for the specified command (object).
 
     */
-    self.isRegistered = function(command) {
-        return command.cmd !== undefined && handlers[command.cmd] !== undefined;
-    };
+    self.isRegistered = (command) => command.cmd !== undefined && handlers[command.cmd] !== undefined;
 
     /*
     Function: jaxon.ajax.handler.call
@@ -100,70 +95,25 @@
     Returns:
         true - (boolean) :
     */
-    self.call = function(command) {
-        return handlers[command.cmd](command);
-    };
+    self.call = (command) => handlers[command.cmd](command);
 
     self.register('rcmplt', function(command) {
         rsp.complete(command.request);
         return true;
     });
 
-    self.register('css', function(command) {
-        command.fullName = 'includeCSS';
-        if (command.media === undefined)
-            command.media = 'screen';
-        return style.add(command.data, command.media);
-    });
-    self.register('rcss', function(command) {
-        command.fullName = 'removeCSS';
-        if (command.media === undefined)
-            command.media = 'screen';
-        return style.remove(command.data, command.media);
-    });
-    self.register('wcss', function(command) {
-        command.fullName = 'waitForCSS';
-        return style.waitForCSS(command);
-    });
+    self.register('css', style.add);
+    self.register('rcss', style.remove);
+    self.register('wcss', style.waitForCSS);
 
-    self.register('as', function(command) {
-        command.fullName = 'assign/clear';
-        try {
-            return node.assign(command.target, command.prop, command.data);
-        } catch (e) {
-            // do nothing, if the debug module is installed it will
-            // catch and handle the exception
-        }
-        return true;
-    });
-    self.register('ap', function(command) {
-        command.fullName = 'append';
-        return node.append(command.target, command.prop, command.data);
-    });
-    self.register('pp', function(command) {
-        command.fullName = 'prepend';
-        return node.prepend(command.target, command.prop, command.data);
-    });
-    self.register('rp', function(command) {
-        command.fullName = 'replace';
-        return node.replace(command.id, command.prop, command.data);
-    });
-    self.register('rm', function(command) {
-        command.fullName = 'remove';
-        return node.remove(command.id);
-    });
-    self.register('ce', function(command) {
-        command.fullName = 'create';
-        return node.create(command.id, command.data, command.prop);
-    });
-    self.register('ie', function(command) {
-        command.fullName = 'insert';
-        return node.insert(command.id, command.data, command.prop);
-    });
-    self.register('ia', function(command) {
-        command.fullName = 'insertAfter';
-        return node.insertAfter(command.id, command.data, command.prop);
-    });
+    self.register('as', node.assign);
+    self.register('ap', node.append);
+    self.register('pp', node.prepend);
+    self.register('rp', node.replace);
+    self.register('rm', node.remove);
+    self.register('ce', node.create);
+    self.register('ie', node.insert);
+    self.register('ia', node.insertAfter);
 
     self.register('c:as', node.contextAssign);
     self.register('c:ap', node.contextAppend);

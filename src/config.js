@@ -19,15 +19,10 @@ var jaxon = {
     */
     ajax: {
         callback: {},
-
         handler: {},
-
         message: {},
-
         parameters: {},
-
         request: {},
-
         response: {},
     },
 
@@ -37,16 +32,10 @@ var jaxon = {
     Contains the functions for page content, layout, functions and events.
     */
     cmd: {
-        delay: {},
-
         event: {},
-
         form: {},
-
         node: {},
-
         script: {},
-
         style: {},
     },
 
@@ -56,14 +45,11 @@ var jaxon = {
     This contains utility functions which are used throughout the jaxon core.
     */
     utils: {
+        delay: {},
         dom: {},
-
         form: {},
-
         queue: {},
-
         string: {},
-
         upload: {},
     },
 
@@ -261,22 +247,12 @@ jaxon.config.status = {
     Constructs and returns a set of event handlers that will be
     called by the jaxon framework to set the status bar messages.
     */
-    update: function() {
-        return {
-            onRequest: function() {
-                window.status = 'Sending Request...';
-            },
-            onWaiting: function() {
-                window.status = 'Waiting for Response...';
-            },
-            onProcessing: function() {
-                window.status = 'Processing...';
-            },
-            onComplete: function() {
-                window.status = 'Done.';
-            }
-        }
-    },
+    update: () => ({
+        onRequest: () => {},
+        onWaiting: () => {},
+        onProcessing: () => {},
+        onComplete: () => {}
+    }),
 
     /*
     Function: dontUpdate
@@ -285,14 +261,12 @@ jaxon.config.status = {
     called by the jaxon framework where status bar updates
     would normally occur.
     */
-    dontUpdate: function() {
-        return {
-            onRequest: function() {},
-            onWaiting: function() {},
-            onProcessing: function() {},
-            onComplete: function() {}
-        }
-    }
+    dontUpdate: () =>({
+        onRequest: () => {},
+        onWaiting: () => {},
+        onProcessing: () => {},
+        onComplete: () => {}
+    }),
 };
 
 /*
@@ -311,17 +285,18 @@ jaxon.config.cursor = {
     called by the jaxon framework to effect the status of the
     cursor during requests.
     */
-    update: function() {
-        return {
-            onWaiting: function() {
-                if (jaxon.config.baseDocument.body)
-                    jaxon.config.baseDocument.body.style.cursor = 'wait';
-            },
-            onComplete: function() {
+    update: () => ({
+        onWaiting: () => {
+            if (jaxon.config.baseDocument.body) {
+                jaxon.config.baseDocument.body.style.cursor = 'wait';
+            }
+        },
+        onComplete: () => {
+            if (jaxon.config.baseDocument.body) {
                 jaxon.config.baseDocument.body.style.cursor = 'auto';
             }
         }
-    },
+    }),
 
     /*
     Function: dontUpdate
@@ -330,10 +305,8 @@ jaxon.config.cursor = {
     be called by the jaxon framework where cursor status changes
     would typically be made during the handling of requests.
     */
-    dontUpdate: function() {
-        return {
-            onWaiting: function() {},
-            onComplete: function() {}
-        }
-    }
+    dontUpdate: () => ({
+        onWaiting: () => {},
+        onComplete: () => {}
+    }),
 };

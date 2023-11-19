@@ -10,7 +10,7 @@
 
     oRequest - (object):  The request context object.
     */
-    self.complete = function(oRequest) {
+    self.complete = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onComplete', oRequest);
         oRequest.cursor.onComplete();
         oRequest.status.onComplete();
@@ -54,7 +54,7 @@
      *
      * @returns {boolean}
      */
-    const processCommand = function(command) {
+    const processCommand = (command) => {
         try {
             if (handler.execute(command) !== false) {
                 return true;
@@ -88,11 +88,11 @@
 
     Note:
 
-    - Use <jaxon.cmd.delay.setWakeup> or call this function to cause the queue processing to continue.
+    - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
     - This will clear the associated timeout, this function is not designed to be reentrant.
     - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
     */
-    const processCommands = function(commandQueue) {
+    const processCommands = (commandQueue) => {
         if (commandQueue.timeout !== null) {
             clearTimeout(commandQueue.timeout);
             commandQueue.timeout = null;
@@ -113,7 +113,7 @@
     Parameters:
     oRequest - (object):  The request context object.
     */
-    const queueCommands = function(oRequest) {
+    const queueCommands = (oRequest) => {
         const nodes = oRequest.responseContent;
         if (!nodes || !nodes.jxnobj) {
             return;
@@ -203,7 +203,7 @@
 
     oRequest - (object):  The request context object.
     */
-    const jsonProcessor = function(oRequest) {
+    const jsonProcessor = (oRequest) => {
         // It's important to have '==' and not '===' here.
         if (successCodes.find(code => code == oRequest.response.status) !== undefined) {
             cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
@@ -252,7 +252,7 @@
 
     oRequest - (object):  The request context object.
     */
-    self.received = function(oRequest) {
+    self.received = (oRequest) => {
         // sometimes the responseReceived gets called when the request is aborted
         if (oRequest.aborted) {
             return null;
@@ -269,4 +269,4 @@
         return fProc(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue, jaxon.cmd.delay, window, console);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.delay, window, console);

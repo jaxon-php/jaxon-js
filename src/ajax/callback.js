@@ -15,9 +15,7 @@
 
     object - A callback timer object.
     */
-    const setupTimer = function(iDelay) {
-        return { timer: null, delay: iDelay };
-    };
+    const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
 
     /*
     Function: jaxon.ajax.callback.create
@@ -29,25 +27,21 @@
 
     object - The callback object.
     */
-    self.create = function() {
-        return {
-            timers: {
-                onResponseDelay: setupTimer((arguments.length > 0) ?
-                    arguments[0] : config.defaultResponseDelayTime),
-                onExpiration: setupTimer((arguments.length > 1) ?
-                    arguments[1] : config.defaultExpirationTime),
-            },
-            onPrepare: null,
-            onRequest: null,
-            onResponseDelay: null,
-            onExpiration: null,
-            beforeResponseProcessing: null,
-            onFailure: null,
-            onRedirect: null,
-            onSuccess: null,
-            onComplete: null,
-        };
-    };
+    self.create = (responseDelayTime, expirationTime) => ({
+        timers: {
+            onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+            onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+        },
+        onPrepare: null,
+        onRequest: null,
+        onResponseDelay: null,
+        onExpiration: null,
+        beforeResponseProcessing: null,
+        onFailure: null,
+        onRedirect: null,
+        onSuccess: null,
+        onComplete: null,
+    });
 
     /*
     Object: jaxon.ajax.callback.callback
@@ -68,7 +62,7 @@
     sFunction - (string):  The name of the event to be triggered.
     args - (object):  The request object for this request.
     */
-    self.execute = function(oCallback, sFunction, args) {
+    self.execute = (oCallback, sFunction, args) => {
         // The callback object is recognized by the presence of the timers attribute.
         if (oCallback.timers === undefined) {
             oCallback.forEach(oCb => self.execute(oCb, sFunction, args));
@@ -101,7 +95,7 @@
     sFunction - (string):  The name of the function associated
         with the timer to be cleared.
     */
-    self.clearTimer = function(oCallback, sFunction) {
+    self.clearTimer = (oCallback, sFunction) => {
         // The callback object is recognized by the presence of the timers attribute.
         if (oCallback.timers === undefined) {
             oCallback.forEach(oCb => self.clearTimer(oCb, sFunction));

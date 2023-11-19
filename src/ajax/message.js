@@ -58,7 +58,7 @@
         yesCallback - (Function): The function to call if the user answers yes.
         noCallback - (Function): The function to call if the user answers no.
     */
-    self.confirm = function(question, title, yesCallback, noCallback) {
+    self.confirm = (question, title, yesCallback, noCallback) => {
         if(confirm(question)) {
             yesCallback();
             return;

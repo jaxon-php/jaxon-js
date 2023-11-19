@@ -17,7 +17,10 @@
 
     true - The operation completed successfully.
     */
-    self.add = function(fileName, media) {
+    self.add = (command) => {
+        command.fullName = 'includeCSS';
+        const { data: fileName, media = 'screen' } = command;
+
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const found = oHead.getElementsByTagName('link')
@@ -48,7 +51,10 @@
 
     true - The operation completed successfully.
     */
-    self.remove = function(fileName, media) {
+    self.remove = (command) => {
+        command.fullName = 'removeCSS';
+        const { data: fileName, media = 'screen' } = command;
+
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
@@ -73,7 +79,9 @@
     true - The .css files appear to be loaded.
     false - The .css files do not appear to be loaded and the timeout has not expired.
     */
-    self.waitForCSS = function(command) {
+    self.waitForCSS = (command) => {
+        command.fullName = 'waitForCSS';
+
         const oDocSS = baseDocument.styleSheets;
         const ssLoaded = oDocSS
             .map(styleSheet => styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0)
@@ -84,11 +92,12 @@
 
         // inject a delay in the queue processing
         // handle retry counter
-        if (delay.retry(command, command.prop)) {
-            delay.setWakeup(command.response, 10);
+        const { prop: duration, response } = command;
+        if (delay.retry(command, duration)) {
+            delay.setWakeup(response, 10);
             return false;
         }
         // Give up, continue processing queue
         return true;
     };
-})(jaxon.cmd.style, jaxon.cmd.delay, jaxon.config.baseDocument);
+})(jaxon.cmd.style, jaxon.utils.delay, jaxon.config.baseDocument);

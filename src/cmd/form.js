@@ -16,7 +16,7 @@
 
     object - The new input element.
     */
-    const getInput = function(type, name, id) {
+    const getInput = (type, name, id) => {
         const oInput = baseDocument.createElement('input');
         oInput.setAttribute('type', type);
         oInput.setAttribute('name', name);
@@ -41,12 +41,10 @@
 
     true - The operation completed successfully.
     */
-    self.createInput = function(command) {
+    self.createInput = (command) => {
         command.fullName = 'createInput';
-        const objParent = dom.$(command.id);
-        const sType = command.type;
-        const sName = command.data;
-        const sId = command.prop;
+
+        const { target: objParent, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -71,12 +69,10 @@
 
     true - The operation completed successfully.
     */
-    self.insertInput = function(command) {
+    self.insertInput = (command) => {
         command.fullName = 'insertInput';
-        const objSibling = dom.$(command.id);
-        const sType = command.type;
-        const sName = command.data;
-        const sId = command.prop;
+
+        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -100,12 +96,10 @@
 
     true - The operation completed successfully.
     */
-    self.insertInputAfter = function(command) {
+    self.insertInputAfter = (command) => {
         command.fullName = 'insertInputAfter';
-        const objSibling = dom.$(command.id);
-        const sType = command.type;
-        const sName = command.data;
-        const sId = command.prop;
+
+        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode)
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);

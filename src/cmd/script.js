@@ -18,7 +18,7 @@
 
     true - The reference exists or was added.
     */
-    self.includeScriptOnce = function(command) {
+    self.includeScriptOnce = (command) => {
         command.fullName = 'includeScriptOnce';
 
         const fileName = command.data;
@@ -46,7 +46,7 @@
 
     true - The reference was added.
     */
-    self.includeScript = function(command) {
+    self.includeScript = (command) => {
         command.fullName = 'includeScript';
 
         const objHead = baseDocument.getElementsByTagName('head');
@@ -73,18 +73,19 @@
 
     true - The script was not found or was removed.
     */
-    self.removeScript = function(command) {
+    self.removeScript = (command) => {
         command.fullName = 'removeScript';
-        const fileName = command.data;
+
+        const { data: fileName, unld: unload } = command;
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
         const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
         if (!loadedScript) {
             return true;
         }
-        if (command.unld) {
+        if (unload) {
             // Execute the provided unload function.
-            self.execute({ data: command.unld, context: window });
+            self.execute({ data: unload, context: window });
         }
         loadedScript.parentNode.removeChild(loadedScript);
         return true;
@@ -107,12 +108,14 @@
     true - The sleep operation completed.
     false - The sleep time has not yet expired, continue sleeping.
     */
-    self.sleep = function(command) {
+    self.sleep = (command) => {
         command.fullName = 'sleep';
+
         // inject a delay in the queue processing
         // handle retry counter
-        if (delay.retry(command, command.prop)) {
-            delay.setWakeup(command.response, 100);
+        const { prop: duration, response } = command;
+        if (delay.retry(command, duration)) {
+            delay.setWakeup(response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -132,7 +135,7 @@
 
     true - The operation completed successfully.
     */
-    self.alert = function(command) {
+    self.alert = (command) => {
         command.fullName = 'alert';
         msg.info(command.data);
         return true;
@@ -153,7 +156,7 @@
 
     false - Stop the processing of the command queue until the user answers the question.
     */
-    self.confirm = function(command) {
+    self.confirm = (command) => {
         command.fullName = 'confirm';
         delay.confirm(command, command.count, command.data);
         return false;
@@ -176,15 +179,16 @@
 
     true - The call completed successfully.
     */
-    self.call = function(command) {
+    self.call = (command) => {
         command.fullName = 'call js function';
         self.context = command.context ?? {};
 
-        const func = dom.findFunction(command.func);
+        const { func: funcName, data: funcParams } = command;
+        const func = dom.findFunction(funcName);
         if(!func) {
             return true;
         }
-        func.apply(self.context, command.data);
+        func.apply(self.context, funcParams);
         return true;
     };
 
@@ -204,12 +208,13 @@
     unknown - A value set by the script using 'returnValue = '
     true - If the script does not set a returnValue.
     */
-    self.execute = function(command) {
+    self.execute = (command) => {
         command.fullName = 'execute Javascript';
         self.context = command.context ?? {};
 
+        const { data: funcBody } = command;
         const jsCode = `() => {
-    ${command.data}
+    ${funcBody}
 }`;
         dom.createFunction(jsCode);
         self.context.delegateCall();
@@ -236,21 +241,22 @@
     false - The condition evaulates to false and the sleep time has not expired.
     true - The condition evaluates to true or the sleep time has expired.
     */
-    self.waitFor = function(command) {
+    self.waitFor = (command) => {
         command.fullName = 'waitFor';
         self.context = command.context ?? {};
 
+        const { data: funcBody, prop: duration, response } = command;
         try {
             const jsCode = `() => {
-    return (${command.data});
+    return (${funcBody});
 }`;
             dom.createFunction(jsCode);
             const bResult = self.context.delegateCall();
             if (!bResult) {
                 // inject a delay in the queue processing
                 // handle retry counter
-                if (delay.retry(command, command.prop)) {
-                    delay.setWakeup(command.response, 100);
+                if (delay.retry(command, duration)) {
+                    delay.setWakeup(response, 100);
                     return false;
                 }
                 // give up, continue processing queue
@@ -264,7 +270,7 @@
      *
      * @param {string|object} parameters 
      */
-    const getParameters = function(parameters) {
+    const getParameters = (parameters) => {
         if (parameters === undefined) {
             return '';
         }
@@ -295,14 +301,14 @@
 
     true - The function was constructed successfully.
     */
-    self.setFunction = function(command) {
+    self.setFunction = (command) => {
         command.fullName = 'setFunction';
 
-        const funcParams = getParameters(command.prop);
-        const jsCode = `(${funcParams}) => {
-    ${command.data}
+        const { func: funcName, data: funcBody, prop: funcParams } = command;
+        const jsCode = `(${getParameters(funcParams)}) => {
+    ${funcBody}
 }`;
-        dom.createFunction(jsCode, command.func);
+        dom.createFunction(jsCode, funcName);
         return true;
     };
 
@@ -328,42 +334,45 @@
     true - The wrapper function was constructed successfully.
     */
     self.wrapped = {}; // Original wrapped functions will be saved here.
-    self.wrapFunction = function(command) {
+    self.wrapFunction = (command) => {
         command.fullName = 'wrapFunction';
         self.context = command.context ?? {};
 
-        const func = dom.findFunction(command.func);
+        const { func: funcName } = command;
+        const func = dom.findFunction(funcName);
         if(!func) {
             return true;
         }
 
         // Save the existing function
-        const wrappedFuncName = command.func.toLowerCase().replaceAll('.', '_');
+        const wrappedFuncName = funcName.toLowerCase().replaceAll('.', '_');
         if (!self.wrapped[wrappedFuncName]) {
             self.wrapped[wrappedFuncName] = func;
         }
 
-        const varDefine = command.type ? `let ${command.type} = null;` : '// No return value';
-        const varAssign = command.type ? `${command.type} = ` : '';
-        const varReturn = command.type ? `return ${command.type};` : '// No return value';
-        const funcParams = getParameters(command.prop);
-        const funcCodeBefore = command.data[0];
-        const funcCodeAfter = command.data[1] || '// No call after';
+        const {
+            data: [funcCodeBefore, funcCodeAfter = '// No call after'],
+            prop: funcParams,
+            type: returnType,
+        } = command;
+        const varDefine = returnType ? `let ${returnType} = null;` : '// No return value';
+        const varAssign = returnType ? `${returnType} = ` : '';
+        const varReturn = returnType ? `return ${returnType};` : '// No return value';
 
-        const jsCode = `(${funcParams}) => {
+        const jsCode = `(${getParameters(funcParams)}) => {
     ${varDefine}
     ${funcCodeBefore}
 
-    const wrappedFuncName = "${command.func}".toLowerCase().replaceAll('.', '_');
+    const wrappedFuncName = "${funcName}".toLowerCase().replaceAll('.', '_');
     // Call the wrapped function (saved in jaxon.cmd.script.wrapped) with the same parameters.
     ${varAssign}jaxon.cmd.script.wrapped[wrappedFuncName](${funcParams});
     ${funcCodeAfter}
     ${varReturn}
 }`;
 
-        dom.createFunction(jsCode, command.func);
+        dom.createFunction(jsCode, funcName);
         self.context.delegateCall();
         return true;
     }
-})(jaxon.cmd.script, jaxon.cmd.delay, jaxon.ajax.message,
+})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message,
     jaxon.utils.dom, jaxon.config.baseDocument, window);

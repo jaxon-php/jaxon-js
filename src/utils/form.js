@@ -11,7 +11,7 @@
 
     Modified version for multidimensional arrays
     */
-    const _getValue = function(aFormValues, child, submitDisabledElements, prefix) {
+    const _getValue = (aFormValues, child, submitDisabledElements, prefix) => {
         if (!child.name || 'PARAM' === child.tagName)
             return;
         if (!submitDisabledElements && child.disabled)
@@ -70,7 +70,7 @@
     of form elements.  This function will extract all form element values
     regardless of the depth of the element within the form.
     */
-    const _getValues = function(aFormValues, children, submitDisabledElements, prefix) {
+    const _getValues = (aFormValues, children, submitDisabledElements, prefix) => {
         children.forEach(child => {
             if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
                 _getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
@@ -92,7 +92,7 @@
     Returns:
     An associative array of form element id and value.
     */
-    self.getValues = function(parent) {
+    self.getValues = (parent) => {
         const submitDisabledElements = (arguments.length > 1 && arguments[1] == true);
         const prefix = (arguments.length > 2) ? arguments[2] : '';
         if (typeof parent === 'string') {

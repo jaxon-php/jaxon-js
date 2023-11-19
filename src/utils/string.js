@@ -42,7 +42,7 @@
     Returns:
     string - The modified string.
     */
-    self.stripOnPrefix = function(sEventName) {
+    self.stripOnPrefix = (sEventName) => {
         sEventName = sEventName.toLowerCase();
         return sEventName.indexOf('on') === 0 ? sEventName.replace(/on/, '') : sEventName;
     };
@@ -59,7 +59,7 @@
     Returns:
     string - The modified string.
     */
-    self.addOnPrefix = function(sEventName) {
+    self.addOnPrefix = (sEventName) => {
         sEventName = sEventName.toLowerCase();
         return sEventName.indexOf('on') !== 0 ? 'on' + sEventName : sEventName;
     };

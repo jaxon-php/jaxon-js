@@ -13,14 +13,12 @@
      *
      * @returns {true} - The operation completed successfully.
      */
-    self.setEvent = function(command) {
+    self.setEvent = (command) => {
         command.fullName = 'setEvent';
-        const sEvent = str.addOnPrefix(command.prop);
-        const sCode = str.doubleQuotes(command.data);
-        // force to get the target
-        const oTarget = dom.$(command.id);
-        dom.createFunction(`(e) => { ${sCode} }`);
-        oTarget[sEvent] = script.context.delegateCall;
+        const { target: oTarget, prop: sEvent, data: sCode } = command;
+
+        dom.createFunction(`(e) => { ${str.doubleQuotes(sCode)} }`);
+        oTarget[str.addOnPrefix(sEvent)] = script.context.delegateCall;
         return true;
     };
 
@@ -44,13 +42,12 @@
      *
      * @returns {true} - The operation completed successfully.
      */
-    self.addHandler = function(command) {
+    self.addHandler = (command) => {
         command.fullName = 'addHandler';
-        const sFuncName = command.data;
-        const sEvent = getName(command.prop);
-        // force to get the target
-        const oTarget = dom.$(command.id);
-        return _addHandler(oTarget, sEvent, sFuncName);
+        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
+
+        _addHandler(oTarget, getName(sEvent), sFuncName);
+        return true;
     };
 
     /**
@@ -63,12 +60,11 @@
      *
      * @returns {true} - The operation completed successfully.
      */
-    self.removeHandler = function(command) {
+    self.removeHandler = (command) => {
         command.fullName = 'removeHandler';
-        const sFuncName = command.data;
-        const sEvent = getName(command.prop);
-        // force to get the target
-        const oTarget = dom.$(command.id);
-        return _removeHandler(oTarget, sEvent, sFuncName);
+        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
+
+       _removeHandler(oTarget, getName(sEvent), sFuncName);
+       return true;
     };
 })(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);

@@ -10,16 +10,20 @@
 
     Parameters:
 
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute to set.
-    data - (string):  The new value to be applied.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (object):  The HTML element to effect.
+        - command.prop - (string):  The name of the attribute to set.
+        - command.data - (string):  The new value to be applied.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.assign = function(element, property, data) {
-        element = dom.$(element);
+    self.assign = (command) => {
+        command.fullName = 'assign/clear';
+        const { target: element, prop: property, data } = command;
+        // element = dom.$(element);
+
         if (property === 'innerHTML') {
             element.innerHTML = data;
             return true;
@@ -44,16 +48,20 @@
 
     Parameters:
 
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute to append to.
-    data - (string):  The new value to be appended.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (object):  The HTML element to effect.
+        - command.prop - (string):  The name of the attribute to append to.
+        - command.data - (string):  The new value to be appended.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.append = function(element, property, data) {
-        element = dom.$(element);
+    self.append = (command) => {
+        command.fullName = 'append';
+        const { target: element, prop: property, data } = command;
+        // element = dom.$(element);
+
         if (property === 'innerHTML') {
             element.innerHTML = element.innerHTML + data;
             return true;
@@ -78,16 +86,20 @@
 
     Parameters:
 
-    element - (object):  The HTML element to effect.
-    property - (string):  The name of the attribute.
-    data - (string):  The new value to be prepended.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (object):  The HTML element to effect.
+        - command.prop - (string):  The name of the attribute.
+        - command.data - (string):  The new value to be prepended.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.prepend = function(element, property, data) {
-        element = dom.$(element);
+    self.prepend = (command) => {
+        command.fullName = 'prepend';
+        const { target: element, prop: property, data } = command;
+        // element = dom.$(element);
+
         if (property === 'innerHTML') {
             element.innerHTML = data + element.innerHTML;
             return true;
@@ -112,19 +124,22 @@
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself which is to be modified.
-    sAttribute - (string):  The name of the attribute to be set.
-    aData - (array):  The search text and replacement text.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (string or object):  The element which is to be modified.
+        - command.sAttribute - (string):  The name of the attribute to be set.
+        - command.aData - (array):  The search text and replacement text.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.replace = function(element, sAttribute, aData) {
+    self.replace = (command) => {
+        command.fullName = 'replace';
+        const { target: element, prop: sAttribute, data: aData } = command;
+        // element = dom.$(element);
+
         const sReplace = aData['r'];
-        const sSearch = (sAttribute === 'innerHTML') ?
-            dom.getBrowserHTML(aData['s']) : aData['s'];
-        element = dom.$(element);
+        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
         const [innerElement, innerAttribute] = dom.getInnerObject(element, sAttribute);
         if(!innerElement) {
             return true;
@@ -164,14 +179,18 @@
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself which will be deleted.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (string or object):  The element which will be deleted.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.remove = function(element) {
-        element = dom.$(element);
+    self.remove = (command) => {
+        command.fullName = 'remove';
+        const { target: element } = command;
+        // element = dom.$(element);
+
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
@@ -185,20 +204,23 @@
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself
-        which will contain the new element.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value to be assigned to the id attribute of the new element.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (string or object):  The element which will contain the new element.
+        - command.data - (string):  The tag name for the new element.
+        - command.prop - (string):  The value to be assigned to the id attribute of the new element.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.create = function(element, sTag, sId) {
-        element = dom.$(element);
+    self.create = (command) => {
+        command.fullName = 'create';
+        const { target: element, data: sTag, prop: sId } = command;
+        // element = dom.$(element);
         if (!element) {
             return true;
         }
+
         const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.appendChild(target);
@@ -212,20 +234,23 @@
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself
-        that will be used as the reference point for insertion.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value that will be assigned to the new element's id attribute.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (string or object):  The element that will be used as the reference point for insertion.
+        - command.data - (string):  The tag name for the new element.
+        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.insert = function(element, sTag, sId) {
-        element = dom.$(element);
+    self.insert = (command) => {
+        command.fullName = 'insert';
+        const { target: element, data: sTag, prop: sId } = command;
+        // element = dom.$(element);
         if (!element || !element.parentNode) {
             return true;
         }
+
         const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.parentNode.insertBefore(target, element);
@@ -239,20 +264,23 @@
 
     Parameters:
 
-    element - (string or object):  The name of, or the element itself
-        that will be used as the reference point for insertion.
-    sTag - (string):  The tag name for the new element.
-    sId - (string):  The value that will be assigned to the new element's id attribute.
+    command - (object):  The response command object which will contain the following:
+        - command.target - (string or object):  The element that will be used as the reference point for insertion.
+        - command.data - (string):  The tag name for the new element.
+        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.insertAfter = function(element, sTag, sId) {
-        element = dom.$(element);
+    self.insertAfter = (command) => {
+        command.fullName = 'insertAfter';
+        const { target: element, data: sTag, prop: sId } = command;
+        // element = dom.$(element);
         if (!element || !element.parentNode) {
             return true;
         }
+
         const target = baseDocument.createElement(sTag);
         target.setAttribute('id', sId);
         element.parentNode.insertBefore(target, element.nextSibling);
@@ -267,7 +295,6 @@
     Parameters:
 
     command - (object):  The response command object which will contain the following:
-
         - command.prop: (string):  The name of the member to assign.
         - command.data: (string or object):  The value to assign to the member.
         - command.context: (object):  The current script context object which
@@ -277,14 +304,15 @@
 
     true - The operation completed successfully.
     */
-    self.contextAssign = function(command) {
+    self.contextAssign = (command) => {
         command.fullName = 'context assign';
+        const { context, prop: sAttribute, data } = command;
 
-        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if(!innerElement) {
             return true;
         }
-        innerElement[innerProperty] = command.data;
+        innerElement[innerProperty] = data;
         return true;
     };
 
@@ -296,7 +324,6 @@
     Parameters:
 
     command - (object):  The response command object which will contain the following:
-
         - command.prop: (string):  The name of the member to append to.
         - command.data: (string or object):  The value to append to the member.
         - command.context: (object):  The current script context object which
@@ -306,14 +333,15 @@
 
     true - The operation completed successfully.
     */
-    self.contextAppend = function(command) {
+    self.contextAppend = (command) => {
         command.fullName = 'context append';
+        const { context, prop: sAttribute, data } = command;
 
-        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if(!innerElement) {
             return true;
         }
-        innerElement[innerProperty] = innerElement[innerProperty] + command.data;
+        innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
     };
 
@@ -325,24 +353,23 @@
     Parameters:
 
     command - (object):  The response command object which will contain the following:
-
         - command.prop: (string):  The name of the member to prepend to.
         - command.data: (string or object):  The value to prepend to the member.
-        - command.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
+        - command.context: (object):  The current script context object which is accessable via the 'this' keyword.
 
     Returns:
 
     true - The operation completed successfully.
     */
-    self.contextPrepend = function(command) {
+    self.contextPrepend = (command) => {
         command.fullName = 'context prepend';
+        const { context, prop: sAttribute, data } = command;
 
-        const [innerElement, innerProperty] = dom.getInnerObject(this, command.prop);
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if(!innerElement) {
             return true;
         }
-        innerElement[innerProperty] = command.data + innerElement[innerProperty];
+        innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
     };
 })(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);

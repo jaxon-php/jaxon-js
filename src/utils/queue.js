@@ -45,7 +45,7 @@
      *
      * @returns integer The number of entries in the queue.
      */
-    self.push = function(oQueue, obj) {
+    self.push = (oQueue, obj) => {
         // No push if the queue is full.
         if(self.full(oQueue)) {
             throw { code: 10003 };
@@ -68,7 +68,7 @@
      *
      * @returns integer The number of entries in the queue.
      */
-    self.pushFront = function(oQueue, obj) {
+    self.pushFront = (oQueue, obj) => {
         // No push if the queue is full.
         if(self.full(oQueue)) {
             throw { code: 10003 };
@@ -94,7 +94,7 @@
      *
      * @returns object|null
      */
-    self.pop = function(oQueue) {
+    self.pop = (oQueue) => {
         if(self.empty(oQueue)) {
             return null;
         }
@@ -115,7 +115,7 @@
      *
      * @returns object|null
      */
-    self.peek = function(oQueue) {
+    self.peek = (oQueue) => {
         if(self.empty(oQueue)) {
             return null;
         }

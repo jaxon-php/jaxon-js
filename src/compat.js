@@ -25,15 +25,13 @@ jaxon.command = {
     Creates a new command (object) that will be populated with
     command parameters and eventually passed to the command handler.
     */
-    create: function(sequence, request, context) {
-        return {
-            cmd: '*',
-            fullName: '* unknown command name *',
-            sequence: sequence,
-            request: request,
-            context: context
-        };
-    }
+    create: (sequence, request, context) => ({
+        cmd: '*',
+        fullName: '* unknown command name *',
+        sequence: sequence,
+        request: request,
+        context: context
+    }),
 };
 
 /*

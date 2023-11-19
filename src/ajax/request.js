@@ -8,7 +8,7 @@
      *
      * @return {void}
      */
-    const initCallbacks = function(oRequest) {
+    const initCallbacks = (oRequest) => {
         const lcb = cbk.create();
 
         const aCallbacks = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
@@ -46,7 +46,7 @@
         that will, in addition, be used to store all request related
         values.  This includes temporary values used internally by jaxon.
     */
-    const initialize = function(oRequest) {
+    const initialize = (oRequest) => {
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
         aHeaders.forEach(sHeader => {
             oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] };
@@ -112,7 +112,7 @@
     This is called each time a request object is being prepared for a call to the server.
     If the request is retried, the request must be prepared again.
     */
-    const prepare = function(oRequest) {
+    const prepare = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onPrepare', oRequest);
 
         // Check if the request must be aborted
@@ -154,7 +154,7 @@
     Parameters:
     oRequest - (object):  The request context object.
     */
-    const submit = function(oRequest) {
+    const submit = (oRequest) => {
         oRequest.status.onRequest();
 
         cbk.execute([cbk.callback, oRequest.callback], 'onResponseDelay', oRequest);
@@ -203,7 +203,7 @@
 
     oRequest - (object):  The request context object.
     */
-    self.abort = function(oRequest) {
+    self.abort = (oRequest) => {
         oRequest.aborted = true;
         oRequest.request.abort();
         rsp.complete(oRequest);
@@ -226,7 +226,7 @@
         request.
 
     */
-    self.execute = function(functionName, functionArgs) {
+    self.execute = (functionName, functionArgs) => {
         if (functionName === undefined) {
             return false;
         }
@@ -254,4 +254,4 @@
         }
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.cmd.delay, window);
+    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.utils.delay, window);

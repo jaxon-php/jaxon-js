@@ -24,12 +24,12 @@
      *
      * @returns {object} - The workspace DOM element.
      */
-    const _getWorkspace = function() {
+    const _getWorkspace = () => {
         const elWorkspace = self.$('jaxon_temp_workspace');
         if (elWorkspace) {
             return elWorkspace;
         }
-        // Workspace not found. Must be ceated.
+        // Workspace not found. Must be created.
         if (!baseDocument.body) {
             return null;
         }
@@ -50,7 +50,7 @@
      *
      * @returns {string} - The (potentially modified) html code or text.
      */
-    self.getBrowserHTML = function(sValue) {
+    self.getBrowserHTML = (sValue) => {
         const elWorkspace = _getWorkspace();
         elWorkspace.innerHTML = sValue;
         const browserHTML = elWorkspace.innerHTML;
@@ -68,7 +68,7 @@
      * @returns {true} - The specified value differs from the current attribute value.
      * @returns {false} - The specified value is the same as the current value.
      */
-    self.willChange = function(element, attribute, newData) {
+    self.willChange = (element, attribute, newData) => {
         if (typeof element === 'string') {
             element = self.$(element);
         }
@@ -99,7 +99,7 @@
      *
      * @returns {array} The inner object and the attribute name in an array.
      */
-    self.getInnerObject = function(xElement, attribute) {
+    self.getInnerObject = (xElement, attribute) => {
         const attributes = attribute.split('.');
         // Get the last element in the array.
         attribute = attributes.pop();
@@ -120,7 +120,7 @@
      * 
      * @returns {boolean}
      */
-    self.createFunction = function(funcCode, funcName) {
+    self.createFunction = (funcCode, funcName) => {
         if (!funcCode) {
             return;
         }

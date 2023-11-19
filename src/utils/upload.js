@@ -8,7 +8,7 @@
      *
      * @return {bool}
      */
-    const initRequest = function(oRequest) {
+    const initRequest = (oRequest) => {
         if (!oRequest.upload) {
             return false;
         }
@@ -48,7 +48,7 @@
      *
      * @return {void}
      */
-    self.initialize = function(oRequest) {
+    self.initialize = (oRequest) => {
         // The content type shall not be set when uploading a file with FormData.
         // It will be set by the browser.
         if (!initRequest(oRequest)) {
