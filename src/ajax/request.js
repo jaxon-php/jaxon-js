@@ -48,9 +48,7 @@
     */
     const initialize = (oRequest) => {
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => {
-            oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] };
-        });
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
 
         const oOptions = {
             statusMessages: cfg.statusMessages,
@@ -69,19 +67,13 @@
             upload: false,
             aborted: false,
         };
-        Object.keys(oOptions).forEach(sOption => {
-            oRequest[sOption] = oRequest[sOption] ?? oOptions[sOption];
-        });
+        Object.keys(oOptions).forEach(sOption => oRequest[sOption] = oRequest[sOption] ?? oOptions[sOption]);
 
         initCallbacks(oRequest);
 
-        oRequest.status = (oRequest.statusMessages) ?
-            cfg.status.update() :
-            cfg.status.dontUpdate();
+        oRequest.status = (oRequest.statusMessages) ? cfg.status.update() : cfg.status.dontUpdate();
 
-        oRequest.cursor = (oRequest.waitCursor) ?
-            cfg.cursor.update() :
-            cfg.cursor.dontUpdate();
+        oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update() : cfg.cursor.dontUpdate();
 
         oRequest.method = oRequest.method.toUpperCase();
         if (oRequest.method !== 'GET') {

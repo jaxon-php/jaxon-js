@@ -33,15 +33,15 @@
             queue.pop(delay.q.send);
             queue.pop(delay.q.recv);
             // Process the asynchronous requests received while waiting.
-            while((recvRequest = delay.popAsyncRequest(delay.q.recv)) != null) {
+            while((recvRequest = delay.popAsyncRequest(delay.q.recv)) !== null) {
                 received(recvRequest);
             }
             // Submit the asynchronous requests sent while waiting.
-            while((nextRequest = delay.popAsyncRequest(delay.q.send)) != null) {
+            while((nextRequest = delay.popAsyncRequest(delay.q.send)) !== null) {
                 req.submit(nextRequest);
             }
             // Submit the next synchronous request, if there's any.
-            if((nextRequest = queue.peek(delay.q.send)) != null) {
+            if((nextRequest = queue.peek(delay.q.send)) !== null) {
                 req.submit(nextRequest);
             }
         }
@@ -143,7 +143,7 @@
 
     These values should match those specified in the HTTP standard.
     */
-    const successCodes = ['0', '200'];
+    // const successCodes = [0, 200];
 
     // 10.4.1 400 Bad Request
     // 10.4.2 401 Unauthorized
@@ -175,7 +175,7 @@
     This array contains a list of status codes returned by the server to indicate that
     the request failed for some reason.
     */
-    const errorsForAlert = ['400', '401', '402', '403', '404', '500', '501', '502', '503'];
+    const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
     // 10.3.2 301 Moved Permanently
@@ -192,7 +192,7 @@
     Typically, this is used by the server to send the browser to another URL.
     This does not typically indicate that the jaxon request should be sent to another URL.
     */
-    const redirectCodes = ['301', '302', '307'];
+    const redirectCodes = [301, 302, 307];
 
     /*
     Function: jsonProcessor
@@ -204,8 +204,7 @@
     oRequest - (object):  The request context object.
     */
     const jsonProcessor = (oRequest) => {
-        // It's important to have '==' and not '===' here.
-        if (successCodes.find(code => code == oRequest.response.status) !== undefined) {
+        if (oRequest.response.ok) {
             cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
 
             oRequest.sequence = 0;
@@ -227,15 +226,13 @@
             }
             return oRequest.returnValue;
         }
-        // It's important to have '==' and not '===' here.
-        if (redirectCodes.find(code => code == oRequest.response.status) !== undefined) {
+        if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
             cbk.execute([cbk.callback, oRequest.callback], 'onRedirect', oRequest);
-            window.location = oRequest.request.getResponseHeader('location');
+            window.location = oRequest.response.headers.get('location');
             self.complete(oRequest);
             return oRequest.returnValue;
         }
-        // It's important to have '==' and not '===' here.
-        if (errorsForAlert.find(code => code == oRequest.response.status) !== undefined) {
+        if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
             cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
             self.complete(oRequest);
             return oRequest.returnValue;
