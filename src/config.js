@@ -78,7 +78,7 @@ jaxon.config = {
 
     These headers will be set for both POST and GET requests.
     */
-    'commonHeaders': {
+    commonHeaders: {
         'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
     },
 
@@ -89,7 +89,7 @@ jaxon.config = {
     option name and the associated value is the value that will
     set when the request object is initialized.
     */
-    'postHeaders': {},
+    postHeaders: {},
 
     /*
     Object: getHeaders
@@ -98,7 +98,7 @@ jaxon.config = {
     option name and the associated value is the value that will
     set when the request object is initialized.
     */
-    'getHeaders': {},
+    getHeaders: {},
 
     /*
     Boolean: waitCursor
@@ -106,7 +106,7 @@ jaxon.config = {
     true - jaxon should display a wait cursor when making a request
     false - jaxon should not show a wait cursor during a request
     */
-    'waitCursor': false,
+    waitCursor: false,
 
     /*
     Boolean: statusMessages
@@ -114,7 +114,7 @@ jaxon.config = {
     true - jaxon should update the status bar during a request
     false - jaxon should not display the status of the request
     */
-    'statusMessages': false,
+    statusMessages: false,
 
     /*
     Object: baseDocument
@@ -122,14 +122,14 @@ jaxon.config = {
     The base document that will be used throughout the code for
     locating elements by ID.
     */
-    'baseDocument': document,
+    baseDocument: document,
 
     /*
     String: requestURI
 
     The URI that requests will be sent to.
     */
-    'requestURI': document.URL,
+    requestURI: document.URL,
 
     /*
     String: defaultMode
@@ -143,7 +143,7 @@ jaxon.config = {
     response.  This option allows the server to return
     a value directly to the caller.
     */
-    'defaultMode': 'asynchronous',
+    defaultMode: 'asynchronous',
 
     /*
     String: defaultHttpVersion
@@ -151,14 +151,14 @@ jaxon.config = {
     The Hyper Text Transport Protocol version designated in the
     header of the request.
     */
-    'defaultHttpVersion': 'HTTP/1.1',
+    defaultHttpVersion: 'HTTP/1.1',
 
     /*
     String: defaultContentType
 
     The content type designated in the header of the request.
     */
-    'defaultContentType': 'application/x-www-form-urlencoded',
+    defaultContentType: 'application/x-www-form-urlencoded',
 
     /*
     Integer: defaultResponseDelayTime
@@ -166,14 +166,14 @@ jaxon.config = {
     The delay time, in milliseconds, associated with the
     <jaxon.callback.onRequestDelay> event.
     */
-    'defaultResponseDelayTime': 1000,
+    defaultResponseDelayTime: 1000,
 
     /*
     Boolean: convertResponseToJson
 
     Always convert the reponse content to json.
     */
-    'convertResponseToJson': true,
+    convertResponseToJson: true,
 
     /*
     Integer: defaultExpirationTime
@@ -182,7 +182,7 @@ jaxon.config = {
     is considered expired.  This is used to trigger the
     <jaxon.callback.onExpiration event.
     */
-    'defaultExpirationTime': 10000,
+    defaultExpirationTime: 10000,
 
     /*
     String: defaultMethod
@@ -193,7 +193,7 @@ jaxon.config = {
     'GET' - Generate a GET request; parameters are appended
     to the <jaxon.config.requestURI> to form a URL.
     */
-    'defaultMethod': 'POST', // W3C: Method is case sensitive
+    defaultMethod: 'POST', // W3C: Method is case sensitive
 
     /*
     Integer: defaultRetry
@@ -201,7 +201,7 @@ jaxon.config = {
     The number of times a request should be retried
     if it expires.
     */
-    'defaultRetry': 5,
+    defaultRetry: 5,
 
     /*
     Object: defaultReturnValue
@@ -209,7 +209,7 @@ jaxon.config = {
     The value returned by <jaxon.request> when in asynchronous
     mode, or when a syncrhonous call does not specify the return value.
     */
-    'defaultReturnValue': false,
+    defaultReturnValue: false,
 
     /*
     Integer: maxObjectDepth
@@ -217,7 +217,7 @@ jaxon.config = {
     The maximum depth of recursion allowed when serializing
     objects to be sent to the server in a request.
     */
-    'maxObjectDepth': 20,
+    maxObjectDepth: 20,
 
     /*
     Integer: maxObjectSize
@@ -225,11 +225,11 @@ jaxon.config = {
     The maximum number of members allowed when serializing
     objects to be sent to the server in a request.
     */
-    'maxObjectSize': 2000,
+    maxObjectSize: 2000,
 
-    'commandQueueSize': 1000,
+    commandQueueSize: 1000,
 
-    'requestQueueSize': 1000,
+    requestQueueSize: 1000,
 };
 
 /*
@@ -248,10 +248,10 @@ jaxon.config.status = {
     called by the jaxon framework to set the status bar messages.
     */
     update: () => ({
-        onRequest: () => {},
-        onWaiting: () => {},
-        onProcessing: () => {},
-        onComplete: () => {}
+        onRequest: () => console.log('Sending Request...'),
+        onWaiting: () => console.log('Waiting for Response...'),
+        onProcessing: () => console.log('Processing...'),
+        onComplete: () => console.log('Done.'),
     }),
 
     /*
