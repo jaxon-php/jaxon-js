@@ -37,6 +37,7 @@ var jaxon = {
         node: {},
         script: {},
         style: {},
+        json: {},
     },
 
     /*

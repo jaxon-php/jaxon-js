@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, rsp, node, style, script, form, evt, dom, console) {
+(function(self, rsp, node, style, script, form, evt, json, dom, console) {
     /*
     An array that is used internally in the jaxon.fn.handler object
     to keep track of command handlers that have been registered.
@@ -114,7 +114,6 @@
     self.register('ce', node.create);
     self.register('ie', node.insert);
     self.register('ia', node.insertAfter);
-
     self.register('c:as', node.contextAssign);
     self.register('c:ap', node.contextAppend);
     self.register('c:pp', node.contextPrepend);
@@ -136,9 +135,10 @@
     self.register('iia', form.insertInputAfter);
 
     self.register('ev', evt.setEvent);
-
     self.register('ah', evt.addHandler);
     self.register('rh', evt.removeHandler);
+
+    self.register('json', json.execute);
 
     self.register('dbg', function(command) {
         command.fullName = 'debug message';
@@ -146,4 +146,4 @@
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
-    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);
+    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.cmd.json, jaxon.utils.dom, console);

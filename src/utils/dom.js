@@ -79,12 +79,13 @@
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName - The name of the function to find.
+     * @param {object} context
      *
      * @returns {object} - The function
      */
-    self.findFunction = function (sFuncName) {
+    self.findFunction = function (sFuncName, context = window) {
         const names = sFuncName.split(".");
-        for (let i = 0, length = names.length, context = window; i < length && (context); i++) {
+        for (let i = 0, length = names.length; i < length && (context); i++) {
             context = context[names[i]];
         }
         return context ?? null;
