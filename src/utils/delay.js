@@ -27,8 +27,7 @@
     self.retry = (command, count) => {
         let retries = command.retries;
         if(retries) {
-            --retries;
-            if(1 > retries) {
+            if(1 > --retries) {
                 return false;
             }
         } else {
@@ -105,11 +104,8 @@
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        msg.confirm(question, '', function() {
-            confirmCallback(command, count, false);
-        }, function() {
-            confirmCallback(command, count, true);
-        });
+        msg.confirm(question, '', () => confirmCallback(command, count, false),
+            () => confirmCallback(command, count, true));
 
         // This command must not be processed again.
         command.requeue = false;

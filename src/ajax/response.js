@@ -59,7 +59,7 @@
             if (handler.execute(command) !== false) {
                 return true;
             }
-            if(!command.requeue) {
+            if (!command.requeue) {
                 delete command;
                 return true;
             }

@@ -158,7 +158,8 @@
     */
     self.confirm = (command) => {
         command.fullName = 'confirm';
-        delay.confirm(command, command.count, command.data);
+        const { count, data: question } = command;
+        delay.confirm(command, count, question);
         return false;
     };
 

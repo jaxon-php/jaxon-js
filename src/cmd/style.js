@@ -58,7 +58,7 @@
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
-        oLinks.filter(link = oLinks[i].href.indexOf(fileName) >= 0 && oLinks[i].media == media)
+        oLinks.filter(link => link.href.indexOf(fileName) >= 0 && link.media === media)
             .forEach(link => oHead.removeChild(link));
         return true;
     },
@@ -83,9 +83,10 @@
         command.fullName = 'waitForCSS';
 
         const oDocSS = baseDocument.styleSheets;
-        const ssLoaded = oDocSS
-            .map(styleSheet => styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0)
-            .every(enabled => enabled !== 0);
+        const ssLoaded = oDocSS.every(styleSheet => {
+            const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
+            return enabled !== 0;
+        });
         if (ssLoaded) {
             return;
         }

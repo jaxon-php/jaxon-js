@@ -44,37 +44,45 @@
     };
 
     /**
+     * Sets the request parameters in a container.
+     *
+     * @param {object} oRequest The request object
+     * @param {callable} fSetter A function that sets a single parameter
+     *
+     * @return {void}
+     */
+    const setParams = (oRequest, fSetter) => {
+        fSetter('jxnr', oRequest.dNow.getTime());
+
+        Object.keys(oRequest.functionName).forEach(sCommand =>
+            fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
+        if (oRequest.parameters) {
+            for (const oVal of oRequest.parameters) {
+                fSetter('jxnargs[]', stringify(oVal));
+            }
+        }
+        if (oRequest.bags) {
+            const oValues = {};
+            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
+            fSetter('jxnbags', stringify(oValues));
+        }
+    };
+
+    /**
      * Processes request specific parameters and store them in a FormData object.
      *
      * @param {object} oRequest
      *
-     * @return {void}
+     * @return {FormData}
      */
-    const toFormData = (oRequest) => {
+    const getFormDataParams = (oRequest) => {
         const rd = new FormData();
-        rd.append('jxnr', oRequest.dNow.getTime());
+        setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
 
         // Files to upload
         const input = oRequest.upload.input;
         input.files && input.files.forEach(file => rd.append(input.name, file));
-
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
-
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                rd.append('jxnargs[]', stringify(oVal));
-            }
-        }
-
-        if(oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            rd.append('jxnbags', stringify(oValues));
-        }
-
-        oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = rd;
+        return rd;
     };
 
     /**
@@ -84,35 +92,17 @@
      *
      * @return {void}
      */
-    const toUrlEncoded = (oRequest) => {
+    const getUrlEncodedParams = (oRequest) => {
         const rd = [];
-        rd.push('jxnr=' + oRequest.dNow.getTime());
+        setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            rd.push(sCommand + '=' + encodeURIComponent(oRequest.functionName[sCommand])));
-
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                rd.push('jxnargs[]=' + stringify(oVal));
-            }
-        }
-
-        if(oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            rd.push('jxnbags=' + stringify(oValues));
-        }
-
-        oRequest.requestURI = oRequest.URI;
-
+        // Move the parameters to the URL for HTTP GET requests
         if (oRequest.method === 'GET') {
             oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
             oRequest.requestURI += rd.join('&');
-            // No body for HTTP GET requests
             rd = [];
         }
-
-        oRequest.requestData = rd.join('&');
+        return rd.join('&');
     };
 
     /**
@@ -129,11 +119,11 @@
      * This is called once per request; upon a request failure, this will not be called for additional retries.
      */
     self.process = (oRequest) => {
-        const func = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
-            toFormData : toUrlEncoded;
         // Make request parameters.
         oRequest.dNow = new Date();
-        func(oRequest);
+        oRequest.requestURI = oRequest.URI;
+        oRequest.requestData = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
+            getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
         delete oRequest.dNow;
     };
 })(jaxon.ajax.parameters);

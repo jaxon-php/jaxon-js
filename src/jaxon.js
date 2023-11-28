@@ -16,7 +16,7 @@
     @version $Id: jaxon.core.js 327 2007-02-28 16:55:26Z calltoconstruct $
     @copyright Copyright (c) 2005-2007 by Jared White & J. Max Wilson
     @copyright Copyright (c) 2008-2010 by Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
-    @license http://www.jaxonproject.org/bsd_license.txt BSD License
+    @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
 /*

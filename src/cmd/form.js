@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.form
  */
 
-(function(self, dom, baseDocument) {
+(function(self, baseDocument) {
     /*
     Create and return a form input element with the specified parameters.
 
@@ -74,8 +74,9 @@
 
         const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
+        if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling);
+        }
         return true;
     };
 
@@ -101,8 +102,9 @@
 
         const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
+        if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
+        }
         return true;
     };
-})(jaxon.cmd.form, jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.form, jaxon.config.baseDocument);

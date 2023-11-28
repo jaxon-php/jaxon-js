@@ -85,22 +85,20 @@
     Build an associative array of form elements and their values from the specified form.
 
     Parameters:
-    element - (string): The unique name (id) of the form to be processed.
+    formId - (string): The unique name (id) of the form to be processed.
     disabled - (boolean, optional): Include form elements which are currently disabled.
     prefix - (string, optional): A prefix used for selecting form elements.
 
     Returns:
     An associative array of form element id and value.
     */
-    self.getValues = (parent) => {
-        const submitDisabledElements = (arguments.length > 1 && arguments[1] == true);
-        const prefix = (arguments.length > 2) ? arguments[2] : '';
-        if (typeof parent === 'string') {
-            parent = dom.$(parent);
-        }
+    self.getValues = (formId, disabled, prefix) => {
+        const submitDisabledElements = (disabled === true);
+        const prefixValue = prefix ?? '';
+        const form = dom.$(formId);
         const aFormValues = {};
-        if (parent && parent.childNodes) {
-            _getValues(aFormValues, parent.childNodes, submitDisabledElements, prefix);
+        if (form && form.childNodes) {
+            _getValues(aFormValues, form.childNodes, submitDisabledElements, prefixValue);
         }
         return aFormValues;
     };

@@ -116,11 +116,11 @@
      * Create a function by inserting its code in the page using a <script> tag.
      *
      * @param {string} funcCode
-     * @param {string|undefined} funcName
+     * @param {string} funcName
      * 
      * @returns {boolean}
      */
-    self.createFunction = (funcCode, funcName) => {
+    self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
         if (!funcCode) {
             return;
         }
@@ -128,7 +128,6 @@
         // const removeTagAfter = funcName === undefined;
         const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
             'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
-        funcName = funcName ?? 'jaxon.cmd.script.context.delegateCall';
 
         // Remove the tag if it already exists.
         jaxon.cmd.node.remove(scriptTagId);
