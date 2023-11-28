@@ -37,6 +37,7 @@ var jaxon = {
         node: {},
         script: {},
         style: {},
+        json: {},
     },
 
     /*
@@ -341,8 +342,7 @@ jaxon.config.cursor = {
     self.retry = (command, count) => {
         let retries = command.retries;
         if(retries) {
-            --retries;
-            if(1 > retries) {
+            if(1 > --retries) {
                 return false;
             }
         } else {
@@ -419,11 +419,8 @@ jaxon.config.cursor = {
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        msg.confirm(question, '', function() {
-            confirmCallback(command, count, false);
-        }, function() {
-            confirmCallback(command, count, true);
-        });
+        msg.confirm(question, '', () => confirmCallback(command, count, false),
+            () => confirmCallback(command, count, true));
 
         // This command must not be processed again.
         command.requeue = false;
@@ -513,12 +510,13 @@ jaxon.config.cursor = {
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName - The name of the function to find.
+     * @param {object} context
      *
      * @returns {object} - The function
      */
-    self.findFunction = function (sFuncName) {
+    self.findFunction = function (sFuncName, context = window) {
         const names = sFuncName.split(".");
-        for (let i = 0, length = names.length, context = window; i < length && (context); i++) {
+        for (let i = 0, length = names.length; i < length && (context); i++) {
             context = context[names[i]];
         }
         return context ?? null;
@@ -550,11 +548,11 @@ jaxon.config.cursor = {
      * Create a function by inserting its code in the page using a <script> tag.
      *
      * @param {string} funcCode
-     * @param {string|undefined} funcName
+     * @param {string} funcName
      * 
      * @returns {boolean}
      */
-    self.createFunction = (funcCode, funcName) => {
+    self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
         if (!funcCode) {
             return;
         }
@@ -562,7 +560,6 @@ jaxon.config.cursor = {
         // const removeTagAfter = funcName === undefined;
         const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
             'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
-        funcName = funcName ?? 'jaxon.cmd.script.context.delegateCall';
 
         // Remove the tag if it already exists.
         jaxon.cmd.node.remove(scriptTagId);
@@ -669,22 +666,20 @@ jaxon.config.cursor = {
     Build an associative array of form elements and their values from the specified form.
 
     Parameters:
-    element - (string): The unique name (id) of the form to be processed.
+    formId - (string): The unique name (id) of the form to be processed.
     disabled - (boolean, optional): Include form elements which are currently disabled.
     prefix - (string, optional): A prefix used for selecting form elements.
 
     Returns:
     An associative array of form element id and value.
     */
-    self.getValues = (parent) => {
-        const submitDisabledElements = (arguments.length > 1 && arguments[1] == true);
-        const prefix = (arguments.length > 2) ? arguments[2] : '';
-        if (typeof parent === 'string') {
-            parent = dom.$(parent);
-        }
+    self.getValues = (formId, disabled, prefix) => {
+        const submitDisabledElements = (disabled === true);
+        const prefixValue = prefix ?? '';
+        const form = dom.$(formId);
         const aFormValues = {};
-        if (parent && parent.childNodes) {
-            _getValues(aFormValues, parent.childNodes, submitDisabledElements, prefix);
+        if (form && form.childNodes) {
+            _getValues(aFormValues, form.childNodes, submitDisabledElements, prefixValue);
         }
         return aFormValues;
     };
@@ -1043,7 +1038,7 @@ jaxon.config.cursor = {
  * Class: jaxon.cmd.form
  */
 
-(function(self, dom, baseDocument) {
+(function(self, baseDocument) {
     /*
     Create and return a form input element with the specified parameters.
 
@@ -1115,8 +1110,9 @@ jaxon.config.cursor = {
 
         const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
+        if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling);
+        }
         return true;
     };
 
@@ -1142,11 +1138,153 @@ jaxon.config.cursor = {
 
         const { target: objSibling, type: sType, data: sName, prop: sId } = command;
         const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode)
+        if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
+        }
         return true;
     };
-})(jaxon.cmd.form, jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.form, jaxon.config.baseDocument);
+
+
+/**
+ * Class: jaxon.cmd.json
+ */
+
+(function(self, dom, form, jq) {
+    /**
+     * Check if a parameter is an expression.
+     *
+     * @param {mixed} xParam
+     *
+     * @returns {boolean}
+     */
+    const isExpression = xParam => typeof xParam === 'object' && (xParam.__type);
+
+    /**
+     * Get the value of a single parameter.
+     *
+     * @param {mixed} xParam
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xParam, xTarget) => {
+        if (!isExpression(xParam)) {
+            return xParam;
+        }
+        const { __type: sType, name: sName } = xParam;
+        if (sType === 'form') {
+            return form.getValues(sName);
+        }
+        if (sType === 'input') {
+            return dom.$(sName).value;
+        }
+        if (sType === 'checked') {
+            return dom.$(sName).checked;
+        }
+        if (sType === 'html') {
+            return dom.$(sName).innerHTML;
+        }
+        // if (sType === 'expr')
+        return execExpression(xParam, xTarget);
+    };
+
+    /**
+     * Get the values of an array of parameters.
+     *
+     * @param {array} aParams
+     * @param {object|null} xTarget
+     *
+     * @returns {array}
+     */
+    const getValues = (aParams, xTarget) => aParams.map(xParam => getValue(xParam, xTarget));
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xCall
+     * @param {object} xContext
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const execCall = (xCall, xContext, xTarget = null) => {
+        if (!xContext) {
+            return null;
+        }
+
+        // Make calls
+        const { __type: sType, name: sName } = xCall;
+        if (sType === 'attr') {
+            const { param: xValue } = xCall;
+            if(xValue === undefined) {
+                // Read an attribute.
+                return xContext[sName];
+            }
+            // Assign an attribute.
+            xContext[sName] = getValue(xValue, xTarget);
+            return;
+        }
+        if(sType === 'func') {
+            if (sName === 'toInt') {
+                return parseInt(xContext);
+            }
+            const { params: aParams = [] } = xCall;
+            // Call a function with xContext as "this" and an array of parameters.
+            const func = dom.findFunction(sName, xContext);
+            return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
+        }
+        if(sType === 'jqsel') {
+            // jQuery selector
+            const { params: aParams = [] } = xCall;
+            if(xContext === window && aParams.length === 0) {
+                // First call with an empty parameter list => $(this).
+                return xTarget;
+            }
+            // Call the jQuery selector with xContext as "this".
+            return jq.apply(xContext, getValues(aParams, xTarget));
+        }
+        if(sType === 'jqevt') {
+            // Set a jQuery event handler. Takes an expression as parameter.
+            const { param: xExpression } = xCall;
+            return xContext.on(sName, (e) => execExpression(xExpression, $(e.currentTarget)));
+        }
+        return null;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const execExpression = (xExpression, xTarget = null) => {
+        // Make calls
+        const { calls: aCalls = [] } = xExpression;
+        let xContext = window;
+        aCalls.forEach(xCall => xContext = execCall(xCall, xContext, xTarget));
+        return xContext;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object, using the current script context.
+     *
+     * @param {object} command - Response command object.
+     * - data: The expression object
+     *
+     * @returns {true} - The operation completed successfully.
+     */
+    self.execute = (command) => {
+        const { data: xExpression } = command;
+        // Check the command data validity. The data must be an object.
+        if (typeof xExpression === 'object' && !Array.isArray(xExpression)) {
+            execExpression(xExpression);
+        }
+        return true;
+    };
+})(jaxon.cmd.json, jaxon.utils.dom, jaxon.utils.form, jQuery);
 
 
 /**
@@ -1686,7 +1824,8 @@ jaxon.config.cursor = {
     */
     self.confirm = (command) => {
         command.fullName = 'confirm';
-        delay.confirm(command, command.count, command.data);
+        const { count, data: question } = command;
+        delay.confirm(command, count, question);
         return false;
     };
 
@@ -1966,7 +2105,7 @@ jaxon.config.cursor = {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
-        oLinks.filter(link = oLinks[i].href.indexOf(fileName) >= 0 && oLinks[i].media == media)
+        oLinks.filter(link => link.href.indexOf(fileName) >= 0 && link.media === media)
             .forEach(link => oHead.removeChild(link));
         return true;
     },
@@ -1991,9 +2130,10 @@ jaxon.config.cursor = {
         command.fullName = 'waitForCSS';
 
         const oDocSS = baseDocument.styleSheets;
-        const ssLoaded = oDocSS
-            .map(styleSheet => styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0)
-            .every(enabled => enabled !== 0);
+        const ssLoaded = oDocSS.every(styleSheet => {
+            const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
+            return enabled !== 0;
+        });
         if (ssLoaded) {
             return;
         }
@@ -2126,7 +2266,7 @@ jaxon.config.cursor = {
  * Class: jaxon.ajax.handler
  */
 
-(function(self, rsp, node, style, script, form, evt, dom, console) {
+(function(self, rsp, node, style, script, form, evt, json, dom, console) {
     /*
     An array that is used internally in the jaxon.fn.handler object
     to keep track of command handlers that have been registered.
@@ -2238,7 +2378,6 @@ jaxon.config.cursor = {
     self.register('ce', node.create);
     self.register('ie', node.insert);
     self.register('ia', node.insertAfter);
-
     self.register('c:as', node.contextAssign);
     self.register('c:ap', node.contextAppend);
     self.register('c:pp', node.contextPrepend);
@@ -2260,9 +2399,10 @@ jaxon.config.cursor = {
     self.register('iia', form.insertInputAfter);
 
     self.register('ev', evt.setEvent);
-
     self.register('ah', evt.addHandler);
     self.register('rh', evt.removeHandler);
+
+    self.register('json', json.execute);
 
     self.register('dbg', function(command) {
         command.fullName = 'debug message';
@@ -2270,7 +2410,7 @@ jaxon.config.cursor = {
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
-    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);
+    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.cmd.json, jaxon.utils.dom, console);
 
 
 /**
@@ -2389,37 +2529,45 @@ jaxon.config.cursor = {
     };
 
     /**
+     * Sets the request parameters in a container.
+     *
+     * @param {object} oRequest The request object
+     * @param {callable} fSetter A function that sets a single parameter
+     *
+     * @return {void}
+     */
+    const setParams = (oRequest, fSetter) => {
+        fSetter('jxnr', oRequest.dNow.getTime());
+
+        Object.keys(oRequest.functionName).forEach(sCommand =>
+            fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
+        if (oRequest.parameters) {
+            for (const oVal of oRequest.parameters) {
+                fSetter('jxnargs[]', stringify(oVal));
+            }
+        }
+        if (oRequest.bags) {
+            const oValues = {};
+            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
+            fSetter('jxnbags', stringify(oValues));
+        }
+    };
+
+    /**
      * Processes request specific parameters and store them in a FormData object.
      *
      * @param {object} oRequest
      *
-     * @return {void}
+     * @return {FormData}
      */
-    const toFormData = (oRequest) => {
+    const getFormDataParams = (oRequest) => {
         const rd = new FormData();
-        rd.append('jxnr', oRequest.dNow.getTime());
+        setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
 
         // Files to upload
         const input = oRequest.upload.input;
         input.files && input.files.forEach(file => rd.append(input.name, file));
-
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            rd.append(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
-
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                rd.append('jxnargs[]', stringify(oVal));
-            }
-        }
-
-        if(oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            rd.append('jxnbags', stringify(oValues));
-        }
-
-        oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = rd;
+        return rd;
     };
 
     /**
@@ -2429,35 +2577,17 @@ jaxon.config.cursor = {
      *
      * @return {void}
      */
-    const toUrlEncoded = (oRequest) => {
+    const getUrlEncodedParams = (oRequest) => {
         const rd = [];
-        rd.push('jxnr=' + oRequest.dNow.getTime());
+        setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            rd.push(sCommand + '=' + encodeURIComponent(oRequest.functionName[sCommand])));
-
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                rd.push('jxnargs[]=' + stringify(oVal));
-            }
-        }
-
-        if(oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            rd.push('jxnbags=' + stringify(oValues));
-        }
-
-        oRequest.requestURI = oRequest.URI;
-
+        // Move the parameters to the URL for HTTP GET requests
         if (oRequest.method === 'GET') {
             oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
             oRequest.requestURI += rd.join('&');
-            // No body for HTTP GET requests
             rd = [];
         }
-
-        oRequest.requestData = rd.join('&');
+        return rd.join('&');
     };
 
     /**
@@ -2474,11 +2604,11 @@ jaxon.config.cursor = {
      * This is called once per request; upon a request failure, this will not be called for additional retries.
      */
     self.process = (oRequest) => {
-        const func = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
-            toFormData : toUrlEncoded;
         // Make request parameters.
         oRequest.dNow = new Date();
-        func(oRequest);
+        oRequest.requestURI = oRequest.URI;
+        oRequest.requestData = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
+            getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
         delete oRequest.dNow;
     };
 })(jaxon.ajax.parameters);
@@ -2796,7 +2926,7 @@ jaxon.config.cursor = {
             if (handler.execute(command) !== false) {
                 return true;
             }
-            if(!command.requeue) {
+            if (!command.requeue) {
                 delete command;
                 return true;
             }
@@ -3095,7 +3225,8 @@ jaxon.config.cursor = {
     @version $Id: jaxon.core.js 327 2007-02-28 16:55:26Z calltoconstruct $
     @copyright Copyright (c) 2005-2007 by Jared White & J. Max Wilson
     @copyright Copyright (c) 2008-2010 by Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
-    @license http://www.jaxonproject.org/bsd_license.txt BSD License
+    @copyright Copyright (c) 2017 by Thierry Feuzeu, Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
+    @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
 /*
