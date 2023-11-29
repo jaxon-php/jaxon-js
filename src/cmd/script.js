@@ -374,6 +374,27 @@
         dom.createFunction(jsCode, funcName);
         self.context.delegateCall();
         return true;
-    }
+    };
+
+    /**
+     * Redirects the browser to the specified URL.
+     *
+     * @param {object} command The response command object which contains the following:
+     *  - command.data: (string):  The new URL to redirect to.
+     *  - command.delay: (integer):  The time to wait before the redirect.
+     *
+     * @returns {true} The function was constructed successfully.
+     */
+    self.redirect = (command) => {
+        command.fullName = 'redirect';
+
+        const { data: sUrl, delay: nDelay } = command;
+        if (nDelay <= 0) {
+            window.location = sUrl;
+            return true;
+        }
+        window.setTimeout(() => window.location = sUrl, nDelay * 1000);
+        return true;
+    };
 })(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message,
     jaxon.utils.dom, jaxon.config.baseDocument, window);

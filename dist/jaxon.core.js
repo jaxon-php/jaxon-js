@@ -3,6 +3,15 @@ Class: jaxon
 */
 var jaxon = {
     /*
+    Version number
+    */
+    version: {
+        major: '4',
+        minor: '0',
+        patch: 'rc-1',
+    },
+
+    /*
     Class: jaxon.debug
     */
     debug: {
@@ -1217,7 +1226,7 @@ jaxon.config.cursor = {
         const { __type: sType, name: sName } = xCall;
         if (sType === 'attr') {
             const { param: xValue } = xCall;
-            if(xValue === undefined) {
+            if (xValue === undefined) {
                 // Read an attribute.
                 return xContext[sName];
             }
@@ -1225,7 +1234,7 @@ jaxon.config.cursor = {
             xContext[sName] = getValue(xValue, xTarget);
             return;
         }
-        if(sType === 'func') {
+        if (sType === 'func') {
             if (sName === 'toInt') {
                 return parseInt(xContext);
             }
@@ -1234,20 +1243,20 @@ jaxon.config.cursor = {
             const func = dom.findFunction(sName, xContext);
             return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
         }
-        if(sType === 'jqsel') {
+        if (sType === 'jqsel') {
             // jQuery selector
             const { params: aParams = [] } = xCall;
-            if(xContext === window && aParams.length === 0) {
+            if (xContext === window && aParams.length === 0) {
                 // First call with an empty parameter list => $(this).
                 return xTarget;
             }
             // Call the jQuery selector with xContext as "this".
             return jq.apply(xContext, getValues(aParams, xTarget));
         }
-        if(sType === 'jqevt') {
+        if (sType === 'jqevt') {
             // Set a jQuery event handler. Takes an expression as parameter.
             const { param: xExpression } = xCall;
-            return xContext.on(sName, (e) => execExpression(xExpression, $(e.currentTarget)));
+            return xContext.on(sName, (e) => execExpression(xExpression, jq(e.currentTarget)));
         }
         return null;
     };
@@ -2040,7 +2049,28 @@ jaxon.config.cursor = {
         dom.createFunction(jsCode, funcName);
         self.context.delegateCall();
         return true;
-    }
+    };
+
+    /**
+     * Redirects the browser to the specified URL.
+     *
+     * @param {object} command The response command object which contains the following:
+     *  - command.data: (string):  The new URL to redirect to.
+     *  - command.delay: (integer):  The time to wait before the redirect.
+     *
+     * @returns {true} The function was constructed successfully.
+     */
+    self.redirect = (command) => {
+        command.fullName = 'redirect';
+
+        const { data: sUrl, delay: nDelay } = command;
+        if (nDelay <= 0) {
+            window.location = sUrl;
+            return true;
+        }
+        window.setTimeout(() => window.location = sUrl, nDelay * 1000);
+        return true;
+    };
 })(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message,
     jaxon.utils.dom, jaxon.config.baseDocument, window);
 
@@ -2393,6 +2423,7 @@ jaxon.config.cursor = {
     self.register('wpf', script.wrapFunction);
     self.register('al', script.alert);
     self.register('cc', script.confirm);
+    self.register('rd', script.redirect);
 
     self.register('ci', form.createInput);
     self.register('ii', form.insertInput);
@@ -2487,7 +2518,7 @@ jaxon.config.cursor = {
  * Class: jaxon.ajax.parameters
  */
 
-(function(self) {
+(function(self, version) {
     /**
      * The array of data bags
      * @type {object}
@@ -2538,6 +2569,7 @@ jaxon.config.cursor = {
      */
     const setParams = (oRequest, fSetter) => {
         fSetter('jxnr', oRequest.dNow.getTime());
+        fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
         Object.keys(oRequest.functionName).forEach(sCommand =>
             fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
@@ -2611,7 +2643,7 @@ jaxon.config.cursor = {
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
         delete oRequest.dNow;
     };
-})(jaxon.ajax.parameters);
+})(jaxon.ajax.parameters, jaxon.version);
 
 
 /**

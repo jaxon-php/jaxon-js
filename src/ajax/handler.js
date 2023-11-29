@@ -129,6 +129,7 @@
     self.register('wpf', script.wrapFunction);
     self.register('al', script.alert);
     self.register('cc', script.confirm);
+    self.register('rd', script.redirect);
 
     self.register('ci', form.createInput);
     self.register('ii', form.insertInput);
