@@ -69,7 +69,7 @@
         const { __type: sType, name: sName } = xCall;
         if (sType === 'attr') {
             const { param: xValue } = xCall;
-            if(xValue === undefined) {
+            if (xValue === undefined) {
                 // Read an attribute.
                 return xContext[sName];
             }
@@ -77,7 +77,7 @@
             xContext[sName] = getValue(xValue, xTarget);
             return;
         }
-        if(sType === 'func') {
+        if (sType === 'func') {
             if (sName === 'toInt') {
                 return parseInt(xContext);
             }
@@ -86,20 +86,20 @@
             const func = dom.findFunction(sName, xContext);
             return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
         }
-        if(sType === 'jqsel') {
+        if (sType === 'jqsel') {
             // jQuery selector
             const { params: aParams = [] } = xCall;
-            if(xContext === window && aParams.length === 0) {
+            if (xContext === window && aParams.length === 0) {
                 // First call with an empty parameter list => $(this).
                 return xTarget;
             }
             // Call the jQuery selector with xContext as "this".
             return jq.apply(xContext, getValues(aParams, xTarget));
         }
-        if(sType === 'jqevt') {
+        if (sType === 'jqevt') {
             // Set a jQuery event handler. Takes an expression as parameter.
             const { param: xExpression } = xCall;
-            return xContext.on(sName, (e) => execExpression(xExpression, $(e.currentTarget)));
+            return xContext.on(sName, (e) => execExpression(xExpression, jq(e.currentTarget)));
         }
         return null;
     };

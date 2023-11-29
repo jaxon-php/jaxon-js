@@ -3,6 +3,15 @@ Class: jaxon
 */
 var jaxon = {
     /*
+    Version number
+    */
+    version: {
+        major: '4',
+        minor: '0',
+        patch: 'rc-1',
+    },
+
+    /*
     Class: jaxon.debug
     */
     debug: {

@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.parameters
  */
 
-(function(self) {
+(function(self, version) {
     /**
      * The array of data bags
      * @type {object}
@@ -53,6 +53,7 @@
      */
     const setParams = (oRequest, fSetter) => {
         fSetter('jxnr', oRequest.dNow.getTime());
+        fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
         Object.keys(oRequest.functionName).forEach(sCommand =>
             fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
@@ -126,4 +127,4 @@
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
         delete oRequest.dNow;
     };
-})(jaxon.ajax.parameters);
+})(jaxon.ajax.parameters, jaxon.version);
