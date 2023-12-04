@@ -6,9 +6,9 @@ var jaxon = {
     Version number
     */
     version: {
-        major: '4',
+        major: '5',
         minor: '0',
-        patch: '0rc-2',
+        patch: '0rc-1',
     },
 
     /*
@@ -46,6 +46,7 @@ var jaxon = {
         node: {},
         script: {},
         style: {},
+        json: {},
     },
 
     /*
