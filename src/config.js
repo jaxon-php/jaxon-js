@@ -8,7 +8,7 @@ var jaxon = {
     version: {
         major: '4',
         minor: '0',
-        patch: 'rc-1',
+        patch: '0rc-2',
     },
 
     /*
@@ -46,7 +46,6 @@ var jaxon = {
         node: {},
         script: {},
         style: {},
-        json: {},
     },
 
     /*

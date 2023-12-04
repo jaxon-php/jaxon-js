@@ -8,7 +8,7 @@ var jaxon = {
     version: {
         major: '4',
         minor: '0',
-        patch: 'rc-1',
+        patch: '0rc-2',
     },
 
     /*
@@ -46,7 +46,6 @@ var jaxon = {
         node: {},
         script: {},
         style: {},
-        json: {},
     },
 
     /*
@@ -550,7 +549,7 @@ jaxon.config.cursor = {
             // The real name for the "css" object is "style".
             xElement = xElement[attr === 'css' ? 'style' : attr];
         }
-        return [xElement ?? null, (xElement) ? attribute : null];
+        return !xElement ? [null, null] : [xElement, attribute];
     };
 
     /**
@@ -1156,147 +1155,6 @@ jaxon.config.cursor = {
 
 
 /**
- * Class: jaxon.cmd.json
- */
-
-(function(self, dom, form, jq) {
-    /**
-     * Check if a parameter is an expression.
-     *
-     * @param {mixed} xParam
-     *
-     * @returns {boolean}
-     */
-    const isExpression = xParam => typeof xParam === 'object' && (xParam.__type);
-
-    /**
-     * Get the value of a single parameter.
-     *
-     * @param {mixed} xParam
-     * @param {object|null} xTarget
-     *
-     * @returns {mixed}
-     */
-    const getValue = (xParam, xTarget) => {
-        if (!isExpression(xParam)) {
-            return xParam;
-        }
-        const { __type: sType, name: sName } = xParam;
-        if (sType === 'form') {
-            return form.getValues(sName);
-        }
-        if (sType === 'input') {
-            return dom.$(sName).value;
-        }
-        if (sType === 'checked') {
-            return dom.$(sName).checked;
-        }
-        if (sType === 'html') {
-            return dom.$(sName).innerHTML;
-        }
-        // if (sType === 'expr')
-        return execExpression(xParam, xTarget);
-    };
-
-    /**
-     * Get the values of an array of parameters.
-     *
-     * @param {array} aParams
-     * @param {object|null} xTarget
-     *
-     * @returns {array}
-     */
-    const getValues = (aParams, xTarget) => aParams.map(xParam => getValue(xParam, xTarget));
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xCall
-     * @param {object} xContext
-     * @param {object|null} xTarget
-     *
-     * @returns {mixed}
-     */
-    const execCall = (xCall, xContext, xTarget = null) => {
-        if (!xContext) {
-            return null;
-        }
-
-        // Make calls
-        const { __type: sType, name: sName } = xCall;
-        if (sType === 'attr') {
-            const { param: xValue } = xCall;
-            if (xValue === undefined) {
-                // Read an attribute.
-                return xContext[sName];
-            }
-            // Assign an attribute.
-            xContext[sName] = getValue(xValue, xTarget);
-            return;
-        }
-        if (sType === 'func') {
-            if (sName === 'toInt') {
-                return parseInt(xContext);
-            }
-            const { params: aParams = [] } = xCall;
-            // Call a function with xContext as "this" and an array of parameters.
-            const func = dom.findFunction(sName, xContext);
-            return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
-        }
-        if (sType === 'jqsel') {
-            // jQuery selector
-            const { params: aParams = [] } = xCall;
-            if (xContext === window && aParams.length === 0) {
-                // First call with an empty parameter list => $(this).
-                return xTarget;
-            }
-            // Call the jQuery selector with xContext as "this".
-            return jq.apply(xContext, getValues(aParams, xTarget));
-        }
-        if (sType === 'jqevt') {
-            // Set a jQuery event handler. Takes an expression as parameter.
-            const { param: xExpression } = xCall;
-            return xContext.on(sName, (e) => execExpression(xExpression, jq(e.currentTarget)));
-        }
-        return null;
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression
-     * @param {object|null} xTarget
-     *
-     * @returns {mixed}
-     */
-    const execExpression = (xExpression, xTarget = null) => {
-        // Make calls
-        const { calls: aCalls = [] } = xExpression;
-        let xContext = window;
-        aCalls.forEach(xCall => xContext = execCall(xCall, xContext, xTarget));
-        return xContext;
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object, using the current script context.
-     *
-     * @param {object} command - Response command object.
-     * - data: The expression object
-     *
-     * @returns {true} - The operation completed successfully.
-     */
-    self.execute = (command) => {
-        const { data: xExpression } = command;
-        // Check the command data validity. The data must be an object.
-        if (typeof xExpression === 'object' && !Array.isArray(xExpression)) {
-            execExpression(xExpression);
-        }
-        return true;
-    };
-})(jaxon.cmd.json, jaxon.utils.dom, jaxon.utils.form, jQuery);
-
-
-/**
  * Class: jaxon.cmd.node
  */
 
@@ -1319,9 +1177,8 @@ jaxon.config.cursor = {
     */
     self.assign = (command) => {
         command.fullName = 'assign/clear';
-        const { target: element, prop: property, data } = command;
-        // element = dom.$(element);
 
+        const { target: element, prop: property, data } = command;
         if (property === 'innerHTML') {
             element.innerHTML = data;
             return true;
@@ -1332,10 +1189,9 @@ jaxon.config.cursor = {
         }
 
         const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data;
         }
-        innerElement[innerProperty] = data;
         return true;
     };
 
@@ -1357,9 +1213,8 @@ jaxon.config.cursor = {
     */
     self.append = (command) => {
         command.fullName = 'append';
-        const { target: element, prop: property, data } = command;
-        // element = dom.$(element);
 
+        const { target: element, prop: property, data } = command;
         if (property === 'innerHTML') {
             element.innerHTML = element.innerHTML + data;
             return true;
@@ -1370,10 +1225,9 @@ jaxon.config.cursor = {
         }
 
         const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = innerElement[innerProperty] + data;
         }
-        innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
     };
 
@@ -1395,9 +1249,8 @@ jaxon.config.cursor = {
     */
     self.prepend = (command) => {
         command.fullName = 'prepend';
-        const { target: element, prop: property, data } = command;
-        // element = dom.$(element);
 
+        const { target: element, prop: property, data } = command;
         if (property === 'innerHTML') {
             element.innerHTML = data + element.innerHTML;
             return true;
@@ -1408,11 +1261,29 @@ jaxon.config.cursor = {
         }
 
         const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data + innerElement[innerProperty];
         }
-        innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
+    };
+
+    /**
+     * Replace a text in the value of a given property in an element
+     *
+     * @param {object} xElement The element to search in
+     * @param {string} sProperty The attribute to search in
+     * @param {string} sSearch The text to search
+     * @param {string} sReplace The text to use as replacement
+     *
+     * @returns {void}
+     */
+    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
+        const bFunction = (typeof xElement[sProperty] === 'function');
+        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
+        const sNewText = sCurText.replaceAll(sSearch, sReplace);
+        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
+            xElement[sProperty] = sNewText;
+        }
     };
 
     /*
@@ -1433,39 +1304,13 @@ jaxon.config.cursor = {
     */
     self.replace = (command) => {
         command.fullName = 'replace';
-        const { target: element, prop: sAttribute, data: aData } = command;
-        // element = dom.$(element);
 
+        const { target: element, prop: sAttribute, data: aData } = command;
         const sReplace = aData['r'];
         const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
-        const [innerElement, innerAttribute] = dom.getInnerObject(element, sAttribute);
-        if(!innerElement) {
-            return true;
-        }
-        let txt = innerElement[innerAttribute];
-
-        let bFunction = false;
-        if (typeof txt === 'function') {
-            txt = txt.join('');
-            bFunction = true;
-        }
-
-        let start = txt.indexOf(sSearch);
-        if (start > -1) {
-            let newTxt = [];
-            while (start > -1) {
-                const end = start + sSearch.length;
-                newTxt.push(txt.substr(0, start));
-                newTxt.push(sReplace);
-                txt = txt.substr(end, txt.length - end);
-                start = txt.indexOf(sSearch);
-            }
-            newTxt.push(txt);
-            newTxt = newTxt.join('');
-
-            if (bFunction || dom.willChange(element, sAttribute, newTxt)) {
-                innerElement[innerAttribute] = newTxt;
-            }
+        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
+        if (innerElement !== null) {
+            replaceText(innerElement, innerProperty, sSearch, sReplace);
         }
         return true;
     };
@@ -1486,9 +1331,8 @@ jaxon.config.cursor = {
     */
     self.remove = (command) => {
         command.fullName = 'remove';
-        const { target: element } = command;
-        // element = dom.$(element);
 
+        const { target: element } = command;
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
@@ -1513,15 +1357,13 @@ jaxon.config.cursor = {
     */
     self.create = (command) => {
         command.fullName = 'create';
-        const { target: element, data: sTag, prop: sId } = command;
-        // element = dom.$(element);
-        if (!element) {
-            return true;
-        }
 
-        const target = baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        element.appendChild(target);
+        const { target: element, data: sTag, prop: sId } = command;
+        if (element) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.appendChild(target);
+        }
         return true;
     };
 
@@ -1543,15 +1385,13 @@ jaxon.config.cursor = {
     */
     self.insert = (command) => {
         command.fullName = 'insert';
-        const { target: element, data: sTag, prop: sId } = command;
-        // element = dom.$(element);
-        if (!element || !element.parentNode) {
-            return true;
-        }
 
-        const target = baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        element.parentNode.insertBefore(target, element);
+        const { target: element, data: sTag, prop: sId } = command;
+        if (element && element.parentNode) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.parentNode.insertBefore(target, element);
+        }
         return true;
     };
 
@@ -1573,15 +1413,13 @@ jaxon.config.cursor = {
     */
     self.insertAfter = (command) => {
         command.fullName = 'insertAfter';
-        const { target: element, data: sTag, prop: sId } = command;
-        // element = dom.$(element);
-        if (!element || !element.parentNode) {
-            return true;
-        }
 
-        const target = baseDocument.createElement(sTag);
-        target.setAttribute('id', sId);
-        element.parentNode.insertBefore(target, element.nextSibling);
+        const { target: element, data: sTag, prop: sId } = command;
+        if (element && element.parentNode) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.parentNode.insertBefore(target, element.nextSibling);
+        }
         return true;
     };
 
@@ -1604,13 +1442,12 @@ jaxon.config.cursor = {
     */
     self.contextAssign = (command) => {
         command.fullName = 'context assign';
-        const { context, prop: sAttribute, data } = command;
 
+        const { context, prop: sAttribute, data } = command;
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data;
         }
-        innerElement[innerProperty] = data;
         return true;
     };
 
@@ -1633,13 +1470,12 @@ jaxon.config.cursor = {
     */
     self.contextAppend = (command) => {
         command.fullName = 'context append';
-        const { context, prop: sAttribute, data } = command;
 
+        const { context, prop: sAttribute, data } = command;
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = innerElement[innerProperty] + data;
         }
-        innerElement[innerProperty] = innerElement[innerProperty] + data;
         return true;
     };
 
@@ -1661,13 +1497,12 @@ jaxon.config.cursor = {
     */
     self.contextPrepend = (command) => {
         command.fullName = 'context prepend';
-        const { context, prop: sAttribute, data } = command;
 
+        const { context, prop: sAttribute, data } = command;
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if(!innerElement) {
-            return true;
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data + innerElement[innerProperty];
         }
-        innerElement[innerProperty] = data + innerElement[innerProperty];
         return true;
     };
 })(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);
@@ -1861,10 +1696,9 @@ jaxon.config.cursor = {
 
         const { func: funcName, data: funcParams } = command;
         const func = dom.findFunction(funcName);
-        if(!func) {
-            return true;
+        if (func) {
+            func.apply(self.context, funcParams);
         }
-        func.apply(self.context, funcParams);
         return true;
     };
 
@@ -2016,7 +1850,7 @@ jaxon.config.cursor = {
 
         const { func: funcName } = command;
         const func = dom.findFunction(funcName);
-        if(!func) {
+        if (!func) {
             return true;
         }
 
