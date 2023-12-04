@@ -110,7 +110,7 @@
             // The real name for the "css" object is "style".
             xElement = xElement[attr === 'css' ? 'style' : attr];
         }
-        return [xElement ?? null, (xElement) ? attribute : null];
+        return !xElement ? [null, null] : [xElement, attribute];
     };
 
     /**

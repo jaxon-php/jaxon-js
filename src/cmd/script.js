@@ -186,10 +186,9 @@
 
         const { func: funcName, data: funcParams } = command;
         const func = dom.findFunction(funcName);
-        if(!func) {
-            return true;
+        if (func) {
+            func.apply(self.context, funcParams);
         }
-        func.apply(self.context, funcParams);
         return true;
     };
 
@@ -341,7 +340,7 @@
 
         const { func: funcName } = command;
         const func = dom.findFunction(funcName);
-        if(!func) {
+        if (!func) {
             return true;
         }
 
