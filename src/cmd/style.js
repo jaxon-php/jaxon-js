@@ -3,20 +3,15 @@
  */
 
 (function(self, delay, baseDocument) {
-    /*
-    Function: jaxon.cmd.style.add
-
-    Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file to reference.
-    media - (string):  The media type of the css file (print/screen/handheld,..)
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file to reference.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.add = (command) => {
         command.fullName = 'includeCSS';
         const { data: fileName, media = 'screen' } = command;
@@ -38,19 +33,15 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.style.remove
-
-    Locate and remove a LINK reference from the current document's HEAD.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Locate and remove a LINK reference from the current document's HEAD.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.remove = (command) => {
         command.fullName = 'removeCSS';
         const { data: fileName, media = 'screen' } = command;
@@ -63,22 +54,17 @@
         return true;
     },
 
-    /*
-    Function: jaxon.cmd.style.waitForCSS
-
-    Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
-    in the HEAD of the current document.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
-
-    Returns:
-
-    true - The .css files appear to be loaded.
-    false - The .css files do not appear to be loaded and the timeout has not expired.
-    */
+    /**
+     * Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
+     * in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
+     * @param {object} command.response The Response object.
+     *
+     * @returns {true} The .css files appear to be loaded.
+     * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
+     */
     self.waitForCSS = (command) => {
         command.fullName = 'waitForCSS';
 
@@ -88,7 +74,7 @@
             return enabled !== 0;
         });
         if (ssLoaded) {
-            return;
+            return false;
         }
 
         // inject a delay in the queue processing

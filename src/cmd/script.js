@@ -3,25 +3,18 @@
  */
 
 (function(self, delay, msg, dom, baseDocument, window) {
-    /*
-    Function: jaxon.cmd.script.includeScriptOnce
-
-    Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
-
-    This will effecitvely cause the script file to be loaded in the browser.
-
-    Parameters:
-
-    fileName - (string):  The URI of the file.
-
-    Returns:
-
-    true - The reference exists or was added.
-    */
+    /**
+     * Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.includeScriptOnce = (command) => {
         command.fullName = 'includeScriptOnce';
 
-        const fileName = command.data;
+        const { data: fileName } = command;
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
@@ -32,20 +25,17 @@
         return self.includeScript(command);
     };
 
-    /*
-    Function: jaxon.cmd.script.includeScript
-
-    Adds a SCRIPT tag referencing the specified file.
-    This effectively causes the script to be loaded in the browser.
-
-    Parameters:
-
-    command (object) - Xajax response object
-
-    Returns:
-
-    true - The reference was added.
-    */
+    /**
+     * Adds a SCRIPT tag referencing the specified file.
+     * This effectively causes the script to be loaded in the browser.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     * @param {string='text/javascript'} command.type The type of the file.
+     * @param {string=} command.elm_id The script tag id.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.includeScript = (command) => {
         command.fullName = 'includeScript';
 
@@ -60,19 +50,15 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.removeScript
-
-    Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
-
-    Parameters:
-
-    command (object) - Xajax response object
-
-    Returns:
-
-    true - The script was not found or was removed.
-    */
+    /**
+     * Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     * @param {string=} command.unld A function to execute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.removeScript = (command) => {
         command.fullName = 'removeScript';
 
@@ -91,23 +77,18 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.sleep
-
-    Causes the processing of items in the queue to be delayed for the specified amount of time.
-    This is an asynchronous operation, therefore, other operations will be given an opportunity
-    to execute during this delay.
-
-    Parameters:
-
-    command - (object):  The response command containing the following parameters.
-        - command.prop: The number of 10ths of a second to sleep.
-
-    Returns:
-
-    true - The sleep operation completed.
-    false - The sleep time has not yet expired, continue sleeping.
-    */
+    /**
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 10ths of a second to sleep.
+     * @param {object} command.response The Response object.
+     *
+     * @returns {true} The sleep operation completed.
+     * @returns {false} The sleep time has not yet expired, continue sleeping.
+     */
     self.sleep = (command) => {
         command.fullName = 'sleep';
 
@@ -122,40 +103,32 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.alert
-
-    Show the specified message.
-
-    Parameters:
-
-    command (object) - jaxon response object
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Show the specified message.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The message to display.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.alert = (command) => {
         command.fullName = 'alert';
-        msg.info(command.data);
+        const { data: message } = command;
+        msg.info(message);
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.confirm
-
-    Prompt the user with the specified question, if the user responds by clicking cancel,
-    then skip the specified number of commands in the response command queue.
-    If the user clicks Ok, the command processing resumes normal operation.
-
-    Parameters:
-
-    command (object) - jaxon response object
-
-    Returns:
-
-    false - Stop the processing of the command queue until the user answers the question.
-    */
+    /**
+     * Prompt the user with the specified question, if the user responds by clicking cancel,
+     * then skip the specified number of commands in the response command queue.
+     * If the user clicks Ok, the command processing resumes normal operation.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The question to ask.
+     * @param {integer} command.count The number of commands to skip.
+     *
+     * @returns {false} Stop the processing of the command queue until the user answers the question.
+     */
     self.confirm = (command) => {
         command.fullName = 'confirm';
         const { count, data: question } = command;
@@ -163,28 +136,21 @@
         return false;
     };
 
-    /*
-    Function: jaxon.cmd.script.call
-
-    Call a javascript function with a series of parameters using the current script context.
-
-    Parameters:
-
-    command - The response command object containing the following:
-        - command.data: (array):  The parameters to pass to the function.
-        - command.func: (string):  The name of the function to call.
-        - command.context: (object):  The current script context object which is accessable in the
-            function name via the 'this keyword.
-
-    Returns:
-
-    true - The call completed successfully.
-    */
+    /**
+     * Call a javascript function with a series of parameters using the current script context.
+     *
+     * @param {object} command The Response command object.
+     * @param {array} command.data  The parameters to pass to the function.
+     * @param {string} command.func The name of the function to call.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.call = (command) => {
         command.fullName = 'call js function';
-        self.context = command.context ?? {};
 
-        const { func: funcName, data: funcParams } = command;
+        const { func: funcName, data: funcParams, context = {} } = command;
+        self.context = context;
         const func = dom.findFunction(funcName);
         if (func) {
             func.apply(self.context, funcParams);
@@ -192,27 +158,20 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.execute
-
-    Execute the specified string of javascript code, using the current script context.
-
-    Parameters:
-
-    command - The response command object containing the following:
-        - command.data: (string):  The javascript to be evaluated.
-        - command.context: (object):  The javascript object that to be referenced as 'this' in the script.
-
-    Returns:
-
-    unknown - A value set by the script using 'returnValue = '
-    true - If the script does not set a returnValue.
-    */
+    /**
+     * Execute the specified string of javascript code, using the current script context.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The javascript to be evaluated.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.execute = (command) => {
         command.fullName = 'execute Javascript';
-        self.context = command.context ?? {};
 
-        const { data: funcBody } = command;
+        const { data: funcBody, context = {} } = command;
+        self.context = context;
         const jsCode = `() => {
     ${funcBody}
 }`;
@@ -221,31 +180,23 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.waitFor
-
-    Test for the specified condition, using the current script context;
-    if the result is false, sleep for 1/10th of a second and try again.
-
-    Parameters:
-
-    command - The response command object containing the following:
-
-        - command.data: (string):  The javascript to evaluate.
-        - command.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
-        - command.context: (object):  The current script context object which is accessable in
-            the javascript being evaulated via the 'this' keyword.
-
-    Returns:
-
-    false - The condition evaulates to false and the sleep time has not expired.
-    true - The condition evaluates to true or the sleep time has expired.
-    */
+    /**
+     * Test for the specified condition, using the current script context;
+     * if the result is false, sleep for 1/10th of a second and try again.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The javascript to evaluate.
+     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The condition evaluates to true or the sleep time has expired.
+     * @returns {false} The condition evaluates to false and the sleep time has not expired.
+     */
     self.waitFor = (command) => {
         command.fullName = 'waitFor';
-        self.context = command.context ?? {};
 
-        const { data: funcBody, prop: duration, response } = command;
+        const { data: funcBody, prop: duration, response, context = {} } = command;
+        self.context = context;
         try {
             const jsCode = `() => {
     return (${funcBody});
@@ -283,28 +234,21 @@
         return parameters;
     };
 
-    /*
-    Function: jaxon.cmd.script.setFunction
-
-    Constructs the specified function using the specified javascript as the body of the function.
-
-    Parameters:
-
-    command - The response command object which contains the following:
-
-        - command.func: (string):  The name of the function to construct.
-        - command.data: (string):  The script that will be the function body.
-        - command.context: (object):  The current script context object
-            which is accessable in the script name via the 'this' keyword.
-
-    Returns:
-
-    true - The function was constructed successfully.
-    */
+    /**
+     * Constructs the specified function using the specified javascript as the body of the function.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.func The name of the function to construct.
+     * @param {string} command.data The script that will be the function body.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.setFunction = (command) => {
         command.fullName = 'setFunction';
 
-        const { func: funcName, data: funcBody, prop: funcParams } = command;
+        const { func: funcName, data: funcBody, prop: funcParams, context = {} } = command;
+        self.context = context;
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
@@ -312,33 +256,25 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.wrapFunction
-
-    Construct a javascript function which will call the original function with the same name,
-    potentially executing code before and after the call to the original function.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-
-        - command.func: (string):  The name of the function to be wrapped.
-        - command.prop: (string):  List of parameters used when calling the function.
-        - command.data: (array):  The portions of code to be called before, after
-            or even between calls to the original function.
-        - command.context: (object):  The current script context object which is
-            accessable in the function name and body via the 'this' keyword.
-
-    Returns:
-
-    true - The wrapper function was constructed successfully.
-    */
+    /**
+     * Construct a javascript function which will call the original function with the same name,
+     * potentially executing code before and after the call to the original function.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.func The name of the function to be wrapped.
+     * @param {string} command.prop List of parameters used when calling the function.
+     * @param {array} command.data The portions of code to be called before, after 
+     *   or even between calls to the original function.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.wrapped = {}; // Original wrapped functions will be saved here.
     self.wrapFunction = (command) => {
         command.fullName = 'wrapFunction';
-        self.context = command.context ?? {};
 
-        const { func: funcName } = command;
+        const { func: funcName, context = {} } = command;
+        self.context = context;
         const func = dom.findFunction(funcName);
         if (!func) {
             return true;
@@ -378,11 +314,11 @@
     /**
      * Redirects the browser to the specified URL.
      *
-     * @param {object} command The response command object which contains the following:
-     *  - command.data: (string):  The new URL to redirect to.
-     *  - command.delay: (integer):  The time to wait before the redirect.
+     * @param {object} command The Response command object.
+     * @param {string} command.data The new URL to redirect to
+     * @param {integer} command.delay The time to wait before the redirect.
      *
-     * @returns {true} The function was constructed successfully.
+     * @returns {true} The operation completed successfully.
      */
     self.redirect = (command) => {
         command.fullName = 'redirect';

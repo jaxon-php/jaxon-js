@@ -2,18 +2,15 @@
 Class: jaxon
 */
 var jaxon = {
-    /*
-    Version number
-    */
+    /**
+     * Version number
+     */
     version: {
         major: '4',
         minor: '0',
         patch: '0rc-2',
     },
 
-    /*
-    Class: jaxon.debug
-    */
     debug: {
         /*
         Class: jaxon.debug.verbose
@@ -23,9 +20,6 @@ var jaxon = {
         verbose: {},
     },
 
-    /*
-    Class: jaxon.ajax
-    */
     ajax: {
         callback: {},
         handler: {},
@@ -35,11 +29,6 @@ var jaxon = {
         response: {},
     },
 
-    /*
-    Class: jaxon.cmd
-
-    Contains the functions for page content, layout, functions and events.
-    */
     cmd: {
         event: {},
         form: {},
@@ -48,11 +37,6 @@ var jaxon = {
         style: {},
     },
 
-    /*
-    Class: jaxon.utils
-
-    This contains utility functions which are used throughout the jaxon core.
-    */
     utils: {
         delay: {},
         dom: {},
@@ -62,178 +46,123 @@ var jaxon = {
         upload: {},
     },
 
-    /*
-    Class: jaxon.dom
-    */
     dom: {},
 };
 
-/*
-    Class: jaxon.config
-
-    This class contains all the default configuration settings.  These
-    are application level settings; however, they can be overridden
-    by including a jaxon.config definition prior to including the
-    <jaxon_core.js> file, or by specifying the appropriate configuration
-    options on a per call basis.
-*/
+/**
+ * This class contains all the default configuration settings.
+ * These are application level settings; however, they can be overridden by including
+ * a jaxon.config definition prior to including the <jaxon_core.js> file, or by
+ * specifying the appropriate configuration options on a per call basis.
+ */
 jaxon.config = {
-    /*
-    Object: commonHeaders
-
-    An array of header entries where the array key is the header
-    option name and the associated value is the value that will
-    set when the request object is initialized.
-
-    These headers will be set for both POST and GET requests.
-    */
+    /**
+     * An array of header entries where the array key is the header option name and
+     * the associated value is the value that will set when the request object is initialized.
+     *
+     * These headers will be set for both POST and GET requests.
+     */
     commonHeaders: {
         'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
     },
 
-    /*
-    Object: postHeaders
-
-    An array of header entries where the array key is the header
-    option name and the associated value is the value that will
-    set when the request object is initialized.
-    */
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
     postHeaders: {},
 
-    /*
-    Object: getHeaders
-
-    An array of header entries where the array key is the header
-    option name and the associated value is the value that will
-    set when the request object is initialized.
-    */
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
     getHeaders: {},
 
-    /*
-    Boolean: waitCursor
-
-    true - jaxon should display a wait cursor when making a request
-    false - jaxon should not show a wait cursor during a request
-    */
+    /**
+     * true - jaxon should display a wait cursor when making a request
+     * false - jaxon should not show a wait cursor during a request
+     */
     waitCursor: false,
 
-    /*
-    Boolean: statusMessages
-
-    true - jaxon should update the status bar during a request
-    false - jaxon should not display the status of the request
-    */
+    /**
+     * true - jaxon should update the status bar during a request
+     * false - jaxon should not display the status of the request
+     */
     statusMessages: false,
 
-    /*
-    Object: baseDocument
-
-    The base document that will be used throughout the code for
-    locating elements by ID.
-    */
+    /**
+     * The base document that will be used throughout the code for locating elements by ID.
+     */
     baseDocument: document,
 
-    /*
-    String: requestURI
-
-    The URI that requests will be sent to.
-    */
+    /**
+     * The URI that requests will be sent to.
+     *
+     * @var {string}
+     */
     requestURI: document.URL,
 
-    /*
-    String: defaultMode
-
-    The request mode.
-
-    'asynchronous' - The request will immediately return, the
-    response will be processed when (and if) it is received.
-
-    'synchronous' - The request will block, waiting for the
-    response.  This option allows the server to return
-    a value directly to the caller.
-    */
+    /**
+     * The request mode.
+     * - 'asynchronous' - The request will immediately return, the response will be processed
+     *   when (and if) it is received.
+     * - 'synchronous' - The request will block, waiting for the response.
+     *   This option allows the server to return a value directly to the caller.
+     */
     defaultMode: 'asynchronous',
 
-    /*
-    String: defaultHttpVersion
-
-    The Hyper Text Transport Protocol version designated in the
-    header of the request.
-    */
+    /**
+     * The Hyper Text Transport Protocol version designated in the header of the request.
+     */
     defaultHttpVersion: 'HTTP/1.1',
 
-    /*
-    String: defaultContentType
-
-    The content type designated in the header of the request.
-    */
+    /**
+     * The content type designated in the header of the request.
+     */
     defaultContentType: 'application/x-www-form-urlencoded',
 
-    /*
-    Integer: defaultResponseDelayTime
-
-    The delay time, in milliseconds, associated with the
-    <jaxon.callback.onRequestDelay> event.
-    */
+    /**
+     * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
+     */
     defaultResponseDelayTime: 1000,
 
-    /*
-    Boolean: convertResponseToJson
-
-    Always convert the reponse content to json.
-    */
+    /**
+     * Always convert the reponse content to json.
+     */
     convertResponseToJson: true,
 
-    /*
-    Integer: defaultExpirationTime
-
-    The amount of time to wait, in milliseconds, before a request
-    is considered expired.  This is used to trigger the
-    <jaxon.callback.onExpiration event.
-    */
+    /**
+     * The amount of time to wait, in milliseconds, before a request is considered expired.
+     * This is used to trigger the <jaxon.callback.onExpiration event.
+     */
     defaultExpirationTime: 10000,
 
-    /*
-    String: defaultMethod
-
-    The method used to send requests to the server.
-
-    'POST' - Generate a form POST request
-    'GET' - Generate a GET request; parameters are appended
-    to the <jaxon.config.requestURI> to form a URL.
-    */
+    /**
+     * The method used to send requests to the server.
+     * - 'POST': Generate a form POST request
+     * - 'GET': Generate a GET request; parameters are appended to the <jaxon.config.requestURI> to form a URL.
+     */
     defaultMethod: 'POST', // W3C: Method is case sensitive
 
-    /*
-    Integer: defaultRetry
-
-    The number of times a request should be retried
-    if it expires.
-    */
+    /**
+     * The number of times a request should be retried if it expires.
+     */
     defaultRetry: 5,
 
-    /*
-    Object: defaultReturnValue
-
-    The value returned by <jaxon.request> when in asynchronous
-    mode, or when a syncrhonous call does not specify the return value.
-    */
+    /**
+     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
+     * does not specify the return value.
+     */
     defaultReturnValue: false,
 
-    /*
-    Integer: maxObjectDepth
-
-    The maximum depth of recursion allowed when serializing
-    objects to be sent to the server in a request.
-    */
+    /**
+     * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
+     */
     maxObjectDepth: 20,
 
-    /*
-    Integer: maxObjectSize
-
-    The maximum number of members allowed when serializing
-    objects to be sent to the server in a request.
-    */
+    /**
+     * The maximum number of members allowed when serializing objects to be sent to the server in a request.
+     */
     maxObjectSize: 2000,
 
     commandQueueSize: 1000,
@@ -241,21 +170,20 @@ jaxon.config = {
     requestQueueSize: 1000,
 };
 
-/*
-Class: jaxon.config.status
-
-Provides support for updating the browser's status bar during
-the request process.  By splitting the status bar functionality
-into an object, the jaxon developer has the opportunity to
-customize the status bar messages prior to sending jaxon requests.
-*/
+/**
+ * Class: jaxon.config.status
+ *
+ * Provides support for updating the browser's status bar during the request process.
+ * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
+ * to customize the status bar messages prior to sending jaxon requests.
+ */
 jaxon.config.status = {
-    /*
-    Function: update
-
-    Constructs and returns a set of event handlers that will be
-    called by the jaxon framework to set the status bar messages.
-    */
+    /**
+     * Constructs and returns a set of event handlers that will be called by the
+     * jaxon framework to set the status bar messages.
+     *
+     * @returns {object}
+     */
     update: () => ({
         onRequest: () => console.log('Sending Request...'),
         onWaiting: () => console.log('Waiting for Response...'),
@@ -263,13 +191,12 @@ jaxon.config.status = {
         onComplete: () => console.log('Done.'),
     }),
 
-    /*
-    Function: dontUpdate
-
-    Constructs and returns a set of event handlers that will be
-    called by the jaxon framework where status bar updates
-    would normally occur.
-    */
+    /**
+     * Constructs and returns a set of event handlers that will be called by the
+     * jaxon framework where status bar updates would normally occur.
+     *
+     * @returns {object}
+     */
     dontUpdate: () =>({
         onRequest: () => {},
         onWaiting: () => {},
@@ -278,22 +205,20 @@ jaxon.config.status = {
     }),
 };
 
-/*
-Class: jaxon.config.cursor
-
-Provides the base functionality for updating the browser's cursor
-during requests.  By splitting this functionalityh into an object
-of it's own, jaxon developers can now customize the functionality
-prior to submitting requests.
-*/
+/**
+ * Class: jaxon.config.cursor
+ *
+ * Provides the base functionality for updating the browser's cursor during requests.
+ * By splitting this functionalityh into an object of it's own, jaxon developers can now
+ * customize the functionality prior to submitting requests.
+ */
 jaxon.config.cursor = {
-    /*
-    Function: update
-
-    Constructs and returns a set of event handlers that will be
-    called by the jaxon framework to effect the status of the
-    cursor during requests.
-    */
+    /**
+     * Constructs and returns a set of event handlers that will be called by the
+     * jaxon framework to effect the status of the cursor during requests.
+     *
+     * @returns {object}
+     */
     update: () => ({
         onWaiting: () => {
             if (jaxon.config.baseDocument.body) {
@@ -307,13 +232,12 @@ jaxon.config.cursor = {
         }
     }),
 
-    /*
-    Function: dontUpdate
-
-    Constructs and returns a set of event handlers that will
-    be called by the jaxon framework where cursor status changes
-    would typically be made during the handling of requests.
-    */
+    /**
+     * Constructs and returns a set of event handlers that will be called by the jaxon framework
+     * where cursor status changes would typically be made during the handling of requests.
+     *
+     * @returns {object}
+     */
     dontUpdate: () => ({
         onWaiting: () => {},
         onComplete: () => {}
@@ -329,9 +253,9 @@ jaxon.config.cursor = {
     /**
      * Attempt to pop the next asynchronous request.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.popAsyncRequest = oQueue =>
         queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
@@ -340,12 +264,11 @@ jaxon.config.cursor = {
     /**
      * Maintains a retry counter for the given object.
      *
-     * @param command object    The object to track the retry count for.
-     * @param count integer     The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
      *
-     * @returns boolean
-     *      true - The object has not exhausted all the retries.
-     *      false - The object has exhausted the retry count specified.
+     * @returns {true} The object has not exhausted all the retries.
+     * @returns {false} The object has exhausted the retry count specified.
      */
     self.retry = (command, count) => {
         let retries = command.retries;
@@ -368,27 +291,27 @@ jaxon.config.cursor = {
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param response object   The queue to process.
-     * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
+     * @param {object} response The queue to process.
+     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
+     *
+     * @returns {void}
      */
     self.setWakeup = (response, when) => {
         if (response.timeout !== null) {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
-        response.timout = setTimeout(function() {
-            rsp.process(response);
-        }, when);
+        response.timout = setTimeout(() => rsp.process(response), when);
     };
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param command object    The object to track the retry count for.
-     * @param count integer     The number of commands to skip.
-     * @param skip boolean      Skip the commands or not.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {boolean} skip Skip the commands or not.
      *
-     * @returns boolean
+     * @returns {void}
      */
     const confirmCallback = (command, count, skip) => {
         if(skip === true) {
@@ -418,11 +341,11 @@ jaxon.config.cursor = {
      * before (when using the blocking confirm() function) or after this function returns.
      * @see confirmCallback
      *
-     * @param command object    The object to track the retry count for.
-     * @param question string   The question to ask to the user.
-     * @param count integer     The number of commands to skip.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {string} question The question to ask to the user.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
@@ -445,14 +368,9 @@ jaxon.config.cursor = {
     /**
      * Shorthand for finding a uniquely named element within the document.
      *
-     * Note:
-     *     This function uses the <jaxon.config.baseDocument> which allows <jaxon> to operate on the
-     *     main window document as well as documents from contained iframes and child windows.
-     *
      * @param {string} sId - The unique name of the element (specified by the ID attribute)
-     * Not to be confused with the name attribute on form elements.
      *
-     * @returns {object} - The element found or null.
+     * @returns {object} The element found or null.
      *
      * @see <self.$>
      */
@@ -461,7 +379,7 @@ jaxon.config.cursor = {
     /**
      * Create a div as workspace for the getBrowserHTML() function.
      *
-     * @returns {object} - The workspace DOM element.
+     * @returns {object} The workspace DOM element.
      */
     const _getWorkspace = () => {
         const elWorkspace = self.$('jaxon_temp_workspace');
@@ -485,9 +403,9 @@ jaxon.config.cursor = {
      * Insert the specified string of HTML into the document, then extract it.
      * This gives the browser the ability to validate the code and to apply any transformations it deems appropriate.
      *
-     * @param {string} sValue - A block of html code or text to be inserted into the browser's document.
+     * @param {string} sValue A block of html code or text to be inserted into the browser's document.
      *
-     * @returns {string} - The (potentially modified) html code or text.
+     * @returns {string} The (potentially modified) html code or text.
      */
     self.getBrowserHTML = (sValue) => {
         const elWorkspace = _getWorkspace();
@@ -500,12 +418,12 @@ jaxon.config.cursor = {
     /**
      * Tests to see if the specified data is the same as the current value of the element's attribute.
      *
-     * @param {string|object} element - The element or it's unique name (specified by the ID attribute)
-     * @param {string} attribute - The name of the attribute.
-     * @param {string} newData - The value to be compared with the current value of the specified element.
+     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
+     * @param {string} attribute The name of the attribute.
+     * @param {string} newData The value to be compared with the current value of the specified element.
      *
-     * @returns {true} - The specified value differs from the current attribute value.
-     * @returns {false} - The specified value is the same as the current value.
+     * @returns {true} The specified value differs from the current attribute value.
+     * @returns {false} The specified value is the same as the current value.
      */
     self.willChange = (element, attribute, newData) => {
         if (typeof element === 'string') {
@@ -517,10 +435,10 @@ jaxon.config.cursor = {
     /**
      * Find a function using its name as a string.
      *
-     * @param {string} sFuncName - The name of the function to find.
+     * @param {string} sFuncName The name of the function to find.
      * @param {object} context
      *
-     * @returns {object} - The function
+     * @returns {object|null}
      */
     self.findFunction = function (sFuncName, context = window) {
         const names = sFuncName.split(".");
@@ -534,8 +452,8 @@ jaxon.config.cursor = {
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *
-     * @param {object} xElement - The outer element.
-     * @param {string} attribute - The attribute name.
+     * @param {object} xElement The outer element.
+     * @param {string} attribute The attribute name.
      *
      * @returns {array} The inner object and the attribute name in an array.
      */
@@ -556,13 +474,13 @@ jaxon.config.cursor = {
      * Create a function by inserting its code in the page using a <script> tag.
      *
      * @param {string} funcCode
-     * @param {string} funcName
+     * @param {string='jaxon.cmd.script.context.delegateCall'} funcName
      * 
      * @returns {boolean}
      */
     self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
         if (!funcCode) {
-            return;
+            return false;
         }
 
         // const removeTagAfter = funcName === undefined;
@@ -592,14 +510,14 @@ jaxon.config.cursor = {
  */
 
 (function(self, dom) {
-    /*
-    Function: _getValue
-
-    Used internally by <_getValues> to extract a single form value.
-    This will detect the type of element (radio, checkbox, multi-select) and add it's value(s) to the form values array.
-
-    Modified version for multidimensional arrays
-    */
+    /**
+     * @param {object} aFormValues
+     * @param {object} child
+     * @param {boolean} submitDisabledElements
+     * @param {string} prefix
+     *
+     * @returns {void}
+     */
     const _getValue = (aFormValues, child, submitDisabledElements, prefix) => {
         if (!child.name || 'PARAM' === child.tagName)
             return;
@@ -652,13 +570,14 @@ jaxon.config.cursor = {
         p[k] = values;
     };
 
-    /*
-    Function: _getValues
-
-    Used internally by <jaxon.utils.form.getValues> to recursively get the value
-    of form elements.  This function will extract all form element values
-    regardless of the depth of the element within the form.
-    */
+    /**
+     * @param {object} aFormValues
+     * @param {array} children
+     * @param {boolean} submitDisabledElements
+     * @param {string} prefix
+     *
+     * @returns {void}
+     */
     const _getValues = (aFormValues, children, submitDisabledElements, prefix) => {
         children.forEach(child => {
             if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
@@ -668,19 +587,15 @@ jaxon.config.cursor = {
         });
     };
 
-    /*
-    Function: jaxon.utils.form.getValues
-
-    Build an associative array of form elements and their values from the specified form.
-
-    Parameters:
-    formId - (string): The unique name (id) of the form to be processed.
-    disabled - (boolean, optional): Include form elements which are currently disabled.
-    prefix - (string, optional): A prefix used for selecting form elements.
-
-    Returns:
-    An associative array of form element id and value.
-    */
+    /**
+     * Build an associative array of form elements and their values from the specified form.
+     *
+     * @param {string} formId The unique name (id) of the form to be processed.
+     * @param {boolean} disabled (optional): Include form elements which are currently disabled.
+     * @param {string} prefix (optional): A prefix used for selecting form elements.
+     *
+     * @returns {object} An associative array of form element id and value.
+     */
     self.getValues = (formId, disabled, prefix) => {
         const submitDisabledElements = (disabled === true);
         const prefixValue = prefix ?? '';
@@ -702,9 +617,9 @@ jaxon.config.cursor = {
     /**
      * Construct and return a new queue object.
      *
-     * @param integer size The number of entries the queue will be able to hold.
+     * @param {integer} size The number of entries the queue will be able to hold.
      *
-     * @returns object
+     * @returns {object}
      */
     self.create = size => ({
         start: 0,
@@ -718,28 +633,28 @@ jaxon.config.cursor = {
     /**
      * Check id a queue is empty.
      *
-     * @param object oQueue The queue to check.
+     * @param {object} oQueue The queue to check.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.empty = oQueue => oQueue.count <= 0;
 
     /**
      * Check id a queue is empty.
      *
-     * @param object oQueue The queue to check.
+     * @param {object} oQueue The queue to check.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.full = oQueue => oQueue.count >= oQueue.size;
 
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *
-     * @param object oQueue The queue in which you would like the object stored.
-     * @param object obj    The object you would like stored in the queue.
+     * @param {object} oQueue The queue in which you would like the object stored.
+     * @param {object} obj    The object you would like stored in the queue.
      *
-     * @returns integer The number of entries in the queue.
+     * @returns {integer} The number of entries in the queue.
      */
     self.push = (oQueue, obj) => {
         // No push if the queue is full.
@@ -759,10 +674,10 @@ jaxon.config.cursor = {
      *
      * This effectively pushes an object to the front of the queue... it will be processed first.
      *
-     * @param object oQueue The queue in which you would like the object stored.
-     * @param object obj    The object you would like stored in the queue.
+     * @param {object} oQueue The queue in which you would like the object stored.
+     * @param {object} obj    The object you would like stored in the queue.
      *
-     * @returns integer The number of entries in the queue.
+     * @returns {integer} The number of entries in the queue.
      */
     self.pushFront = (oQueue, obj) => {
         // No push if the queue is full.
@@ -786,9 +701,9 @@ jaxon.config.cursor = {
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.pop = (oQueue) => {
         if(self.empty(oQueue)) {
@@ -807,9 +722,9 @@ jaxon.config.cursor = {
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.peek = (oQueue) => {
         if(self.empty(oQueue)) {
@@ -825,62 +740,47 @@ jaxon.config.cursor = {
  */
 
 (function(self) {
-    /*
-    Function: jaxon.utils.string.doubleQuotes
+    /**
+     * Replace all occurances of the single quote character with a double quote character.
+     *
+     * @param {string=} haystack The source string to be scanned
+     *
+     * @returns {string|false} A new string with the modifications applied. False on error.
+     */
+    self.doubleQuotes = haystack => haystack === undefined ?
+        false : haystack.replace(new RegExp("'", 'g'), '"');
 
-    Replace all occurances of the single quote character with a double quote character.
+    /**
+     * Replace all occurances of the double quote character with a single quote character.
+     *
+     * @param {string=} haystack The source string to be scanned
+     *
+     * @returns {string|false} A new string with the modification applied
+     */
+    self.singleQuotes = haystack => haystack === undefined ?
+        false : haystack.replace(new RegExp('"', 'g'), "'");
 
-    Parameters:
-    haystack - The source string to be scanned.
-
-    Returns:  false on error
-    string - A new string with the modifications applied.
-    */
-    self.doubleQuotes = haystack =>
-        haystack === undefined ? false : haystack.replace(new RegExp("'", 'g'), '"');
-
-    /*
-    Function: jaxon.utils.string.singleQuotes
-
-    Replace all occurances of the double quote character with a single quote character.
-
-    haystack - The source string to be scanned.
-
-    Returns:
-    string - A new string with the modification applied.
-    */
-    self.singleQuotes = haystack =>
-        haystack === undefined ? false : haystack.replace(new RegExp('"', 'g'), "'");
-
-    /*
-    Function: jaxon.utils.string.stripOnPrefix
-
-    Detect, and if found, remove the prefix 'on' from the specified string.
-    This is used while working with event handlers.
-
-    Parameters:
-    sEventName - (string): The string to be modified.
-
-    Returns:
-    string - The modified string.
-    */
+    /**
+     * Detect, and if found, remove the prefix 'on' from the specified string.
+     * This is used while working with event handlers.
+     *
+     * @param {string} sEventName The string to be modified
+     *
+     * @returns {string} The modified string
+     */
     self.stripOnPrefix = (sEventName) => {
         sEventName = sEventName.toLowerCase();
         return sEventName.indexOf('on') === 0 ? sEventName.replace(/on/, '') : sEventName;
     };
 
-    /*
-    Function: jaxon.utils.string.addOnPrefix
-
-    Detect, and add if not found, the prefix 'on' from the specified string.
-    This is used while working with event handlers.
-
-    Parameters:
-    sEventName - (string): The string to be modified.
-
-    Returns:
-    string - The modified string.
-    */
+    /**
+     * Detect, and add if not found, the prefix 'on' from the specified string.
+     * This is used while working with event handlers.
+     *
+     * @param {string} sEventName The string to be modified
+     *
+     * @returns {string} The modified string
+     */
     self.addOnPrefix = (sEventName) => {
         sEventName = sEventName.toLowerCase();
         return sEventName.indexOf('on') !== 0 ? 'on' + sEventName : sEventName;
@@ -890,18 +790,19 @@ jaxon.config.cursor = {
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
-
-    /**
-     * Substitute variables in the string
-     *
-     * @return string
-     */
     if (!String.prototype.supplant) {
-        String.prototype.supplant = function(o) {
+        /**
+         * Substitute variables in the string
+         *
+         * @param {object} values The substitution values
+         *
+         * @returns {string}
+         */
+        String.prototype.supplant = function(values) {
             return this.replace(
                 /\{([^{}]*)\}/g,
                 function(a, b) {
-                    const r = o[b];
+                    const r = values[b];
                     return typeof r === 'string' || typeof r === 'number' ? r : a;
                 }
             );
@@ -916,9 +817,10 @@ jaxon.config.cursor = {
 
 (function(self, dom, console) {
     /**
-     * @param {object} oRequest
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {string=} oRequest.upload The HTML file upload field id
      *
-     * @return {bool}
+     * @returns {boolean}
      */
     const initRequest = (oRequest) => {
         if (!oRequest.upload) {
@@ -956,9 +858,9 @@ jaxon.config.cursor = {
     /**
      * Check upload data and initialize the request.
      *
-     * @param {object} oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
      *
-     * @return {void}
+     * @returns {void}
      */
     self.initialize = (oRequest) => {
         // The content type shall not be set when uploading a file with FormData.
@@ -978,12 +880,13 @@ jaxon.config.cursor = {
     /**
      *  Set an event handler.
      *
-     * @param {object} command - Response command object.
-     * - id: Element ID
-     * - prop: Event
-     * - data: Code
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The event name
+     * @param {string} command.data The callback code
      *
-     * @returns {true} - The operation completed successfully.
+     * @returns {true} The operation completed successfully.
      */
     self.setEvent = (command) => {
         command.fullName = 'setEvent';
@@ -994,12 +897,31 @@ jaxon.config.cursor = {
         return true;
     };
 
+    /**
+     * Get the real name of an event handler
+     *
+     * @type {(string) => string}
+     */
     const getName = window.addEventListener ? str.stripOnPrefix : str.addOnPrefix;
 
+    /**
+     * @param {object} target The target element
+     * @param {string} event An event name
+     * @param {string} func A function name
+     *
+     * @returns {void}
+     */
     const _addHandler = window.addEventListener ?
         (target, event, func) => target.addEventListener(event, dom.findFunction(func), false) :
         (target, event, func) => target.attachEvent(event, dom.findFunction(func));
 
+    /**
+     * @param {object} target The target element
+     * @param {string} event An event name
+     * @param {string} func A function name
+     *
+     * @returns {void}
+     */
     const _removeHandler = window.addEventListener ?
         (target, event, func) => target.removeEventListener(event, dom.findFunction(func), false) :
         (target, event, func) => target.detachEvent(event, dom.findFunction(func));
@@ -1007,12 +929,13 @@ jaxon.config.cursor = {
     /**
      * Add an event handler to the specified target.
      *
-     * @param {object} command - Response command object.
-     * - id: The id of, or the target itself
-     * - prop: The name of the event.
-     * - data: The name of the function to be called
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} command.data The name of the function to be called
      *
-     * @returns {true} - The operation completed successfully.
+     * @returns {true} The operation completed successfully.
      */
     self.addHandler = (command) => {
         command.fullName = 'addHandler';
@@ -1025,12 +948,13 @@ jaxon.config.cursor = {
     /**
      * Remove an event handler from an target.
      *
-     * @param {object} command - Response command object.
-     * - id: The id of, or the target itself
-     * - prop: The name of the event.
-     * - data: The name of the function to be called
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} command.data The name of the function to be removed
      *
-     * @returns {true} - The operation completed successfully.
+     * @returns {true} The operation completed successfully.
      */
     self.removeHandler = (command) => {
         command.fullName = 'removeHandler';
@@ -1047,19 +971,15 @@ jaxon.config.cursor = {
  */
 
 (function(self, baseDocument) {
-    /*
-    Create and return a form input element with the specified parameters.
-
-    Parameters:
-
-    type - (string):  The type of input element desired.
-    name - (string):  The value to be assigned to the name attribute.
-    id - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    object - The new input element.
-    */
+    /**
+     * Create and return a form input element with the specified parameters.
+     *
+     * @param {string} type The type of input element desired.
+     * @param {string} name The value to be assigned to the name attribute.
+     * @param {string} id The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     const getInput = (type, name, id) => {
         const oInput = baseDocument.createElement('input');
         oInput.setAttribute('type', type);
@@ -1068,23 +988,18 @@ jaxon.config.cursor = {
         return oInput;
     };
 
-    /*
-    Function: jaxon.cmd.form.createInput
-
-    Create a new input element under the specified parent.
-
-    Parameters:
-
-    objParent - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Create a new input element under the specified parent.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.createInput = (command) => {
         command.fullName = 'createInput';
 
@@ -1096,23 +1011,18 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.form.insertInput
-
-    Insert a new input element before the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new input element before the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insertInput = (command) => {
         command.fullName = 'insertInput';
 
@@ -1124,23 +1034,18 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.form.insertInputAfter
-
-    Insert a new input element after the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new input element after the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insertInputAfter = (command) => {
         command.fullName = 'insertInputAfter';
 
@@ -1159,22 +1064,17 @@ jaxon.config.cursor = {
  */
 
 (function(self, dom, baseDocument) {
-    /*
-    Function: jaxon.cmd.node.assign
-
-    Assign an element's attribute to the specified value.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute to set.
-        - command.data - (string):  The new value to be applied.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Assign an element's attribute to the specified value.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to set.
+     * @param {string} command.data The new value to be applied.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.assign = (command) => {
         command.fullName = 'assign/clear';
 
@@ -1195,22 +1095,17 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.append
-
-    Append the specified value to an element's attribute.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute to append to.
-        - command.data - (string):  The new value to be appended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Append the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to append to.
+     * @param {string} command.data The new value to be appended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.append = (command) => {
         command.fullName = 'append';
 
@@ -1231,22 +1126,17 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.prepend
-
-    Prepend the specified value to an element's attribute.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute.
-        - command.data - (string):  The new value to be prepended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Prepend the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute.
+     * @param {string} command.data The new value to be prepended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.prepend = (command) => {
         command.fullName = 'prepend';
 
@@ -1286,22 +1176,17 @@ jaxon.config.cursor = {
         }
     };
 
-    /*
-    Function: jaxon.cmd.node.replace
-
-    Search and replace the specified text.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which is to be modified.
-        - command.sAttribute - (string):  The name of the attribute to be set.
-        - command.aData - (array):  The search text and replacement text.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Search and replace the specified text.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which is to be modified.
+     * @param {string} command.prop The name of the attribute to be set.
+     * @param {array} command.data The search text and replacement text.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.replace = (command) => {
         command.fullName = 'replace';
 
@@ -1315,20 +1200,15 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.remove
-
-    Delete an element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which will be deleted.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Delete an element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will be deleted.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.remove = (command) => {
         command.fullName = 'remove';
 
@@ -1339,22 +1219,17 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.create
-
-    Create a new element and append it to the specified parent element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which will contain the new element.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value to be assigned to the id attribute of the new element.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Create a new element and append it to the specified parent element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will contain the new element.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value to be assigned to the id attribute of the new element.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.create = (command) => {
         command.fullName = 'create';
 
@@ -1367,22 +1242,17 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.insert
-
-    Insert a new element before the specified element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element that will be used as the reference point for insertion.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new element before the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insert = (command) => {
         command.fullName = 'insert';
 
@@ -1395,22 +1265,17 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.insertAfter
-
-    Insert a new element after the specified element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element that will be used as the reference point for insertion.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new element after the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insertAfter = (command) => {
         command.fullName = 'insertAfter';
 
@@ -1423,23 +1288,16 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextAssign
-
-    Assign a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to assign.
-        - command.data: (string or object):  The value to assign to the member.
-        - command.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Assign a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to assign.
+     * @param {string|object} command.data The value to assign to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextAssign = (command) => {
         command.fullName = 'context assign';
 
@@ -1451,23 +1309,16 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextAppend
-
-    Appends a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to append to.
-        - command.data: (string or object):  The value to append to the member.
-        - command.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Appends a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to append to.
+     * @param {string|object} command.data The value to append to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextAppend = (command) => {
         command.fullName = 'context append';
 
@@ -1479,22 +1330,16 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextPrepend
-
-    Prepend a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to prepend to.
-        - command.data: (string or object):  The value to prepend to the member.
-        - command.context: (object):  The current script context object which is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Prepend a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to prepend to.
+     * @param {string|object} command.data The value to prepend to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextPrepend = (command) => {
         command.fullName = 'context prepend';
 
@@ -1513,25 +1358,18 @@ jaxon.config.cursor = {
  */
 
 (function(self, delay, msg, dom, baseDocument, window) {
-    /*
-    Function: jaxon.cmd.script.includeScriptOnce
-
-    Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
-
-    This will effecitvely cause the script file to be loaded in the browser.
-
-    Parameters:
-
-    fileName - (string):  The URI of the file.
-
-    Returns:
-
-    true - The reference exists or was added.
-    */
+    /**
+     * Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.includeScriptOnce = (command) => {
         command.fullName = 'includeScriptOnce';
 
-        const fileName = command.data;
+        const { data: fileName } = command;
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
@@ -1542,20 +1380,17 @@ jaxon.config.cursor = {
         return self.includeScript(command);
     };
 
-    /*
-    Function: jaxon.cmd.script.includeScript
-
-    Adds a SCRIPT tag referencing the specified file.
-    This effectively causes the script to be loaded in the browser.
-
-    Parameters:
-
-    command (object) - Xajax response object
-
-    Returns:
-
-    true - The reference was added.
-    */
+    /**
+     * Adds a SCRIPT tag referencing the specified file.
+     * This effectively causes the script to be loaded in the browser.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     * @param {string='text/javascript'} command.type The type of the file.
+     * @param {string=} command.elm_id The script tag id.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.includeScript = (command) => {
         command.fullName = 'includeScript';
 
@@ -1570,19 +1405,15 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.removeScript
-
-    Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
-
-    Parameters:
-
-    command (object) - Xajax response object
-
-    Returns:
-
-    true - The script was not found or was removed.
-    */
+    /**
+     * Locates a SCRIPT tag in the HEAD of the document which references the specified file and removes it.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the file.
+     * @param {string=} command.unld A function to execute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.removeScript = (command) => {
         command.fullName = 'removeScript';
 
@@ -1601,23 +1432,18 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.sleep
-
-    Causes the processing of items in the queue to be delayed for the specified amount of time.
-    This is an asynchronous operation, therefore, other operations will be given an opportunity
-    to execute during this delay.
-
-    Parameters:
-
-    command - (object):  The response command containing the following parameters.
-        - command.prop: The number of 10ths of a second to sleep.
-
-    Returns:
-
-    true - The sleep operation completed.
-    false - The sleep time has not yet expired, continue sleeping.
-    */
+    /**
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 10ths of a second to sleep.
+     * @param {object} command.response The Response object.
+     *
+     * @returns {true} The sleep operation completed.
+     * @returns {false} The sleep time has not yet expired, continue sleeping.
+     */
     self.sleep = (command) => {
         command.fullName = 'sleep';
 
@@ -1632,40 +1458,32 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.alert
-
-    Show the specified message.
-
-    Parameters:
-
-    command (object) - jaxon response object
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Show the specified message.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The message to display.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.alert = (command) => {
         command.fullName = 'alert';
-        msg.info(command.data);
+        const { data: message } = command;
+        msg.info(message);
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.confirm
-
-    Prompt the user with the specified question, if the user responds by clicking cancel,
-    then skip the specified number of commands in the response command queue.
-    If the user clicks Ok, the command processing resumes normal operation.
-
-    Parameters:
-
-    command (object) - jaxon response object
-
-    Returns:
-
-    false - Stop the processing of the command queue until the user answers the question.
-    */
+    /**
+     * Prompt the user with the specified question, if the user responds by clicking cancel,
+     * then skip the specified number of commands in the response command queue.
+     * If the user clicks Ok, the command processing resumes normal operation.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The question to ask.
+     * @param {integer} command.count The number of commands to skip.
+     *
+     * @returns {false} Stop the processing of the command queue until the user answers the question.
+     */
     self.confirm = (command) => {
         command.fullName = 'confirm';
         const { count, data: question } = command;
@@ -1673,28 +1491,21 @@ jaxon.config.cursor = {
         return false;
     };
 
-    /*
-    Function: jaxon.cmd.script.call
-
-    Call a javascript function with a series of parameters using the current script context.
-
-    Parameters:
-
-    command - The response command object containing the following:
-        - command.data: (array):  The parameters to pass to the function.
-        - command.func: (string):  The name of the function to call.
-        - command.context: (object):  The current script context object which is accessable in the
-            function name via the 'this keyword.
-
-    Returns:
-
-    true - The call completed successfully.
-    */
+    /**
+     * Call a javascript function with a series of parameters using the current script context.
+     *
+     * @param {object} command The Response command object.
+     * @param {array} command.data  The parameters to pass to the function.
+     * @param {string} command.func The name of the function to call.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.call = (command) => {
         command.fullName = 'call js function';
-        self.context = command.context ?? {};
 
-        const { func: funcName, data: funcParams } = command;
+        const { func: funcName, data: funcParams, context = {} } = command;
+        self.context = context;
         const func = dom.findFunction(funcName);
         if (func) {
             func.apply(self.context, funcParams);
@@ -1702,27 +1513,20 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.execute
-
-    Execute the specified string of javascript code, using the current script context.
-
-    Parameters:
-
-    command - The response command object containing the following:
-        - command.data: (string):  The javascript to be evaluated.
-        - command.context: (object):  The javascript object that to be referenced as 'this' in the script.
-
-    Returns:
-
-    unknown - A value set by the script using 'returnValue = '
-    true - If the script does not set a returnValue.
-    */
+    /**
+     * Execute the specified string of javascript code, using the current script context.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The javascript to be evaluated.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.execute = (command) => {
         command.fullName = 'execute Javascript';
-        self.context = command.context ?? {};
 
-        const { data: funcBody } = command;
+        const { data: funcBody, context = {} } = command;
+        self.context = context;
         const jsCode = `() => {
     ${funcBody}
 }`;
@@ -1731,31 +1535,23 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.waitFor
-
-    Test for the specified condition, using the current script context;
-    if the result is false, sleep for 1/10th of a second and try again.
-
-    Parameters:
-
-    command - The response command object containing the following:
-
-        - command.data: (string):  The javascript to evaluate.
-        - command.prop: (integer):  The number of 1/10ths of a second to wait before giving up.
-        - command.context: (object):  The current script context object which is accessable in
-            the javascript being evaulated via the 'this' keyword.
-
-    Returns:
-
-    false - The condition evaulates to false and the sleep time has not expired.
-    true - The condition evaluates to true or the sleep time has expired.
-    */
+    /**
+     * Test for the specified condition, using the current script context;
+     * if the result is false, sleep for 1/10th of a second and try again.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The javascript to evaluate.
+     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The condition evaluates to true or the sleep time has expired.
+     * @returns {false} The condition evaluates to false and the sleep time has not expired.
+     */
     self.waitFor = (command) => {
         command.fullName = 'waitFor';
-        self.context = command.context ?? {};
 
-        const { data: funcBody, prop: duration, response } = command;
+        const { data: funcBody, prop: duration, response, context = {} } = command;
+        self.context = context;
         try {
             const jsCode = `() => {
     return (${funcBody});
@@ -1793,28 +1589,21 @@ jaxon.config.cursor = {
         return parameters;
     };
 
-    /*
-    Function: jaxon.cmd.script.setFunction
-
-    Constructs the specified function using the specified javascript as the body of the function.
-
-    Parameters:
-
-    command - The response command object which contains the following:
-
-        - command.func: (string):  The name of the function to construct.
-        - command.data: (string):  The script that will be the function body.
-        - command.context: (object):  The current script context object
-            which is accessable in the script name via the 'this' keyword.
-
-    Returns:
-
-    true - The function was constructed successfully.
-    */
+    /**
+     * Constructs the specified function using the specified javascript as the body of the function.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.func The name of the function to construct.
+     * @param {string} command.data The script that will be the function body.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.setFunction = (command) => {
         command.fullName = 'setFunction';
 
-        const { func: funcName, data: funcBody, prop: funcParams } = command;
+        const { func: funcName, data: funcBody, prop: funcParams, context = {} } = command;
+        self.context = context;
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
@@ -1822,33 +1611,25 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.script.wrapFunction
-
-    Construct a javascript function which will call the original function with the same name,
-    potentially executing code before and after the call to the original function.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-
-        - command.func: (string):  The name of the function to be wrapped.
-        - command.prop: (string):  List of parameters used when calling the function.
-        - command.data: (array):  The portions of code to be called before, after
-            or even between calls to the original function.
-        - command.context: (object):  The current script context object which is
-            accessable in the function name and body via the 'this' keyword.
-
-    Returns:
-
-    true - The wrapper function was constructed successfully.
-    */
+    /**
+     * Construct a javascript function which will call the original function with the same name,
+     * potentially executing code before and after the call to the original function.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.func The name of the function to be wrapped.
+     * @param {string} command.prop List of parameters used when calling the function.
+     * @param {array} command.data The portions of code to be called before, after 
+     *   or even between calls to the original function.
+     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.wrapped = {}; // Original wrapped functions will be saved here.
     self.wrapFunction = (command) => {
         command.fullName = 'wrapFunction';
-        self.context = command.context ?? {};
 
-        const { func: funcName } = command;
+        const { func: funcName, context = {} } = command;
+        self.context = context;
         const func = dom.findFunction(funcName);
         if (!func) {
             return true;
@@ -1888,11 +1669,11 @@ jaxon.config.cursor = {
     /**
      * Redirects the browser to the specified URL.
      *
-     * @param {object} command The response command object which contains the following:
-     *  - command.data: (string):  The new URL to redirect to.
-     *  - command.delay: (integer):  The time to wait before the redirect.
+     * @param {object} command The Response command object.
+     * @param {string} command.data The new URL to redirect to
+     * @param {integer} command.delay The time to wait before the redirect.
      *
-     * @returns {true} The function was constructed successfully.
+     * @returns {true} The operation completed successfully.
      */
     self.redirect = (command) => {
         command.fullName = 'redirect';
@@ -1914,20 +1695,15 @@ jaxon.config.cursor = {
  */
 
 (function(self, delay, baseDocument) {
-    /*
-    Function: jaxon.cmd.style.add
-
-    Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file to reference.
-    media - (string):  The media type of the css file (print/screen/handheld,..)
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file to reference.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.add = (command) => {
         command.fullName = 'includeCSS';
         const { data: fileName, media = 'screen' } = command;
@@ -1949,19 +1725,15 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.style.remove
-
-    Locate and remove a LINK reference from the current document's HEAD.
-
-    Parameters:
-
-    filename - (string):  The URI of the .css file.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Locate and remove a LINK reference from the current document's HEAD.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.remove = (command) => {
         command.fullName = 'removeCSS';
         const { data: fileName, media = 'screen' } = command;
@@ -1974,22 +1746,17 @@ jaxon.config.cursor = {
         return true;
     },
 
-    /*
-    Function: jaxon.cmd.style.waitForCSS
-
-    Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
-    in the HEAD of the current document.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop - (integer):  The number of 1/10ths of a second to wait before giving up.
-
-    Returns:
-
-    true - The .css files appear to be loaded.
-    false - The .css files do not appear to be loaded and the timeout has not expired.
-    */
+    /**
+     * Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
+     * in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
+     * @param {object} command.response The Response object.
+     *
+     * @returns {true} The .css files appear to be loaded.
+     * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
+     */
     self.waitForCSS = (command) => {
         command.fullName = 'waitForCSS';
 
@@ -1999,7 +1766,7 @@ jaxon.config.cursor = {
             return enabled !== 0;
         });
         if (ssLoaded) {
-            return;
+            return false;
         }
 
         // inject a delay in the queue processing
@@ -2020,30 +1787,25 @@ jaxon.config.cursor = {
  */
 
 (function(self, config) {
-    /*
-    Create a timer to fire an event in the future.
-    This will be used fire the onRequestDelay and onExpiration events.
-
-    Parameters:
-
-    iDelay - (integer):  The amount of time in milliseconds to delay.
-
-    Returns:
-
-    object - A callback timer object.
-    */
+    /**
+     * Create a timer to fire an event in the future.
+     * This will be used fire the onRequestDelay and onExpiration events.
+     *
+     * @param {integer} iDelay The amount of time in milliseconds to delay.
+     *
+     * @returns {object} A callback timer object.
+     */
     const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
 
-    /*
-    Function: jaxon.ajax.callback.create
-
-    Create a blank callback object.
-    Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
-
-    Returns:
-
-    object - The callback object.
-    */
+    /**
+     * Create a blank callback object.
+     * Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
+     *
+     * @param {integer=} responseDelayTime
+     * @param {integer=} expirationTime
+     *
+     * @returns {object} The callback object.
+     */
     self.create = (responseDelayTime, expirationTime) => ({
         timers: {
             onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
@@ -2060,25 +1822,22 @@ jaxon.config.cursor = {
         onComplete: null,
     });
 
-    /*
-    Object: jaxon.ajax.callback.callback
-
-    The global callback object which is active for every request.
-    */
+    /**
+     * The global callback object which is active for every request.
+     *
+     * @var {callable}
+     */
     self.callback = self.create();
 
-    /*
-    Function: jaxon.ajax.callback.execute
-
-    Execute a callback event.
-
-    Parameters:
-
-    oCallback - (object):  The callback object (or objects) which
-        contain the event handlers to be executed.
-    sFunction - (string):  The name of the event to be triggered.
-    args - (object):  The request object for this request.
-    */
+    /**
+     * Execute a callback event.
+     *
+     * @param {object} oCallback The callback object (or objects) which contain the event handlers to be executed.
+     * @param {string} sFunction The name of the event to be triggered.
+     * @param {object} args The request object for this request.
+     *
+     * @returns {void}
+     */
     self.execute = (oCallback, sFunction, args) => {
         // The callback object is recognized by the presence of the timers attribute.
         if (oCallback.timers === undefined) {
@@ -2100,18 +1859,14 @@ jaxon.config.cursor = {
         }, oCallback.timers[sFunction].delay);
     };
 
-    /*
-    Function: jaxon.ajax.callback.clearTimer
-
-    Clear a callback timer for the specified function.
-
-    Parameters:
-
-    oCallback - (object):  The callback object (or objects) that
-        contain the specified function timer to be cleared.
-    sFunction - (string):  The name of the function associated
-        with the timer to be cleared.
-    */
+    /**
+     * Clear a callback timer for the specified function.
+     *
+     * @param {object} oCallback The callback object (or objects) that contain the specified function timer to be cleared.
+     * @param {string} sFunction The name of the function associated with the timer to be cleared.
+     *
+     * @returns {void}
+     */
     self.clearTimer = (oCallback, sFunction) => {
         // The callback object is recognized by the presence of the timers attribute.
         if (oCallback.timers === undefined) {
@@ -2131,36 +1886,30 @@ jaxon.config.cursor = {
  */
 
 (function(self, rsp, node, style, script, form, evt, dom, console) {
-    /*
-    An array that is used internally in the jaxon.fn.handler object
-    to keep track of command handlers that have been registered.
-    */
+    /**
+     * An array that is used internally in the jaxon.fn.handler object to keep track
+     * of command handlers that have been registered.
+     *
+     * @var {array}
+     */
     const handlers = [];
 
-    /*
-    Function: jaxon.ajax.handler.execute
-
-    Perform a lookup on the command specified by the response command
-    object passed in the first parameter.  If the command exists, the
-    function checks to see if the command references a DOM object by
-    ID; if so, the object is located within the DOM and added to the
-    command data.  The command handler is then called.
-
-    If the command handler returns true, it is assumed that the command
-    completed successfully.  If the command handler returns false, then the
-    command is considered pending; jaxon enters a wait state.  It is up
-    to the command handler to set an interval, timeout or event handler
-    which will restart the jaxon response processing.
-
-    Parameters:
-
-    command - (object):  The response command to be executed.
-
-    Returns:
-
-    true - The command completed successfully.
-    false - The command signalled that it needs to pause processing.
-    */
+    /**
+     * Perform a lookup on the command specified by the response command object passed
+     * in the first parameter.  If the command exists, the function checks to see if
+     * the command references a DOM object by ID; if so, the object is located within
+     * the DOM and added to the command data.  The command handler is then called.
+     * 
+     * If the command handler returns true, it is assumed that the command completed
+     * successfully.  If the command handler returns false, then the command is considered
+     * pending; jaxon enters a wait state.  It is up to the command handler to set an
+     * interval, timeout or event handler which will restart the jaxon response processing.
+     * 
+     * @param {object} command The response command to be executed.
+     *
+     * @returns {true} The command completed successfully.
+     * @returns {false} The command signalled that it needs to pause processing.
+     */
     self.execute = (command) => {
         if (self.isRegistered(command)) {
             // If the command has an "id" attr, find the corresponding dom element.
@@ -2173,56 +1922,42 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Function: jaxon.ajax.handler.register
-
-    Registers a new command handler.
-    */
+    /**
+     * Registers a new command handler.
+     *
+     * @returns {void}
+     */
     self.register = (shortName, func) => handlers[shortName] = func;
 
-    /*
-    Function: jaxon.ajax.handler.unregister
-
-    Unregisters and returns a command handler.
-
-    Parameters:
-        shortName - (string): The name of the command handler.
-
-    Returns:
-        func - (function): The unregistered function.
-    */
+    /**
+     * Unregisters and returns a command handler.
+     *
+     * @param {string} shortName The name of the command handler.
+     *
+     * @returns {callable} The unregistered function.
+     */
     self.unregister = (shortName) => {
         const func = handlers[shortName];
         delete handlers[shortName];
         return func;
     };
 
-    /*
-    Function: jaxon.ajax.handler.isRegistered
-
-    Parameters:
-        command - (object): The Name of the function.
-
-    Returns:
-
-    boolean - (true or false): depending on whether a command handler has
-        been registered for the specified command (object).
-
-    */
+    /**
+     * @param {object} command The Name of the function.
+     *
+     * @returns {boolean} (true or false): depending on whether a command handler has
+     * been registered for the specified command (object).
+     */
     self.isRegistered = (command) => command.cmd !== undefined && handlers[command.cmd] !== undefined;
 
-    /*
-    Function: jaxon.ajax.handler.call
-
-    Calls the registered command handler for the specified command
-    (you should always check isRegistered before calling this function)
-
-    Parameters:
-        command - (object): The Name of the function.
-
-    Returns:
-        true - (boolean) :
-    */
+    /**
+     * Calls the registered command handler for the specified command
+     * (you should always check isRegistered before calling this function)
+     *
+     * @param {object} command The Name of the function.
+     *
+     * @returns {boolean}
+     */
     self.call = (command) => handlers[command.cmd](command);
 
     self.register('rcmplt', function(command) {
@@ -2281,61 +2016,56 @@ jaxon.config.cursor = {
  */
 
 (function(self) {
-    /*
-    Function: jaxon.ajax.message.success
-
-    Print a success message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print a success message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.success = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.info
-
-    Print an info message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print an info message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.info = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.warning
-
-    Print a warning message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print a warning message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.warning = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.error
-
-    Print an error message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.error = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.confirm
-
-    Print an error message on the screen.
-
-    Parameters:
-        question - (string):  The confirm question.
-        title - (string):  The confirm title.
-        yesCallback - (Function): The function to call if the user answers yes.
-        noCallback - (Function): The function to call if the user answers no.
-    */
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} question The confirm question.
+     * @param {string} title The confirm title.
+     * @param {callable} yesCallback The function to call if the user answers yesn.
+     * @param {callable} noCallback The function to call if the user answers no.
+     *
+     * @returns {void}
+     */
     self.confirm = (question, title, yesCallback, noCallback) => {
         if(confirm(question)) {
             yesCallback();
@@ -2353,6 +2083,7 @@ jaxon.config.cursor = {
 (function(self, version) {
     /**
      * The array of data bags
+     *
      * @type {object}
      */
     self.bags = {};
@@ -2360,7 +2091,7 @@ jaxon.config.cursor = {
     /**
      * Stringify a parameter of an ajax call.
      *
-     * @param {*} oVal - The value to be stringified
+     * @param {mixed} oVal - The value to be stringified
      *
      * @returns {string}
      */
@@ -2455,8 +2186,6 @@ jaxon.config.cursor = {
     };
 
     /**
-     * Function: jaxon.ajax.parameters.process
-     *
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *
@@ -2514,18 +2243,16 @@ jaxon.config.cursor = {
         }
     };
 
-    /*
-    Function: jaxon.ajax.request.initialize
-
-    Initialize a request object, populating default settings, where
-    call specific settings are not already provided.
-
-    Parameters:
-
-    oRequest - (object):  An object that specifies call specific settings
-        that will, in addition, be used to store all request related
-        values.  This includes temporary values used internally by jaxon.
-    */
+    /**
+     * Initialize a request object, populating default settings, where call specific
+     * settings are not already provided.
+     *
+     * @param {object} oRequest An object that specifies call specific settings that will,
+     * in addition, be used to store all request related values.
+     * This includes temporary values used internally by jaxon.
+     *
+     * @returns {void}
+     */
     const initialize = (oRequest) => {
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
         aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
@@ -2569,21 +2296,19 @@ jaxon.config.cursor = {
         }
     };
 
-    /*
-    Function: jaxon.ajax.request.prepare
-
-    Prepares the XMLHttpRequest object for this jaxon request.
-
-    Parameters:
-
-    oRequest - (object):  An object created by a call to <jaxon.ajax.request.initialize>
-        which already contains the necessary parameters and temporary variables
-        needed to initiate and process a jaxon request.
-
-    Note:
-    This is called each time a request object is being prepared for a call to the server.
-    If the request is retried, the request must be prepared again.
-    */
+    /**
+     * Prepares the XMLHttpRequest object for this jaxon request.
+     *
+     * @param {object} oRequest An object created by a call to <jaxon.ajax.request.initialize>
+     * which already contains the necessary parameters and temporary variables needed to
+     * initiate and process a jaxon request.
+     *
+     * Note:
+     * This is called each time a request object is being prepared for a call to the server.
+     * If the request is retried, the request must be prepared again.
+     *
+     * @returns {boolean}
+     */
     const prepare = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onPrepare', oRequest);
 
@@ -2616,16 +2341,15 @@ jaxon.config.cursor = {
         return submitRequest;
     };
 
-    /*
-    Function: jaxon.ajax.request.submit
-
-    Create a request object and submit the request using the specified request type;
-    all request parameters should be finalized by this point.
-    Upon failure of a POST, this function will fall back to a GET request.
-
-    Parameters:
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Create a request object and submit the request using the specified request type;
+     * all request parameters should be finalized by this point.
+     * Upon failure of a POST, this function will fall back to a GET request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {mixed}
+     */
     const submit = (oRequest) => {
         oRequest.status.onRequest();
 
@@ -2666,38 +2390,30 @@ jaxon.config.cursor = {
         return oRequest.returnValue;
     };
 
-    /*
-    Function: jaxon.ajax.request.abort
-
-    Abort the request.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Abort the request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
     self.abort = (oRequest) => {
         oRequest.aborted = true;
         oRequest.request.abort();
         rsp.complete(oRequest);
     };
 
-    /*
-    Function: jaxon.ajax.request.execute
-
-    Initiates a request to the server.
-
-    Parameters:
-
-    functionName - (object):  An object containing the name of the function to execute
-    on the server. The standard request is: {jxnfun:'function_name'}
-
-    functionArgs - (object, optional):  A request object which
-        may contain call specific parameters.  This object will be
-        used by jaxon to store all the request parameters as well
-        as temporary variables needed during the processing of the
-        request.
-
-    */
+    /**
+     * Initiates a request to the server.
+     *
+     * @param {object} functionName An object containing the name of the function to
+     * execute on the server. The standard request is: {jxnfun:'function_name'}
+     * @param {object=} functionArgs A request object which may contain callspecific parameters.
+     * This object will be used by jaxon to store all the request parameters as well as
+     * temporary variables needed during the processing of the request.
+     *
+     * @returns {boolean}
+     */
     self.execute = (functionName, functionArgs) => {
         if (functionName === undefined) {
             return false;
@@ -2724,6 +2440,7 @@ jaxon.config.cursor = {
                 }
             }
         }
+        return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
     jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.utils.delay, window);
@@ -2734,13 +2451,13 @@ jaxon.config.cursor = {
  */
 
 (function(self, config, handler, req, cbk, queue, delay, window, console) {
-    /*
-    Called by the response command queue processor when all commands have been processed.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Called by the response command queue processor when all commands have been processed.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
     self.complete = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onComplete', oRequest);
         oRequest.cursor.onComplete();
@@ -2803,26 +2520,21 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    While entries exist in the queue, pull and entry out and process it's command.
-    When a command returns false, the processing is halted.
-
-    Parameters:
-
-    response - (commandQueue): A queue containing the commands to execute.
-    This should have been created by calling <queue.create>.
-
-    Returns:
-
-    true - The queue was fully processed and is now empty.
-    false - The queue processing was halted before the queue was fully processed.
-
-    Note:
-
-    - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
-    - This will clear the associated timeout, this function is not designed to be reentrant.
-    - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-    */
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When a command returns false, the processing is halted.
+     *
+     * @param {object} commandQueue A queue containing the commands to execute.
+     * This should have been created by calling <queue.create>.
+     *
+     * @returns {true} The queue was fully processed and is now empty.
+     * @returns {false} The queue processing was halted before the queue was fully processed.
+     *
+     * Note:
+     * - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
+     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     */
     const processCommands = (commandQueue) => {
         if (commandQueue.timeout !== null) {
             clearTimeout(commandQueue.timeout);
@@ -2838,12 +2550,13 @@ jaxon.config.cursor = {
         return true;
     };
 
-    /*
-    Parse the JSON response into a series of commands.
-
-    Parameters:
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Parse the JSON response into a series of commands.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
     const queueCommands = (oRequest) => {
         const nodes = oRequest.responseContent;
         if (!nodes || !nodes.jxnobj) {
@@ -2868,12 +2581,14 @@ jaxon.config.cursor = {
         }));
     };
 
-    /*
-    This array contains a list of codes which will be returned from the server upon
-    successful completion of the server portion of the request.
-
-    These values should match those specified in the HTTP standard.
-    */
+    /**
+     * This array contains a list of codes which will be returned from the server upon
+     * successful completion of the server portion of the request.
+     *
+     * These values should match those specified in the HTTP standard.
+     *
+     * @var {array}
+     */
     // const successCodes = [0, 200];
 
     // 10.4.1 400 Bad Request
@@ -2902,10 +2617,12 @@ jaxon.config.cursor = {
     // 10.5.5 504 Gateway Timeout
     // 10.5.6 505 HTTP Version Not Supported
 
-    /*
-    This array contains a list of status codes returned by the server to indicate that
-    the request failed for some reason.
-    */
+    /**
+     * This array contains a list of status codes returned by the server to indicate
+     * that the request failed for some reason.
+     *
+     * @var {array}
+     */
     const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
@@ -2917,23 +2634,23 @@ jaxon.config.cursor = {
     // 10.3.7 306 (Unused)
     // 10.3.8 307 Temporary Redirect
 
-    /*
-    An array of status codes returned from the server to indicate a request for redirect to another URL.
-
-    Typically, this is used by the server to send the browser to another URL.
-    This does not typically indicate that the jaxon request should be sent to another URL.
-    */
+    /**
+     * An array of status codes returned from the server to indicate a request for redirect to another URL.
+     *
+     * Typically, this is used by the server to send the browser to another URL.
+     * This does not typically indicate that the jaxon request should be sent to another URL.
+     *
+     * @var {array}
+     */
     const redirectCodes = [301, 302, 307];
 
-    /*
-    Function: jsonProcessor
-
-    This is the JSON response processor.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * This is the JSON response processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {mixed}
+     */
     const jsonProcessor = (oRequest) => {
         if (oRequest.response.ok) {
             cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
@@ -2971,15 +2688,13 @@ jaxon.config.cursor = {
         return oRequest.returnValue;
     };
 
-    /*
-    Function: jaxon.ajax.response.received
-
-    Process the response.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Process the response.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {mixed}
+     */
     self.received = (oRequest) => {
         // sometimes the responseReceived gets called when the request is aborted
         if (oRequest.aborted) {
@@ -3015,8 +2730,10 @@ jaxon.config.cursor = {
     let readyFired = false;
     let readyEventHandlersInstalled = false;
 
-    // call this when the document is ready
-    // this function protects itself against being called more than once
+    /**
+     * Call this when the document is ready.
+     * This function protects itself against being called more than once
+     */
     const ready = () => {
         if (readyFired) {
             return;
@@ -3036,9 +2753,11 @@ jaxon.config.cursor = {
 
     const readyStateChange = () => document.readyState === "complete" && ready();
 
-    // This is the one public interface
-    // jaxon.dom.ready(fn, context);
-    // the context argument is optional - if present, it will be passed as an argument to the callback
+    /**
+     * This is the one public interface
+     * jaxon.dom.ready(fn, context);
+     * The context argument is optional - if present, it will be passed as an argument to the callback
+     */
     self.ready = function(callback, context) {
         // if ready has already fired, then just schedule the callback
         // to fire asynchronously, but right away
@@ -3093,94 +2812,67 @@ jaxon.config.cursor = {
     @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
-/*
-Function: jaxon.request
-
-Initiates a request to the server.
-*/
+/**
+ * Initiates a request to the server.
+ */
 jaxon.request = jaxon.ajax.request.execute;
 
-/*
-Function: jaxon.register
-
-Registers a new command handler.
-Shortcut to <jaxon.ajax.handler.register>
-*/
+/**
+ * Registers a new command handler.
+ * Shortcut to <jaxon.ajax.handler.register>
+ */
 jaxon.register = jaxon.ajax.handler.register;
 
-/*
-Function: jaxon.$
-
-Shortcut to <jaxon.utils.dom.$>.
-*/
+/**
+ * Shortcut to <jaxon.utils.dom.$>.
+ */
 jaxon.$ = jaxon.utils.dom.$;
 
-/*
-Function: jaxon.getFormValues
-
-Shortcut to <jaxon.utils.form.getValues>.
-*/
+/**
+ * Shortcut to <jaxon.utils.form.getValues>.
+ */
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
-/*
-Object: jaxon.msg
-
-Prints various types of messages on the user screen.
-*/
+/**
+ * Prints various types of messages on the user screen.
+ */
 jaxon.msg = jaxon.ajax.message;
 
-/*
-Object: jaxon.js
-
-Shortcut to <jaxon.cmd.script>.
-*/
+/**
+ * Shortcut to <jaxon.cmd.script>.
+ */
 jaxon.js = jaxon.cmd.script;
 
-/*
-Boolean: jaxon.isLoaded
-
-true - jaxon module is loaded.
-*/
+/**
+ * Indicates if jaxon module is loaded.
+ */
 jaxon.isLoaded = true;
 
-/*
-Object: jaxon.utils.delay.q
-
-The queues that hold synchronous requests as they are sent and processed.
-*/
+/**
+ * The queues that hold synchronous requests as they are sent and processed.
+ */
 jaxon.utils.delay.q = {
     send: jaxon.utils.queue.create(jaxon.config.requestQueueSize),
     recv: jaxon.utils.queue.create(jaxon.config.requestQueueSize * 2)
 };
 
 
-/*
-Class: jaxon.command
-
-This class is defined for compatibility with previous versions,
-since its functions are used in other packages.
-*/
+/**
+ * Class: jaxon.command
+ *
+ * This class is defined for compatibility with previous versions, since its functions are used in other packages.
+ */
 jaxon.command = {
-    /*
-    Class: jaxon.command.handler
-    */
     handler: {},
 
-    /*
-    Function: jaxon.command.handler.register
-
-    Registers a new command handler.
-    */
     handler: {
         register: jaxon.ajax.handler.register
     },
 
-    /*
-    Function: jaxon.command.create
-
-    Creates a new command (object) that will be populated with
-    command parameters and eventually passed to the command handler.
-    */
+    /**
+     * Creates a new command (object) that will be populated with command parameters
+     * and eventually passed to the command handler.
+     */
     create: (sequence, request, context) => ({
         cmd: '*',
         fullName: '* unknown command name *',
@@ -3190,25 +2882,24 @@ jaxon.command = {
     }),
 };
 
-/*
-Class: jxn
-
-Contains shortcut's to frequently used functions.
-*/
+/**
+ * Class: jxn
+ *
+ * Contains shortcut's to frequently used functions.
+ */
 const jxn = {
-    /*
-    Function: jxn.$
-
-    Shortcut to <jaxon.utils.dom.$>.
-    */
+    /**
+     * Shortcut to <jaxon.utils.dom.$>.
+     */
     $: jaxon.utils.dom.$,
 
-    /*
-    Function: jxn.getFormValues
-
-    Shortcut to <jaxon.utils.form.getValues>.
-    */
+    /**
+     * Shortcut to <jaxon.utils.form.getValues>.
+     */
     getFormValues: jaxon.utils.form.getValues,
 
+    /**
+     * Shortcut to <jaxon.request>.
+     */
     request: jaxon.request
 };

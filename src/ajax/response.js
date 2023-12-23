@@ -3,13 +3,13 @@
  */
 
 (function(self, config, handler, req, cbk, queue, delay, window, console) {
-    /*
-    Called by the response command queue processor when all commands have been processed.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Called by the response command queue processor when all commands have been processed.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
     self.complete = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onComplete', oRequest);
         oRequest.cursor.onComplete();
@@ -72,26 +72,21 @@
         return true;
     };
 
-    /*
-    While entries exist in the queue, pull and entry out and process it's command.
-    When a command returns false, the processing is halted.
-
-    Parameters:
-
-    response - (commandQueue): A queue containing the commands to execute.
-    This should have been created by calling <queue.create>.
-
-    Returns:
-
-    true - The queue was fully processed and is now empty.
-    false - The queue processing was halted before the queue was fully processed.
-
-    Note:
-
-    - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
-    - This will clear the associated timeout, this function is not designed to be reentrant.
-    - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-    */
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When a command returns false, the processing is halted.
+     *
+     * @param {object} commandQueue A queue containing the commands to execute.
+     * This should have been created by calling <queue.create>.
+     *
+     * @returns {true} The queue was fully processed and is now empty.
+     * @returns {false} The queue processing was halted before the queue was fully processed.
+     *
+     * Note:
+     * - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
+     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     */
     const processCommands = (commandQueue) => {
         if (commandQueue.timeout !== null) {
             clearTimeout(commandQueue.timeout);
@@ -107,12 +102,13 @@
         return true;
     };
 
-    /*
-    Parse the JSON response into a series of commands.
-
-    Parameters:
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Parse the JSON response into a series of commands.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
     const queueCommands = (oRequest) => {
         const nodes = oRequest.responseContent;
         if (!nodes || !nodes.jxnobj) {
@@ -137,12 +133,14 @@
         }));
     };
 
-    /*
-    This array contains a list of codes which will be returned from the server upon
-    successful completion of the server portion of the request.
-
-    These values should match those specified in the HTTP standard.
-    */
+    /**
+     * This array contains a list of codes which will be returned from the server upon
+     * successful completion of the server portion of the request.
+     *
+     * These values should match those specified in the HTTP standard.
+     *
+     * @var {array}
+     */
     // const successCodes = [0, 200];
 
     // 10.4.1 400 Bad Request
@@ -171,10 +169,12 @@
     // 10.5.5 504 Gateway Timeout
     // 10.5.6 505 HTTP Version Not Supported
 
-    /*
-    This array contains a list of status codes returned by the server to indicate that
-    the request failed for some reason.
-    */
+    /**
+     * This array contains a list of status codes returned by the server to indicate
+     * that the request failed for some reason.
+     *
+     * @var {array}
+     */
     const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
@@ -186,23 +186,23 @@
     // 10.3.7 306 (Unused)
     // 10.3.8 307 Temporary Redirect
 
-    /*
-    An array of status codes returned from the server to indicate a request for redirect to another URL.
-
-    Typically, this is used by the server to send the browser to another URL.
-    This does not typically indicate that the jaxon request should be sent to another URL.
-    */
+    /**
+     * An array of status codes returned from the server to indicate a request for redirect to another URL.
+     *
+     * Typically, this is used by the server to send the browser to another URL.
+     * This does not typically indicate that the jaxon request should be sent to another URL.
+     *
+     * @var {array}
+     */
     const redirectCodes = [301, 302, 307];
 
-    /*
-    Function: jsonProcessor
-
-    This is the JSON response processor.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * This is the JSON response processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {mixed}
+     */
     const jsonProcessor = (oRequest) => {
         if (oRequest.response.ok) {
             cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
@@ -240,15 +240,13 @@
         return oRequest.returnValue;
     };
 
-    /*
-    Function: jaxon.ajax.response.received
-
-    Process the response.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Process the response.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {mixed}
+     */
     self.received = (oRequest) => {
         // sometimes the responseReceived gets called when the request is aborted
         if (oRequest.aborted) {

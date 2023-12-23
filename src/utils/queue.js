@@ -6,9 +6,9 @@
     /**
      * Construct and return a new queue object.
      *
-     * @param integer size The number of entries the queue will be able to hold.
+     * @param {integer} size The number of entries the queue will be able to hold.
      *
-     * @returns object
+     * @returns {object}
      */
     self.create = size => ({
         start: 0,
@@ -22,28 +22,28 @@
     /**
      * Check id a queue is empty.
      *
-     * @param object oQueue The queue to check.
+     * @param {object} oQueue The queue to check.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.empty = oQueue => oQueue.count <= 0;
 
     /**
      * Check id a queue is empty.
      *
-     * @param object oQueue The queue to check.
+     * @param {object} oQueue The queue to check.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.full = oQueue => oQueue.count >= oQueue.size;
 
     /**
      * Push a new object into the tail of the buffer maintained by the specified queue object.
      *
-     * @param object oQueue The queue in which you would like the object stored.
-     * @param object obj    The object you would like stored in the queue.
+     * @param {object} oQueue The queue in which you would like the object stored.
+     * @param {object} obj    The object you would like stored in the queue.
      *
-     * @returns integer The number of entries in the queue.
+     * @returns {integer} The number of entries in the queue.
      */
     self.push = (oQueue, obj) => {
         // No push if the queue is full.
@@ -63,10 +63,10 @@
      *
      * This effectively pushes an object to the front of the queue... it will be processed first.
      *
-     * @param object oQueue The queue in which you would like the object stored.
-     * @param object obj    The object you would like stored in the queue.
+     * @param {object} oQueue The queue in which you would like the object stored.
+     * @param {object} obj    The object you would like stored in the queue.
      *
-     * @returns integer The number of entries in the queue.
+     * @returns {integer} The number of entries in the queue.
      */
     self.pushFront = (oQueue, obj) => {
         // No push if the queue is full.
@@ -90,9 +90,9 @@
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.pop = (oQueue) => {
         if(self.empty(oQueue)) {
@@ -111,9 +111,9 @@
     /**
      * Attempt to pop an object off the head of the queue.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.peek = (oQueue) => {
         if(self.empty(oQueue)) {

@@ -20,61 +20,45 @@
     @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
-/*
-Function: jaxon.request
-
-Initiates a request to the server.
-*/
+/**
+ * Initiates a request to the server.
+ */
 jaxon.request = jaxon.ajax.request.execute;
 
-/*
-Function: jaxon.register
-
-Registers a new command handler.
-Shortcut to <jaxon.ajax.handler.register>
-*/
+/**
+ * Registers a new command handler.
+ * Shortcut to <jaxon.ajax.handler.register>
+ */
 jaxon.register = jaxon.ajax.handler.register;
 
-/*
-Function: jaxon.$
-
-Shortcut to <jaxon.utils.dom.$>.
-*/
+/**
+ * Shortcut to <jaxon.utils.dom.$>.
+ */
 jaxon.$ = jaxon.utils.dom.$;
 
-/*
-Function: jaxon.getFormValues
-
-Shortcut to <jaxon.utils.form.getValues>.
-*/
+/**
+ * Shortcut to <jaxon.utils.form.getValues>.
+ */
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
-/*
-Object: jaxon.msg
-
-Prints various types of messages on the user screen.
-*/
+/**
+ * Prints various types of messages on the user screen.
+ */
 jaxon.msg = jaxon.ajax.message;
 
-/*
-Object: jaxon.js
-
-Shortcut to <jaxon.cmd.script>.
-*/
+/**
+ * Shortcut to <jaxon.cmd.script>.
+ */
 jaxon.js = jaxon.cmd.script;
 
-/*
-Boolean: jaxon.isLoaded
-
-true - jaxon module is loaded.
-*/
+/**
+ * Indicates if jaxon module is loaded.
+ */
 jaxon.isLoaded = true;
 
-/*
-Object: jaxon.utils.delay.q
-
-The queues that hold synchronous requests as they are sent and processed.
-*/
+/**
+ * The queues that hold synchronous requests as they are sent and processed.
+ */
 jaxon.utils.delay.q = {
     send: jaxon.utils.queue.create(jaxon.config.requestQueueSize),
     recv: jaxon.utils.queue.create(jaxon.config.requestQueueSize * 2)

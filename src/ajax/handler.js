@@ -3,36 +3,30 @@
  */
 
 (function(self, rsp, node, style, script, form, evt, dom, console) {
-    /*
-    An array that is used internally in the jaxon.fn.handler object
-    to keep track of command handlers that have been registered.
-    */
+    /**
+     * An array that is used internally in the jaxon.fn.handler object to keep track
+     * of command handlers that have been registered.
+     *
+     * @var {array}
+     */
     const handlers = [];
 
-    /*
-    Function: jaxon.ajax.handler.execute
-
-    Perform a lookup on the command specified by the response command
-    object passed in the first parameter.  If the command exists, the
-    function checks to see if the command references a DOM object by
-    ID; if so, the object is located within the DOM and added to the
-    command data.  The command handler is then called.
-
-    If the command handler returns true, it is assumed that the command
-    completed successfully.  If the command handler returns false, then the
-    command is considered pending; jaxon enters a wait state.  It is up
-    to the command handler to set an interval, timeout or event handler
-    which will restart the jaxon response processing.
-
-    Parameters:
-
-    command - (object):  The response command to be executed.
-
-    Returns:
-
-    true - The command completed successfully.
-    false - The command signalled that it needs to pause processing.
-    */
+    /**
+     * Perform a lookup on the command specified by the response command object passed
+     * in the first parameter.  If the command exists, the function checks to see if
+     * the command references a DOM object by ID; if so, the object is located within
+     * the DOM and added to the command data.  The command handler is then called.
+     * 
+     * If the command handler returns true, it is assumed that the command completed
+     * successfully.  If the command handler returns false, then the command is considered
+     * pending; jaxon enters a wait state.  It is up to the command handler to set an
+     * interval, timeout or event handler which will restart the jaxon response processing.
+     * 
+     * @param {object} command The response command to be executed.
+     *
+     * @returns {true} The command completed successfully.
+     * @returns {false} The command signalled that it needs to pause processing.
+     */
     self.execute = (command) => {
         if (self.isRegistered(command)) {
             // If the command has an "id" attr, find the corresponding dom element.
@@ -45,56 +39,42 @@
         return true;
     };
 
-    /*
-    Function: jaxon.ajax.handler.register
-
-    Registers a new command handler.
-    */
+    /**
+     * Registers a new command handler.
+     *
+     * @returns {void}
+     */
     self.register = (shortName, func) => handlers[shortName] = func;
 
-    /*
-    Function: jaxon.ajax.handler.unregister
-
-    Unregisters and returns a command handler.
-
-    Parameters:
-        shortName - (string): The name of the command handler.
-
-    Returns:
-        func - (function): The unregistered function.
-    */
+    /**
+     * Unregisters and returns a command handler.
+     *
+     * @param {string} shortName The name of the command handler.
+     *
+     * @returns {callable} The unregistered function.
+     */
     self.unregister = (shortName) => {
         const func = handlers[shortName];
         delete handlers[shortName];
         return func;
     };
 
-    /*
-    Function: jaxon.ajax.handler.isRegistered
-
-    Parameters:
-        command - (object): The Name of the function.
-
-    Returns:
-
-    boolean - (true or false): depending on whether a command handler has
-        been registered for the specified command (object).
-
-    */
+    /**
+     * @param {object} command The Name of the function.
+     *
+     * @returns {boolean} (true or false): depending on whether a command handler has
+     * been registered for the specified command (object).
+     */
     self.isRegistered = (command) => command.cmd !== undefined && handlers[command.cmd] !== undefined;
 
-    /*
-    Function: jaxon.ajax.handler.call
-
-    Calls the registered command handler for the specified command
-    (you should always check isRegistered before calling this function)
-
-    Parameters:
-        command - (object): The Name of the function.
-
-    Returns:
-        true - (boolean) :
-    */
+    /**
+     * Calls the registered command handler for the specified command
+     * (you should always check isRegistered before calling this function)
+     *
+     * @param {object} command The Name of the function.
+     *
+     * @returns {boolean}
+     */
     self.call = (command) => handlers[command.cmd](command);
 
     self.register('rcmplt', function(command) {

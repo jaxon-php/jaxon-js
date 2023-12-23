@@ -3,61 +3,56 @@
  */
 
 (function(self) {
-    /*
-    Function: jaxon.ajax.message.success
-
-    Print a success message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print a success message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.success = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.info
-
-    Print an info message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print an info message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.info = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.warning
-
-    Print a warning message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print a warning message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.warning = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.error
-
-    Print an error message on the screen.
-
-    Parameters:
-        content - (string):  The message content.
-        title - (string):  The message title.
-    */
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
     self.error = (content, title) => alert(content);
 
-    /*
-    Function: jaxon.ajax.message.confirm
-
-    Print an error message on the screen.
-
-    Parameters:
-        question - (string):  The confirm question.
-        title - (string):  The confirm title.
-        yesCallback - (Function): The function to call if the user answers yes.
-        noCallback - (Function): The function to call if the user answers no.
-    */
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} question The confirm question.
+     * @param {string} title The confirm title.
+     * @param {callable} yesCallback The function to call if the user answers yesn.
+     * @param {callable} noCallback The function to call if the user answers no.
+     *
+     * @returns {void}
+     */
     self.confirm = (question, title, yesCallback, noCallback) => {
         if(confirm(question)) {
             yesCallback();

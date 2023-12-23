@@ -34,18 +34,16 @@
         }
     };
 
-    /*
-    Function: jaxon.ajax.request.initialize
-
-    Initialize a request object, populating default settings, where
-    call specific settings are not already provided.
-
-    Parameters:
-
-    oRequest - (object):  An object that specifies call specific settings
-        that will, in addition, be used to store all request related
-        values.  This includes temporary values used internally by jaxon.
-    */
+    /**
+     * Initialize a request object, populating default settings, where call specific
+     * settings are not already provided.
+     *
+     * @param {object} oRequest An object that specifies call specific settings that will,
+     * in addition, be used to store all request related values.
+     * This includes temporary values used internally by jaxon.
+     *
+     * @returns {void}
+     */
     const initialize = (oRequest) => {
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
         aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
@@ -89,21 +87,19 @@
         }
     };
 
-    /*
-    Function: jaxon.ajax.request.prepare
-
-    Prepares the XMLHttpRequest object for this jaxon request.
-
-    Parameters:
-
-    oRequest - (object):  An object created by a call to <jaxon.ajax.request.initialize>
-        which already contains the necessary parameters and temporary variables
-        needed to initiate and process a jaxon request.
-
-    Note:
-    This is called each time a request object is being prepared for a call to the server.
-    If the request is retried, the request must be prepared again.
-    */
+    /**
+     * Prepares the XMLHttpRequest object for this jaxon request.
+     *
+     * @param {object} oRequest An object created by a call to <jaxon.ajax.request.initialize>
+     * which already contains the necessary parameters and temporary variables needed to
+     * initiate and process a jaxon request.
+     *
+     * Note:
+     * This is called each time a request object is being prepared for a call to the server.
+     * If the request is retried, the request must be prepared again.
+     *
+     * @returns {boolean}
+     */
     const prepare = (oRequest) => {
         cbk.execute([cbk.callback, oRequest.callback], 'onPrepare', oRequest);
 
@@ -136,16 +132,15 @@
         return submitRequest;
     };
 
-    /*
-    Function: jaxon.ajax.request.submit
-
-    Create a request object and submit the request using the specified request type;
-    all request parameters should be finalized by this point.
-    Upon failure of a POST, this function will fall back to a GET request.
-
-    Parameters:
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Create a request object and submit the request using the specified request type;
+     * all request parameters should be finalized by this point.
+     * Upon failure of a POST, this function will fall back to a GET request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {mixed}
+     */
     const submit = (oRequest) => {
         oRequest.status.onRequest();
 
@@ -186,38 +181,30 @@
         return oRequest.returnValue;
     };
 
-    /*
-    Function: jaxon.ajax.request.abort
-
-    Abort the request.
-
-    Parameters:
-
-    oRequest - (object):  The request context object.
-    */
+    /**
+     * Abort the request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
     self.abort = (oRequest) => {
         oRequest.aborted = true;
         oRequest.request.abort();
         rsp.complete(oRequest);
     };
 
-    /*
-    Function: jaxon.ajax.request.execute
-
-    Initiates a request to the server.
-
-    Parameters:
-
-    functionName - (object):  An object containing the name of the function to execute
-    on the server. The standard request is: {jxnfun:'function_name'}
-
-    functionArgs - (object, optional):  A request object which
-        may contain call specific parameters.  This object will be
-        used by jaxon to store all the request parameters as well
-        as temporary variables needed during the processing of the
-        request.
-
-    */
+    /**
+     * Initiates a request to the server.
+     *
+     * @param {object} functionName An object containing the name of the function to
+     * execute on the server. The standard request is: {jxnfun:'function_name'}
+     * @param {object=} functionArgs A request object which may contain callspecific parameters.
+     * This object will be used by jaxon to store all the request parameters as well as
+     * temporary variables needed during the processing of the request.
+     *
+     * @returns {boolean}
+     */
     self.execute = (functionName, functionArgs) => {
         if (functionName === undefined) {
             return false;
@@ -244,6 +231,7 @@
                 }
             }
         }
+        return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
     jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.utils.delay, window);

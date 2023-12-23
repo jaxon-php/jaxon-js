@@ -5,6 +5,7 @@
 (function(self, version) {
     /**
      * The array of data bags
+     *
      * @type {object}
      */
     self.bags = {};
@@ -12,7 +13,7 @@
     /**
      * Stringify a parameter of an ajax call.
      *
-     * @param {*} oVal - The value to be stringified
+     * @param {mixed} oVal - The value to be stringified
      *
      * @returns {string}
      */
@@ -107,8 +108,6 @@
     };
 
     /**
-     * Function: jaxon.ajax.parameters.process
-     *
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *

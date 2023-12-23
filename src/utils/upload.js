@@ -4,9 +4,10 @@
 
 (function(self, dom, console) {
     /**
-     * @param {object} oRequest
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {string=} oRequest.upload The HTML file upload field id
      *
-     * @return {bool}
+     * @returns {boolean}
      */
     const initRequest = (oRequest) => {
         if (!oRequest.upload) {
@@ -44,9 +45,9 @@
     /**
      * Check upload data and initialize the request.
      *
-     * @param {object} oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
      *
-     * @return {void}
+     * @returns {void}
      */
     self.initialize = (oRequest) => {
         // The content type shall not be set when uploading a file with FormData.

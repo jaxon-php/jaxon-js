@@ -6,9 +6,9 @@
     /**
      * Attempt to pop the next asynchronous request.
      *
-     * @param object oQueue The queue object you would like to modify.
+     * @param {object} oQueue The queue object you would like to modify.
      *
-     * @returns object|null
+     * @returns {object|null}
      */
     self.popAsyncRequest = oQueue =>
         queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
@@ -17,12 +17,11 @@
     /**
      * Maintains a retry counter for the given object.
      *
-     * @param command object    The object to track the retry count for.
-     * @param count integer     The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
      *
-     * @returns boolean
-     *      true - The object has not exhausted all the retries.
-     *      false - The object has exhausted the retry count specified.
+     * @returns {true} The object has not exhausted all the retries.
+     * @returns {false} The object has exhausted the retry count specified.
      */
     self.retry = (command, count) => {
         let retries = command.retries;
@@ -45,27 +44,27 @@
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param response object   The queue to process.
-     * @param when integer      The number of milliseconds to wait before starting/restarting the processing of the queue.
+     * @param {object} response The queue to process.
+     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
+     *
+     * @returns {void}
      */
     self.setWakeup = (response, when) => {
         if (response.timeout !== null) {
             clearTimeout(response.timeout);
             response.timeout = null;
         }
-        response.timout = setTimeout(function() {
-            rsp.process(response);
-        }, when);
+        response.timout = setTimeout(() => rsp.process(response), when);
     };
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param command object    The object to track the retry count for.
-     * @param count integer     The number of commands to skip.
-     * @param skip boolean      Skip the commands or not.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {boolean} skip Skip the commands or not.
      *
-     * @returns boolean
+     * @returns {void}
      */
     const confirmCallback = (command, count, skip) => {
         if(skip === true) {
@@ -95,11 +94,11 @@
      * before (when using the blocking confirm() function) or after this function returns.
      * @see confirmCallback
      *
-     * @param command object    The object to track the retry count for.
-     * @param question string   The question to ask to the user.
-     * @param count integer     The number of commands to skip.
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {string} question The question to ask to the user.
      *
-     * @returns boolean
+     * @returns {boolean}
      */
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.

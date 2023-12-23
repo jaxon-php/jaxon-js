@@ -3,22 +3,17 @@
  */
 
 (function(self, dom, baseDocument) {
-    /*
-    Function: jaxon.cmd.node.assign
-
-    Assign an element's attribute to the specified value.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute to set.
-        - command.data - (string):  The new value to be applied.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Assign an element's attribute to the specified value.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to set.
+     * @param {string} command.data The new value to be applied.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.assign = (command) => {
         command.fullName = 'assign/clear';
 
@@ -39,22 +34,17 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.append
-
-    Append the specified value to an element's attribute.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute to append to.
-        - command.data - (string):  The new value to be appended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Append the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to append to.
+     * @param {string} command.data The new value to be appended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.append = (command) => {
         command.fullName = 'append';
 
@@ -75,22 +65,17 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.prepend
-
-    Prepend the specified value to an element's attribute.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (object):  The HTML element to effect.
-        - command.prop - (string):  The name of the attribute.
-        - command.data - (string):  The new value to be prepended.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Prepend the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute.
+     * @param {string} command.data The new value to be prepended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.prepend = (command) => {
         command.fullName = 'prepend';
 
@@ -130,22 +115,17 @@
         }
     };
 
-    /*
-    Function: jaxon.cmd.node.replace
-
-    Search and replace the specified text.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which is to be modified.
-        - command.sAttribute - (string):  The name of the attribute to be set.
-        - command.aData - (array):  The search text and replacement text.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Search and replace the specified text.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which is to be modified.
+     * @param {string} command.prop The name of the attribute to be set.
+     * @param {array} command.data The search text and replacement text.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.replace = (command) => {
         command.fullName = 'replace';
 
@@ -159,20 +139,15 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.remove
-
-    Delete an element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which will be deleted.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Delete an element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will be deleted.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.remove = (command) => {
         command.fullName = 'remove';
 
@@ -183,22 +158,17 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.create
-
-    Create a new element and append it to the specified parent element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element which will contain the new element.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value to be assigned to the id attribute of the new element.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Create a new element and append it to the specified parent element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will contain the new element.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value to be assigned to the id attribute of the new element.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.create = (command) => {
         command.fullName = 'create';
 
@@ -211,22 +181,17 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.insert
-
-    Insert a new element before the specified element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element that will be used as the reference point for insertion.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new element before the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insert = (command) => {
         command.fullName = 'insert';
 
@@ -239,22 +204,17 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.insertAfter
-
-    Insert a new element after the specified element.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.target - (string or object):  The element that will be used as the reference point for insertion.
-        - command.data - (string):  The tag name for the new element.
-        - command.prop - (string):  The value that will be assigned to the new element's id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Insert a new element after the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.insertAfter = (command) => {
         command.fullName = 'insertAfter';
 
@@ -267,23 +227,16 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextAssign
-
-    Assign a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to assign.
-        - command.data: (string or object):  The value to assign to the member.
-        - command.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Assign a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to assign.
+     * @param {string|object} command.data The value to assign to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextAssign = (command) => {
         command.fullName = 'context assign';
 
@@ -295,23 +248,16 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextAppend
-
-    Appends a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to append to.
-        - command.data: (string or object):  The value to append to the member.
-        - command.context: (object):  The current script context object which
-            is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Appends a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to append to.
+     * @param {string|object} command.data The value to append to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextAppend = (command) => {
         command.fullName = 'context append';
 
@@ -323,22 +269,16 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.node.contextPrepend
-
-    Prepend a value to a named member of the current script context object.
-
-    Parameters:
-
-    command - (object):  The response command object which will contain the following:
-        - command.prop: (string):  The name of the member to prepend to.
-        - command.data: (string or object):  The value to prepend to the member.
-        - command.context: (object):  The current script context object which is accessable via the 'this' keyword.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
+    /**
+     * Prepend a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to prepend to.
+     * @param {string|object} command.data The value to prepend to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     self.contextPrepend = (command) => {
         command.fullName = 'context prepend';
 
