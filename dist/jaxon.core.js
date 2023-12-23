@@ -2508,7 +2508,8 @@ jaxon.config.cursor = {
                 return true;
             }
             if (!command.requeue) {
-                delete command;
+                // No need. The pop() function had already removed the command from the queue.
+                // delete command;
                 return true;
             }
             queue.pushFront(commandQueue, command);
@@ -2516,7 +2517,8 @@ jaxon.config.cursor = {
         } catch (e) {
             console.log(e);
         }
-        delete command;
+        // No need. The pop() function had already removed the command from the queue.
+        // delete command;
         return true;
     };
 
