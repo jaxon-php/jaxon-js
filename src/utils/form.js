@@ -25,7 +25,7 @@
 
         const name = child.name;
         const values = child.type !== 'select-multiple' ? child.value :
-            child.options.filter(option => option.selected).map(option => option.value);
+            child.options.filter(({ selected }) => selected).map(({ value }) => value);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
@@ -36,7 +36,9 @@
         // Parse names into brackets
         let k = name.substring(0, keyBegin);
         let a = name.substring(keyBegin);
-        aFormValues[k] = aFormValues[k] || {};
+        if (aFormValues[k] === undefined) {
+            aFormValues[k] = {};
+        }
         let p = aFormValues; // pointer reset
         while (a.length > 0) {
             const sa = a.substring(0, a.indexOf(']') + 1);
@@ -45,7 +47,7 @@
 
             a = a.substring(a.indexOf(']') + 1);
             p = p[k];
-            k = sa.substring(1, sa.length - 2);
+            k = sa.substring(1, sa.length - 1);
             if (k === '') {
                 if ('select-multiple' === child.type) {
                     k = lastKey; //restore last key
@@ -85,11 +87,11 @@
      *
      * @param {string} formId The unique name (id) of the form to be processed.
      * @param {boolean} disabled (optional): Include form elements which are currently disabled.
-     * @param {string} prefix (optional): A prefix used for selecting form elements.
+     * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled, prefix) => {
+    self.getValues = (formId, disabled, prefix = '') => {
         const submitDisabledElements = (disabled === true);
         const prefixValue = prefix ?? '';
         const form = dom.$(formId);

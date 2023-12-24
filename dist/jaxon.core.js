@@ -532,7 +532,7 @@ jaxon.config.cursor = {
 
         const name = child.name;
         const values = child.type !== 'select-multiple' ? child.value :
-            child.options.filter(option => option.selected).map(option => option.value);
+            child.options.filter(({ selected }) => selected).map(({ value }) => value);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
@@ -543,7 +543,9 @@ jaxon.config.cursor = {
         // Parse names into brackets
         let k = name.substring(0, keyBegin);
         let a = name.substring(keyBegin);
-        aFormValues[k] = aFormValues[k] || {};
+        if (aFormValues[k] === undefined) {
+            aFormValues[k] = {};
+        }
         let p = aFormValues; // pointer reset
         while (a.length > 0) {
             const sa = a.substring(0, a.indexOf(']') + 1);
@@ -552,7 +554,7 @@ jaxon.config.cursor = {
 
             a = a.substring(a.indexOf(']') + 1);
             p = p[k];
-            k = sa.substring(1, sa.length - 2);
+            k = sa.substring(1, sa.length - 1);
             if (k === '') {
                 if ('select-multiple' === child.type) {
                     k = lastKey; //restore last key
@@ -592,11 +594,11 @@ jaxon.config.cursor = {
      *
      * @param {string} formId The unique name (id) of the form to be processed.
      * @param {boolean} disabled (optional): Include form elements which are currently disabled.
-     * @param {string} prefix (optional): A prefix used for selecting form elements.
+     * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled, prefix) => {
+    self.getValues = (formId, disabled, prefix = '') => {
         const submitDisabledElements = (disabled === true);
         const prefixValue = prefix ?? '';
         const form = dom.$(formId);
@@ -1800,20 +1802,20 @@ jaxon.config.cursor = {
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
      *
-     * @var {object}
+     * @var {array}
      */
-    const handlers = {};
+    const handlers = [];
 
     /**
      * Registers a new command handler.
      *
      * @param {string} cmd The short name of the command handler.
-     * @param {string} name The full name of the command handler.
      * @param {string} func The command handler function.
+     * @param {string=''} name The full name of the command handler.
      *
      * @returns {void}
      */
-    self.register = (cmd, name, func) => handlers[cmd] = { name, func };
+    self.register = (cmd, func, name = '') => handlers[cmd] = { name, func };
 
     /**
      * Unregisters and returns a command handler.
@@ -1880,52 +1882,52 @@ jaxon.config.cursor = {
         handler.func(command);
     }
 
-    self.register('rcmplt', 'Response complete', ({ request }) => {
+    self.register('rcmplt', ({ request }) => {
         rsp.complete(request);
         return true;
-    });
+    }, 'Response complete');
 
-    self.register('css', 'includeCSS', style.add);
-    self.register('rcss', 'removeCSS', style.remove);
-    self.register('wcss', 'waitForCSS', style.waitForCSS);
+    self.register('css', style.add, 'includeCSS');
+    self.register('rcss', style.remove, 'removeCSS');
+    self.register('wcss', style.waitForCSS, 'waitForCSS');
 
-    self.register('as', 'assign/clear', node.assign);
-    self.register('ap', 'append', node.append);
-    self.register('pp', 'prepend', node.prepend);
-    self.register('rp', 'replace', node.replace);
-    self.register('rm', 'remove', node.remove);
-    self.register('ce', 'create', node.create);
-    self.register('ie', 'insert', node.insert);
-    self.register('ia', 'insertAfter', node.insertAfter);
-    self.register('c:as', 'context assign', node.contextAssign);
-    self.register('c:ap', 'context append', node.contextAppend);
-    self.register('c:pp', 'context prepend', node.contextPrepend);
+    self.register('as', node.assign, 'assign/clear');
+    self.register('ap', node.append, 'append');
+    self.register('pp', node.prepend, 'prepend');
+    self.register('rp', node.replace, 'replace');
+    self.register('rm', node.remove, 'remove');
+    self.register('ce', node.create, 'create');
+    self.register('ie', node.insert, 'insert');
+    self.register('ia', node.insertAfter, 'insertAfter');
+    self.register('c:as', node.contextAssign, 'context assign');
+    self.register('c:ap', node.contextAppend, 'context append');
+    self.register('c:pp', node.contextPrepend, 'context prepend');
 
-    self.register('s', 'sleep', script.sleep);
-    self.register('ino', 'includeScriptOnce', script.includeScriptOnce);
-    self.register('in', 'includeScript', script.includeScript);
-    self.register('rjs', 'removeScript', script.removeScript);
-    self.register('wf', 'waitFor', script.waitFor);
-    self.register('js', 'execute Javascript', script.execute);
-    self.register('jc', 'call js function', script.call);
-    self.register('sf', 'setFunction', script.setFunction);
-    self.register('wpf', 'wrapFunction', script.wrapFunction);
-    self.register('al', 'alert', script.alert);
-    self.register('cc', 'confirm', script.confirm);
-    self.register('rd', 'redirect', script.redirect);
+    self.register('s', script.sleep, 'sleep');
+    self.register('ino', script.includeScriptOnce, 'includeScriptOnce');
+    self.register('in', script.includeScript, 'includeScript');
+    self.register('rjs', script.removeScript, 'removeScript');
+    self.register('wf', script.waitFor, 'waitFor');
+    self.register('js', script.execute, 'execute Javascript');
+    self.register('jc', script.call, 'call js function');
+    self.register('sf', script.setFunction, 'setFunction');
+    self.register('wpf', script.wrapFunction, 'wrapFunction');
+    self.register('al', script.alert, 'alert');
+    self.register('cc', script.confirm, 'confirm');
+    self.register('rd', script.redirect, 'redirect');
 
-    self.register('ci', 'createInput', form.createInput);
-    self.register('ii', 'insertInput', form.insertInput);
-    self.register('iia', 'insertInputAfter', form.insertInputAfter);
+    self.register('ci', form.createInput, 'createInput');
+    self.register('ii', form.insertInput, 'insertInput');
+    self.register('iia', form.insertInputAfter, 'insertInputAfter');
 
-    self.register('ev', 'setEvent', evt.setEvent);
-    self.register('ah', 'addHandler', evt.addHandler);
-    self.register('rh', 'removeHandler', evt.removeHandler);
+    self.register('ev', evt.setEvent, 'setEvent');
+    self.register('ah', evt.addHandler, 'addHandler');
+    self.register('rh', evt.removeHandler, 'removeHandler');
 
-    self.register('dbg', 'Debug message', function({ data: message }) {
+    self.register('dbg', function({ data: message }) {
         console.log(message);
         return true;
-    });
+    }, 'Debug message');
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
     jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);
 
