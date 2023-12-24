@@ -1802,9 +1802,9 @@ jaxon.config.cursor = {
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
      *
-     * @var {array}
+     * @var {object}
      */
-    const handlers = [];
+    const handlers = {};
 
     /**
      * Registers a new command handler.
