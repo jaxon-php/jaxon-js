@@ -14,10 +14,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = (command) => {
-        command.fullName = 'assign/clear';
-
-        const { target: element, prop: property, data } = command;
+    self.assign = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = data;
             return true;
@@ -45,10 +42,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = (command) => {
-        command.fullName = 'append';
-
-        const { target: element, prop: property, data } = command;
+    self.append = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = element.innerHTML + data;
             return true;
@@ -76,10 +70,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = (command) => {
-        command.fullName = 'prepend';
-
-        const { target: element, prop: property, data } = command;
+    self.prepend = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = data + element.innerHTML;
             return true;
@@ -126,10 +117,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = (command) => {
-        command.fullName = 'replace';
-
-        const { target: element, prop: sAttribute, data: aData } = command;
+    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
         const sReplace = aData['r'];
         const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
         const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
@@ -148,10 +136,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = (command) => {
-        command.fullName = 'remove';
-
-        const { target: element } = command;
+    self.remove = ({ target: element }) => {
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
@@ -169,10 +154,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.create = (command) => {
-        command.fullName = 'create';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.create = ({ target: element, data: sTag, prop: sId }) => {
         if (element) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -192,10 +174,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = (command) => {
-        command.fullName = 'insert';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.insert = ({ target: element, data: sTag, prop: sId }) => {
         if (element && element.parentNode) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -215,10 +194,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertAfter = (command) => {
-        command.fullName = 'insertAfter';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.insertAfter = ({ target: element, data: sTag, prop: sId }) => {
         if (element && element.parentNode) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -237,10 +213,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAssign = (command) => {
-        command.fullName = 'context assign';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextAssign = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = data;
@@ -258,10 +231,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAppend = (command) => {
-        command.fullName = 'context append';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextAppend = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = innerElement[innerProperty] + data;
@@ -279,10 +249,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextPrepend = (command) => {
-        command.fullName = 'context prepend';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = data + innerElement[innerProperty];

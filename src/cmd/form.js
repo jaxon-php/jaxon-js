@@ -32,10 +32,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.createInput = (command) => {
-        command.fullName = 'createInput';
-
-        const { target: objParent, type: sType, data: sName, prop: sId } = command;
+    self.createInput = ({ target: objParent, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -55,10 +52,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertInput = (command) => {
-        command.fullName = 'insertInput';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    self.insertInput = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -78,10 +72,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertInputAfter = (command) => {
-        command.fullName = 'insertInputAfter';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    self.insertInputAfter = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);

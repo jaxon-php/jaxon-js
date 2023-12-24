@@ -14,10 +14,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEvent = (command) => {
-        command.fullName = 'setEvent';
-        const { target: oTarget, prop: sEvent, data: sCode } = command;
-
+    self.setEvent = ({ target: oTarget, prop: sEvent, data: sCode }) => {
         dom.createFunction(`(e) => { ${str.doubleQuotes(sCode)} }`);
         oTarget[str.addOnPrefix(sEvent)] = script.context.delegateCall;
         return true;
@@ -63,10 +60,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addHandler = (command) => {
-        command.fullName = 'addHandler';
-        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
-
+    self.addHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
         _addHandler(oTarget, getName(sEvent), sFuncName);
         return true;
     };
@@ -82,10 +76,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeHandler = (command) => {
-        command.fullName = 'removeHandler';
-        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
-
+    self.removeHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
        _removeHandler(oTarget, getName(sEvent), sFuncName);
        return true;
     };

@@ -12,10 +12,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.add = (command) => {
-        command.fullName = 'includeCSS';
-        const { data: fileName, media = 'screen' } = command;
-
+    self.add = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const found = oHead.getElementsByTagName('link')
@@ -42,10 +39,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = (command) => {
-        command.fullName = 'removeCSS';
-        const { data: fileName, media = 'screen' } = command;
-
+    self.remove = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
@@ -66,8 +60,6 @@
      * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
      */
     self.waitForCSS = (command) => {
-        command.fullName = 'waitForCSS';
-
         const oDocSS = baseDocument.styleSheets;
         const ssLoaded = oDocSS.every(styleSheet => {
             const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;

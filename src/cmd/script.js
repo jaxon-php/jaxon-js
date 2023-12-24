@@ -11,18 +11,12 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.includeScriptOnce = (command) => {
-        command.fullName = 'includeScriptOnce';
-
-        const { data: fileName } = command;
+    self.includeScriptOnce = ({ data: src, type = 'text/javascript', elm_id }) => {
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
-        if (loadedScript) {
-            return true;
-        }
-        return self.includeScript(command);
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        return (loadedScript) ? true : self.includeScript({ data: src, type, elm_id });
     };
 
     /**
@@ -36,15 +30,13 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.includeScript = (command) => {
-        command.fullName = 'includeScript';
-
+    self.includeScript = ({ data: src, type = 'text/javascript', elm_id }) => {
         const objHead = baseDocument.getElementsByTagName('head');
         const objScript = baseDocument.createElement('script');
-        objScript.src = command.data;
-        objScript.type = command.type || 'text/javascript';
-        if (command.elm_id) {
-            objScript.setAttribute('id', command.elm_id);
+        objScript.src = src;
+        objScript.type = type;
+        if (elm_id) {
+            objScript.setAttribute('id', elm_id);
         }
         objHead[0].appendChild(objScript);
         return true;
@@ -59,13 +51,10 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeScript = (command) => {
-        command.fullName = 'removeScript';
-
-        const { data: fileName, unld: unload } = command;
+    self.removeScript = ({ data: src, unld: unload }) => {
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
         if (!loadedScript) {
             return true;
         }
@@ -90,8 +79,6 @@
      * @returns {false} The sleep time has not yet expired, continue sleeping.
      */
     self.sleep = (command) => {
-        command.fullName = 'sleep';
-
         // inject a delay in the queue processing
         // handle retry counter
         const { prop: duration, response } = command;
@@ -111,9 +98,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.alert = (command) => {
-        command.fullName = 'alert';
-        const { data: message } = command;
+    self.alert = ({ data: message }) => {
         msg.info(message);
         return true;
     };
@@ -130,7 +115,6 @@
      * @returns {false} Stop the processing of the command queue until the user answers the question.
      */
     self.confirm = (command) => {
-        command.fullName = 'confirm';
         const { count, data: question } = command;
         delay.confirm(command, count, question);
         return false;
@@ -146,10 +130,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = (command) => {
-        command.fullName = 'call js function';
-
-        const { func: funcName, data: funcParams, context = {} } = command;
+    self.call = ({ func: funcName, data: funcParams, context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
         if (func) {
@@ -167,16 +148,15 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.execute = (command) => {
-        command.fullName = 'execute Javascript';
-
-        const { data: funcBody, context = {} } = command;
+    self.execute = ({ data: funcBody, context = {} }) => {
         self.context = context;
         const jsCode = `() => {
     ${funcBody}
 }`;
-        dom.createFunction(jsCode);
-        self.context.delegateCall();
+        try {
+            dom.createFunction(jsCode);
+            self.context.delegateCall();
+        } catch (e) {}
         return true;
     };
 
@@ -193,14 +173,12 @@
      * @returns {false} The condition evaluates to false and the sleep time has not expired.
      */
     self.waitFor = (command) => {
-        command.fullName = 'waitFor';
-
         const { data: funcBody, prop: duration, response, context = {} } = command;
         self.context = context;
-        try {
-            const jsCode = `() => {
+        const jsCode = `() => {
     return (${funcBody});
 }`;
+        try {
             dom.createFunction(jsCode);
             const bResult = self.context.delegateCall();
             if (!bResult) {
@@ -244,17 +222,18 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setFunction = (command) => {
-        command.fullName = 'setFunction';
-
-        const { func: funcName, data: funcBody, prop: funcParams, context = {} } = command;
+    self.setFunction = ({ func: funcName, data: funcBody, prop: funcParams, context = {} }) => {
         self.context = context;
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
-        dom.createFunction(jsCode, funcName);
+        try {
+            dom.createFunction(jsCode, funcName);
+        } catch (e) {}
         return true;
     };
+
+    self.wrapped = {}; // Original wrapped functions will be saved here.
 
     /**
      * Construct a javascript function which will call the original function with the same name,
@@ -269,11 +248,8 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.wrapped = {}; // Original wrapped functions will be saved here.
-    self.wrapFunction = (command) => {
-        command.fullName = 'wrapFunction';
-
-        const { func: funcName, context = {} } = command;
+    self.wrapFunction = ({ func: funcName, type: returnType, prop: funcParams,
+        data: [funcCodeBefore, funcCodeAfter = '// No call after'], context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
         if (!func) {
@@ -286,11 +262,6 @@
             self.wrapped[wrappedFuncName] = func;
         }
 
-        const {
-            data: [funcCodeBefore, funcCodeAfter = '// No call after'],
-            prop: funcParams,
-            type: returnType,
-        } = command;
         const varDefine = returnType ? `let ${returnType} = null;` : '// No return value';
         const varAssign = returnType ? `${returnType} = ` : '';
         const varReturn = returnType ? `return ${returnType};` : '// No return value';
@@ -305,9 +276,10 @@
     ${funcCodeAfter}
     ${varReturn}
 }`;
-
-        dom.createFunction(jsCode, funcName);
-        self.context.delegateCall();
+        try {
+            dom.createFunction(jsCode, funcName);
+            self.context.delegateCall();
+        } catch (e) {}
         return true;
     };
 
@@ -320,10 +292,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.redirect = (command) => {
-        command.fullName = 'redirect';
-
-        const { data: sUrl, delay: nDelay } = command;
+    self.redirect = ({ data: sUrl, delay: nDelay }) => {
         if (nDelay <= 0) {
             window.location = sUrl;
             return true;
@@ -331,5 +300,5 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message,
-    jaxon.utils.dom, jaxon.config.baseDocument, window);
+})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message, jaxon.utils.dom,
+    jaxon.config.baseDocument, window);

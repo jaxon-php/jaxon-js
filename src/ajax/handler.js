@@ -7,9 +7,42 @@
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
      *
-     * @var {array}
+     * @var {object}
      */
-    const handlers = [];
+    const handlers = {};
+
+    /**
+     * Registers a new command handler.
+     *
+     * @param {string} cmd The short name of the command handler.
+     * @param {string} name The full name of the command handler.
+     * @param {string} func The command handler function.
+     *
+     * @returns {void}
+     */
+    self.register = (cmd, name, func) => handlers[cmd] = { name, func };
+
+    /**
+     * Unregisters and returns a command handler.
+     *
+     * @param {string} cmd The name of the command handler.
+     *
+     * @returns {callable} The unregistered function.
+     */
+    self.unregister = (cmd) => {
+        const handler = handlers[cmd];
+        delete handlers[cmd];
+        return handler.func;
+    };
+
+    /**
+     * @param {object} command The response command to be executed.
+     * @param {string} command.cmd The name of the function.
+     *
+     * @returns {boolean} (true or false): depending on whether a command handler has
+     * been registered for the specified command (object).
+     */
+    self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
 
     /**
      * Perform a lookup on the command specified by the response command object passed
@@ -33,95 +66,71 @@
             if (command.id) {
                 command.target = dom.$(command.id);
             }
-            // process the command
+            // Process the command
             return self.call(command);
         }
         return true;
     };
 
     /**
-     * Registers a new command handler.
-     *
-     * @returns {void}
-     */
-    self.register = (shortName, func) => handlers[shortName] = func;
-
-    /**
-     * Unregisters and returns a command handler.
-     *
-     * @param {string} shortName The name of the command handler.
-     *
-     * @returns {callable} The unregistered function.
-     */
-    self.unregister = (shortName) => {
-        const func = handlers[shortName];
-        delete handlers[shortName];
-        return func;
-    };
-
-    /**
-     * @param {object} command The Name of the function.
-     *
-     * @returns {boolean} (true or false): depending on whether a command handler has
-     * been registered for the specified command (object).
-     */
-    self.isRegistered = (command) => command.cmd !== undefined && handlers[command.cmd] !== undefined;
-
-    /**
      * Calls the registered command handler for the specified command
      * (you should always check isRegistered before calling this function)
      *
-     * @param {object} command The Name of the function.
+     * @param {object} command The response command to be executed.
+     * @param {string} command.cmd The name of the function.
      *
      * @returns {boolean}
      */
-    self.call = (command) => handlers[command.cmd](command);
+    self.call = (command) => {
+        const handler = handlers[command.cmd];
+        command.fullName = handler.name;
+        handler.func(command);
+    }
 
-    self.register('rcmplt', function(command) {
-        rsp.complete(command.request);
+    self.register('rcmplt', 'Response complete', ({ request }) => {
+        rsp.complete(request);
         return true;
     });
 
-    self.register('css', style.add);
-    self.register('rcss', style.remove);
-    self.register('wcss', style.waitForCSS);
+    self.register('css', 'includeCSS', style.add);
+    self.register('rcss', 'removeCSS', style.remove);
+    self.register('wcss', 'waitForCSS', style.waitForCSS);
 
-    self.register('as', node.assign);
-    self.register('ap', node.append);
-    self.register('pp', node.prepend);
-    self.register('rp', node.replace);
-    self.register('rm', node.remove);
-    self.register('ce', node.create);
-    self.register('ie', node.insert);
-    self.register('ia', node.insertAfter);
-    self.register('c:as', node.contextAssign);
-    self.register('c:ap', node.contextAppend);
-    self.register('c:pp', node.contextPrepend);
+    self.register('as', 'assign/clear', node.assign);
+    self.register('ap', 'append', node.append);
+    self.register('pp', 'prepend', node.prepend);
+    self.register('rp', 'replace', node.replace);
+    self.register('rm', 'remove', node.remove);
+    self.register('ce', 'create', node.create);
+    self.register('ie', 'insert', node.insert);
+    self.register('ia', 'insertAfter', node.insertAfter);
+    self.register('c:as', 'context assign', node.contextAssign);
+    self.register('c:ap', 'context append', node.contextAppend);
+    self.register('c:pp', 'context prepend', node.contextPrepend);
 
-    self.register('s', script.sleep);
-    self.register('ino', script.includeScriptOnce);
-    self.register('in', script.includeScript);
-    self.register('rjs', script.removeScript);
-    self.register('wf', script.waitFor);
-    self.register('js', script.execute);
-    self.register('jc', script.call);
-    self.register('sf', script.setFunction);
-    self.register('wpf', script.wrapFunction);
-    self.register('al', script.alert);
-    self.register('cc', script.confirm);
-    self.register('rd', script.redirect);
+    self.register('s', 'sleep', script.sleep);
+    self.register('ino', 'includeScriptOnce', script.includeScriptOnce);
+    self.register('in', 'includeScript', script.includeScript);
+    self.register('rjs', 'removeScript', script.removeScript);
+    self.register('wf', 'waitFor', script.waitFor);
+    self.register('js', 'execute Javascript', script.execute);
+    self.register('jc', 'call js function', script.call);
+    self.register('sf', 'setFunction', script.setFunction);
+    self.register('wpf', 'wrapFunction', script.wrapFunction);
+    self.register('al', 'alert', script.alert);
+    self.register('cc', 'confirm', script.confirm);
+    self.register('rd', 'redirect', script.redirect);
 
-    self.register('ci', form.createInput);
-    self.register('ii', form.insertInput);
-    self.register('iia', form.insertInputAfter);
+    self.register('ci', 'createInput', form.createInput);
+    self.register('ii', 'insertInput', form.insertInput);
+    self.register('iia', 'insertInputAfter', form.insertInputAfter);
 
-    self.register('ev', evt.setEvent);
-    self.register('ah', evt.addHandler);
-    self.register('rh', evt.removeHandler);
+    self.register('ev', 'setEvent', evt.setEvent);
+    self.register('ah', 'addHandler', evt.addHandler);
+    self.register('rh', 'removeHandler', evt.removeHandler);
 
-    self.register('dbg', function(command) {
-        command.fullName = 'debug message';
-        console.log(command.data);
+    self.register('dbg', 'Debug message', function({ data: message }) {
+        console.log(message);
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,

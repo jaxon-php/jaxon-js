@@ -888,10 +888,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEvent = (command) => {
-        command.fullName = 'setEvent';
-        const { target: oTarget, prop: sEvent, data: sCode } = command;
-
+    self.setEvent = ({ target: oTarget, prop: sEvent, data: sCode }) => {
         dom.createFunction(`(e) => { ${str.doubleQuotes(sCode)} }`);
         oTarget[str.addOnPrefix(sEvent)] = script.context.delegateCall;
         return true;
@@ -937,10 +934,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addHandler = (command) => {
-        command.fullName = 'addHandler';
-        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
-
+    self.addHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
         _addHandler(oTarget, getName(sEvent), sFuncName);
         return true;
     };
@@ -956,10 +950,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeHandler = (command) => {
-        command.fullName = 'removeHandler';
-        const { target: oTarget, prop: sEvent, data: sFuncName } = command;
-
+    self.removeHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
        _removeHandler(oTarget, getName(sEvent), sFuncName);
        return true;
     };
@@ -1000,10 +991,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.createInput = (command) => {
-        command.fullName = 'createInput';
-
-        const { target: objParent, type: sType, data: sName, prop: sId } = command;
+    self.createInput = ({ target: objParent, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -1023,10 +1011,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertInput = (command) => {
-        command.fullName = 'insertInput';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    self.insertInput = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -1046,10 +1031,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertInputAfter = (command) => {
-        command.fullName = 'insertInputAfter';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    self.insertInputAfter = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
@@ -1075,10 +1057,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = (command) => {
-        command.fullName = 'assign/clear';
-
-        const { target: element, prop: property, data } = command;
+    self.assign = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = data;
             return true;
@@ -1106,10 +1085,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = (command) => {
-        command.fullName = 'append';
-
-        const { target: element, prop: property, data } = command;
+    self.append = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = element.innerHTML + data;
             return true;
@@ -1137,10 +1113,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = (command) => {
-        command.fullName = 'prepend';
-
-        const { target: element, prop: property, data } = command;
+    self.prepend = ({ target: element, prop: property, data }) => {
         if (property === 'innerHTML') {
             element.innerHTML = data + element.innerHTML;
             return true;
@@ -1187,10 +1160,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = (command) => {
-        command.fullName = 'replace';
-
-        const { target: element, prop: sAttribute, data: aData } = command;
+    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
         const sReplace = aData['r'];
         const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
         const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
@@ -1209,10 +1179,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = (command) => {
-        command.fullName = 'remove';
-
-        const { target: element } = command;
+    self.remove = ({ target: element }) => {
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
@@ -1230,10 +1197,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.create = (command) => {
-        command.fullName = 'create';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.create = ({ target: element, data: sTag, prop: sId }) => {
         if (element) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -1253,10 +1217,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = (command) => {
-        command.fullName = 'insert';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.insert = ({ target: element, data: sTag, prop: sId }) => {
         if (element && element.parentNode) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -1276,10 +1237,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertAfter = (command) => {
-        command.fullName = 'insertAfter';
-
-        const { target: element, data: sTag, prop: sId } = command;
+    self.insertAfter = ({ target: element, data: sTag, prop: sId }) => {
         if (element && element.parentNode) {
             const target = baseDocument.createElement(sTag);
             target.setAttribute('id', sId);
@@ -1298,10 +1256,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAssign = (command) => {
-        command.fullName = 'context assign';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextAssign = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = data;
@@ -1319,10 +1274,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAppend = (command) => {
-        command.fullName = 'context append';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextAppend = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = innerElement[innerProperty] + data;
@@ -1340,10 +1292,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextPrepend = (command) => {
-        command.fullName = 'context prepend';
-
-        const { context, prop: sAttribute, data } = command;
+    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
         const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
         if (innerElement !== null) {
             innerElement[innerProperty] = data + innerElement[innerProperty];
@@ -1366,18 +1315,12 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.includeScriptOnce = (command) => {
-        command.fullName = 'includeScriptOnce';
-
-        const { data: fileName } = command;
+    self.includeScriptOnce = ({ data: src, type = 'text/javascript', elm_id }) => {
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
-        if (loadedScript) {
-            return true;
-        }
-        return self.includeScript(command);
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        return (loadedScript) ? true : self.includeScript({ data: src, type, elm_id });
     };
 
     /**
@@ -1391,15 +1334,13 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.includeScript = (command) => {
-        command.fullName = 'includeScript';
-
+    self.includeScript = ({ data: src, type = 'text/javascript', elm_id }) => {
         const objHead = baseDocument.getElementsByTagName('head');
         const objScript = baseDocument.createElement('script');
-        objScript.src = command.data;
-        objScript.type = command.type || 'text/javascript';
-        if (command.elm_id) {
-            objScript.setAttribute('id', command.elm_id);
+        objScript.src = src;
+        objScript.type = type;
+        if (elm_id) {
+            objScript.setAttribute('id', elm_id);
         }
         objHead[0].appendChild(objScript);
         return true;
@@ -1414,13 +1355,10 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeScript = (command) => {
-        command.fullName = 'removeScript';
-
-        const { data: fileName, unld: unload } = command;
+    self.removeScript = ({ data: src, unld: unload }) => {
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(fileName) >= 0);
+        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
         if (!loadedScript) {
             return true;
         }
@@ -1445,8 +1383,6 @@ jaxon.config.cursor = {
      * @returns {false} The sleep time has not yet expired, continue sleeping.
      */
     self.sleep = (command) => {
-        command.fullName = 'sleep';
-
         // inject a delay in the queue processing
         // handle retry counter
         const { prop: duration, response } = command;
@@ -1466,9 +1402,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.alert = (command) => {
-        command.fullName = 'alert';
-        const { data: message } = command;
+    self.alert = ({ data: message }) => {
         msg.info(message);
         return true;
     };
@@ -1485,7 +1419,6 @@ jaxon.config.cursor = {
      * @returns {false} Stop the processing of the command queue until the user answers the question.
      */
     self.confirm = (command) => {
-        command.fullName = 'confirm';
         const { count, data: question } = command;
         delay.confirm(command, count, question);
         return false;
@@ -1501,10 +1434,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = (command) => {
-        command.fullName = 'call js function';
-
-        const { func: funcName, data: funcParams, context = {} } = command;
+    self.call = ({ func: funcName, data: funcParams, context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
         if (func) {
@@ -1522,16 +1452,15 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.execute = (command) => {
-        command.fullName = 'execute Javascript';
-
-        const { data: funcBody, context = {} } = command;
+    self.execute = ({ data: funcBody, context = {} }) => {
         self.context = context;
         const jsCode = `() => {
     ${funcBody}
 }`;
-        dom.createFunction(jsCode);
-        self.context.delegateCall();
+        try {
+            dom.createFunction(jsCode);
+            self.context.delegateCall();
+        } catch (e) {}
         return true;
     };
 
@@ -1548,14 +1477,12 @@ jaxon.config.cursor = {
      * @returns {false} The condition evaluates to false and the sleep time has not expired.
      */
     self.waitFor = (command) => {
-        command.fullName = 'waitFor';
-
         const { data: funcBody, prop: duration, response, context = {} } = command;
         self.context = context;
-        try {
-            const jsCode = `() => {
+        const jsCode = `() => {
     return (${funcBody});
 }`;
+        try {
             dom.createFunction(jsCode);
             const bResult = self.context.delegateCall();
             if (!bResult) {
@@ -1599,17 +1526,18 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setFunction = (command) => {
-        command.fullName = 'setFunction';
-
-        const { func: funcName, data: funcBody, prop: funcParams, context = {} } = command;
+    self.setFunction = ({ func: funcName, data: funcBody, prop: funcParams, context = {} }) => {
         self.context = context;
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
-        dom.createFunction(jsCode, funcName);
+        try {
+            dom.createFunction(jsCode, funcName);
+        } catch (e) {}
         return true;
     };
+
+    self.wrapped = {}; // Original wrapped functions will be saved here.
 
     /**
      * Construct a javascript function which will call the original function with the same name,
@@ -1624,11 +1552,8 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.wrapped = {}; // Original wrapped functions will be saved here.
-    self.wrapFunction = (command) => {
-        command.fullName = 'wrapFunction';
-
-        const { func: funcName, context = {} } = command;
+    self.wrapFunction = ({ func: funcName, type: returnType, prop: funcParams,
+        data: [funcCodeBefore, funcCodeAfter = '// No call after'], context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
         if (!func) {
@@ -1641,11 +1566,6 @@ jaxon.config.cursor = {
             self.wrapped[wrappedFuncName] = func;
         }
 
-        const {
-            data: [funcCodeBefore, funcCodeAfter = '// No call after'],
-            prop: funcParams,
-            type: returnType,
-        } = command;
         const varDefine = returnType ? `let ${returnType} = null;` : '// No return value';
         const varAssign = returnType ? `${returnType} = ` : '';
         const varReturn = returnType ? `return ${returnType};` : '// No return value';
@@ -1660,9 +1580,10 @@ jaxon.config.cursor = {
     ${funcCodeAfter}
     ${varReturn}
 }`;
-
-        dom.createFunction(jsCode, funcName);
-        self.context.delegateCall();
+        try {
+            dom.createFunction(jsCode, funcName);
+            self.context.delegateCall();
+        } catch (e) {}
         return true;
     };
 
@@ -1675,10 +1596,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.redirect = (command) => {
-        command.fullName = 'redirect';
-
-        const { data: sUrl, delay: nDelay } = command;
+    self.redirect = ({ data: sUrl, delay: nDelay }) => {
         if (nDelay <= 0) {
             window.location = sUrl;
             return true;
@@ -1686,8 +1604,8 @@ jaxon.config.cursor = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message,
-    jaxon.utils.dom, jaxon.config.baseDocument, window);
+})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message, jaxon.utils.dom,
+    jaxon.config.baseDocument, window);
 
 
 /**
@@ -1704,10 +1622,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.add = (command) => {
-        command.fullName = 'includeCSS';
-        const { data: fileName, media = 'screen' } = command;
-
+    self.add = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const found = oHead.getElementsByTagName('link')
@@ -1734,10 +1649,7 @@ jaxon.config.cursor = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = (command) => {
-        command.fullName = 'removeCSS';
-        const { data: fileName, media = 'screen' } = command;
-
+    self.remove = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
         const oLinks = oHead.getElementsByTagName('link');
@@ -1758,8 +1670,6 @@ jaxon.config.cursor = {
      * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
      */
     self.waitForCSS = (command) => {
-        command.fullName = 'waitForCSS';
-
         const oDocSS = baseDocument.styleSheets;
         const ssLoaded = oDocSS.every(styleSheet => {
             const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
@@ -1890,9 +1800,42 @@ jaxon.config.cursor = {
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
      *
-     * @var {array}
+     * @var {object}
      */
-    const handlers = [];
+    const handlers = {};
+
+    /**
+     * Registers a new command handler.
+     *
+     * @param {string} cmd The short name of the command handler.
+     * @param {string} name The full name of the command handler.
+     * @param {string} func The command handler function.
+     *
+     * @returns {void}
+     */
+    self.register = (cmd, name, func) => handlers[cmd] = { name, func };
+
+    /**
+     * Unregisters and returns a command handler.
+     *
+     * @param {string} cmd The name of the command handler.
+     *
+     * @returns {callable} The unregistered function.
+     */
+    self.unregister = (cmd) => {
+        const handler = handlers[cmd];
+        delete handlers[cmd];
+        return handler.func;
+    };
+
+    /**
+     * @param {object} command The response command to be executed.
+     * @param {string} command.cmd The name of the function.
+     *
+     * @returns {boolean} (true or false): depending on whether a command handler has
+     * been registered for the specified command (object).
+     */
+    self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
 
     /**
      * Perform a lookup on the command specified by the response command object passed
@@ -1916,95 +1859,71 @@ jaxon.config.cursor = {
             if (command.id) {
                 command.target = dom.$(command.id);
             }
-            // process the command
+            // Process the command
             return self.call(command);
         }
         return true;
     };
 
     /**
-     * Registers a new command handler.
-     *
-     * @returns {void}
-     */
-    self.register = (shortName, func) => handlers[shortName] = func;
-
-    /**
-     * Unregisters and returns a command handler.
-     *
-     * @param {string} shortName The name of the command handler.
-     *
-     * @returns {callable} The unregistered function.
-     */
-    self.unregister = (shortName) => {
-        const func = handlers[shortName];
-        delete handlers[shortName];
-        return func;
-    };
-
-    /**
-     * @param {object} command The Name of the function.
-     *
-     * @returns {boolean} (true or false): depending on whether a command handler has
-     * been registered for the specified command (object).
-     */
-    self.isRegistered = (command) => command.cmd !== undefined && handlers[command.cmd] !== undefined;
-
-    /**
      * Calls the registered command handler for the specified command
      * (you should always check isRegistered before calling this function)
      *
-     * @param {object} command The Name of the function.
+     * @param {object} command The response command to be executed.
+     * @param {string} command.cmd The name of the function.
      *
      * @returns {boolean}
      */
-    self.call = (command) => handlers[command.cmd](command);
+    self.call = (command) => {
+        const handler = handlers[command.cmd];
+        command.fullName = handler.name;
+        handler.func(command);
+    }
 
-    self.register('rcmplt', function(command) {
-        rsp.complete(command.request);
+    self.register('rcmplt', 'Response complete', ({ request }) => {
+        rsp.complete(request);
         return true;
     });
 
-    self.register('css', style.add);
-    self.register('rcss', style.remove);
-    self.register('wcss', style.waitForCSS);
+    self.register('css', 'includeCSS', style.add);
+    self.register('rcss', 'removeCSS', style.remove);
+    self.register('wcss', 'waitForCSS', style.waitForCSS);
 
-    self.register('as', node.assign);
-    self.register('ap', node.append);
-    self.register('pp', node.prepend);
-    self.register('rp', node.replace);
-    self.register('rm', node.remove);
-    self.register('ce', node.create);
-    self.register('ie', node.insert);
-    self.register('ia', node.insertAfter);
-    self.register('c:as', node.contextAssign);
-    self.register('c:ap', node.contextAppend);
-    self.register('c:pp', node.contextPrepend);
+    self.register('as', 'assign/clear', node.assign);
+    self.register('ap', 'append', node.append);
+    self.register('pp', 'prepend', node.prepend);
+    self.register('rp', 'replace', node.replace);
+    self.register('rm', 'remove', node.remove);
+    self.register('ce', 'create', node.create);
+    self.register('ie', 'insert', node.insert);
+    self.register('ia', 'insertAfter', node.insertAfter);
+    self.register('c:as', 'context assign', node.contextAssign);
+    self.register('c:ap', 'context append', node.contextAppend);
+    self.register('c:pp', 'context prepend', node.contextPrepend);
 
-    self.register('s', script.sleep);
-    self.register('ino', script.includeScriptOnce);
-    self.register('in', script.includeScript);
-    self.register('rjs', script.removeScript);
-    self.register('wf', script.waitFor);
-    self.register('js', script.execute);
-    self.register('jc', script.call);
-    self.register('sf', script.setFunction);
-    self.register('wpf', script.wrapFunction);
-    self.register('al', script.alert);
-    self.register('cc', script.confirm);
-    self.register('rd', script.redirect);
+    self.register('s', 'sleep', script.sleep);
+    self.register('ino', 'includeScriptOnce', script.includeScriptOnce);
+    self.register('in', 'includeScript', script.includeScript);
+    self.register('rjs', 'removeScript', script.removeScript);
+    self.register('wf', 'waitFor', script.waitFor);
+    self.register('js', 'execute Javascript', script.execute);
+    self.register('jc', 'call js function', script.call);
+    self.register('sf', 'setFunction', script.setFunction);
+    self.register('wpf', 'wrapFunction', script.wrapFunction);
+    self.register('al', 'alert', script.alert);
+    self.register('cc', 'confirm', script.confirm);
+    self.register('rd', 'redirect', script.redirect);
 
-    self.register('ci', form.createInput);
-    self.register('ii', form.insertInput);
-    self.register('iia', form.insertInputAfter);
+    self.register('ci', 'createInput', form.createInput);
+    self.register('ii', 'insertInput', form.insertInput);
+    self.register('iia', 'insertInputAfter', form.insertInputAfter);
 
-    self.register('ev', evt.setEvent);
-    self.register('ah', evt.addHandler);
-    self.register('rh', evt.removeHandler);
+    self.register('ev', 'setEvent', evt.setEvent);
+    self.register('ah', 'addHandler', evt.addHandler);
+    self.register('rh', 'removeHandler', evt.removeHandler);
 
-    self.register('dbg', function(command) {
-        command.fullName = 'debug message';
-        console.log(command.data);
+    self.register('dbg', 'Debug message', function({ data: message }) {
+        console.log(message);
         return true;
     });
 })(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
