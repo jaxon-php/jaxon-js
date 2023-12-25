@@ -121,19 +121,23 @@
             return false;
         }
 
-        // const removeTagAfter = funcName === undefined;
-        const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
-            'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
+        try {
+            // const removeTagAfter = funcName === undefined;
+            const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
+                'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
 
-        // Remove the tag if it already exists.
-        jaxon.cmd.node.remove(scriptTagId);
-        // Create a new tag.
-        const scriptTag = baseDocument.createElement('script');
-        scriptTag.setAttribute('id', scriptTagId);
-        scriptTag.textContent = `
+            // Remove the tag if it already exists.
+            jaxon.cmd.node.remove(scriptTagId);
+            // Create a new tag.
+            const scriptTag = baseDocument.createElement('script');
+            scriptTag.setAttribute('id', scriptTagId);
+            scriptTag.textContent = `
     ${funcName} = ${funcCode}
 `;
-        baseDocument.body.appendChild(scriptTag);
+            baseDocument.body.appendChild(scriptTag);
+        } catch (e) {
+            return false;
+        }
 
         // Since this js code saves the function in a var,
         // the tag can be removed, and the function will still exist.

@@ -133,9 +133,7 @@
     self.call = ({ func: funcName, data: funcParams, context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
-        if (func) {
-            func.apply(self.context, funcParams);
-        }
+        func && func.apply(self.context, funcParams);
         return true;
     };
 
@@ -153,10 +151,8 @@
         const jsCode = `() => {
     ${funcBody}
 }`;
-        try {
-            dom.createFunction(jsCode);
-            self.context.delegateCall();
-        } catch (e) {}
+
+        dom.createFunction(jsCode) && self.context.delegateCall();
         return true;
     };
 
@@ -178,19 +174,16 @@
         const jsCode = `() => {
     return (${funcBody});
 }`;
-        try {
-            dom.createFunction(jsCode);
-            const bResult = self.context.delegateCall();
-            if (!bResult) {
-                // inject a delay in the queue processing
-                // handle retry counter
-                if (handler.retry(command, duration)) {
-                    handler.setWakeup(response, 100);
-                    return false;
-                }
-                // give up, continue processing queue
+
+        if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
+            // inject a delay in the queue processing
+            // handle retry counter
+            if (handler.retry(command, duration)) {
+                handler.setWakeup(response, 100);
+                return false;
             }
-        } catch (e) {}
+            // give up, continue processing queue
+        }
         return true;
     };
 
@@ -227,9 +220,8 @@
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
-        try {
-            dom.createFunction(jsCode, funcName);
-        } catch (e) {}
+
+        dom.createFunction(jsCode, funcName);
         return true;
     };
 
@@ -276,10 +268,8 @@
     ${funcCodeAfter}
     ${varReturn}
 }`;
-        try {
-            dom.createFunction(jsCode, funcName);
-            self.context.delegateCall();
-        } catch (e) {}
+
+        dom.createFunction(jsCode) && self.context.delegateCall();
         return true;
     };
 

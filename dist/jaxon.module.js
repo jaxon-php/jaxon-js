@@ -376,19 +376,23 @@ jaxon.config = {
             return false;
         }
 
-        // const removeTagAfter = funcName === undefined;
-        const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
-            'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
+        try {
+            // const removeTagAfter = funcName === undefined;
+            const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
+                'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
 
-        // Remove the tag if it already exists.
-        jaxon.cmd.node.remove(scriptTagId);
-        // Create a new tag.
-        const scriptTag = baseDocument.createElement('script');
-        scriptTag.setAttribute('id', scriptTagId);
-        scriptTag.textContent = `
+            // Remove the tag if it already exists.
+            jaxon.cmd.node.remove(scriptTagId);
+            // Create a new tag.
+            const scriptTag = baseDocument.createElement('script');
+            scriptTag.setAttribute('id', scriptTagId);
+            scriptTag.textContent = `
     ${funcName} = ${funcCode}
 `;
-        baseDocument.body.appendChild(scriptTag);
+            baseDocument.body.appendChild(scriptTag);
+        } catch (e) {
+            return false;
+        }
 
         // Since this js code saves the function in a var,
         // the tag can be removed, and the function will still exist.
@@ -2347,9 +2351,7 @@ jaxon.config = {
     self.call = ({ func: funcName, data: funcParams, context = {} }) => {
         self.context = context;
         const func = dom.findFunction(funcName);
-        if (func) {
-            func.apply(self.context, funcParams);
-        }
+        func && func.apply(self.context, funcParams);
         return true;
     };
 
@@ -2367,10 +2369,8 @@ jaxon.config = {
         const jsCode = `() => {
     ${funcBody}
 }`;
-        try {
-            dom.createFunction(jsCode);
-            self.context.delegateCall();
-        } catch (e) {}
+
+        dom.createFunction(jsCode) && self.context.delegateCall();
         return true;
     };
 
@@ -2392,19 +2392,16 @@ jaxon.config = {
         const jsCode = `() => {
     return (${funcBody});
 }`;
-        try {
-            dom.createFunction(jsCode);
-            const bResult = self.context.delegateCall();
-            if (!bResult) {
-                // inject a delay in the queue processing
-                // handle retry counter
-                if (handler.retry(command, duration)) {
-                    handler.setWakeup(response, 100);
-                    return false;
-                }
-                // give up, continue processing queue
+
+        if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
+            // inject a delay in the queue processing
+            // handle retry counter
+            if (handler.retry(command, duration)) {
+                handler.setWakeup(response, 100);
+                return false;
             }
-        } catch (e) {}
+            // give up, continue processing queue
+        }
         return true;
     };
 
@@ -2441,9 +2438,8 @@ jaxon.config = {
         const jsCode = `(${getParameters(funcParams)}) => {
     ${funcBody}
 }`;
-        try {
-            dom.createFunction(jsCode, funcName);
-        } catch (e) {}
+
+        dom.createFunction(jsCode, funcName);
         return true;
     };
 
@@ -2490,10 +2486,8 @@ jaxon.config = {
     ${funcCodeAfter}
     ${varReturn}
 }`;
-        try {
-            dom.createFunction(jsCode, funcName);
-            self.context.delegateCall();
-        } catch (e) {}
+
+        dom.createFunction(jsCode) && self.context.delegateCall();
         return true;
     };
 
