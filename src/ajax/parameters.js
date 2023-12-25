@@ -67,7 +67,7 @@
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
         bags.length > 0 && fSetter('jxnbags', stringify(bags.reduce((oValues, sKey) =>
-            ({ ...oValues, sKey: self.bags[sKey] ?? '*' }), {})));
+            ({ ...oValues, [sKey]: self.bags[sKey] ?? '*' }), {})));
     };
 
     /**
