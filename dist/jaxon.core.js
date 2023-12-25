@@ -7,9 +7,9 @@
     @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
-/*
-Class: jaxon
-*/
+/**
+ * Class: jaxon
+ */
 var jaxon = {
     /**
      * Version number
@@ -32,7 +32,6 @@ var jaxon = {
     ajax: {
         callback: {},
         handler: {},
-        message: {},
         parameters: {},
         request: {},
         response: {},
@@ -87,14 +86,12 @@ jaxon.config = {
     getHeaders: {},
 
     /**
-     * true - jaxon should display a wait cursor when making a request
-     * false - jaxon should not show a wait cursor during a request
+     * true if jaxon should display a wait cursor when making a request, false otherwise.
      */
     waitCursor: false,
 
     /**
-     * true - jaxon should update the status bar during a request
-     * false - jaxon should not display the status of the request
+     * true if jaxon should log the status to the console during a request, false otherwise.
      */
     statusMessages: false,
 
@@ -148,7 +145,7 @@ jaxon.config = {
     /**
      * The method used to send requests to the server.
      * - 'POST': Generate a form POST request
-     * - 'GET': Generate a GET request; parameters are appended to the <jaxon.config.requestURI> to form a URL.
+     * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
      */
     defaultMethod: 'POST', // W3C: Method is case sensitive
 
@@ -173,8 +170,14 @@ jaxon.config = {
      */
     maxObjectSize: 2000,
 
+    /**
+     * The maximum number of commands allowed in a single response.
+     */
     commandQueueSize: 1000,
 
+    /**
+     * The maximum number of requests that can be processed simultaneously.
+     */
     requestQueueSize: 1000,
 
     /**
@@ -249,6 +252,69 @@ jaxon.config = {
             onWaiting: () => {},
             onComplete: () => {}
         }),
+    },
+};
+
+/**
+ * Class: jaxon.ajax.message
+ */
+jaxon.ajax.message = {
+    /**
+     * Print a success message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    success: (content, title) => alert(content),
+
+    /**
+     * Print an info message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    info: (content, title) => alert(content),
+
+    /**
+     * Print a warning message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    warning: (content, title) => alert(content),
+
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    error: (content, title) => alert(content),
+
+    /**
+     * Ask a confirm question to the user.
+     *
+     * @param {string} question The confirm question.
+     * @param {string} title The confirm title.
+     * @param {callable} yesCallback The function to call if the user answers yesn.
+     * @param {callable} noCallback The function to call if the user answers no.
+     *
+     * @returns {void}
+     */
+    confirm: (question, title, yesCallback, noCallback) => {
+        if(confirm(question)) {
+            yesCallback();
+            return;
+        }
+        noCallback && noCallback();
     },
 };
 
@@ -812,41 +878,62 @@ jaxon.config = {
     });
 
     /**
+     * The names of the available callbacks.
+     *
+     * @var {array}
+     */
+    self.aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
+        'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+
+    /**
      * The global callback object which is active for every request.
      *
-     * @var {callable}
+     * @var {object}
      */
     self.callback = self.create();
+
+    /**
+     * Get a flatten array of callbacks
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {array}
+     */
+    const getCallbacks = (oRequest) => Array.isArray(oRequest.callback) ?
+        [self.callback, ...oRequest.callback] : [self.callback, oRequest.callback];
 
     /**
      * Execute a callback event.
      *
      * @param {object} oCallback The callback object (or objects) which contain the event handlers to be executed.
      * @param {string} sFunction The name of the event to be triggered.
-     * @param {object} args The request object for this request.
+     * @param {object} xArgs The callback argument.
      *
      * @returns {void}
      */
-    self.execute = (oCallback, sFunction, args) => {
-        // The callback object is recognized by the presence of the timers attribute.
-        if (oCallback.timers === undefined) {
-            oCallback.forEach(oCb => self.execute(oCb, sFunction, args));
+    const execute = (oCallback, sFunction, xArgs) => {
+        const [ func, timer ] = [ oCallback[sFunction], oCallback.timers[sFunction] ];
+        if (!func || typeof func !== 'function') {
             return;
         }
-
-        if (oCallback[sFunction] === undefined || 'function' !== typeof oCallback[sFunction]) {
+        if (!timer) {
+            func(xArgs); // Call the function directly.
             return;
         }
-
-        if (oCallback.timers[sFunction] === undefined) {
-            oCallback[sFunction](args);
-            return;
-        }
-
-        oCallback.timers[sFunction].timer = setTimeout(function() {
-            oCallback[sFunction](args);
-        }, oCallback.timers[sFunction].delay);
+        // Call the function after the timeout.
+        timer.timer = setTimeout(() => func(xArgs), timer.delay);
     };
+
+    /**
+     * Execute a callback event.
+     *
+     * @param {object} oRequest The request context object.
+     * @param {string} sFunction The name of the event to be triggered.
+     *
+     * @returns {void}
+     */
+    self.execute = (oRequest, sFunction) => getCallbacks(oRequest)
+        .forEach(oCallback => execute(oCallback, sFunction, oRequest));
 
     /**
      * Clear a callback timer for the specified function.
@@ -856,17 +943,21 @@ jaxon.config = {
      *
      * @returns {void}
      */
-    self.clearTimer = (oCallback, sFunction) => {
-        // The callback object is recognized by the presence of the timers attribute.
-        if (oCallback.timers === undefined) {
-            oCallback.forEach(oCb => self.clearTimer(oCb, sFunction));
-            return;
-        }
-
-        if (oCallback.timers[sFunction] !== undefined) {
-            clearTimeout(oCallback.timers[sFunction].timer);
-        }
+    const clearTimer = (oCallback, sFunction) => {
+        const timer = oCallback.timers[sFunction];
+        timer !== undefined && timer.timer !== null && clearTimeout(timer.timer);
     };
+
+    /**
+     * Clear a callback timer for the specified function.
+     *
+     * @param {object} oRequest The request context object.
+     * @param {string} sFunction The name of the function associated with the timer to be cleared.
+     *
+     * @returns {void}
+     */
+    self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
+        .forEach(oCallback => clearTimer(oCallback, sFunction));
 })(jaxon.ajax.callback, jaxon.config);
 
 
@@ -943,15 +1034,15 @@ jaxon.config = {
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        if (self.isRegistered(command)) {
-            // If the command has an "id" attr, find the corresponding dom element.
-            if (command.id) {
-                command.target = dom.$(command.id);
-            }
-            // Process the command
-            return self.call(command);
+        if (!self.isRegistered(command)) {
+            return true;
         }
-        return true;
+        // If the command has an "id" attr, find the corresponding dom element.
+        if (command.id) {
+            command.target = dom.$(command.id);
+        }
+        // Process the command
+        return self.call(command);
     };
 
     /**
@@ -966,7 +1057,7 @@ jaxon.config = {
     self.call = (command) => {
         const handler = handlers[command.cmd];
         command.fullName = handler.name;
-        handler.func(command);
+        return handler.func(command);
     }
 
     /**
@@ -1084,71 +1175,6 @@ jaxon.config = {
  * Class: jaxon.ajax.parameters
  */
 
-(function(self) {
-    /**
-     * Print a success message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    self.success = (content, title) => alert(content);
-
-    /**
-     * Print an info message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    self.info = (content, title) => alert(content);
-
-    /**
-     * Print a warning message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    self.warning = (content, title) => alert(content);
-
-    /**
-     * Print an error message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    self.error = (content, title) => alert(content);
-
-    /**
-     * Print an error message on the screen.
-     *
-     * @param {string} question The confirm question.
-     * @param {string} title The confirm title.
-     * @param {callable} yesCallback The function to call if the user answers yesn.
-     * @param {callable} noCallback The function to call if the user answers no.
-     *
-     * @returns {void}
-     */
-    self.confirm = (question, title, yesCallback, noCallback) => {
-        if(confirm(question)) {
-            yesCallback();
-            return;
-        }
-        noCallback && noCallback();
-    };
-})(jaxon.ajax.message);
-
-
-/**
- * Class: jaxon.ajax.parameters
- */
-
 (function(self, version) {
     /**
      * The array of data bags
@@ -1195,26 +1221,26 @@ jaxon.config = {
      * Sets the request parameters in a container.
      *
      * @param {object} oRequest The request object
+     * @param {object} oRequest.func The function to call on the server app.
+     * @param {object} oRequest.parameters The parameters to pass to the function.
+     * @param {array=} oRequest.bags The keys of values to get from the data bag.
      * @param {callable} fSetter A function that sets a single parameter
      *
      * @return {void}
      */
-    const setParams = (oRequest, fSetter) => {
-        fSetter('jxnr', oRequest.dNow.getTime());
+    const setParams = ({ func, parameters, bags = [] }, fSetter) => {
+        fSetter('jxnr', self.dNow.getTime());
         fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                fSetter('jxnargs[]', stringify(oVal));
-            }
-        }
-        if (oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            fSetter('jxnbags', stringify(oValues));
-        }
+        Object.keys(func).forEach(sParam => fSetter(sParam, encodeURIComponent(func[sParam])));
+
+        // The parameters value was assigned from the js "arguments" var in a function. So it
+        // is an array-like object, that we need to convert to a real array => [...parameters].
+        // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+        [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
+
+        bags.length > 0 && fSetter('jxnbags', stringify(bags.reduce((oValues, sKey) =>
+            ({ ...oValues, sKey: self.bags[sKey] ?? '*' }), {})));
     };
 
     /**
@@ -1239,26 +1265,36 @@ jaxon.config = {
      *
      * @param {object} oRequest
      *
-     * @return {void}
+     * @return {string}
      */
     const getUrlEncodedParams = (oRequest) => {
         const rd = [];
         setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
-        // Move the parameters to the URL for HTTP GET requests
-        if (oRequest.method === 'GET') {
-            oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
-            oRequest.requestURI += rd.join('&');
-            rd = [];
+        if (oRequest.method === 'POST') {
+            return rd.join('&');
         }
-        return rd.join('&');
+        // Move the parameters to the URL for HTTP GET requests
+        oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
+        oRequest.requestURI += rd.join('&');
+        return ''; // The request body is empty
     };
+
+    /**
+     * Check if the request has files to upload.
+     *
+     * @param {object} oRequest The request object
+     * @param {object} oRequest.upload The upload object
+     *
+     * @return {boolean}
+     */
+    const hasUpload = ({ upload }) => upload && upload.ajax && upload.input;
 
     /**
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *
-     * @param {object} oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {object} oRequest The request object
      *
      * @return {void}
      *
@@ -1267,11 +1303,11 @@ jaxon.config = {
      */
     self.process = (oRequest) => {
         // Make request parameters.
-        oRequest.dNow = new Date();
+        self.dNow = new Date();
         oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
+        oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-        delete oRequest.dNow;
+        delete self.dNow;
     };
 })(jaxon.ajax.parameters, jaxon.version);
 
@@ -1282,33 +1318,35 @@ jaxon.config = {
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue, window) {
     /**
+     * Move all the callbacks defined directly in the oRequest object to the
+     * oRequest.callback property, which may then be converted to an array.
+     *
      * @param {object} oRequest
      *
      * @return {void}
      */
     const initCallbacks = (oRequest) => {
-        const lcb = cbk.create();
+        const callback = cbk.create();
 
-        const aCallbacks = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
-            'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
-        aCallbacks.forEach(sCallback => {
-            if (oRequest[sCallback] !== undefined) {
-                lcb[sCallback] = oRequest[sCallback];
-                lcb.hasEvents = true;
-                delete oRequest[sCallback];
+        let callbackFound = false;
+        cbk.aCallbackNames.forEach(sName => {
+            if (oRequest[sName] !== undefined) {
+                callback[sName] = oRequest[sName];
+                callbackFound = true;
+                delete oRequest[sName];
             }
         });
 
         if (oRequest.callback === undefined) {
-            oRequest.callback = lcb;
+            oRequest.callback = callback;
             return;
         }
         // Add the timers attribute, if it is not defined.
         if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = [];
+            oRequest.callback.timers = {};
         }
-        if (lcb.hasEvents) {
-            oRequest.callback = [oRequest.callback, lcb];
+        if (callbackFound) {
+            oRequest.callback = [oRequest.callback, callback];
         }
     };
 
@@ -1379,7 +1417,7 @@ jaxon.config = {
      * @returns {boolean}
      */
     const prepare = (oRequest) => {
-        cbk.execute([cbk.callback, oRequest.callback], 'onPrepare', oRequest);
+        cbk.execute(oRequest, 'onPrepare');
 
         // Check if the request must be aborted
         if (oRequest.aborted === true) {
@@ -1422,9 +1460,9 @@ jaxon.config = {
     const submit = (oRequest) => {
         oRequest.status.onRequest();
 
-        cbk.execute([cbk.callback, oRequest.callback], 'onResponseDelay', oRequest);
-        cbk.execute([cbk.callback, oRequest.callback], 'onExpiration', oRequest);
-        cbk.execute([cbk.callback, oRequest.callback], 'onRequest', oRequest);
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+        cbk.execute(oRequest, 'onRequest');
 
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
@@ -1452,7 +1490,7 @@ jaxon.config = {
             })
             .then(oRequest.responseHandler)
             .catch(error => {
-                cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+                cbk.execute(oRequest, 'onFailure');
                 throw error;
             });
 
@@ -1475,21 +1513,21 @@ jaxon.config = {
     /**
      * Initiates a request to the server.
      *
-     * @param {object} functionName An object containing the name of the function to
+     * @param {object} func An object containing the name of the function to
      * execute on the server. The standard request is: {jxnfun:'function_name'}
-     * @param {object=} functionArgs A request object which may contain callspecific parameters.
+     * @param {object=} funcArgs A request object which may contain call specific parameters.
      * This object will be used by jaxon to store all the request parameters as well as
      * temporary variables needed during the processing of the request.
      *
      * @returns {boolean}
      */
-    self.execute = (functionName, functionArgs) => {
-        if (functionName === undefined) {
+    self.execute = (func, funcArgs) => {
+        if (func === undefined) {
             return false;
         }
 
-        const oRequest = functionArgs ?? {};
-        oRequest.functionName = functionName;
+        const oRequest = funcArgs ?? {};
+        oRequest.func = func;
 
         initialize(oRequest);
         params.process(oRequest);
@@ -1503,7 +1541,7 @@ jaxon.config = {
                 return null;
             }
             catch (e) {
-                cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+                cbk.execute(oRequest, 'onFailure');
                 if (oRequest.requestRetry === 0) {
                     throw e;
                 }
@@ -1528,11 +1566,11 @@ jaxon.config = {
      * @return {void}
      */
     self.complete = (oRequest) => {
-        cbk.execute([cbk.callback, oRequest.callback], 'onComplete', oRequest);
+        cbk.execute(oRequest, 'onComplete');
         oRequest.cursor.onComplete();
         oRequest.status.onComplete();
         // clean up -- these items are restored when the request is initiated
-        delete oRequest['functionName'];
+        delete oRequest['func'];
         delete oRequest['requestURI'];
         delete oRequest['requestData'];
         delete oRequest['requestRetry'];
@@ -1724,7 +1762,7 @@ jaxon.config = {
      */
     const jsonProcessor = (oRequest) => {
         if (oRequest.response.ok) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
+            cbk.execute(oRequest, 'onSuccess');
 
             oRequest.sequence = 0;
             queueCommands(oRequest)
@@ -1746,13 +1784,13 @@ jaxon.config = {
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onRedirect', oRequest);
+            cbk.execute(oRequest, 'onRedirect');
             window.location = oRequest.response.headers.get('location');
             self.complete(oRequest);
             return oRequest.returnValue;
         }
         if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+            cbk.execute(oRequest, 'onFailure');
             self.complete(oRequest);
             return oRequest.returnValue;
         }
@@ -1775,9 +1813,9 @@ jaxon.config = {
         // Create a response queue for this request.
         oRequest.commandQueue = queue.create(config.commandQueueSize);
 
-        cbk.clearTimer([cbk.callback, oRequest.callback], 'onExpiration');
-        cbk.clearTimer([cbk.callback, oRequest.callback], 'onResponseDelay');
-        cbk.execute([cbk.callback, oRequest.callback], 'beforeResponseProcessing', oRequest);
+        cbk.clearTimer(oRequest, 'onExpiration');
+        cbk.clearTimer(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'beforeResponseProcessing');
 
         const fProc = oRequest.responseProcessor ?? jsonProcessor;
         return fProc(oRequest);

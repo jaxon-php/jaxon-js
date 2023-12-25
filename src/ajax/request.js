@@ -4,33 +4,35 @@
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue, window) {
     /**
+     * Move all the callbacks defined directly in the oRequest object to the
+     * oRequest.callback property, which may then be converted to an array.
+     *
      * @param {object} oRequest
      *
      * @return {void}
      */
     const initCallbacks = (oRequest) => {
-        const lcb = cbk.create();
+        const callback = cbk.create();
 
-        const aCallbacks = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
-            'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
-        aCallbacks.forEach(sCallback => {
-            if (oRequest[sCallback] !== undefined) {
-                lcb[sCallback] = oRequest[sCallback];
-                lcb.hasEvents = true;
-                delete oRequest[sCallback];
+        let callbackFound = false;
+        cbk.aCallbackNames.forEach(sName => {
+            if (oRequest[sName] !== undefined) {
+                callback[sName] = oRequest[sName];
+                callbackFound = true;
+                delete oRequest[sName];
             }
         });
 
         if (oRequest.callback === undefined) {
-            oRequest.callback = lcb;
+            oRequest.callback = callback;
             return;
         }
         // Add the timers attribute, if it is not defined.
         if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = [];
+            oRequest.callback.timers = {};
         }
-        if (lcb.hasEvents) {
-            oRequest.callback = [oRequest.callback, lcb];
+        if (callbackFound) {
+            oRequest.callback = [oRequest.callback, callback];
         }
     };
 
@@ -101,7 +103,7 @@
      * @returns {boolean}
      */
     const prepare = (oRequest) => {
-        cbk.execute([cbk.callback, oRequest.callback], 'onPrepare', oRequest);
+        cbk.execute(oRequest, 'onPrepare');
 
         // Check if the request must be aborted
         if (oRequest.aborted === true) {
@@ -144,9 +146,9 @@
     const submit = (oRequest) => {
         oRequest.status.onRequest();
 
-        cbk.execute([cbk.callback, oRequest.callback], 'onResponseDelay', oRequest);
-        cbk.execute([cbk.callback, oRequest.callback], 'onExpiration', oRequest);
-        cbk.execute([cbk.callback, oRequest.callback], 'onRequest', oRequest);
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+        cbk.execute(oRequest, 'onRequest');
 
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
@@ -174,7 +176,7 @@
             })
             .then(oRequest.responseHandler)
             .catch(error => {
-                cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+                cbk.execute(oRequest, 'onFailure');
                 throw error;
             });
 
@@ -197,21 +199,21 @@
     /**
      * Initiates a request to the server.
      *
-     * @param {object} functionName An object containing the name of the function to
+     * @param {object} func An object containing the name of the function to
      * execute on the server. The standard request is: {jxnfun:'function_name'}
-     * @param {object=} functionArgs A request object which may contain callspecific parameters.
+     * @param {object=} funcArgs A request object which may contain call specific parameters.
      * This object will be used by jaxon to store all the request parameters as well as
      * temporary variables needed during the processing of the request.
      *
      * @returns {boolean}
      */
-    self.execute = (functionName, functionArgs) => {
-        if (functionName === undefined) {
+    self.execute = (func, funcArgs) => {
+        if (func === undefined) {
             return false;
         }
 
-        const oRequest = functionArgs ?? {};
-        oRequest.functionName = functionName;
+        const oRequest = funcArgs ?? {};
+        oRequest.func = func;
 
         initialize(oRequest);
         params.process(oRequest);
@@ -225,7 +227,7 @@
                 return null;
             }
             catch (e) {
-                cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+                cbk.execute(oRequest, 'onFailure');
                 if (oRequest.requestRetry === 0) {
                     throw e;
                 }

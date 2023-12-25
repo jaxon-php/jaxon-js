@@ -71,15 +71,15 @@
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        if (self.isRegistered(command)) {
-            // If the command has an "id" attr, find the corresponding dom element.
-            if (command.id) {
-                command.target = dom.$(command.id);
-            }
-            // Process the command
-            return self.call(command);
+        if (!self.isRegistered(command)) {
+            return true;
         }
-        return true;
+        // If the command has an "id" attr, find the corresponding dom element.
+        if (command.id) {
+            command.target = dom.$(command.id);
+        }
+        // Process the command
+        return self.call(command);
     };
 
     /**
@@ -94,7 +94,7 @@
     self.call = (command) => {
         const handler = handlers[command.cmd];
         command.fullName = handler.name;
-        handler.func(command);
+        return handler.func(command);
     }
 
     /**

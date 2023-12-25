@@ -7,9 +7,9 @@
     @license https://opensource.org/license/bsd-3-clause/ BSD License
 */
 
-/*
-Class: jaxon
-*/
+/**
+ * Class: jaxon
+ */
 var jaxon = {
     /**
      * Version number
@@ -32,7 +32,6 @@ var jaxon = {
     ajax: {
         callback: {},
         handler: {},
-        message: {},
         parameters: {},
         request: {},
         response: {},
@@ -87,14 +86,12 @@ jaxon.config = {
     getHeaders: {},
 
     /**
-     * true - jaxon should display a wait cursor when making a request
-     * false - jaxon should not show a wait cursor during a request
+     * true if jaxon should display a wait cursor when making a request, false otherwise.
      */
     waitCursor: false,
 
     /**
-     * true - jaxon should update the status bar during a request
-     * false - jaxon should not display the status of the request
+     * true if jaxon should log the status to the console during a request, false otherwise.
      */
     statusMessages: false,
 
@@ -148,7 +145,7 @@ jaxon.config = {
     /**
      * The method used to send requests to the server.
      * - 'POST': Generate a form POST request
-     * - 'GET': Generate a GET request; parameters are appended to the <jaxon.config.requestURI> to form a URL.
+     * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
      */
     defaultMethod: 'POST', // W3C: Method is case sensitive
 
@@ -173,8 +170,14 @@ jaxon.config = {
      */
     maxObjectSize: 2000,
 
+    /**
+     * The maximum number of commands allowed in a single response.
+     */
     commandQueueSize: 1000,
 
+    /**
+     * The maximum number of requests that can be processed simultaneously.
+     */
     requestQueueSize: 1000,
 
     /**
@@ -249,5 +252,68 @@ jaxon.config = {
             onWaiting: () => {},
             onComplete: () => {}
         }),
+    },
+};
+
+/**
+ * Class: jaxon.ajax.message
+ */
+jaxon.ajax.message = {
+    /**
+     * Print a success message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    success: (content, title) => alert(content),
+
+    /**
+     * Print an info message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    info: (content, title) => alert(content),
+
+    /**
+     * Print a warning message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    warning: (content, title) => alert(content),
+
+    /**
+     * Print an error message on the screen.
+     *
+     * @param {string} content The message content.
+     * @param {string} title The message title.
+     *
+     * @returns {void}
+     */
+    error: (content, title) => alert(content),
+
+    /**
+     * Ask a confirm question to the user.
+     *
+     * @param {string} question The confirm question.
+     * @param {string} title The confirm title.
+     * @param {callable} yesCallback The function to call if the user answers yesn.
+     * @param {callable} noCallback The function to call if the user answers no.
+     *
+     * @returns {void}
+     */
+    confirm: (question, title, yesCallback, noCallback) => {
+        if(confirm(question)) {
+            yesCallback();
+            return;
+        }
+        noCallback && noCallback();
     },
 };

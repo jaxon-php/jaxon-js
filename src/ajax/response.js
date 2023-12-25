@@ -11,11 +11,11 @@
      * @return {void}
      */
     self.complete = (oRequest) => {
-        cbk.execute([cbk.callback, oRequest.callback], 'onComplete', oRequest);
+        cbk.execute(oRequest, 'onComplete');
         oRequest.cursor.onComplete();
         oRequest.status.onComplete();
         // clean up -- these items are restored when the request is initiated
-        delete oRequest['functionName'];
+        delete oRequest['func'];
         delete oRequest['requestURI'];
         delete oRequest['requestData'];
         delete oRequest['requestRetry'];
@@ -207,7 +207,7 @@
      */
     const jsonProcessor = (oRequest) => {
         if (oRequest.response.ok) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onSuccess', oRequest);
+            cbk.execute(oRequest, 'onSuccess');
 
             oRequest.sequence = 0;
             queueCommands(oRequest)
@@ -229,13 +229,13 @@
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onRedirect', oRequest);
+            cbk.execute(oRequest, 'onRedirect');
             window.location = oRequest.response.headers.get('location');
             self.complete(oRequest);
             return oRequest.returnValue;
         }
         if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
-            cbk.execute([cbk.callback, oRequest.callback], 'onFailure', oRequest);
+            cbk.execute(oRequest, 'onFailure');
             self.complete(oRequest);
             return oRequest.returnValue;
         }
@@ -258,9 +258,9 @@
         // Create a response queue for this request.
         oRequest.commandQueue = queue.create(config.commandQueueSize);
 
-        cbk.clearTimer([cbk.callback, oRequest.callback], 'onExpiration');
-        cbk.clearTimer([cbk.callback, oRequest.callback], 'onResponseDelay');
-        cbk.execute([cbk.callback, oRequest.callback], 'beforeResponseProcessing', oRequest);
+        cbk.clearTimer(oRequest, 'onExpiration');
+        cbk.clearTimer(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'beforeResponseProcessing');
 
         const fProc = oRequest.responseProcessor ?? jsonProcessor;
         return fProc(oRequest);
