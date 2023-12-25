@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.style
  */
 
-(function(self, delay, baseDocument) {
+(function(self, handler, baseDocument) {
     /**
      * Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
      *
@@ -72,11 +72,11 @@
         // inject a delay in the queue processing
         // handle retry counter
         const { prop: duration, response } = command;
-        if (delay.retry(command, duration)) {
-            delay.setWakeup(response, 10);
+        if (handler.retry(command, duration)) {
+            handler.setWakeup(response, 10);
             return false;
         }
         // Give up, continue processing queue
         return true;
     };
-})(jaxon.cmd.style, jaxon.utils.delay, jaxon.config.baseDocument);
+})(jaxon.cmd.style, jaxon.ajax.handler, jaxon.config.baseDocument);

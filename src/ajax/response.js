@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue, delay, window, console) {
+(function(self, config, handler, req, cbk, queue, window, console) {
     /**
      * Called by the response command queue processor when all commands have been processed.
      *
@@ -30,18 +30,18 @@
         // All the requests queued while waiting must now be processed.
         if(oRequest.mode === 'synchronous') {
             // Remove the current request from the send and recv queues.
-            queue.pop(delay.q.send);
-            queue.pop(delay.q.recv);
+            queue.pop(handler.q.send);
+            queue.pop(handler.q.recv);
             // Process the asynchronous requests received while waiting.
-            while((recvRequest = delay.popAsyncRequest(delay.q.recv)) !== null) {
+            while((recvRequest = handler.popAsyncRequest(handler.q.recv)) !== null) {
                 received(recvRequest);
             }
             // Submit the asynchronous requests sent while waiting.
-            while((nextRequest = delay.popAsyncRequest(delay.q.send)) !== null) {
+            while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
                 req.submit(nextRequest);
             }
             // Submit the next synchronous request, if there's any.
-            if((nextRequest = queue.peek(delay.q.send)) !== null) {
+            if((nextRequest = queue.peek(handler.q.send)) !== null) {
                 req.submit(nextRequest);
             }
         }
@@ -85,7 +85,7 @@
      * @returns {false} The queue processing was halted before the queue was fully processed.
      *
      * Note:
-     * - Use <jaxon.utils.delay.setWakeup> or call this function to cause the queue processing to continue.
+     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
      * - This will clear the associated timeout, this function is not designed to be reentrant.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      */
@@ -266,4 +266,4 @@
         return fProc(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.delay, window, console);
+    jaxon.ajax.callback, jaxon.utils.queue, window, console);

@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, delay, msg, dom, baseDocument, window) {
+(function(self, handler, msg, dom, baseDocument, window) {
     /**
      * Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
      *
@@ -82,8 +82,8 @@
         // inject a delay in the queue processing
         // handle retry counter
         const { prop: duration, response } = command;
-        if (delay.retry(command, duration)) {
-            delay.setWakeup(response, 100);
+        if (handler.retry(command, duration)) {
+            handler.setWakeup(response, 100);
             return false;
         }
         // wake up, continue processing queue
@@ -116,7 +116,7 @@
      */
     self.confirm = (command) => {
         const { count, data: question } = command;
-        delay.confirm(command, count, question);
+        handler.confirm(command, count, question);
         return false;
     };
 
@@ -184,8 +184,8 @@
             if (!bResult) {
                 // inject a delay in the queue processing
                 // handle retry counter
-                if (delay.retry(command, duration)) {
-                    delay.setWakeup(response, 100);
+                if (handler.retry(command, duration)) {
+                    handler.setWakeup(response, 100);
                     return false;
                 }
                 // give up, continue processing queue
@@ -300,5 +300,5 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.utils.delay, jaxon.ajax.message, jaxon.utils.dom,
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.message, jaxon.utils.dom,
     jaxon.config.baseDocument, window);

@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.request
  */
 
-(function(self, cfg, params, rsp, cbk, upload, queue, delay, window) {
+(function(self, cfg, params, rsp, cbk, handler, upload, queue, window) {
     /**
      * @param {object} oRequest
      *
@@ -112,23 +112,23 @@
             oRequest.responseContent = responseContent;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
-            if (queue.empty(delay.q.send) || oRequest.mode === 'synchronous') {
+            if (queue.empty(handler.q.send) || oRequest.mode === 'synchronous') {
                 rsp.received(oRequest);
             } else {
-                queue.push(delay.q.recv, oRequest);
+                queue.push(handler.q.recv, oRequest);
             }
         };
 
         // No request is submitted while there are pending requests in the outgoing queue.
-        const submitRequest = queue.empty(delay.q.send);
+        const submitRequest = queue.empty(handler.q.send);
         if (oRequest.mode === 'synchronous') {
             // Synchronous requests are always queued, in both send and recv queues.
-            queue.push(delay.q.send, oRequest);
-            queue.push(delay.q.recv, oRequest);
+            queue.push(handler.q.send, oRequest);
+            queue.push(handler.q.recv, oRequest);
             return submitRequest;
         }
         // Asynchronous requests are queued in send queue only if they are not submitted.
-        submitRequest || queue.push(delay.q.send, oRequest);
+        submitRequest || queue.push(handler.q.send, oRequest);
         return submitRequest;
     };
 
@@ -234,4 +234,4 @@
         return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue, jaxon.utils.delay, window);
+    jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue, window);

@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, rsp, node, style, script, form, evt, dom, console) {
+(function(self, config, rsp, msg, queue, dom) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -10,6 +10,16 @@
      * @var {object}
      */
     const handlers = {};
+
+    /**
+     * The queues that hold synchronous requests as they are sent and processed.
+     *
+     * @var {object}
+     */
+    self.q = {
+        send: queue.create(config.requestQueueSize),
+        recv: queue.create(config.requestQueueSize * 2)
+    };
 
     /**
      * Registers a new command handler.
@@ -87,51 +97,112 @@
         handler.func(command);
     }
 
-    self.register('rcmplt', ({ request }) => {
-        rsp.complete(request);
+    /**
+     * Attempt to pop the next asynchronous request.
+     *
+     * @param {object} oQueue The queue object you would like to modify.
+     *
+     * @returns {object|null}
+     */
+    self.popAsyncRequest = oQueue =>
+        queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
+        null : queue.pop(oQueue);
+
+    /**
+     * Maintains a retry counter for the given object.
+     *
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
+     *
+     * @returns {true} The object has not exhausted all the retries.
+     * @returns {false} The object has exhausted the retry count specified.
+     */
+    self.retry = (command, count) => {
+        let retries = command.retries;
+        if(retries) {
+            if(1 > --retries) {
+                return false;
+            }
+        } else {
+            retries = count;
+        }
+        command.retries = retries;
+        // This command must be processed again.
+        command.requeue = true;
         return true;
-    }, 'Response complete');
+    };
 
-    self.register('css', style.add, 'includeCSS');
-    self.register('rcss', style.remove, 'removeCSS');
-    self.register('wcss', style.waitForCSS, 'waitForCSS');
+    /**
+     * Set or reset a timeout that is used to restart processing of the queue.
+     *
+     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
+     * to process pending events, like loading files)
+     *
+     * @param {object} response The queue to process.
+     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
+     *
+     * @returns {void}
+     */
+    self.setWakeup = (response, when) => {
+        if (response.timeout !== null) {
+            clearTimeout(response.timeout);
+            response.timeout = null;
+        }
+        response.timout = setTimeout(() => rsp.process(response), when);
+    };
 
-    self.register('as', node.assign, 'assign/clear');
-    self.register('ap', node.append, 'append');
-    self.register('pp', node.prepend, 'prepend');
-    self.register('rp', node.replace, 'replace');
-    self.register('rm', node.remove, 'remove');
-    self.register('ce', node.create, 'create');
-    self.register('ie', node.insert, 'insert');
-    self.register('ia', node.insertAfter, 'insertAfter');
-    self.register('c:as', node.contextAssign, 'context assign');
-    self.register('c:ap', node.contextAppend, 'context append');
-    self.register('c:pp', node.contextPrepend, 'context prepend');
+    /**
+     * The function to run after the confirm question, for the comfirmCommands.
+     *
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {boolean} skip Skip the commands or not.
+     *
+     * @returns {void}
+     */
+    const confirmCallback = (command, count, skip) => {
+        if(skip === true) {
+            // The last entry in the queue is not a user command.
+            // Thus it cannot be skipped.
+            while (count > 0 && command.response.count > 1 &&
+                queue.pop(command.response) !== null) {
+                --count;
+            }
+        }
+        // Run a different command depending on whether this callback executes
+        // before of after the confirm function returns;
+        if(command.requeue === true) {
+            // Before => the processing is delayed.
+            self.setWakeup(command.response, 30);
+            return;
+        }
+        // After => the processing is executed.
+        rsp.process(command.response);
+    };
 
-    self.register('s', script.sleep, 'sleep');
-    self.register('ino', script.includeScriptOnce, 'includeScriptOnce');
-    self.register('in', script.includeScript, 'includeScript');
-    self.register('rjs', script.removeScript, 'removeScript');
-    self.register('wf', script.waitFor, 'waitFor');
-    self.register('js', script.execute, 'execute Javascript');
-    self.register('jc', script.call, 'call js function');
-    self.register('sf', script.setFunction, 'setFunction');
-    self.register('wpf', script.wrapFunction, 'wrapFunction');
-    self.register('al', script.alert, 'alert');
-    self.register('cc', script.confirm, 'confirm');
-    self.register('rd', script.redirect, 'redirect');
+    /**
+     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     *
+     * The processing of the queue after the question is delayed so it occurs after this function returns.
+     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
+     * before (when using the blocking confirm() function) or after this function returns.
+     * @see confirmCallback
+     *
+     * @param {object} command The object to track the retry count for.
+     * @param {integer} count The number of commands to skip.
+     * @param {string} question The question to ask to the user.
+     *
+     * @returns {boolean}
+     */
+    self.confirm = (command, count, question) => {
+        // This will be checked in the callback.
+        command.requeue = true;
+        msg.confirm(question, '', () => confirmCallback(command, count, false),
+            () => confirmCallback(command, count, true));
 
-    self.register('ci', form.createInput, 'createInput');
-    self.register('ii', form.insertInput, 'insertInput');
-    self.register('iia', form.insertInputAfter, 'insertInputAfter');
-
-    self.register('ev', evt.setEvent, 'setEvent');
-    self.register('ah', evt.addHandler, 'addHandler');
-    self.register('rh', evt.removeHandler, 'removeHandler');
-
-    self.register('dbg', function({ data: message }) {
-        console.log(message);
-        return true;
-    }, 'Debug message');
-})(jaxon.ajax.handler, jaxon.ajax.response, jaxon.cmd.node, jaxon.cmd.style,
-    jaxon.cmd.script, jaxon.cmd.form, jaxon.cmd.event, jaxon.utils.dom, console);
+        // This command must not be processed again.
+        command.requeue = false;
+        return false;
+    };
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.ajax.message,
+    jaxon.utils.queue, jaxon.utils.dom);

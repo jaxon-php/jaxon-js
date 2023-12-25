@@ -1,4 +1,13 @@
 /*
+    @package jaxon
+    @version $Id: jaxon.core.js 327 2007-02-28 16:55:26Z calltoconstruct $
+    @copyright Copyright (c) 2005-2007 by Jared White & J. Max Wilson
+    @copyright Copyright (c) 2008-2010 by Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
+    @copyright Copyright (c) 2017 by Thierry Feuzeu, Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
+    @license https://opensource.org/license/bsd-3-clause/ BSD License
+*/
+
+/*
 Class: jaxon
 */
 var jaxon = {
@@ -12,11 +21,11 @@ var jaxon = {
     },
 
     debug: {
-        /*
-        Class: jaxon.debug.verbose
-
-        Provide a high level of detail which can be used to debug hard to find problems.
-        */
+        /**
+         * Class: jaxon.debug.verbose
+         *
+         * Provide a high level of detail which can be used to debug hard to find problems.
+         */
         verbose: {},
     },
 
@@ -38,7 +47,6 @@ var jaxon = {
     },
 
     utils: {
-        delay: {},
         dom: {},
         form: {},
         queue: {},
@@ -168,78 +176,78 @@ jaxon.config = {
     commandQueueSize: 1000,
 
     requestQueueSize: 1000,
-};
-
-/**
- * Class: jaxon.config.status
- *
- * Provides support for updating the browser's status bar during the request process.
- * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
- * to customize the status bar messages prior to sending jaxon requests.
- */
-jaxon.config.status = {
-    /**
-     * Constructs and returns a set of event handlers that will be called by the
-     * jaxon framework to set the status bar messages.
-     *
-     * @returns {object}
-     */
-    update: () => ({
-        onRequest: () => console.log('Sending Request...'),
-        onWaiting: () => console.log('Waiting for Response...'),
-        onProcessing: () => console.log('Processing...'),
-        onComplete: () => console.log('Done.'),
-    }),
 
     /**
-     * Constructs and returns a set of event handlers that will be called by the
-     * jaxon framework where status bar updates would normally occur.
+     * Class: jaxon.config.status
      *
-     * @returns {object}
+     * Provides support for updating the browser's status bar during the request process.
+     * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
+     * to customize the status bar messages prior to sending jaxon requests.
      */
-    dontUpdate: () =>({
-        onRequest: () => {},
-        onWaiting: () => {},
-        onProcessing: () => {},
-        onComplete: () => {}
-    }),
-};
+    status: {
+        /**
+         * Constructs and returns a set of event handlers that will be called by the
+         * jaxon framework to set the status bar messages.
+         *
+         * @returns {object}
+         */
+        update: () => ({
+            onRequest: () => console.log('Sending Request...'),
+            onWaiting: () => console.log('Waiting for Response...'),
+            onProcessing: () => console.log('Processing...'),
+            onComplete: () => console.log('Done.'),
+        }),
 
-/**
- * Class: jaxon.config.cursor
- *
- * Provides the base functionality for updating the browser's cursor during requests.
- * By splitting this functionalityh into an object of it's own, jaxon developers can now
- * customize the functionality prior to submitting requests.
- */
-jaxon.config.cursor = {
+        /**
+         * Constructs and returns a set of event handlers that will be called by the
+         * jaxon framework where status bar updates would normally occur.
+         *
+         * @returns {object}
+         */
+        dontUpdate: () =>({
+            onRequest: () => {},
+            onWaiting: () => {},
+            onProcessing: () => {},
+            onComplete: () => {}
+        }),
+    },
+
     /**
-     * Constructs and returns a set of event handlers that will be called by the
-     * jaxon framework to effect the status of the cursor during requests.
+     * Class: jaxon.config.cursor
      *
-     * @returns {object}
+     * Provides the base functionality for updating the browser's cursor during requests.
+     * By splitting this functionalityh into an object of it's own, jaxon developers can now
+     * customize the functionality prior to submitting requests.
      */
-    update: () => ({
-        onWaiting: () => {
-            if (jaxon.config.baseDocument.body) {
-                jaxon.config.baseDocument.body.style.cursor = 'wait';
+    cursor: {
+        /**
+         * Constructs and returns a set of event handlers that will be called by the
+         * jaxon framework to effect the status of the cursor during requests.
+         *
+         * @returns {object}
+         */
+        update: () => ({
+            onWaiting: () => {
+                if (jaxon.config.baseDocument.body) {
+                    jaxon.config.baseDocument.body.style.cursor = 'wait';
+                }
+            },
+            onComplete: () => {
+                if (jaxon.config.baseDocument.body) {
+                    jaxon.config.baseDocument.body.style.cursor = 'auto';
+                }
             }
-        },
-        onComplete: () => {
-            if (jaxon.config.baseDocument.body) {
-                jaxon.config.baseDocument.body.style.cursor = 'auto';
-            }
-        }
-    }),
+        }),
 
-    /**
-     * Constructs and returns a set of event handlers that will be called by the jaxon framework
-     * where cursor status changes would typically be made during the handling of requests.
-     *
-     * @returns {object}
-     */
-    dontUpdate: () => ({
-        onWaiting: () => {},
-        onComplete: () => {}
-    }),
+        /**
+         * Constructs and returns a set of event handlers that will be called by the jaxon framework
+         * where cursor status changes would typically be made during the handling of requests.
+         *
+         * @returns {object}
+         */
+        dontUpdate: () => ({
+            onWaiting: () => {},
+            onComplete: () => {}
+        }),
+    },
 };
