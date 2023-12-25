@@ -56,17 +56,11 @@
             return;
         }
         if (!readyEventHandlersInstalled) {
-            // otherwise if we don't have event handlers installed, install them
-            if (document.addEventListener) {
-                // first choice is DOMContentLoaded event
-                document.addEventListener("DOMContentLoaded", ready, false);
-                // backup is window load event
-                window.addEventListener("load", ready, false);
-            } else {
-                // must be IE
-                document.attachEvent("onreadystatechange", readyStateChange);
-                window.attachEvent("onload", ready);
-            }
+            // first choice is DOMContentLoaded event
+            document.addEventListener("DOMContentLoaded", ready, false);
+            // backup is window load event
+            window.addEventListener("load", ready, false);
+
             readyEventHandlersInstalled = true;
         }
     }

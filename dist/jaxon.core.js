@@ -1240,7 +1240,7 @@ jaxon.ajax.message = {
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
         bags.length > 0 && fSetter('jxnbags', stringify(bags.reduce((oValues, sKey) =>
-            ({ ...oValues, sKey: self.bags[sKey] ?? '*' }), {})));
+            ({ ...oValues, [sKey]: self.bags[sKey] ?? '*' }), {})));
     };
 
     /**
@@ -1847,11 +1847,14 @@ jaxon.ajax.message = {
     };
 
     /**
-     * Get the real name of an event handler
+     * @param {object} target The target element
+     * @param {string} event An event name
+     * @param {string} func A function name
      *
-     * @type {(string) => string}
+     * @returns {void}
      */
-    const getName = window.addEventListener ? str.stripOnPrefix : str.addOnPrefix;
+    const _addHandler = (target, event, func) =>
+        target.addEventListener(event, dom.findFunction(func), false);
 
     /**
      * @param {object} target The target element
@@ -1860,20 +1863,8 @@ jaxon.ajax.message = {
      *
      * @returns {void}
      */
-    const _addHandler = window.addEventListener ?
-        (target, event, func) => target.addEventListener(event, dom.findFunction(func), false) :
-        (target, event, func) => target.attachEvent(event, dom.findFunction(func));
-
-    /**
-     * @param {object} target The target element
-     * @param {string} event An event name
-     * @param {string} func A function name
-     *
-     * @returns {void}
-     */
-    const _removeHandler = window.addEventListener ?
-        (target, event, func) => target.removeEventListener(event, dom.findFunction(func), false) :
-        (target, event, func) => target.detachEvent(event, dom.findFunction(func));
+    const _removeHandler = (target, event, func) =>
+        target.removeEventListener(event, dom.findFunction(func), false);
 
     /**
      * Add an event handler to the specified target.
@@ -1887,7 +1878,7 @@ jaxon.ajax.message = {
      * @returns {true} The operation completed successfully.
      */
     self.addHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
-        _addHandler(oTarget, getName(sEvent), sFuncName);
+        _addHandler(oTarget, str.stripOnPrefix(sEvent), sFuncName);
         return true;
     };
 
@@ -1903,7 +1894,7 @@ jaxon.ajax.message = {
      * @returns {true} The operation completed successfully.
      */
     self.removeHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
-       _removeHandler(oTarget, getName(sEvent), sFuncName);
+       _removeHandler(oTarget, str.stripOnPrefix(sEvent), sFuncName);
        return true;
     };
 })(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
@@ -2692,17 +2683,11 @@ jaxon.ajax.message = {
             return;
         }
         if (!readyEventHandlersInstalled) {
-            // otherwise if we don't have event handlers installed, install them
-            if (document.addEventListener) {
-                // first choice is DOMContentLoaded event
-                document.addEventListener("DOMContentLoaded", ready, false);
-                // backup is window load event
-                window.addEventListener("load", ready, false);
-            } else {
-                // must be IE
-                document.attachEvent("onreadystatechange", readyStateChange);
-                window.attachEvent("onload", ready);
-            }
+            // first choice is DOMContentLoaded event
+            document.addEventListener("DOMContentLoaded", ready, false);
+            // backup is window load event
+            window.addEventListener("load", ready, false);
+
             readyEventHandlersInstalled = true;
         }
     }
