@@ -54,131 +54,188 @@ var jaxon = {
     },
 
     dom: {},
+
+    /**
+     * This class contains all the default configuration settings.
+     * These are application level settings; however, they can be overridden by including
+     * a jaxon.config definition prior to including the <jaxon_core.js> file, or by
+     * specifying the appropriate configuration options on a per call basis.
+     */
+    config: {
+        /**
+         * An array of header entries where the array key is the header option name and
+         * the associated value is the value that will set when the request object is initialized.
+         *
+         * These headers will be set for both POST and GET requests.
+         */
+        commonHeaders: {
+            'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
+        },
+
+        /**
+         * An array of header entries where the array key is the header option name and the
+         * associated value is the value that will set when the request object is initialized.
+         */
+        postHeaders: {},
+
+        /**
+         * An array of header entries where the array key is the header option name and the
+         * associated value is the value that will set when the request object is initialized.
+         */
+        getHeaders: {},
+
+        /**
+         * true if jaxon should display a wait cursor when making a request, false otherwise.
+         */
+        waitCursor: false,
+
+        /**
+         * true if jaxon should log the status to the console during a request, false otherwise.
+         */
+        statusMessages: false,
+
+        /**
+         * The base document that will be used throughout the code for locating elements by ID.
+         */
+        baseDocument: document,
+
+        /**
+         * The URI that requests will be sent to.
+         *
+         * @var {string}
+         */
+        requestURI: document.URL,
+
+        /**
+         * The request mode.
+         * - 'asynchronous' - The request will immediately return, the response will be processed
+         *   when (and if) it is received.
+         * - 'synchronous' - The request will block, waiting for the response.
+         *   This option allows the server to return a value directly to the caller.
+         */
+        defaultMode: 'asynchronous',
+
+        /**
+         * The Hyper Text Transport Protocol version designated in the header of the request.
+         */
+        defaultHttpVersion: 'HTTP/1.1',
+
+        /**
+         * The content type designated in the header of the request.
+         */
+        defaultContentType: 'application/x-www-form-urlencoded',
+
+        /**
+         * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
+         */
+        defaultResponseDelayTime: 1000,
+
+        /**
+         * Always convert the reponse content to json.
+         */
+        convertResponseToJson: true,
+
+        /**
+         * The amount of time to wait, in milliseconds, before a request is considered expired.
+         * This is used to trigger the <jaxon.callback.onExpiration event.
+         */
+        defaultExpirationTime: 10000,
+
+        /**
+         * The method used to send requests to the server.
+         * - 'POST': Generate a form POST request
+         * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
+         */
+        defaultMethod: 'POST', // W3C: Method is case sensitive
+
+        /**
+         * The number of times a request should be retried if it expires.
+         */
+        defaultRetry: 5,
+
+        /**
+         * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
+         * does not specify the return value.
+         */
+        defaultReturnValue: false,
+
+        /**
+         * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
+         */
+        maxObjectDepth: 20,
+
+        /**
+         * The maximum number of members allowed when serializing objects to be sent to the server in a request.
+         */
+        maxObjectSize: 2000,
+
+        /**
+         * The maximum number of commands allowed in a single response.
+         */
+        commandQueueSize: 1000,
+
+        /**
+         * The maximum number of requests that can be processed simultaneously.
+         */
+        requestQueueSize: 1000,
+
+        /**
+         * Common options for all HTTP requests to the server.
+         */
+        httpRequestOptions: {
+            mode: "cors", // no-cors, *cors, same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: "same-origin", // include, *same-origin, omit
+            redirect: "manual", // manual, *follow, error
+        },
+    },
 };
 
 /**
- * This class contains all the default configuration settings.
- * These are application level settings; however, they can be overridden by including
- * a jaxon.config definition prior to including the <jaxon_core.js> file, or by
- * specifying the appropriate configuration options on a per call basis.
+ * Register the command handlers provided by the library.
  */
-jaxon.config = {
+(function(cfg) {
     /**
-     * An array of header entries where the array key is the header option name and
-     * the associated value is the value that will set when the request object is initialized.
+     * Set the options in the request object
      *
-     * These headers will be set for both POST and GET requests.
-     */
-    commonHeaders: {
-        'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
-    },
-
-    /**
-     * An array of header entries where the array key is the header option name and the
-     * associated value is the value that will set when the request object is initialized.
-     */
-    postHeaders: {},
-
-    /**
-     * An array of header entries where the array key is the header option name and the
-     * associated value is the value that will set when the request object is initialized.
-     */
-    getHeaders: {},
-
-    /**
-     * true if jaxon should display a wait cursor when making a request, false otherwise.
-     */
-    waitCursor: false,
-
-    /**
-     * true if jaxon should log the status to the console during a request, false otherwise.
-     */
-    statusMessages: false,
-
-    /**
-     * The base document that will be used throughout the code for locating elements by ID.
-     */
-    baseDocument: document,
-
-    /**
-     * The URI that requests will be sent to.
+     * @param {object} oRequest The request context object.
      *
-     * @var {string}
+     * @returns {void}
      */
-    requestURI: document.URL,
+    cfg.setRequestOptions = (oRequest) => {
+        if (cfg.requestURI === undefined) {
+            throw { code: 10005 };
+        }
 
-    /**
-     * The request mode.
-     * - 'asynchronous' - The request will immediately return, the response will be processed
-     *   when (and if) it is received.
-     * - 'synchronous' - The request will block, waiting for the response.
-     *   This option allows the server to return a value directly to the caller.
-     */
-    defaultMode: 'asynchronous',
+        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
 
-    /**
-     * The Hyper Text Transport Protocol version designated in the header of the request.
-     */
-    defaultHttpVersion: 'HTTP/1.1',
+        const oDefaultOptions = {
+            statusMessages: cfg.statusMessages,
+            waitCursor: cfg.waitCursor,
+            mode: cfg.defaultMode,
+            method: cfg.defaultMethod,
+            URI: cfg.requestURI,
+            httpVersion: cfg.defaultHttpVersion,
+            contentType: cfg.defaultContentType,
+            convertResponseToJson: cfg.convertResponseToJson,
+            retry: cfg.defaultRetry,
+            returnValue: cfg.defaultReturnValue,
+            maxObjectDepth: cfg.maxObjectDepth,
+            maxObjectSize: cfg.maxObjectSize,
+            context: window,
+            upload: false,
+            aborted: false,
+        };
+        Object.keys(oDefaultOptions).forEach(sOption =>
+            oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
 
-    /**
-     * The content type designated in the header of the request.
-     */
-    defaultContentType: 'application/x-www-form-urlencoded',
-
-    /**
-     * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
-     */
-    defaultResponseDelayTime: 1000,
-
-    /**
-     * Always convert the reponse content to json.
-     */
-    convertResponseToJson: true,
-
-    /**
-     * The amount of time to wait, in milliseconds, before a request is considered expired.
-     * This is used to trigger the <jaxon.callback.onExpiration event.
-     */
-    defaultExpirationTime: 10000,
-
-    /**
-     * The method used to send requests to the server.
-     * - 'POST': Generate a form POST request
-     * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
-     */
-    defaultMethod: 'POST', // W3C: Method is case sensitive
-
-    /**
-     * The number of times a request should be retried if it expires.
-     */
-    defaultRetry: 5,
-
-    /**
-     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
-     * does not specify the return value.
-     */
-    defaultReturnValue: false,
-
-    /**
-     * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
-     */
-    maxObjectDepth: 20,
-
-    /**
-     * The maximum number of members allowed when serializing objects to be sent to the server in a request.
-     */
-    maxObjectSize: 2000,
-
-    /**
-     * The maximum number of commands allowed in a single response.
-     */
-    commandQueueSize: 1000,
-
-    /**
-     * The maximum number of requests that can be processed simultaneously.
-     */
-    requestQueueSize: 1000,
+        oRequest.method = oRequest.method.toUpperCase();
+        if (oRequest.method !== 'GET') {
+            oRequest.method = 'POST'; // W3C: Method is case sensitive
+        }
+        oRequest.requestRetry = oRequest.retry;
+    };
 
     /**
      * Class: jaxon.config.status
@@ -187,49 +244,49 @@ jaxon.config = {
      * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
      * to customize the status bar messages prior to sending jaxon requests.
      */
-    status: {
+    cfg.status = {
         /**
-         * Constructs and returns a set of event handlers that will be called by the
+         * A set of event handlers that will be called by the
          * jaxon framework to set the status bar messages.
          *
-         * @returns {object}
+         * @type {object}
          */
-        update: () => ({
+        update: {
             onRequest: () => console.log('Sending Request...'),
             onWaiting: () => console.log('Waiting for Response...'),
             onProcessing: () => console.log('Processing...'),
             onComplete: () => console.log('Done.'),
-        }),
+        },
 
         /**
-         * Constructs and returns a set of event handlers that will be called by the
+         * A set of event handlers that will be called by the
          * jaxon framework where status bar updates would normally occur.
          *
-         * @returns {object}
+         * @type {object}
          */
-        dontUpdate: () =>({
+        dontUpdate: {
             onRequest: () => {},
             onWaiting: () => {},
             onProcessing: () => {},
             onComplete: () => {}
-        }),
-    },
+        },
+    };
 
     /**
      * Class: jaxon.config.cursor
      *
      * Provides the base functionality for updating the browser's cursor during requests.
-     * By splitting this functionalityh into an object of it's own, jaxon developers can now
+     * By splitting this functionality into an object of it's own, jaxon developers can now
      * customize the functionality prior to submitting requests.
      */
-    cursor: {
+    cfg.cursor = {
         /**
          * Constructs and returns a set of event handlers that will be called by the
          * jaxon framework to effect the status of the cursor during requests.
          *
-         * @returns {object}
+         * @type {object}
          */
-        update: () => ({
+        update: {
             onWaiting: () => {
                 if (jaxon.config.baseDocument.body) {
                     jaxon.config.baseDocument.body.style.cursor = 'wait';
@@ -240,83 +297,20 @@ jaxon.config = {
                     jaxon.config.baseDocument.body.style.cursor = 'auto';
                 }
             }
-        }),
+        },
 
         /**
          * Constructs and returns a set of event handlers that will be called by the jaxon framework
          * where cursor status changes would typically be made during the handling of requests.
          *
-         * @returns {object}
+         * @type {object}
          */
-        dontUpdate: () => ({
+        dontUpdate: {
             onWaiting: () => {},
             onComplete: () => {}
-        }),
-    },
-};
-
-/**
- * Class: jaxon.ajax.message
- */
-jaxon.ajax.message = {
-    /**
-     * Print a success message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    success: (content, title) => alert(content),
-
-    /**
-     * Print an info message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    info: (content, title) => alert(content),
-
-    /**
-     * Print a warning message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    warning: (content, title) => alert(content),
-
-    /**
-     * Print an error message on the screen.
-     *
-     * @param {string} content The message content.
-     * @param {string} title The message title.
-     *
-     * @returns {void}
-     */
-    error: (content, title) => alert(content),
-
-    /**
-     * Ask a confirm question to the user.
-     *
-     * @param {string} question The confirm question.
-     * @param {string} title The confirm title.
-     * @param {callable} yesCallback The function to call if the user answers yesn.
-     * @param {callable} noCallback The function to call if the user answers no.
-     *
-     * @returns {void}
-     */
-    confirm: (question, title, yesCallback, noCallback) => {
-        if(confirm(question)) {
-            yesCallback();
-            return;
-        }
-        noCallback && noCallback();
-    },
-};
+        },
+    };
+})(jaxon.config);
 
 
 /**
@@ -882,7 +876,7 @@ jaxon.ajax.message = {
      *
      * @var {array}
      */
-    self.aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
+    const aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
         'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
@@ -891,6 +885,39 @@ jaxon.ajax.message = {
      * @var {object}
      */
     self.callback = self.create();
+
+    /**
+     * Move all the callbacks defined directly in the oRequest object to the
+     * oRequest.callback property, which may then be converted to an array.
+     *
+     * @param {object} oRequest
+     *
+     * @return {void}
+     */
+    self.initCallbacks = (oRequest) => {
+        const callback = self.create();
+
+        let callbackFound = false;
+        aCallbackNames.forEach(sName => {
+            if (oRequest[sName] !== undefined) {
+                callback[sName] = oRequest[sName];
+                callbackFound = true;
+                delete oRequest[sName];
+            }
+        });
+
+        if (oRequest.callback === undefined) {
+            oRequest.callback = callback;
+            return;
+        }
+        // Add the timers attribute, if it is not defined.
+        if (oRequest.callback.timers === undefined) {
+            oRequest.callback.timers = {};
+        }
+        if (callbackFound) {
+            oRequest.callback = [oRequest.callback, callback];
+        }
+    };
 
     /**
      * Get a flatten array of callbacks
@@ -1067,9 +1094,12 @@ jaxon.ajax.message = {
      *
      * @returns {object|null}
      */
-    self.popAsyncRequest = oQueue =>
-        queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
-        null : queue.pop(oQueue);
+    self.popAsyncRequest = oQueue => {
+        if (queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous') {
+            return null;
+        }
+        return queue.pop(oQueue);
+    }
 
     /**
      * Maintains a retry counter for the given object.
@@ -1081,15 +1111,13 @@ jaxon.ajax.message = {
      * @returns {false} The object has exhausted the retry count specified.
      */
     self.retry = (command, count) => {
-        let retries = command.retries;
-        if(retries) {
-            if(1 > --retries) {
+        if(command.retries > 0) {
+            if(--command.retries < 1) {
                 return false;
             }
         } else {
-            retries = count;
+            command.retries = count;
         }
-        command.retries = retries;
         // This command must be processed again.
         command.requeue = true;
         return true;
@@ -1218,6 +1246,18 @@ jaxon.ajax.message = {
     };
 
     /**
+     * Make the databag object to send in the HTTP request.
+     *
+     * @param {array} aKeys The keys of values to get from the data bag.
+     *
+     * @return {object}
+     */
+    const getBagsParam = (aKeys) => JSON.stringify(aKeys.reduce((oValues, sKey) => ({
+        ...oValues,
+        [sKey]: self.bags[sKey] ?? '*' }
+    ), {}));
+
+    /**
      * Sets the request parameters in a container.
      *
      * @param {object} oRequest The request object
@@ -1229,7 +1269,8 @@ jaxon.ajax.message = {
      * @return {void}
      */
     const setParams = ({ func, parameters, bags = [] }, fSetter) => {
-        fSetter('jxnr', self.dNow.getTime());
+        const dNow = new Date();
+        fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
         Object.keys(func).forEach(sParam => fSetter(sParam, encodeURIComponent(func[sParam])));
@@ -1239,8 +1280,7 @@ jaxon.ajax.message = {
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
-        bags.length > 0 && fSetter('jxnbags', stringify(bags.reduce((oValues, sKey) =>
-            ({ ...oValues, [sKey]: self.bags[sKey] ?? '*' }), {})));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsParam(bags)));
     };
 
     /**
@@ -1294,20 +1334,18 @@ jaxon.ajax.message = {
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *
+     * Note:
+     * This is called once per request; upon a request failure, this will not be called for additional retries.
+     *
      * @param {object} oRequest The request object
      *
      * @return {void}
-     *
-     * Note:
-     * This is called once per request; upon a request failure, this will not be called for additional retries.
      */
     self.process = (oRequest) => {
         // Make request parameters.
-        self.dNow = new Date();
         oRequest.requestURI = oRequest.URI;
         oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-        delete self.dNow;
     };
 })(jaxon.ajax.parameters, jaxon.version);
 
@@ -1316,115 +1354,50 @@ jaxon.ajax.message = {
  * Class: jaxon.ajax.request
  */
 
-(function(self, cfg, params, rsp, cbk, handler, upload, queue, window) {
-    /**
-     * Move all the callbacks defined directly in the oRequest object to the
-     * oRequest.callback property, which may then be converted to an array.
-     *
-     * @param {object} oRequest
-     *
-     * @return {void}
-     */
-    const initCallbacks = (oRequest) => {
-        const callback = cbk.create();
-
-        let callbackFound = false;
-        cbk.aCallbackNames.forEach(sName => {
-            if (oRequest[sName] !== undefined) {
-                callback[sName] = oRequest[sName];
-                callbackFound = true;
-                delete oRequest[sName];
-            }
-        });
-
-        if (oRequest.callback === undefined) {
-            oRequest.callback = callback;
-            return;
-        }
-        // Add the timers attribute, if it is not defined.
-        if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = {};
-        }
-        if (callbackFound) {
-            oRequest.callback = [oRequest.callback, callback];
-        }
-    };
-
+(function(self, cfg, params, rsp, cbk, handler, upload, queue) {
     /**
      * Initialize a request object, populating default settings, where call specific
      * settings are not already provided.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
-     * in addition, be used to store all request related values.
-     * This includes temporary values used internally by jaxon.
+     *      in addition, be used to store all request related values.
+     *      This includes temporary values used internally by jaxon.
      *
-     * @returns {void}
+     * @returns {boolean}
      */
     const initialize = (oRequest) => {
-        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
+        cfg.setRequestOptions(oRequest);
 
-        const oOptions = {
-            statusMessages: cfg.statusMessages,
-            waitCursor: cfg.waitCursor,
-            mode: cfg.defaultMode,
-            method: cfg.defaultMethod,
-            URI: cfg.requestURI,
-            httpVersion: cfg.defaultHttpVersion,
-            contentType: cfg.defaultContentType,
-            convertResponseToJson: cfg.convertResponseToJson,
-            retry: cfg.defaultRetry,
-            returnValue: cfg.defaultReturnValue,
-            maxObjectDepth: cfg.maxObjectDepth,
-            maxObjectSize: cfg.maxObjectSize,
-            context: window,
-            upload: false,
-            aborted: false,
-        };
-        Object.keys(oOptions).forEach(sOption => oRequest[sOption] = oRequest[sOption] ?? oOptions[sOption]);
+        cbk.initCallbacks(oRequest);
 
-        initCallbacks(oRequest);
-
-        oRequest.status = (oRequest.statusMessages) ? cfg.status.update() : cfg.status.dontUpdate();
-
-        oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update() : cfg.cursor.dontUpdate();
-
-        oRequest.method = oRequest.method.toUpperCase();
-        if (oRequest.method !== 'GET') {
-            oRequest.method = 'POST'; // W3C: Method is case sensitive
-        }
-        oRequest.requestRetry = oRequest.retry;
+        oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
+        oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
 
         // Look for upload parameter
         upload.initialize(oRequest);
 
-        if (oRequest.URI === undefined) {
-            throw { code: 10005 };
-        }
-    };
+        // Process the request parameters
+        params.process(oRequest);
 
-    /**
-     * Prepares the XMLHttpRequest object for this jaxon request.
-     *
-     * @param {object} oRequest An object created by a call to <jaxon.ajax.request.initialize>
-     * which already contains the necessary parameters and temporary variables needed to
-     * initiate and process a jaxon request.
-     *
-     * Note:
-     * This is called each time a request object is being prepared for a call to the server.
-     * If the request is retried, the request must be prepared again.
-     *
-     * @returns {boolean}
-     */
-    const prepare = (oRequest) => {
         cbk.execute(oRequest, 'onPrepare');
 
-        // Check if the request must be aborted
-        if (oRequest.aborted === true) {
-            return false;
-        }
+        oRequest.httpRequestOptions = {
+            ...cfg.httpRequestOptions,
+            method: oRequest.method,
+            headers: {
+                ...oRequest.commonHeaders,
+                ...(oRequest.method === 'POST' ? oRequest.postHeaders : oRequest.getHeaders),
+            },
+            body: oRequest.requestData,
+        };
 
-        oRequest.responseHandler = function(responseContent) {
+        oRequest.responseConverter = (response) => {
+            // Save the reponse object
+            oRequest.response = response;
+            // Get the response content
+            return oRequest.convertResponseToJson ? response.json() : response.text();
+        };
+        oRequest.responseHandler = (responseContent) => {
             oRequest.responseContent = responseContent;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
@@ -1434,6 +1407,13 @@ jaxon.ajax.message = {
                 queue.push(handler.q.recv, oRequest);
             }
         };
+        oRequest.errorHandler = (error) => {
+            cbk.execute(oRequest, 'onFailure');
+            throw error;
+        };
+        if (!oRequest.responseProcessor) {
+            oRequest.responseProcessor = rsp.jsonProcessor;
+        }
 
         // No request is submitted while there are pending requests in the outgoing queue.
         const submitRequest = queue.empty(handler.q.send);
@@ -1449,6 +1429,62 @@ jaxon.ajax.message = {
     };
 
     /**
+     * Clean up the request object.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    const cleanUp = (oRequest) => {
+        // clean up -- these items are restored when the request is initiated
+        delete oRequest.func;
+        delete oRequest.URI;
+        delete oRequest.requestURI;
+        delete oRequest.requestData;
+        delete oRequest.requestRetry;
+        delete oRequest.httpRequestOptions;
+        delete oRequest.responseHandler;
+        delete oRequest.responseConverter;
+        delete oRequest.responseContent;
+        delete oRequest.response;
+        delete oRequest.errorHandler;
+    };
+
+    /**
+     * Called by the response command queue processor when all commands have been processed.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    self.complete = (oRequest) => {
+        cbk.execute(oRequest, 'onComplete');
+        oRequest.cursor.onComplete();
+        oRequest.status.onComplete();
+
+        cleanUp(oRequest);
+
+        // All the requests and responses queued while waiting must now be processed.
+        if(oRequest.mode === 'synchronous') {
+            // Remove the current request from the send and recv queues.
+            queue.pop(handler.q.send);
+            queue.pop(handler.q.recv);
+            // Process the asynchronous responses received while waiting.
+            while((recvRequest = handler.popAsyncRequest(handler.q.recv)) !== null) {
+                rsp.received(recvRequest);
+            }
+            // Submit the asynchronous requests sent while waiting.
+            while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
+                self.submit(nextRequest);
+            }
+            // Submit the next synchronous request, if there's any.
+            if((nextRequest = queue.peek(handler.q.send)) !== null) {
+                self.submit(nextRequest);
+            }
+        }
+    };
+
+    /**
      * Create a request object and submit the request using the specified request type;
      * all request parameters should be finalized by this point.
      * Upon failure of a POST, this function will fall back to a GET request.
@@ -1458,6 +1494,7 @@ jaxon.ajax.message = {
      * @returns {mixed}
      */
     const submit = (oRequest) => {
+        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -1467,32 +1504,10 @@ jaxon.ajax.message = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        const headers = {
-            ...oRequest.commonHeaders,
-            ...(oRequest.method === 'POST' ? oRequest.postHeaders : oRequest.getHeaders),
-        };
-
-        const oOptions = {
-            method: oRequest.method,
-            mode: "cors", // no-cors, *cors, same-origin
-            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: "same-origin", // include, *same-origin, omit
-            redirect: "manual", // manual, *follow, error
-            headers,
-            body: oRequest.requestData,
-        };
-        fetch(oRequest.requestURI, oOptions)
-            .then(response => {
-                // Save the reponse object
-                oRequest.response = response;
-                // Get the response content
-                return oRequest.convertResponseToJson ? response.json() : response.text();
-            })
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.responseConverter)
             .then(oRequest.responseHandler)
-            .catch(error => {
-                cbk.execute(oRequest, 'onFailure');
-                throw error;
-            });
+            .catch(oRequest.errorHandler);
 
         return oRequest.returnValue;
     };
@@ -1506,18 +1521,17 @@ jaxon.ajax.message = {
      */
     self.abort = (oRequest) => {
         oRequest.aborted = true;
-        oRequest.request.abort();
-        rsp.complete(oRequest);
+        self.complete(oRequest);
     };
 
     /**
      * Initiates a request to the server.
      *
      * @param {object} func An object containing the name of the function to
-     * execute on the server. The standard request is: {jxnfun:'function_name'}
+     *      execute on the server. The standard request is: {jxnfun:'function_name'}
      * @param {object=} funcArgs A request object which may contain call specific parameters.
-     * This object will be used by jaxon to store all the request parameters as well as
-     * temporary variables needed during the processing of the request.
+     *      This object will be used by jaxon to store all the request parameters as well as
+     *      temporary variables needed during the processing of the request.
      *
      * @returns {boolean}
      */
@@ -1529,13 +1543,13 @@ jaxon.ajax.message = {
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        initialize(oRequest);
-        params.process(oRequest);
+        if (!initialize(oRequest)) {
+            return true;
+        }
 
         while (oRequest.requestRetry > 0) {
             try {
-                if (prepare(oRequest)) {
-                    --oRequest.requestRetry;
+                if (!oRequest.aborted) {
                     return submit(oRequest);
                 }
                 return null;
@@ -1550,146 +1564,14 @@ jaxon.ajax.message = {
         return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue, window);
+    jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue);
 
 
 /**
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue, window, console) {
-    /**
-     * Called by the response command queue processor when all commands have been processed.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @return {void}
-     */
-    self.complete = (oRequest) => {
-        cbk.execute(oRequest, 'onComplete');
-        oRequest.cursor.onComplete();
-        oRequest.status.onComplete();
-        // clean up -- these items are restored when the request is initiated
-        delete oRequest['func'];
-        delete oRequest['requestURI'];
-        delete oRequest['requestData'];
-        delete oRequest['requestRetry'];
-        delete oRequest['request'];
-        delete oRequest['responseHandler '];
-        delete oRequest['responseContent'];
-        delete oRequest['response'];
-        delete oRequest['sequence'];
-        delete oRequest['status'];
-        delete oRequest['cursor'];
-
-        // All the requests queued while waiting must now be processed.
-        if(oRequest.mode === 'synchronous') {
-            // Remove the current request from the send and recv queues.
-            queue.pop(handler.q.send);
-            queue.pop(handler.q.recv);
-            // Process the asynchronous requests received while waiting.
-            while((recvRequest = handler.popAsyncRequest(handler.q.recv)) !== null) {
-                received(recvRequest);
-            }
-            // Submit the asynchronous requests sent while waiting.
-            while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
-                req.submit(nextRequest);
-            }
-            // Submit the next synchronous request, if there's any.
-            if((nextRequest = queue.peek(handler.q.send)) !== null) {
-                req.submit(nextRequest);
-            }
-        }
-    };
-
-    /**
-     * Process a single command
-     * 
-     * @param {object} command The command to process
-     *
-     * @returns {boolean}
-     */
-    const processCommand = (command) => {
-        try {
-            if (handler.execute(command) !== false) {
-                return true;
-            }
-            if (!command.requeue) {
-                // No need. The pop() function had already removed the command from the queue.
-                // delete command;
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
-        } catch (e) {
-            console.log(e);
-        }
-        // No need. The pop() function had already removed the command from the queue.
-        // delete command;
-        return true;
-    };
-
-    /**
-     * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
-     *
-     * @param {object} commandQueue A queue containing the commands to execute.
-     * This should have been created by calling <queue.create>.
-     *
-     * @returns {true} The queue was fully processed and is now empty.
-     * @returns {false} The queue processing was halted before the queue was fully processed.
-     *
-     * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
-     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-     */
-    const processCommands = (commandQueue) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
-        let command = null;
-        while ((command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(command)) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    /**
-     * Parse the JSON response into a series of commands.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @return {void}
-     */
-    const queueCommands = (oRequest) => {
-        const nodes = oRequest.responseContent;
-        if (!nodes || !nodes.jxnobj) {
-            return;
-        }
-
-        oRequest.status.onProcessing();
-
-        if (nodes.jxnrv) {
-            oRequest.returnValue = nodes.jxnrv;
-        }
-
-        nodes.debugmsg && console.log(nodes.debugmsg);
-
-        nodes.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
-            ...command,
-            fullName: '*unknown*',
-            sequence: oRequest.sequence++,
-            response: oRequest.commandQueue,
-            request: oRequest,
-            context: oRequest.context,
-        }));
-    };
-
+(function(self, config, handler, req, cbk, queue) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -1698,7 +1580,7 @@ jaxon.ajax.message = {
      *
      * @var {array}
      */
-    // const successCodes = [0, 200];
+    const successCodes = [0, 200];
 
     // 10.4.1 400 Bad Request
     // 10.4.2 401 Unauthorized
@@ -1754,44 +1636,126 @@ jaxon.ajax.message = {
     const redirectCodes = [301, 302, 307];
 
     /**
+     * An object that will hold temp vars
+     *
+     * @type {object}
+     */
+    const _temp = {};
+
+    /**
+     * Parse the JSON response into a series of commands.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    const queueCommands = (oRequest) => {
+        const responseContent = oRequest.responseContent;
+        if (!responseContent || !responseContent.jxnobj) {
+            return;
+        }
+
+        oRequest.status.onProcessing();
+
+        if (responseContent.jxnrv) {
+            oRequest.returnValue = responseContent.jxnrv;
+        }
+
+        responseContent.debugmsg && console.log(responseContent.debugmsg);
+
+        _temp.sequence = 0;
+        responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
+            ...command,
+            fullName: '*unknown*',
+            sequence: _temp.sequence++,
+            response: oRequest.commandQueue,
+            request: oRequest,
+            context: oRequest.context,
+        }));
+        // Queue a last command to clear the queue
+        queue.push(oRequest.commandQueue, {
+            fullName: 'Response Complete',
+            sequence: _temp.sequence,
+            request: oRequest,
+            context: oRequest.context,
+            cmd: 'rcmplt',
+        });
+    };
+
+    /**
+     * Process a single command
+     * 
+     * @param {object} commandQueue A queue containing the commands to execute.
+     * @param {object} command The command to process
+     *
+     * @returns {boolean}
+     */
+    const processCommand = (commandQueue, command) => {
+        try {
+            if (handler.execute(command) === true || !command.requeue) {
+                return true;
+            }
+            queue.pushFront(commandQueue, command);
+            return false;
+        } catch (e) {
+            console.log(e);
+        }
+        return true;
+    };
+
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When a command returns false, the processing is halted.
+     *
+     * Note:
+     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
+     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     *
+     * @param {object} oRequest The request context object.
+     * @param {object} oRequest.commandQueue A queue containing the commands to execute.
+     *
+     * @returns {true} The queue was fully processed and is now empty.
+     * @returns {false} The queue processing was halted before the queue was fully processed.
+     */
+    const processCommands = ({ commandQueue }) => {
+        if (commandQueue.timeout !== null) {
+            clearTimeout(commandQueue.timeout);
+            commandQueue.timeout = null;
+        }
+
+        while ((_temp.command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(commandQueue, _temp.command)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    /**
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
      *
      * @return {mixed}
      */
-    const jsonProcessor = (oRequest) => {
-        if (oRequest.response.ok) {
+    self.jsonProcessor = (oRequest) => {
+        if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
             cbk.execute(oRequest, 'onSuccess');
-
-            oRequest.sequence = 0;
+            // Queue and process the commands in the response.
             queueCommands(oRequest)
-
-            // Queue a last command to clear the queue
-            queue.push(oRequest.commandQueue, {
-                fullName: 'Response Complete',
-                sequence: oRequest.sequence,
-                request: oRequest,
-                context: oRequest.context,
-                cmd: 'rcmplt',
-            });
-
-            // do not re-start the queue if a timeout is set
-            if (!oRequest.commandQueue.timeout) {
-                // Process the commands in the queue
-                processCommands(oRequest.commandQueue);
-            }
+            processCommands(oRequest);
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onRedirect');
+            req.complete(oRequest);
             window.location = oRequest.response.headers.get('location');
-            self.complete(oRequest);
             return oRequest.returnValue;
         }
         if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onFailure');
-            self.complete(oRequest);
+            req.complete(oRequest);
             return oRequest.returnValue;
         }
         return oRequest.returnValue;
@@ -1805,23 +1769,23 @@ jaxon.ajax.message = {
      * @return {mixed}
      */
     self.received = (oRequest) => {
-        // sometimes the responseReceived gets called when the request is aborted
+        // Sometimes the response.received gets called when the request is aborted
         if (oRequest.aborted) {
             return null;
         }
 
-        // Create a response queue for this request.
+        // Create a queue for the commands in the response.
         oRequest.commandQueue = queue.create(config.commandQueueSize);
 
+        // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
         cbk.clearTimer(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'beforeResponseProcessing');
 
-        const fProc = oRequest.responseProcessor ?? jsonProcessor;
-        return fProc(oRequest);
+        return oRequest.responseProcessor(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue, window, console);
+    jaxon.ajax.callback, jaxon.utils.queue);
 
 
 /**
@@ -2740,11 +2704,11 @@ jaxon.js = jaxon.cmd.script;
 jaxon.isLoaded = true;
 
 /**
- * Register the command handlers provided by the library.
+ * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, response, cmd) {
+(function(register, cmd, ajax) {
     register('rcmplt', ({ request }) => {
-        response.complete(request);
+        ajax.request.complete(request);
         return true;
     }, 'Response complete');
 
@@ -2789,7 +2753,70 @@ jaxon.isLoaded = true;
         console.log(message);
         return true;
     }, 'Debug message');
-})(jaxon.register, jaxon.ajax.response, jaxon.cmd);
+
+    /**
+     * Class: jaxon.ajax.message
+     */
+    ajax.message = {
+        /**
+         * Print a success message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        success: (content, title) => alert(content),
+
+        /**
+         * Print an info message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        info: (content, title) => alert(content),
+
+        /**
+         * Print a warning message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        warning: (content, title) => alert(content),
+
+        /**
+         * Print an error message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        error: (content, title) => alert(content),
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {string} question The confirm question.
+         * @param {string} title The confirm title.
+         * @param {callable} yesCallback The function to call if the user answers yesn.
+         * @param {callable} noCallback The function to call if the user answers no.
+         *
+         * @returns {void}
+         */
+        confirm: (question, title, yesCallback, noCallback) => {
+            if(confirm(question)) {
+                yesCallback();
+                return;
+            }
+            noCallback && noCallback();
+        },
+    };
+})(jaxon.register, jaxon.cmd, jaxon.ajax);
 
 
 /**

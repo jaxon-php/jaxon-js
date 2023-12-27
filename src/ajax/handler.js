@@ -104,9 +104,12 @@
      *
      * @returns {object|null}
      */
-    self.popAsyncRequest = oQueue =>
-        queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous' ?
-        null : queue.pop(oQueue);
+    self.popAsyncRequest = oQueue => {
+        if (queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous') {
+            return null;
+        }
+        return queue.pop(oQueue);
+    }
 
     /**
      * Maintains a retry counter for the given object.
@@ -118,15 +121,13 @@
      * @returns {false} The object has exhausted the retry count specified.
      */
     self.retry = (command, count) => {
-        let retries = command.retries;
-        if(retries) {
-            if(1 > --retries) {
+        if(command.retries > 0) {
+            if(--command.retries < 1) {
                 return false;
             }
         } else {
-            retries = count;
+            command.retries = count;
         }
-        command.retries = retries;
         // This command must be processed again.
         command.requeue = true;
         return true;

@@ -44,11 +44,11 @@ jaxon.js = jaxon.cmd.script;
 jaxon.isLoaded = true;
 
 /**
- * Register the command handlers provided by the library.
+ * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, response, cmd) {
+(function(register, cmd, ajax) {
     register('rcmplt', ({ request }) => {
-        response.complete(request);
+        ajax.request.complete(request);
         return true;
     }, 'Response complete');
 
@@ -93,4 +93,67 @@ jaxon.isLoaded = true;
         console.log(message);
         return true;
     }, 'Debug message');
-})(jaxon.register, jaxon.ajax.response, jaxon.cmd);
+
+    /**
+     * Class: jaxon.ajax.message
+     */
+    ajax.message = {
+        /**
+         * Print a success message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        success: (content, title) => alert(content),
+
+        /**
+         * Print an info message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        info: (content, title) => alert(content),
+
+        /**
+         * Print a warning message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        warning: (content, title) => alert(content),
+
+        /**
+         * Print an error message on the screen.
+         *
+         * @param {string} content The message content.
+         * @param {string} title The message title.
+         *
+         * @returns {void}
+         */
+        error: (content, title) => alert(content),
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {string} question The confirm question.
+         * @param {string} title The confirm title.
+         * @param {callable} yesCallback The function to call if the user answers yesn.
+         * @param {callable} noCallback The function to call if the user answers no.
+         *
+         * @returns {void}
+         */
+        confirm: (question, title, yesCallback, noCallback) => {
+            if(confirm(question)) {
+                yesCallback();
+                return;
+            }
+            noCallback && noCallback();
+        },
+    };
+})(jaxon.register, jaxon.cmd, jaxon.ajax);

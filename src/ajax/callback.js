@@ -43,7 +43,7 @@
      *
      * @var {array}
      */
-    self.aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
+    const aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
         'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
@@ -52,6 +52,39 @@
      * @var {object}
      */
     self.callback = self.create();
+
+    /**
+     * Move all the callbacks defined directly in the oRequest object to the
+     * oRequest.callback property, which may then be converted to an array.
+     *
+     * @param {object} oRequest
+     *
+     * @return {void}
+     */
+    self.initCallbacks = (oRequest) => {
+        const callback = self.create();
+
+        let callbackFound = false;
+        aCallbackNames.forEach(sName => {
+            if (oRequest[sName] !== undefined) {
+                callback[sName] = oRequest[sName];
+                callbackFound = true;
+                delete oRequest[sName];
+            }
+        });
+
+        if (oRequest.callback === undefined) {
+            oRequest.callback = callback;
+            return;
+        }
+        // Add the timers attribute, if it is not defined.
+        if (oRequest.callback.timers === undefined) {
+            oRequest.callback.timers = {};
+        }
+        if (callbackFound) {
+            oRequest.callback = [oRequest.callback, callback];
+        }
+    };
 
     /**
      * Get a flatten array of callbacks
