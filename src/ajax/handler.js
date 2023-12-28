@@ -139,41 +139,51 @@
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param {object} response The queue to process.
+     * @param {object} commandQueue The queue to process.
      * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
      *
      * @returns {void}
      */
-    self.setWakeup = (response, when) => {
-        if (response.timeout !== null) {
-            clearTimeout(response.timeout);
-            response.timeout = null;
+    self.setWakeup = (commandQueue, when) => {
+        if (commandQueue.timeout !== null) {
+            clearTimeout(commandQueue.timeout);
+            commandQueue.timeout = null;
         }
-        response.timout = setTimeout(() => rsp.process(response), when);
+        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
     };
+
+    /**
+     * Show the specified message.
+     *
+     * @param {string} message The message to display.
+     *
+     * @returns {void}
+     */
+    self.alert = (message) => ajax.message.info(message);
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} command The object to track the retry count for.
+     * @param {object} commandQueue The queue to process.
+     * @param {boolean} requeue True if the last command must be processed again.
      * @param {integer} count The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (command, count) => {
+    const confirmCallback = (commandQueue, requeue, count) => {
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (count > 0 && command.response.count > 1 && queue.pop(command.response) !== null) {
+        while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
             --count;
         }
         // Run a different command depending on whether this callback executes
         // before of after the confirm function returns;
-        if(command.requeue === true) {
+        if(requeue === true) {
             // Before => the processing is delayed.
-            self.setWakeup(command.response, 30);
+            self.setWakeup(commandQueue, 30);
             return;
         }
         // After => the processing is executed.
-        rsp.process(command.response);
+        rsp.process(commandQueue);
     };
 
     /**
@@ -188,17 +198,18 @@
      * @param {integer} count The number of commands to skip.
      * @param {string} question The question to ask to the user.
      *
-     * @returns {boolean}
+     * @returns {void}
      */
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        ajax.message.confirm(question, '', () => confirmCallback(command, 0),
-            () => confirmCallback(command, count));
+        const { response: commandQueue, requeue } = command;
+        ajax.message.confirm(question, '',
+            () => confirmCallback(commandQueue, requeue, 0),
+            () => confirmCallback(commandQueue, requeue, count));
 
         // This command must not be processed again.
         command.requeue = false;
-        return false;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);
