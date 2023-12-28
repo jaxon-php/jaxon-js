@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, msg, queue, dom) {
+(function(self, config, ajax, rsp, queue, dom) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -157,18 +157,13 @@
      *
      * @param {object} command The object to track the retry count for.
      * @param {integer} count The number of commands to skip.
-     * @param {boolean} skip Skip the commands or not.
      *
      * @returns {void}
      */
-    const confirmCallback = (command, count, skip) => {
-        if(skip === true) {
-            // The last entry in the queue is not a user command.
-            // Thus it cannot be skipped.
-            while (count > 0 && command.response.count > 1 &&
-                queue.pop(command.response) !== null) {
-                --count;
-            }
+    const confirmCallback = (command, count) => {
+        // The last entry in the queue is not a user command, thus it cannot be skipped.
+        while (count > 0 && command.response.count > 1 && queue.pop(command.response) !== null) {
+            --count;
         }
         // Run a different command depending on whether this callback executes
         // before of after the confirm function returns;
@@ -198,12 +193,12 @@
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        msg.confirm(question, '', () => confirmCallback(command, count, false),
-            () => confirmCallback(command, count, true));
+        ajax.message.confirm(question, '', () => confirmCallback(command, 0),
+            () => confirmCallback(command, count));
 
         // This command must not be processed again.
         command.requeue = false;
         return false;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.ajax.message,
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);

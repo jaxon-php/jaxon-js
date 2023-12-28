@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.cmd.node
+ * Class: jaxon.cmd.body
  */
 
 (function(self, dom, baseDocument) {
@@ -137,9 +137,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.remove = ({ target: element }) => {
-        if (element && element.parentNode && element.parentNode.removeChild) {
-            element.parentNode.removeChild(element);
-        }
+        dom.removeElement(element);
         return true;
     };
 
@@ -256,4 +254,4 @@
         }
         return true;
     };
-})(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.body, jaxon.utils.dom, jaxon.config.baseDocument);

@@ -38,11 +38,11 @@ var jaxon = {
     },
 
     cmd: {
-        event: {},
-        form: {},
-        node: {},
+        head: {},
+        body: {},
         script: {},
-        style: {},
+        form: {},
+        event: {},
     },
 
     utils: {

@@ -38,11 +38,11 @@ var jaxon = {
     },
 
     cmd: {
-        event: {},
-        form: {},
-        node: {},
+        head: {},
+        body: {},
         script: {},
-        style: {},
+        form: {},
+        event: {},
     },
 
     utils: {
@@ -386,6 +386,22 @@ var jaxon = {
     };
 
     /**
+     * Tests to see if the specified data is the same as the current value of the element's attribute.
+     *
+     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
+     *
+     * @returns {void}
+     */
+    self.removeElement = (element) => {
+        if (typeof element === 'string') {
+            element = self.$(element);
+        }
+        if (element && element.parentNode && element.parentNode.removeChild) {
+            element.parentNode.removeChild(element);
+        }
+    };
+
+    /**
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName The name of the function to find.
@@ -437,12 +453,11 @@ var jaxon = {
         }
 
         try {
-            // const removeTagAfter = funcName === undefined;
             const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
                 'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
 
             // Remove the tag if it already exists.
-            jaxon.cmd.node.remove(scriptTagId);
+            self.removeElement(scriptTagId);
             // Create a new tag.
             const scriptTag = baseDocument.createElement('script');
             scriptTag.setAttribute('id', scriptTagId);
@@ -454,9 +469,6 @@ var jaxon = {
             return false;
         }
 
-        // Since this js code saves the function in a var,
-        // the tag can be removed, and the function will still exist.
-        // removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);
@@ -992,7 +1004,7 @@ var jaxon = {
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, msg, queue, dom) {
+(function(self, config, ajax, rsp, queue, dom) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1147,18 +1159,13 @@ var jaxon = {
      *
      * @param {object} command The object to track the retry count for.
      * @param {integer} count The number of commands to skip.
-     * @param {boolean} skip Skip the commands or not.
      *
      * @returns {void}
      */
-    const confirmCallback = (command, count, skip) => {
-        if(skip === true) {
-            // The last entry in the queue is not a user command.
-            // Thus it cannot be skipped.
-            while (count > 0 && command.response.count > 1 &&
-                queue.pop(command.response) !== null) {
-                --count;
-            }
+    const confirmCallback = (command, count) => {
+        // The last entry in the queue is not a user command, thus it cannot be skipped.
+        while (count > 0 && command.response.count > 1 && queue.pop(command.response) !== null) {
+            --count;
         }
         // Run a different command depending on whether this callback executes
         // before of after the confirm function returns;
@@ -1188,14 +1195,14 @@ var jaxon = {
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        msg.confirm(question, '', () => confirmCallback(command, count, false),
-            () => confirmCallback(command, count, true));
+        ajax.message.confirm(question, '', () => confirmCallback(command, 0),
+            () => confirmCallback(command, count));
 
         // This command must not be processed again.
         command.requeue = false;
         return false;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.ajax.message,
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);
 
 
@@ -1789,6 +1796,265 @@ var jaxon = {
 
 
 /**
+ * Class: jaxon.cmd.body
+ */
+
+(function(self, dom, baseDocument) {
+    /**
+     * Assign an element's attribute to the specified value.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to set.
+     * @param {string} command.data The new value to be applied.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.assign = ({ target: element, prop: property, data }) => {
+        if (property === 'innerHTML') {
+            element.innerHTML = data;
+            return true;
+        }
+        if (property === 'outerHTML') {
+            element.outerHTML = data;
+            return true;
+        }
+
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data;
+        }
+        return true;
+    };
+
+    /**
+     * Append the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute to append to.
+     * @param {string} command.data The new value to be appended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.append = ({ target: element, prop: property, data }) => {
+        if (property === 'innerHTML') {
+            element.innerHTML = element.innerHTML + data;
+            return true;
+        }
+        if (property === 'outerHTML') {
+            element.outerHTML = element.outerHTML + data;
+            return true;
+        }
+
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = innerElement[innerProperty] + data;
+        }
+        return true;
+    };
+
+    /**
+     * Prepend the specified value to an element's attribute.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The HTML element to effect.
+     * @param {string} command.prop The name of the attribute.
+     * @param {string} command.data The new value to be prepended.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.prepend = ({ target: element, prop: property, data }) => {
+        if (property === 'innerHTML') {
+            element.innerHTML = data + element.innerHTML;
+            return true;
+        }
+        if (property === 'outerHTML') {
+            element.outerHTML = data + element.outerHTML;
+            return true;
+        }
+
+        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data + innerElement[innerProperty];
+        }
+        return true;
+    };
+
+    /**
+     * Replace a text in the value of a given property in an element
+     *
+     * @param {object} xElement The element to search in
+     * @param {string} sProperty The attribute to search in
+     * @param {string} sSearch The text to search
+     * @param {string} sReplace The text to use as replacement
+     *
+     * @returns {void}
+     */
+    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
+        const bFunction = (typeof xElement[sProperty] === 'function');
+        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
+        const sNewText = sCurText.replaceAll(sSearch, sReplace);
+        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
+            xElement[sProperty] = sNewText;
+        }
+    };
+
+    /**
+     * Search and replace the specified text.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which is to be modified.
+     * @param {string} command.prop The name of the attribute to be set.
+     * @param {array} command.data The search text and replacement text.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
+        const sReplace = aData['r'];
+        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
+        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
+        if (innerElement !== null) {
+            replaceText(innerElement, innerProperty, sSearch, sReplace);
+        }
+        return true;
+    };
+
+    /**
+     * Delete an element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will be deleted.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.remove = ({ target: element }) => {
+        dom.removeElement(element);
+        return true;
+    };
+
+    /**
+     * Create a new element and append it to the specified parent element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will contain the new element.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value to be assigned to the id attribute of the new element.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.create = ({ target: element, data: sTag, prop: sId }) => {
+        if (element) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.appendChild(target);
+        }
+        return true;
+    };
+
+    /**
+     * Insert a new element before the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.insert = ({ target: element, data: sTag, prop: sId }) => {
+        if (element && element.parentNode) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.parentNode.insertBefore(target, element);
+        }
+        return true;
+    };
+
+    /**
+     * Insert a new element after the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {string} command.data The tag name for the new element.
+     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.insertAfter = ({ target: element, data: sTag, prop: sId }) => {
+        if (element && element.parentNode) {
+            const target = baseDocument.createElement(sTag);
+            target.setAttribute('id', sId);
+            element.parentNode.insertBefore(target, element.nextSibling);
+        }
+        return true;
+    };
+
+    /**
+     * Assign a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to assign.
+     * @param {string|object} command.data The value to assign to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.contextAssign = ({ context, prop: sAttribute, data }) => {
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data;
+        }
+        return true;
+    };
+
+    /**
+     * Appends a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to append to.
+     * @param {string|object} command.data The value to append to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.contextAppend = ({ context, prop: sAttribute, data }) => {
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = innerElement[innerProperty] + data;
+        }
+        return true;
+    };
+
+    /**
+     * Prepend a value to a named member of the current script context object.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.prop The name of the member to prepend to.
+     * @param {string|object} command.data The value to prepend to the member.
+     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
+        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
+        if (innerElement !== null) {
+            innerElement[innerProperty] = data + innerElement[innerProperty];
+        }
+        return true;
+    };
+})(jaxon.cmd.body, jaxon.utils.dom, jaxon.config.baseDocument);
+
+
+/**
  * Class: jaxon.cmd.event
  */
 
@@ -1949,271 +2215,10 @@ var jaxon = {
 
 
 /**
- * Class: jaxon.cmd.node
+ * Class: jaxon.cmd.head
  */
 
-(function(self, dom, baseDocument) {
-    /**
-     * Assign an element's attribute to the specified value.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute to set.
-     * @param {string} command.data The new value to be applied.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.assign = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
-        }
-        return true;
-    };
-
-    /**
-     * Append the specified value to an element's attribute.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute to append to.
-     * @param {string} command.data The new value to be appended.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.append = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = element.innerHTML + data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = element.outerHTML + data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
-        }
-        return true;
-    };
-
-    /**
-     * Prepend the specified value to an element's attribute.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute.
-     * @param {string} command.data The new value to be prepended.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.prepend = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data + element.innerHTML;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data + element.outerHTML;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
-        }
-        return true;
-    };
-
-    /**
-     * Replace a text in the value of a given property in an element
-     *
-     * @param {object} xElement The element to search in
-     * @param {string} sProperty The attribute to search in
-     * @param {string} sSearch The text to search
-     * @param {string} sReplace The text to use as replacement
-     *
-     * @returns {void}
-     */
-    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sProperty] === 'function');
-        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
-        const sNewText = sCurText.replaceAll(sSearch, sReplace);
-        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
-            xElement[sProperty] = sNewText;
-        }
-    };
-
-    /**
-     * Search and replace the specified text.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
-     * @param {string} command.prop The name of the attribute to be set.
-     * @param {array} command.data The search text and replacement text.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
-        const sReplace = aData['r'];
-        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
-        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
-        if (innerElement !== null) {
-            replaceText(innerElement, innerProperty, sSearch, sReplace);
-        }
-        return true;
-    };
-
-    /**
-     * Delete an element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.remove = ({ target: element }) => {
-        if (element && element.parentNode && element.parentNode.removeChild) {
-            element.parentNode.removeChild(element);
-        }
-        return true;
-    };
-
-    /**
-     * Create a new element and append it to the specified parent element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will contain the new element.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value to be assigned to the id attribute of the new element.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.create = ({ target: element, data: sTag, prop: sId }) => {
-        if (element) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.appendChild(target);
-        }
-        return true;
-    };
-
-    /**
-     * Insert a new element before the specified element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.insert = ({ target: element, data: sTag, prop: sId }) => {
-        if (element && element.parentNode) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.parentNode.insertBefore(target, element);
-        }
-        return true;
-    };
-
-    /**
-     * Insert a new element after the specified element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.insertAfter = ({ target: element, data: sTag, prop: sId }) => {
-        if (element && element.parentNode) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.parentNode.insertBefore(target, element.nextSibling);
-        }
-        return true;
-    };
-
-    /**
-     * Assign a value to a named member of the current script context object.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.prop The name of the member to assign.
-     * @param {string|object} command.data The value to assign to the member.
-     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.contextAssign = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
-        }
-        return true;
-    };
-
-    /**
-     * Appends a value to a named member of the current script context object.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.prop The name of the member to append to.
-     * @param {string|object} command.data The value to append to the member.
-     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.contextAppend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
-        }
-        return true;
-    };
-
-    /**
-     * Prepend a value to a named member of the current script context object.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.prop The name of the member to prepend to.
-     * @param {string|object} command.data The value to prepend to the member.
-     * @param {object} command.context The current script context object which is accessable via the 'this' keyword.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
-        }
-        return true;
-    };
-})(jaxon.cmd.node, jaxon.utils.dom, jaxon.config.baseDocument);
-
-
-/**
- * Class: jaxon.cmd.script
- */
-
-(function(self, handler, msg, dom, baseDocument, window) {
+(function(self, handler, baseDocument) {
     /**
      * Add a reference to the specified script file if one does not already exist in the HEAD of the current document.
      *
@@ -2278,6 +2283,90 @@ var jaxon = {
     };
 
     /**
+     * Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file to reference.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.includeCSS = ({ data: fileName, media = 'screen' }) => {
+        const oHeads = baseDocument.getElementsByTagName('head');
+        const oHead = oHeads[0];
+        const found = oHead.getElementsByTagName('link')
+            .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
+        if (found) {
+            return true;
+        }
+
+        const oCSS = baseDocument.createElement('link');
+        oCSS.rel = 'stylesheet';
+        oCSS.type = 'text/css';
+        oCSS.href = fileName;
+        oCSS.media = media;
+        oHead.appendChild(oCSS);
+        return true;
+    };
+
+    /**
+     * Locate and remove a LINK reference from the current document's HEAD.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.data The URI of the .css file.
+     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.removeCSS = ({ data: fileName, media = 'screen' }) => {
+        const oHeads = baseDocument.getElementsByTagName('head');
+        const oHead = oHeads[0];
+        const oLinks = oHead.getElementsByTagName('link');
+        oLinks.filter(link => link.href.indexOf(fileName) >= 0 && link.media === media)
+            .forEach(link => oHead.removeChild(link));
+        return true;
+    },
+
+    /**
+     * Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
+     * in the HEAD of the current document.
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
+     * @param {object} command.response The Response object.
+     *
+     * @returns {true} The .css files appear to be loaded.
+     * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
+     */
+    self.waitForCSS = (command) => {
+        const oDocSS = baseDocument.styleSheets;
+        const ssLoaded = oDocSS.every(styleSheet => {
+            const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
+            return enabled !== 0;
+        });
+        if (ssLoaded) {
+            return false;
+        }
+
+        // inject a delay in the queue processing
+        // handle retry counter
+        const { prop: duration, response } = command;
+        if (handler.retry(command, duration)) {
+            handler.setWakeup(response, 10);
+            return false;
+        }
+        // Give up, continue processing queue
+        return true;
+    };
+})(jaxon.cmd.head, jaxon.ajax.handler, jaxon.config.baseDocument);
+
+
+/**
+ * Class: jaxon.cmd.script
+ */
+
+(function(self, handler, msg, dom) {
+    /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
      * to execute during this delay.
@@ -2290,14 +2379,13 @@ var jaxon = {
      * @returns {false} The sleep time has not yet expired, continue sleeping.
      */
     self.sleep = (command) => {
-        // inject a delay in the queue processing
-        // handle retry counter
+        // Inject a delay in the queue processing and handle retry counter
         const { prop: duration, response } = command;
         if (handler.retry(command, duration)) {
             handler.setWakeup(response, 100);
             return false;
         }
-        // wake up, continue processing queue
+        // Wake up, continue processing queue
         return true;
     };
 
@@ -2387,13 +2475,12 @@ var jaxon = {
 }`;
 
         if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
-            // inject a delay in the queue processing
-            // handle retry counter
+            // Inject a delay in the queue processing and handle retry counter
             if (handler.retry(command, duration)) {
                 handler.setWakeup(response, 100);
                 return false;
             }
-            // give up, continue processing queue
+            // Give up, continue processing queue
         }
         return true;
     };
@@ -2501,92 +2588,7 @@ var jaxon = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.message, jaxon.utils.dom,
-    jaxon.config.baseDocument, window);
-
-
-/**
- * Class: jaxon.cmd.style
- */
-
-(function(self, handler, baseDocument) {
-    /**
-     * Add a LINK reference to the specified .css file if it does not already exist in the HEAD of the current document.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.data The URI of the .css file to reference.
-     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.add = ({ data: fileName, media = 'screen' }) => {
-        const oHeads = baseDocument.getElementsByTagName('head');
-        const oHead = oHeads[0];
-        const found = oHead.getElementsByTagName('link')
-            .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
-        if (found) {
-            return true;
-        }
-
-        const oCSS = baseDocument.createElement('link');
-        oCSS.rel = 'stylesheet';
-        oCSS.type = 'text/css';
-        oCSS.href = fileName;
-        oCSS.media = media;
-        oHead.appendChild(oCSS);
-        return true;
-    };
-
-    /**
-     * Locate and remove a LINK reference from the current document's HEAD.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.data The URI of the .css file.
-     * @param {string='screen'} command.media The media type of the css file (print/screen/handheld,..)
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.remove = ({ data: fileName, media = 'screen' }) => {
-        const oHeads = baseDocument.getElementsByTagName('head');
-        const oHead = oHeads[0];
-        const oLinks = oHead.getElementsByTagName('link');
-        oLinks.filter(link => link.href.indexOf(fileName) >= 0 && link.media === media)
-            .forEach(link => oHead.removeChild(link));
-        return true;
-    },
-
-    /**
-     * Attempt to detect when all .css files have been loaded once they are referenced by a LINK tag
-     * in the HEAD of the current document.
-     *
-     * @param {object} command The Response command object.
-     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
-     * @param {object} command.response The Response object.
-     *
-     * @returns {true} The .css files appear to be loaded.
-     * @returns {false} The .css files do not appear to be loaded and the timeout has not expired.
-     */
-    self.waitForCSS = (command) => {
-        const oDocSS = baseDocument.styleSheets;
-        const ssLoaded = oDocSS.every(styleSheet => {
-            const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
-            return enabled !== 0;
-        });
-        if (ssLoaded) {
-            return false;
-        }
-
-        // inject a delay in the queue processing
-        // handle retry counter
-        const { prop: duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 10);
-            return false;
-        }
-        // Give up, continue processing queue
-        return true;
-    };
-})(jaxon.cmd.style, jaxon.ajax.handler, jaxon.config.baseDocument);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.message, jaxon.utils.dom);
 
 
 /**
@@ -2712,26 +2714,26 @@ jaxon.isLoaded = true;
         return true;
     }, 'Response complete');
 
-    register('css', cmd.style.add, 'includeCSS');
-    register('rcss', cmd.style.remove, 'removeCSS');
-    register('wcss', cmd.style.waitForCSS, 'waitForCSS');
+    register('ino', cmd.head.includeScriptOnce, 'includeScriptOnce');
+    register('in', cmd.head.includeScript, 'includeScript');
+    register('rjs', cmd.head.removeScript, 'removeScript');
+    register('css', cmd.head.includeCSS, 'includeCSS');
+    register('rcss', cmd.head.removeCSS, 'removeCSS');
+    register('wcss', cmd.head.waitForCSS, 'waitForCSS');
 
-    register('as', cmd.node.assign, 'assign/clear');
-    register('ap', cmd.node.append, 'append');
-    register('pp', cmd.node.prepend, 'prepend');
-    register('rp', cmd.node.replace, 'replace');
-    register('rm', cmd.node.remove, 'remove');
-    register('ce', cmd.node.create, 'create');
-    register('ie', cmd.node.insert, 'insert');
-    register('ia', cmd.node.insertAfter, 'insertAfter');
-    register('c:as', cmd.node.contextAssign, 'context assign');
-    register('c:ap', cmd.node.contextAppend, 'context append');
-    register('c:pp', cmd.node.contextPrepend, 'context prepend');
+    register('as', cmd.body.assign, 'assign/clear');
+    register('ap', cmd.body.append, 'append');
+    register('pp', cmd.body.prepend, 'prepend');
+    register('rp', cmd.body.replace, 'replace');
+    register('rm', cmd.body.remove, 'remove');
+    register('ce', cmd.body.create, 'create');
+    register('ie', cmd.body.insert, 'insert');
+    register('ia', cmd.body.insertAfter, 'insertAfter');
+    register('c:as', cmd.body.contextAssign, 'context assign');
+    register('c:ap', cmd.body.contextAppend, 'context append');
+    register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
     register('s', cmd.script.sleep, 'sleep');
-    register('ino', cmd.script.includeScriptOnce, 'includeScriptOnce');
-    register('in', cmd.script.includeScript, 'includeScript');
-    register('rjs', cmd.script.removeScript, 'removeScript');
     register('wf', cmd.script.waitFor, 'waitFor');
     register('js', cmd.script.execute, 'execute Javascript');
     register('jc', cmd.script.call, 'call js function');
