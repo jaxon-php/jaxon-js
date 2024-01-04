@@ -12,7 +12,8 @@
      *
      * @see <self.$>
      */
-    self.$ = sId => !sId ? null : (typeof sId !== 'string' ? sId : baseDocument.getElementById(sId));
+    self.$ = (sId) => !sId ? null :
+        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.
@@ -64,9 +65,7 @@
      * @returns {false} The specified value is the same as the current value.
      */
     self.willChange = (element, attribute, newData) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         return !element ? false : (newData != element[attribute]);
     };
 
@@ -78,9 +77,7 @@
      * @returns {void}
      */
     self.removeElement = (element) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }

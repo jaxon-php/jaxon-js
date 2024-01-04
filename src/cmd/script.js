@@ -125,16 +125,17 @@
     /**
      * Get function parameters as string
      *
-     * @param {string|object} parameters 
+     * @param {string} parameters 
      */
     const getParameters = (parameters) => {
         if (parameters === undefined) {
             return '';
         }
-        if (Array.isArray(parameters)) {
+        const sType = str.typeOf(parameters);
+        if (sType === 'array') {
             return parameters.join(', ');
         }
-        if (typeof parameters === 'object') {
+        if (sType === 'object') {
             return parameters.values().join(', ');
         }
         return parameters;

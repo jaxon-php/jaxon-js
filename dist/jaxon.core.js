@@ -327,7 +327,8 @@ var jaxon = {
      *
      * @see <self.$>
      */
-    self.$ = sId => !sId ? null : (typeof sId !== 'string' ? sId : baseDocument.getElementById(sId));
+    self.$ = (sId) => !sId ? null :
+        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.
@@ -379,9 +380,7 @@ var jaxon = {
      * @returns {false} The specified value is the same as the current value.
      */
     self.willChange = (element, attribute, newData) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         return !element ? false : (newData != element[attribute]);
     };
 
@@ -393,9 +392,7 @@ var jaxon = {
      * @returns {void}
      */
     self.removeElement = (element) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         if (element && element.parentNode && element.parentNode.removeChild) {
             element.parentNode.removeChild(element);
         }
@@ -758,6 +755,16 @@ var jaxon = {
     };
 
     /**
+     * Get the type of an object. Unlike typeof, this function distinguishes
+     * objects from arrays, and the first letter is capitalized.
+     *
+     * @param {mixed} xObject The object to check
+     *
+     * @returns {string}
+     */
+    self.typeOf = (xObject) => Object.prototype.toString.call(xObject).slice(8, -1).toLowerCase();
+
+    /**
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
@@ -772,9 +779,10 @@ var jaxon = {
         String.prototype.supplant = function(values) {
             return this.replace(
                 /\{([^{}]*)\}/g,
-                function(a, b) {
+                (a, b) => {
                     const r = values[b];
-                    return typeof r === 'string' || typeof r === 'number' ? r : a;
+                    const t = typeof r;
+                    return t === 'string' || t === 'number' ? r : a;
                 }
             );
         };
@@ -1141,41 +1149,51 @@ var jaxon = {
      * This allows the queue to asynchronously wait for an event to occur (giving the browser time
      * to process pending events, like loading files)
      *
-     * @param {object} response The queue to process.
+     * @param {object} commandQueue The queue to process.
      * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
      *
      * @returns {void}
      */
-    self.setWakeup = (response, when) => {
-        if (response.timeout !== null) {
-            clearTimeout(response.timeout);
-            response.timeout = null;
+    self.setWakeup = (commandQueue, when) => {
+        if (commandQueue.timeout !== null) {
+            clearTimeout(commandQueue.timeout);
+            commandQueue.timeout = null;
         }
-        response.timout = setTimeout(() => rsp.process(response), when);
+        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
     };
+
+    /**
+     * Show the specified message.
+     *
+     * @param {string} message The message to display.
+     *
+     * @returns {void}
+     */
+    self.alert = (message) => ajax.message.info(message);
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} command The object to track the retry count for.
+     * @param {object} commandQueue The queue to process.
+     * @param {boolean} requeue True if the last command must be processed again.
      * @param {integer} count The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (command, count) => {
+    const confirmCallback = (commandQueue, requeue, count) => {
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (count > 0 && command.response.count > 1 && queue.pop(command.response) !== null) {
+        while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
             --count;
         }
         // Run a different command depending on whether this callback executes
         // before of after the confirm function returns;
-        if(command.requeue === true) {
+        if(requeue === true) {
             // Before => the processing is delayed.
-            self.setWakeup(command.response, 30);
+            self.setWakeup(commandQueue, 30);
             return;
         }
         // After => the processing is executed.
-        rsp.process(command.response);
+        rsp.process(commandQueue);
     };
 
     /**
@@ -1190,17 +1208,18 @@ var jaxon = {
      * @param {integer} count The number of commands to skip.
      * @param {string} question The question to ask to the user.
      *
-     * @returns {boolean}
+     * @returns {void}
      */
     self.confirm = (command, count, question) => {
         // This will be checked in the callback.
         command.requeue = true;
-        ajax.message.confirm(question, '', () => confirmCallback(command, 0),
-            () => confirmCallback(command, count));
+        const { response: commandQueue, requeue } = command;
+        ajax.message.confirm(question, '',
+            () => confirmCallback(commandQueue, requeue, 0),
+            () => confirmCallback(commandQueue, requeue, count));
 
         // This command must not be processed again.
         command.requeue = false;
-        return false;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);
@@ -1210,7 +1229,7 @@ var jaxon = {
  * Class: jaxon.ajax.parameters
  */
 
-(function(self, version) {
+(function(self, str, version) {
     /**
      * The array of data bags
      *
@@ -1229,8 +1248,8 @@ var jaxon = {
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
-        const sType = typeof oVal;
-        if (sType === 'object') {
+        const sType = str.typeOf(oVal);
+        if (sType === 'object' || sType === 'array') {
             try {
                 return encodeURIComponent(JSON.stringify(oVal));
             } catch (e) {
@@ -1354,7 +1373,7 @@ var jaxon = {
         oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
     };
-})(jaxon.ajax.parameters, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.string, jaxon.version);
 
 
 /**
@@ -2365,7 +2384,7 @@ var jaxon = {
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, msg, dom) {
+(function(self, handler, dom) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -2398,7 +2417,7 @@ var jaxon = {
      * @returns {true} The operation completed successfully.
      */
     self.alert = ({ data: message }) => {
-        msg.info(message);
+        handler.alert(message);
         return true;
     };
 
@@ -2488,16 +2507,17 @@ var jaxon = {
     /**
      * Get function parameters as string
      *
-     * @param {string|object} parameters 
+     * @param {string} parameters 
      */
     const getParameters = (parameters) => {
         if (parameters === undefined) {
             return '';
         }
-        if (Array.isArray(parameters)) {
+        const sType = str.typeOf(parameters);
+        if (sType === 'array') {
             return parameters.join(', ');
         }
-        if (typeof parameters === 'object') {
+        if (sType === 'object') {
             return parameters.values().join(', ');
         }
         return parameters;
@@ -2588,7 +2608,7 @@ var jaxon = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.message, jaxon.utils.dom);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom);
 
 
 /**

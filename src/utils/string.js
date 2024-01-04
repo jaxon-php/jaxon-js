@@ -50,6 +50,16 @@
     };
 
     /**
+     * Get the type of an object. Unlike typeof, this function distinguishes
+     * objects from arrays, and the first letter is capitalized.
+     *
+     * @param {mixed} xObject The object to check
+     *
+     * @returns {string}
+     */
+    self.typeOf = (xObject) => Object.prototype.toString.call(xObject).slice(8, -1).toLowerCase();
+
+    /**
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
@@ -64,9 +74,10 @@
         String.prototype.supplant = function(values) {
             return this.replace(
                 /\{([^{}]*)\}/g,
-                function(a, b) {
+                (a, b) => {
                     const r = values[b];
-                    return typeof r === 'string' || typeof r === 'number' ? r : a;
+                    const t = typeof r;
+                    return t === 'string' || t === 'number' ? r : a;
                 }
             );
         };
