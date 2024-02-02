@@ -144,6 +144,7 @@
      * @returns {mixed}
      */
     const submit = (oRequest) => {
+        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -215,16 +216,15 @@
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
+        cbk.execute(oRequest, 'beforeInitialize');
         initialize(oRequest);
+        cbk.execute(oRequest, 'afterInitialize');
+
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
             try {
-                if (prepare(oRequest)) {
-                    --oRequest.requestRetry;
-                    return submit(oRequest);
-                }
-                return null;
+                return prepare(oRequest) ? submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');

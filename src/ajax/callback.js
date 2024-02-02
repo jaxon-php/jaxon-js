@@ -43,8 +43,9 @@
      *
      * @var {array}
      */
-    self.aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
-        'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
      * The global callback object which is active for every request.
