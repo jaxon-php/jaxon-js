@@ -12,7 +12,8 @@
      *
      * @see <self.$>
      */
-    self.$ = sId => !sId ? null : (typeof sId !== 'string' ? sId : baseDocument.getElementById(sId));
+    self.$ = (sId) => !sId ? null :
+        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.
@@ -64,10 +65,22 @@
      * @returns {false} The specified value is the same as the current value.
      */
     self.willChange = (element, attribute, newData) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         return !element ? false : (newData != element[attribute]);
+    };
+
+    /**
+     * Tests to see if the specified data is the same as the current value of the element's attribute.
+     *
+     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
+     *
+     * @returns {void}
+     */
+    self.removeElement = (element) => {
+        element = self.$(element);
+        if (element && element.parentNode && element.parentNode.removeChild) {
+            element.parentNode.removeChild(element);
+        }
     };
 
     /**
@@ -122,12 +135,11 @@
         }
 
         try {
-            // const removeTagAfter = funcName === undefined;
             const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
                 'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
 
             // Remove the tag if it already exists.
-            jaxon.cmd.node.remove(scriptTagId);
+            self.removeElement(scriptTagId);
             // Create a new tag.
             const scriptTag = baseDocument.createElement('script');
             scriptTag.setAttribute('id', scriptTagId);
@@ -139,9 +151,6 @@
             return false;
         }
 
-        // Since this js code saves the function in a var,
-        // the tag can be removed, and the function will still exist.
-        // removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);

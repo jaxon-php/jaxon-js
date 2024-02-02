@@ -1,6 +1,6 @@
 const $ = require('jquery');
 const {
-    cmd: { node },
+    cmd: { body },
     ajax: { handler },
     utils: { dom },
 } = require('../dist/jaxon.module');
@@ -8,7 +8,7 @@ const {
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    node.assign({
+    body.assign({
         id: 'username',
         target: dom.$('username'),
         prop: 'innerHTML',
@@ -34,7 +34,7 @@ test('Assign element inner html', () => {
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    node.assign({
+    body.assign({
         id: 'username',
         target: dom.$('username'),
         prop: 'outerHTML',

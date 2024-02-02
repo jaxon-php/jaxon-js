@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.parameters
  */
 
-(function(self, version) {
+(function(self, str, version) {
     /**
      * The array of data bags
      *
@@ -21,8 +21,8 @@
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
-        const sType = typeof oVal;
-        if (sType === 'object') {
+        const sType = str.typeOf(oVal);
+        if (sType === 'object' || sType === 'array') {
             try {
                 return encodeURIComponent(JSON.stringify(oVal));
             } catch (e) {
@@ -45,6 +45,18 @@
     };
 
     /**
+     * Make the databag object to send in the HTTP request.
+     *
+     * @param {array} aKeys The keys of values to get from the data bag.
+     *
+     * @return {object}
+     */
+    const getBagsParam = (aKeys) => JSON.stringify(aKeys.reduce((oValues, sKey) => ({
+        ...oValues,
+        [sKey]: self.bags[sKey] ?? '*' }
+    ), {}));
+
+    /**
      * Sets the request parameters in a container.
      *
      * @param {object} oRequest The request object
@@ -56,7 +68,8 @@
      * @return {void}
      */
     const setParams = ({ func, parameters, bags = [] }, fSetter) => {
-        fSetter('jxnr', self.dNow.getTime());
+        const dNow = new Date();
+        fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
         Object.keys(func).forEach(sParam => fSetter(sParam, encodeURIComponent(func[sParam])));
@@ -66,8 +79,7 @@
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
-        bags.length > 0 && fSetter('jxnbags', stringify(bags.reduce((oValues, sKey) =>
-            ({ ...oValues, [sKey]: self.bags[sKey] ?? '*' }), {})));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsParam(bags)));
     };
 
     /**
@@ -121,19 +133,17 @@
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *
+     * Note:
+     * This is called once per request; upon a request failure, this will not be called for additional retries.
+     *
      * @param {object} oRequest The request object
      *
      * @return {void}
-     *
-     * Note:
-     * This is called once per request; upon a request failure, this will not be called for additional retries.
      */
     self.process = (oRequest) => {
         // Make request parameters.
-        self.dNow = new Date();
         oRequest.requestURI = oRequest.URI;
         oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-        delete self.dNow;
     };
-})(jaxon.ajax.parameters, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.string, jaxon.version);
