@@ -896,8 +896,9 @@ var jaxon = {
      *
      * @var {array}
      */
-    const aCallbackNames = ['onPrepare', 'onRequest', 'onResponseDelay', 'onExpiration',
-        'beforeResponseProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
      * The global callback object which is active for every request.
@@ -1569,16 +1570,15 @@ var jaxon = {
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        if (!initialize(oRequest)) {
-            return true;
-        }
+        cbk.execute(oRequest, 'beforeInitialize');
+        initialize(oRequest);
+        cbk.execute(oRequest, 'afterInitialize');
+
+        params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
             try {
-                if (!oRequest.aborted) {
-                    return submit(oRequest);
-                }
-                return null;
+                return prepare(oRequest) ? submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
