@@ -60,9 +60,6 @@ jaxon.isLoaded = true;
     register('ce', cmd.body.create, 'create');
     register('ie', cmd.body.insert, 'insert');
     register('ia', cmd.body.insertAfter, 'insertAfter');
-    register('c:as', cmd.body.contextAssign, 'context assign');
-    register('c:ap', cmd.body.contextAppend, 'context append');
-    register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
     register('s', cmd.script.sleep, 'sleep');
     register('jc', cmd.script.call, 'call js function');
