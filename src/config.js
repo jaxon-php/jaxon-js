@@ -41,7 +41,6 @@ var jaxon = {
         head: {},
         body: {},
         script: {},
-        form: {},
         event: {},
     },
 

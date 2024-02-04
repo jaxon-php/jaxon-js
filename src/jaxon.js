@@ -77,10 +77,6 @@ jaxon.isLoaded = true;
     register('cc', cmd.script.confirm, 'confirm');
     register('rd', cmd.script.redirect, 'redirect');
 
-    register('ci', cmd.form.createInput, 'createInput');
-    register('ii', cmd.form.insertInput, 'insertInput');
-    register('iia', cmd.form.insertInputAfter, 'insertInputAfter');
-
     register('se', cmd.event.setEventHandler, 'setEventHandler');
     register('ae', cmd.event.addEventHandler, 'addEventHandler');
     register('ah', cmd.event.addHandler, 'addHandler');
