@@ -52,13 +52,6 @@ jaxon.isLoaded = true;
         return true;
     }, 'Response complete');
 
-    register('ino', cmd.head.includeScriptOnce, 'includeScriptOnce');
-    register('in', cmd.head.includeScript, 'includeScript');
-    register('rjs', cmd.head.removeScript, 'removeScript');
-    register('css', cmd.head.includeCSS, 'includeCSS');
-    register('rcss', cmd.head.removeCSS, 'removeCSS');
-    register('wcss', cmd.head.waitForCSS, 'waitForCSS');
-
     register('as', cmd.body.assign, 'assign/clear');
     register('ap', cmd.body.append, 'append');
     register('pp', cmd.body.prepend, 'prepend');
