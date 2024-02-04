@@ -128,6 +128,20 @@
     };
 
     /**
+     * Clear an element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element which will be deleted.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.clear = ({ target: element }) => {
+        element.innerHTML = '';
+        return true;
+    };
+
+    /**
      * Delete an element.
      *
      * @param {object} command The Response command object.

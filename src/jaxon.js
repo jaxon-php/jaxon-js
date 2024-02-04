@@ -47,15 +47,17 @@ jaxon.isLoaded = true;
  * Register the command handlers provided by the library, and initialize the message object.
  */
 (function(register, cmd, ajax) {
+    // Pseudo command needed to complete queued commands processing.
     register('rcmplt', ({ request }) => {
         ajax.request.complete(request);
         return true;
     }, 'Response complete');
 
-    register('as', cmd.body.assign, 'assign/clear');
+    register('as', cmd.body.assign, 'assign');
     register('ap', cmd.body.append, 'append');
     register('pp', cmd.body.prepend, 'prepend');
     register('rp', cmd.body.replace, 'replace');
+    register('cl', cmd.body.clear, 'clear');
     register('rm', cmd.body.remove, 'remove');
     register('ce', cmd.body.create, 'create');
     register('ie', cmd.body.insert, 'insert');
