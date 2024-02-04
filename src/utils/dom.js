@@ -6,23 +6,19 @@
     /**
      * Shorthand for finding a uniquely named element within the document.
      *
-     * Note:
-     *     This function uses the <jaxon.config.baseDocument> which allows <jaxon> to operate on the
-     *     main window document as well as documents from contained iframes and child windows.
-     *
      * @param {string} sId - The unique name of the element (specified by the ID attribute)
-     * Not to be confused with the name attribute on form elements.
      *
-     * @returns {object} - The element found or null.
+     * @returns {object} The element found or null.
      *
      * @see <self.$>
      */
-    self.$ = sId => !sId ? null : (typeof sId !== 'string' ? sId : baseDocument.getElementById(sId));
+    self.$ = (sId) => !sId ? null :
+        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.
      *
-     * @returns {object} - The workspace DOM element.
+     * @returns {object} The workspace DOM element.
      */
     const _getWorkspace = () => {
         const elWorkspace = self.$('jaxon_temp_workspace');
@@ -46,9 +42,9 @@
      * Insert the specified string of HTML into the document, then extract it.
      * This gives the browser the ability to validate the code and to apply any transformations it deems appropriate.
      *
-     * @param {string} sValue - A block of html code or text to be inserted into the browser's document.
+     * @param {string} sValue A block of html code or text to be inserted into the browser's document.
      *
-     * @returns {string} - The (potentially modified) html code or text.
+     * @returns {string} The (potentially modified) html code or text.
      */
     self.getBrowserHTML = (sValue) => {
         const elWorkspace = _getWorkspace();
@@ -61,27 +57,39 @@
     /**
      * Tests to see if the specified data is the same as the current value of the element's attribute.
      *
-     * @param {string|object} element - The element or it's unique name (specified by the ID attribute)
-     * @param {string} attribute - The name of the attribute.
-     * @param {string} newData - The value to be compared with the current value of the specified element.
+     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
+     * @param {string} attribute The name of the attribute.
+     * @param {string} newData The value to be compared with the current value of the specified element.
      *
-     * @returns {true} - The specified value differs from the current attribute value.
-     * @returns {false} - The specified value is the same as the current value.
+     * @returns {true} The specified value differs from the current attribute value.
+     * @returns {false} The specified value is the same as the current value.
      */
     self.willChange = (element, attribute, newData) => {
-        if (typeof element === 'string') {
-            element = self.$(element);
-        }
+        element = self.$(element);
         return !element ? false : (newData != element[attribute]);
+    };
+
+    /**
+     * Tests to see if the specified data is the same as the current value of the element's attribute.
+     *
+     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
+     *
+     * @returns {void}
+     */
+    self.removeElement = (element) => {
+        element = self.$(element);
+        if (element && element.parentNode && element.parentNode.removeChild) {
+            element.parentNode.removeChild(element);
+        }
     };
 
     /**
      * Find a function using its name as a string.
      *
-     * @param {string} sFuncName - The name of the function to find.
+     * @param {string} sFuncName The name of the function to find.
      * @param {object} context
      *
-     * @returns {object} - The function
+     * @returns {object|null}
      */
     self.findFunction = function (sFuncName, context = window) {
         const names = sFuncName.split(".");
@@ -95,8 +103,8 @@
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *
-     * @param {object} xElement - The outer element.
-     * @param {string} attribute - The attribute name.
+     * @param {object} xElement The outer element.
+     * @param {string} attribute The attribute name.
      *
      * @returns {array} The inner object and the attribute name in an array.
      */
@@ -117,32 +125,32 @@
      * Create a function by inserting its code in the page using a <script> tag.
      *
      * @param {string} funcCode
-     * @param {string} funcName
+     * @param {string='jaxon.cmd.script.context.delegateCall'} funcName
      * 
      * @returns {boolean}
      */
     self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
         if (!funcCode) {
-            return;
+            return false;
         }
 
-        // const removeTagAfter = funcName === undefined;
-        const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
-            'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
+        try {
+            const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
+                'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
 
-        // Remove the tag if it already exists.
-        jaxon.cmd.node.remove(scriptTagId);
-        // Create a new tag.
-        const scriptTag = baseDocument.createElement('script');
-        scriptTag.setAttribute('id', scriptTagId);
-        scriptTag.textContent = `
+            // Remove the tag if it already exists.
+            self.removeElement(scriptTagId);
+            // Create a new tag.
+            const scriptTag = baseDocument.createElement('script');
+            scriptTag.setAttribute('id', scriptTagId);
+            scriptTag.textContent = `
     ${funcName} = ${funcCode}
 `;
-        baseDocument.body.appendChild(scriptTag);
+            baseDocument.body.appendChild(scriptTag);
+        } catch (e) {
+            return false;
+        }
 
-        // Since this js code saves the function in a var,
-        // the tag can be removed, and the function will still exist.
-        // removeTagAfter && jaxon.cmd.node.remove(scriptTagId);
         return true;
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);

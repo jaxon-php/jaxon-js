@@ -2,9 +2,10 @@
  * Class: jaxon.ajax.parameters
  */
 
-(function(self, version) {
+(function(self, str, version) {
     /**
      * The array of data bags
+     *
      * @type {object}
      */
     self.bags = {};
@@ -12,7 +13,7 @@
     /**
      * Stringify a parameter of an ajax call.
      *
-     * @param {*} oVal - The value to be stringified
+     * @param {mixed} oVal - The value to be stringified
      *
      * @returns {string}
      */
@@ -20,8 +21,8 @@
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
-        const sType = typeof oVal;
-        if (sType === 'object') {
+        const sType = str.typeOf(oVal);
+        if (sType === 'object' || sType === 'array') {
             try {
                 return encodeURIComponent(JSON.stringify(oVal));
             } catch (e) {
@@ -44,29 +45,41 @@
     };
 
     /**
+     * Make the databag object to send in the HTTP request.
+     *
+     * @param {array} aKeys The keys of values to get from the data bag.
+     *
+     * @return {object}
+     */
+    const getBagsParam = (aKeys) => JSON.stringify(aKeys.reduce((oValues, sKey) => ({
+        ...oValues,
+        [sKey]: self.bags[sKey] ?? '*' }
+    ), {}));
+
+    /**
      * Sets the request parameters in a container.
      *
      * @param {object} oRequest The request object
+     * @param {object} oRequest.func The function to call on the server app.
+     * @param {object} oRequest.parameters The parameters to pass to the function.
+     * @param {array=} oRequest.bags The keys of values to get from the data bag.
      * @param {callable} fSetter A function that sets a single parameter
      *
      * @return {void}
      */
-    const setParams = (oRequest, fSetter) => {
-        fSetter('jxnr', oRequest.dNow.getTime());
+    const setParams = ({ func, parameters, bags = [] }, fSetter) => {
+        const dNow = new Date();
+        fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
 
-        Object.keys(oRequest.functionName).forEach(sCommand =>
-            fSetter(sCommand, encodeURIComponent(oRequest.functionName[sCommand])));
-        if (oRequest.parameters) {
-            for (const oVal of oRequest.parameters) {
-                fSetter('jxnargs[]', stringify(oVal));
-            }
-        }
-        if (oRequest.bags) {
-            const oValues = {};
-            oRequest.bags.forEach(sBag => oValues[sBag] = self.bags[sBag] ?? '*')
-            fSetter('jxnbags', stringify(oValues));
-        }
+        Object.keys(func).forEach(sParam => fSetter(sParam, encodeURIComponent(func[sParam])));
+
+        // The parameters value was assigned from the js "arguments" var in a function. So it
+        // is an array-like object, that we need to convert to a real array => [...parameters].
+        // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+        [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
+
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsParam(bags)));
     };
 
     /**
@@ -91,40 +104,46 @@
      *
      * @param {object} oRequest
      *
-     * @return {void}
+     * @return {string}
      */
     const getUrlEncodedParams = (oRequest) => {
         const rd = [];
         setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
-        // Move the parameters to the URL for HTTP GET requests
-        if (oRequest.method === 'GET') {
-            oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
-            oRequest.requestURI += rd.join('&');
-            rd = [];
+        if (oRequest.method === 'POST') {
+            return rd.join('&');
         }
-        return rd.join('&');
+        // Move the parameters to the URL for HTTP GET requests
+        oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
+        oRequest.requestURI += rd.join('&');
+        return ''; // The request body is empty
     };
 
     /**
-     * Function: jaxon.ajax.parameters.process
+     * Check if the request has files to upload.
      *
+     * @param {object} oRequest The request object
+     * @param {object} oRequest.upload The upload object
+     *
+     * @return {boolean}
+     */
+    const hasUpload = ({ upload }) => upload && upload.ajax && upload.input;
+
+    /**
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
      *
-     * @param {object} oRequest - A request object, created initially by a call to <jaxon.ajax.request.initialize>
-     *
-     * @return {void}
-     *
      * Note:
      * This is called once per request; upon a request failure, this will not be called for additional retries.
+     *
+     * @param {object} oRequest The request object
+     *
+     * @return {void}
      */
     self.process = (oRequest) => {
         // Make request parameters.
-        oRequest.dNow = new Date();
         oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = (oRequest.upload && oRequest.upload.ajax && oRequest.upload.input) ?
+        oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-        delete oRequest.dNow;
     };
-})(jaxon.ajax.parameters, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.string, jaxon.version);

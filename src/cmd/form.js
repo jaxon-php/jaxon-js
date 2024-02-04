@@ -3,19 +3,15 @@
  */
 
 (function(self, baseDocument) {
-    /*
-    Create and return a form input element with the specified parameters.
-
-    Parameters:
-
-    type - (string):  The type of input element desired.
-    name - (string):  The value to be assigned to the name attribute.
-    id - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    object - The new input element.
-    */
+    /**
+     * Create and return a form input element with the specified parameters.
+     *
+     * @param {string} type The type of input element desired.
+     * @param {string} name The value to be assigned to the name attribute.
+     * @param {string} id The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
     const getInput = (type, name, id) => {
         const oInput = baseDocument.createElement('input');
         oInput.setAttribute('type', type);
@@ -24,27 +20,19 @@
         return oInput;
     };
 
-    /*
-    Function: jaxon.cmd.form.createInput
-
-    Create a new input element under the specified parent.
-
-    Parameters:
-
-    objParent - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    self.createInput = (command) => {
-        command.fullName = 'createInput';
-
-        const { target: objParent, type: sType, data: sName, prop: sId } = command;
+    /**
+     * Create a new input element under the specified parent.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.createInput = ({ target: objParent, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (objParent && target) {
             objParent.appendChild(target);
@@ -52,27 +40,19 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.form.insertInput
-
-    Insert a new input element before the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    self.insertInput = (command) => {
-        command.fullName = 'insertInput';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    /**
+     * Insert a new input element before the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.insertInput = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling);
@@ -80,27 +60,19 @@
         return true;
     };
 
-    /*
-    Function: jaxon.cmd.form.insertInputAfter
-
-    Insert a new input element after the specified element.
-
-    Parameters:
-
-    objSibling - (string or object):  The name of, or the element itself
-        that will be used as the reference for the insertion.
-    sType - (string):  The value to be assigned to the type attribute.
-    sName - (string):  The value to be assigned to the name attribute.
-    sId - (string):  The value to be assigned to the id attribute.
-
-    Returns:
-
-    true - The operation completed successfully.
-    */
-    self.insertInputAfter = (command) => {
-        command.fullName = 'insertInputAfter';
-
-        const { target: objSibling, type: sType, data: sName, prop: sId } = command;
+    /**
+     * Insert a new input element after the specified element.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The element that will be used as the reference for the insertion.
+     * @param {string} command.type The value to be assigned to the type attribute.
+     * @param {string} command.data The value to be assigned to the name attribute.
+     * @param {string} command.prop The value to be assigned to the id attribute.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.insertInputAfter = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
         const target = getInput(sType, sName, sId);
         if (target && objSibling && objSibling.parentNode) {
             objSibling.parentNode.insertBefore(target, objSibling.nextSibling);

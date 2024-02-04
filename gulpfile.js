@@ -19,16 +19,18 @@ const files = {
         core: [
             folders.src + 'config.js',
             folders.src + 'utils/*.js',
-            folders.src + 'cmd/*.js',
             folders.src + 'ajax/*.js',
+            folders.src + 'cmd/*.js',
             folders.src + 'ready.js',
             folders.src + 'jaxon.js',
-            folders.src + 'compat.js'
-        ]
+        ],
+        compat: folders.src + 'compat.js',
+        module: folders.src + 'module.js',
     },
     dist: {
         core: 'jaxon.core.js',
         debug: 'jaxon.debug.js',
+        module: 'jaxon.module.js',
         lang: [
             folders.dist + 'lang/jaxon.bg.js',
             folders.dist + 'lang/jaxon.de.js',
@@ -37,27 +39,28 @@ const files = {
             folders.dist + 'lang/jaxon.fr.js',
             folders.dist + 'lang/jaxon.nl.js',
             folders.dist + 'lang/jaxon.tr.js'
-        ]
+        ],
     },
     min: {
         core: 'jaxon.core.min.js',
         debug: 'jaxon.debug.min.js'
-    }
+    },
 };
 
 // Concat core library files
 const js_core = () => {
-    const jsbuild = src(files.src.core)
+    const jsbuild = src([...files.src.core, files.src.compat])
         // .pipe(deporder())
         .pipe(concat(files.dist.core, {newLine: "\n\n"}));
 
-    // Development mode?
-    /*const devBuild = (process.env.NODE_ENV !== 'production');
-    if (!devBuild) {
-        jsbuild = jsbuild
-            .pipe(stripdebug())
-            .pipe(terser());
-    }*/
+    return jsbuild.pipe(dest(folders.dist));
+};
+
+// Concat core library files into a module
+const js_module = () => {
+    const jsbuild = src([...files.src.core, files.src.module])
+        // .pipe(deporder())
+        .pipe(concat(files.dist.module, {newLine: "\n\n"}));
 
     return jsbuild.pipe(dest(folders.dist));
 };
@@ -88,7 +91,7 @@ const js_lang_min = () => src(files.dist.lang)
     .pipe(dest(folders.lang));
 
 // Minify all the files
-const js_min = series(js_core, js_core_min, js_debug_min, js_lang_min);
+const js_all = series(js_core, js_module, js_core_min, js_debug_min, js_lang_min);
 
-exports.default = js_min;
+exports.default = js_all;
 exports.js_core = js_core;
