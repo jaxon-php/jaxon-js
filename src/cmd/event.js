@@ -22,23 +22,23 @@
 
     /**
      * @param {object} target The target element
-     * @param {string} event An event name
-     * @param {string} func A function name
+     * @param {string} eventName The event name
+     * @param {string} funcName The function name
      *
      * @returns {void}
      */
-    const _addHandler = (target, event, func) =>
-        target.addEventListener(event, dom.findFunction(func), false);
+    const _addHandler = (target, eventName, funcName) =>
+        target.addEventListener(eventName, dom.findFunction(funcName), false);
 
     /**
      * @param {object} target The target element
-     * @param {string} event An event name
-     * @param {string} func A function name
+     * @param {string} eventName The event name
+     * @param {string} funcName The function name
      *
      * @returns {void}
      */
-    const _removeHandler = (target, event, func) =>
-        target.removeEventListener(event, dom.findFunction(func), false);
+    const _removeHandler = (target, eventName, funcName) =>
+        target.removeEventListener(eventName, dom.findFunction(funcName), false);
 
     /**
      * Add an event handler to the specified target.

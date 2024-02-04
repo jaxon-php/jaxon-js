@@ -2097,23 +2097,23 @@ var jaxon = {
 
     /**
      * @param {object} target The target element
-     * @param {string} event An event name
-     * @param {string} func A function name
+     * @param {string} eventName The event name
+     * @param {string} funcName The function name
      *
      * @returns {void}
      */
-    const _addHandler = (target, event, func) =>
-        target.addEventListener(event, dom.findFunction(func), false);
+    const _addHandler = (target, eventName, funcName) =>
+        target.addEventListener(eventName, dom.findFunction(funcName), false);
 
     /**
      * @param {object} target The target element
-     * @param {string} event An event name
-     * @param {string} func A function name
+     * @param {string} eventName The event name
+     * @param {string} funcName The function name
      *
      * @returns {void}
      */
-    const _removeHandler = (target, event, func) =>
-        target.removeEventListener(event, dom.findFunction(func), false);
+    const _removeHandler = (target, eventName, funcName) =>
+        target.removeEventListener(eventName, dom.findFunction(funcName), false);
 
     /**
      * Add an event handler to the specified target.
@@ -2448,10 +2448,10 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func: funcName, data: funcParams, context = {} }) => {
+    self.call = ({ func: sFuncName, data: aFuncParams, context = {} }) => {
         self.context = context;
-        const func = dom.findFunction(funcName);
-        func && func.apply(self.context, funcParams);
+        const func = dom.findFunction(sFuncName);
+        func && func.apply(self.context, aFuncParams);
         return true;
     };
 
@@ -2533,13 +2533,13 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setFunction = ({ func: funcName, data: funcBody, prop: funcParams, context = {} }) => {
+    self.setFunction = ({ func: sFuncName, data: funcBody, prop: aFuncParams, context = {} }) => {
         self.context = context;
-        const jsCode = `(${getParameters(funcParams)}) => {
+        const jsCode = `(${getParameters(aFuncParams)}) => {
     ${funcBody}
 }`;
 
-        dom.createFunction(jsCode, funcName);
+        dom.createFunction(jsCode, sFuncName);
         return true;
     };
 
@@ -2558,16 +2558,16 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.wrapFunction = ({ func: funcName, type: returnType, prop: funcParams,
+    self.wrapFunction = ({ func: sFuncName, type: returnType, prop: aFuncParams,
         data: [funcCodeBefore, funcCodeAfter = '// No call after'], context = {} }) => {
         self.context = context;
-        const func = dom.findFunction(funcName);
+        const func = dom.findFunction(sFuncName);
         if (!func) {
             return true;
         }
 
         // Save the existing function
-        const wrappedFuncName = funcName.toLowerCase().replaceAll('.', '_');
+        const wrappedFuncName = sFuncName.toLowerCase().replaceAll('.', '_');
         if (!self.wrapped[wrappedFuncName]) {
             self.wrapped[wrappedFuncName] = func;
         }
@@ -2576,13 +2576,13 @@ var jaxon = {
         const varAssign = returnType ? `${returnType} = ` : '';
         const varReturn = returnType ? `return ${returnType};` : '// No return value';
 
-        const jsCode = `(${getParameters(funcParams)}) => {
+        const jsCode = `(${getParameters(aFuncParams)}) => {
     ${varDefine}
     ${funcCodeBefore}
 
-    const wrappedFuncName = "${funcName}".toLowerCase().replaceAll('.', '_');
+    const wrappedFuncName = "${sFuncName}".toLowerCase().replaceAll('.', '_');
     // Call the wrapped function (saved in jaxon.cmd.script.wrapped) with the same parameters.
-    ${varAssign}jaxon.cmd.script.wrapped[wrappedFuncName](${funcParams});
+    ${varAssign}jaxon.cmd.script.wrapped[wrappedFuncName](${aFuncParams});
     ${funcCodeAfter}
     ${varReturn}
 }`;
