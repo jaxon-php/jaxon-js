@@ -15,9 +15,9 @@ var jaxon = {
      * Version number
      */
     version: {
-        major: '4',
+        major: '5',
         minor: '0',
-        patch: '0rc-2',
+        patch: '0rc-1',
     },
 
     debug: {
@@ -41,7 +41,6 @@ var jaxon = {
         head: {},
         body: {},
         script: {},
-        form: {},
         event: {},
     },
 
@@ -434,39 +433,6 @@ var jaxon = {
             xElement = xElement[attr === 'css' ? 'style' : attr];
         }
         return !xElement ? [null, null] : [xElement, attribute];
-    };
-
-    /**
-     * Create a function by inserting its code in the page using a <script> tag.
-     *
-     * @param {string} funcCode
-     * @param {string='jaxon.cmd.script.context.delegateCall'} funcName
-     * 
-     * @returns {boolean}
-     */
-    self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
-        if (!funcCode) {
-            return false;
-        }
-
-        try {
-            const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
-                'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
-
-            // Remove the tag if it already exists.
-            self.removeElement(scriptTagId);
-            // Create a new tag.
-            const scriptTag = baseDocument.createElement('script');
-            scriptTag.setAttribute('id', scriptTagId);
-            scriptTag.textContent = `
-    ${funcName} = ${funcCode}
-`;
-            baseDocument.body.appendChild(scriptTag);
-        } catch (e) {
-            return false;
-        }
-
-        return true;
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);
 
@@ -2079,23 +2045,6 @@ var jaxon = {
 
 (function(self, dom, str, script) {
     /**
-     *  Set an event handler.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.prop The event name
-     * @param {string} command.data The callback code
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.setEvent = ({ target: oTarget, prop: sEvent, data: sCode }) => {
-        dom.createFunction(`(e) => { ${str.doubleQuotes(sCode)} }`);
-        oTarget[str.addOnPrefix(sEvent)] = script.context.delegateCall;
-        return true;
-    };
-
-    /**
      * Add an event handler to the specified target.
      *
      * @param {object} command The Response command object.
@@ -2126,91 +2075,44 @@ var jaxon = {
        target.removeEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false);
        return true;
     };
+
+    /**
+     * Add an event handler with parameters to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} command.func The name of the function to be called
+     * @param {array} command.data The function parameters
+     * @param {object|false} command.options The handler options
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.addEventHandler = ({ target, prop: sEvent, func, data = [], options = false }) => {
+        target.addEventListener(str.stripOnPrefix(sEvent), (event) =>
+            script.call({ func, data, context: { event, target } }), options);
+        return true;
+    };
+
+    /**
+     * Set an event handler with parameters to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} command.func The name of the function to be called
+     * @param {array} command.data The function parameters
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.setEventHandler = ({ target, prop: sEvent, func, data = [] }) => {
+        target[str.addOnPrefix(sEvent)] = (event) =>
+            script.call({ func, data, context: { event, target } });
+        return true;
+    };
 })(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
-
-
-/**
- * Class: jaxon.cmd.form
- */
-
-(function(self, baseDocument) {
-    /**
-     * Create and return a form input element with the specified parameters.
-     *
-     * @param {string} type The type of input element desired.
-     * @param {string} name The value to be assigned to the name attribute.
-     * @param {string} id The value to be assigned to the id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    const getInput = (type, name, id) => {
-        const oInput = baseDocument.createElement('input');
-        oInput.setAttribute('type', type);
-        oInput.setAttribute('name', name);
-        oInput.setAttribute('id', id);
-        return oInput;
-    };
-
-    /**
-     * Create a new input element under the specified parent.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference for the insertion.
-     * @param {string} command.type The value to be assigned to the type attribute.
-     * @param {string} command.data The value to be assigned to the name attribute.
-     * @param {string} command.prop The value to be assigned to the id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.createInput = ({ target: objParent, type: sType, data: sName, prop: sId }) => {
-        const target = getInput(sType, sName, sId);
-        if (objParent && target) {
-            objParent.appendChild(target);
-        }
-        return true;
-    };
-
-    /**
-     * Insert a new input element before the specified element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference for the insertion.
-     * @param {string} command.type The value to be assigned to the type attribute.
-     * @param {string} command.data The value to be assigned to the name attribute.
-     * @param {string} command.prop The value to be assigned to the id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.insertInput = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
-        const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode) {
-            objSibling.parentNode.insertBefore(target, objSibling);
-        }
-        return true;
-    };
-
-    /**
-     * Insert a new input element after the specified element.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference for the insertion.
-     * @param {string} command.type The value to be assigned to the type attribute.
-     * @param {string} command.data The value to be assigned to the name attribute.
-     * @param {string} command.prop The value to be assigned to the id attribute.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.insertInputAfter = ({ target: objSibling, type: sType, data: sName, prop: sId }) => {
-        const target = getInput(sType, sName, sId);
-        if (target && objSibling && objSibling.parentNode) {
-            objSibling.parentNode.insertBefore(target, objSibling.nextSibling);
-        }
-        return true;
-    };
-})(jaxon.cmd.form, jaxon.config.baseDocument);
 
 
 /**
@@ -2361,6 +2263,147 @@ var jaxon = {
 
 
 /**
+ * Class: jaxon.cmd.json
+ */
+
+(function(self, dom, form, jq) {
+    /**
+     * Check if a parameter is an expression.
+     *
+     * @param {mixed} xParam
+     *
+     * @returns {boolean}
+     */
+    const isExpression = xParam => typeof xParam === 'object' && (xParam.__type);
+
+    /**
+     * Get the value of a single parameter.
+     *
+     * @param {mixed} xParam
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xParam, xTarget) => {
+        if (!isExpression(xParam)) {
+            return xParam.value;
+        }
+        const { __type: sType, name: sName } = xParam;
+        if (sType === 'form') {
+            return form.getValues(sName);
+        }
+        if (sType === 'input') {
+            return dom.$(sName).value;
+        }
+        if (sType === 'checked') {
+            return dom.$(sName).checked;
+        }
+        if (sType === 'html') {
+            return dom.$(sName).innerHTML;
+        }
+        // if (sType === 'expr')
+        return execExpression(xParam, xTarget);
+    };
+
+    /**
+     * Get the values of an array of parameters.
+     *
+     * @param {array} aParams
+     * @param {object|null} xTarget
+     *
+     * @returns {array}
+     */
+    const getValues = (aParams, xTarget) => aParams.map(xParam => getValue(xParam, xTarget));
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xCall
+     * @param {object} xContext
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const execCall = (xCall, xContext, xTarget = null) => {
+        if (!xContext) {
+            return null;
+        }
+
+        // Make calls
+        const { __type: sType, name: sName } = xCall;
+        if (sType === 'attr') {
+            const { param: xValue } = xCall;
+            if (xValue === undefined) {
+                // Read an attribute.
+                return xContext[sName];
+            }
+            // Assign an attribute.
+            xContext[sName] = getValue(xValue, xTarget);
+            return;
+        }
+        if (sType === 'func') {
+            if (sName === 'toInt') {
+                return parseInt(xContext);
+            }
+            const { params: aParams = [] } = xCall;
+            // Call a function with xContext as "this" and an array of parameters.
+            const func = dom.findFunction(sName, xContext);
+            return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
+        }
+        if (sType === 'jqsel') {
+            // jQuery selector
+            const { params: aParams = [] } = xCall;
+            if (xContext === window && aParams.length === 0) {
+                // First call with an empty parameter list => $(this).
+                return xTarget;
+            }
+            // Call the jQuery selector with xContext as "this".
+            return jq.apply(xContext, getValues(aParams, xTarget));
+        }
+        if (sType === 'jqevt') {
+            // Set a jQuery event handler. Takes an expression as parameter.
+            const { param: xExpression } = xCall;
+            return xContext.on(sName, (e) => execExpression(xExpression, jq(e.currentTarget)));
+        }
+        return null;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     * @param {object|null} xTarget
+     *
+     * @returns {mixed}
+     */
+    const execExpression = (xExpression, xTarget = null) => {
+        // Make calls
+        const { calls: aCalls = [] } = xExpression;
+        let xContext = window;
+        aCalls.forEach(xCall => xContext = execCall(xCall, xContext, xTarget));
+        return xContext;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object, using the current script context.
+     *
+     * @param {object} command - Response command object.
+     * - data: The expression object
+     *
+     * @returns {true} - The operation completed successfully.
+     */
+    self.execute = (command) => {
+        const { data: xExpression } = command;
+        // Check the command data validity. The data must be an object.
+        if (typeof xExpression === 'object' && !Array.isArray(xExpression)) {
+            execExpression(xExpression);
+        }
+        return true;
+    };
+})(jaxon.cmd.json, jaxon.utils.dom, jaxon.utils.form, jQuery);
+
+
+/**
  * Class: jaxon.cmd.script
  */
 
@@ -2432,142 +2475,6 @@ var jaxon = {
         self.context = context;
         const func = dom.findFunction(sFuncName);
         func && func.apply(self.context, aFuncParams);
-        return true;
-    };
-
-    /**
-     * Execute the specified string of javascript code, using the current script context.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.data The javascript to be evaluated.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.execute = ({ data: funcBody, context = {} }) => {
-        self.context = context;
-        const jsCode = `() => {
-    ${funcBody}
-}`;
-
-        dom.createFunction(jsCode) && self.context.delegateCall();
-        return true;
-    };
-
-    /**
-     * Test for the specified condition, using the current script context;
-     * if the result is false, sleep for 1/10th of a second and try again.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.data The javascript to evaluate.
-     * @param {integer} command.prop The number of 1/10ths of a second to wait before giving up.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
-     *
-     * @returns {true} The condition evaluates to true or the sleep time has expired.
-     * @returns {false} The condition evaluates to false and the sleep time has not expired.
-     */
-    self.waitFor = (command) => {
-        const { data: funcBody, prop: duration, response, context = {} } = command;
-        self.context = context;
-        const jsCode = `() => {
-    return (${funcBody});
-}`;
-
-        if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
-            // Inject a delay in the queue processing and handle retry counter
-            if (handler.retry(command, duration)) {
-                handler.setWakeup(response, 100);
-                return false;
-            }
-            // Give up, continue processing queue
-        }
-        return true;
-    };
-
-    /**
-     * Get function parameters as string
-     *
-     * @param {string} parameters 
-     */
-    const getParameters = (parameters) => {
-        if (parameters === undefined) {
-            return '';
-        }
-        const sType = str.typeOf(parameters);
-        if (sType === 'array') {
-            return parameters.join(', ');
-        }
-        if (sType === 'object') {
-            return parameters.values().join(', ');
-        }
-        return parameters;
-    };
-
-    /**
-     * Constructs the specified function using the specified javascript as the body of the function.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.func The name of the function to construct.
-     * @param {string} command.data The script that will be the function body.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.setFunction = ({ func: sFuncName, data: funcBody, prop: aFuncParams, context = {} }) => {
-        self.context = context;
-        const jsCode = `(${getParameters(aFuncParams)}) => {
-    ${funcBody}
-}`;
-
-        dom.createFunction(jsCode, sFuncName);
-        return true;
-    };
-
-    self.wrapped = {}; // Original wrapped functions will be saved here.
-
-    /**
-     * Construct a javascript function which will call the original function with the same name,
-     * potentially executing code before and after the call to the original function.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.func The name of the function to be wrapped.
-     * @param {string} command.prop List of parameters used when calling the function.
-     * @param {array} command.data The portions of code to be called before, after 
-     *   or even between calls to the original function.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.wrapFunction = ({ func: sFuncName, type: returnType, prop: aFuncParams,
-        data: [funcCodeBefore, funcCodeAfter = '// No call after'], context = {} }) => {
-        self.context = context;
-        const func = dom.findFunction(sFuncName);
-        if (!func) {
-            return true;
-        }
-
-        // Save the existing function
-        const wrappedFuncName = sFuncName.toLowerCase().replaceAll('.', '_');
-        if (!self.wrapped[wrappedFuncName]) {
-            self.wrapped[wrappedFuncName] = func;
-        }
-
-        const varDefine = returnType ? `let ${returnType} = null;` : '// No return value';
-        const varAssign = returnType ? `${returnType} = ` : '';
-        const varReturn = returnType ? `return ${returnType};` : '// No return value';
-
-        const jsCode = `(${getParameters(aFuncParams)}) => {
-    ${varDefine}
-    ${funcCodeBefore}
-
-    const wrappedFuncName = "${sFuncName}".toLowerCase().replaceAll('.', '_');
-    // Call the wrapped function (saved in jaxon.cmd.script.wrapped) with the same parameters.
-    ${varAssign}jaxon.cmd.script.wrapped[wrappedFuncName](${aFuncParams});
-    ${funcCodeAfter}
-    ${varReturn}
-}`;
-
-        dom.createFunction(jsCode) && self.context.delegateCall();
         return true;
     };
 
@@ -2734,20 +2641,13 @@ jaxon.isLoaded = true;
     register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
     register('s', cmd.script.sleep, 'sleep');
-    register('wf', cmd.script.waitFor, 'waitFor');
-    register('js', cmd.script.execute, 'execute Javascript');
     register('jc', cmd.script.call, 'call js function');
-    register('sf', cmd.script.setFunction, 'setFunction');
-    register('wpf', cmd.script.wrapFunction, 'wrapFunction');
     register('al', cmd.script.alert, 'alert');
     register('cc', cmd.script.confirm, 'confirm');
     register('rd', cmd.script.redirect, 'redirect');
 
-    register('ci', cmd.form.createInput, 'createInput');
-    register('ii', cmd.form.insertInput, 'insertInput');
-    register('iia', cmd.form.insertInputAfter, 'insertInputAfter');
-
-    register('ev', cmd.event.setEvent, 'setEvent');
+    register('se', cmd.event.setEventHandler, 'setEventHandler');
+    register('ae', cmd.event.addEventHandler, 'addEventHandler');
     register('ah', cmd.event.addHandler, 'addHandler');
     register('rh', cmd.event.removeHandler, 'removeHandler');
 
