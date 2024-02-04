@@ -81,6 +81,7 @@ jaxon.isLoaded = true;
     register('ii', cmd.form.insertInput, 'insertInput');
     register('iia', cmd.form.insertInputAfter, 'insertInputAfter');
 
+    register('ae', cmd.event.addEventHandler, 'addEventHandler');
     register('ah', cmd.event.addHandler, 'addHandler');
     register('rh', cmd.event.removeHandler, 'removeHandler');
 

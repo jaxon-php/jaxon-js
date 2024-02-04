@@ -54,4 +54,22 @@
        _removeHandler(oTarget, str.stripOnPrefix(sEvent), sFuncName);
        return true;
     };
+
+    /**
+     * Add an event handler with parameters to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} command.func The name of the function to be called
+     * @param {array} command.data The function parameters
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.addEventHandler = ({ target, prop: sEvent, func, data = [] }) => {
+        target.addEventListener(str.stripOnPrefix(sEvent), (event) =>
+            script.call({ func, data, context: { event, target } }), false);
+        return true;
+    };
 })(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
