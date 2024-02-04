@@ -45,6 +45,7 @@ var jaxon = {
 
     utils: {
         dom: {},
+        json: {},
         form: {},
         queue: {},
         string: {},

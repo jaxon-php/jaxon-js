@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.json
  */
 
-(function(self, dom, form, jq) {
+(function(self, dom, form, str, jq) {
     /**
      * Check if a parameter is an expression.
      *
@@ -10,7 +10,7 @@
      *
      * @returns {boolean}
      */
-    const isExpression = xParam => typeof xParam === 'object' && (xParam.__type);
+    const isExpression = xParam => str.typeOf(xParam) === 'object' && (xParam.__type);
 
     /**
      * Get the value of a single parameter.
@@ -25,20 +25,14 @@
             return xParam.value;
         }
         const { __type: sType, name: sName } = xParam;
-        if (sType === 'form') {
-            return form.getValues(sName);
+        switch(sType) {
+            case 'form': return form.getValues(sName);
+            case 'html': return dom.$(sName).innerHTML;
+            case 'input': return dom.$(sName).value;
+            case 'checked': return dom.$(sName).checked;
+            case 'expr':
+            default: return execExpression(xParam, xTarget);
         }
-        if (sType === 'input') {
-            return dom.$(sName).value;
-        }
-        if (sType === 'checked') {
-            return dom.$(sName).checked;
-        }
-        if (sType === 'html') {
-            return dom.$(sName).innerHTML;
-        }
-        // if (sType === 'expr')
-        return execExpression(xParam, xTarget);
     };
 
     /**
@@ -83,7 +77,7 @@
             }
             const { params: aParams = [] } = xCall;
             // Call a function with xContext as "this" and an array of parameters.
-            const func = dom.findFunction(sName, xContext);
+            const func = dom.findFunction(sName);
             return func ? func.apply(xContext, getValues(aParams, xTarget)) : null;
         }
         if (sType === 'jqsel') {
@@ -121,19 +115,14 @@
     };
 
     /**
-     * Execute the javascript code represented by an expression object, using the current script context.
+     * Execute the javascript code represented by an expression object.
      *
-     * @param {object} command - Response command object.
-     * - data: The expression object
+     * @param {object} xExpression An object representing a command
      *
-     * @returns {true} - The operation completed successfully.
+     * @returns {mixed}
      */
-    self.execute = (command) => {
-        const { data: xExpression } = command;
+    self.execute = (xExpression) => {
         // Check the command data validity. The data must be an object.
-        if (typeof xExpression === 'object' && !Array.isArray(xExpression)) {
-            execExpression(xExpression);
-        }
-        return true;
+        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : false;
     };
-})(jaxon.cmd.json, jaxon.utils.dom, jaxon.utils.form, jQuery);
+})(jaxon.utils.json, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string, jQuery);
