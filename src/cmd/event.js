@@ -4,26 +4,6 @@
 
 (function(self, dom, str, script) {
     /**
-     * @param {object} target The target element
-     * @param {string} eventName The event name
-     * @param {string} funcName The function name
-     *
-     * @returns {void}
-     */
-    const _addHandler = (target, eventName, funcName) =>
-        target.addEventListener(eventName, dom.findFunction(funcName), false);
-
-    /**
-     * @param {object} target The target element
-     * @param {string} eventName The event name
-     * @param {string} funcName The function name
-     *
-     * @returns {void}
-     */
-    const _removeHandler = (target, eventName, funcName) =>
-        target.removeEventListener(eventName, dom.findFunction(funcName), false);
-
-    /**
      * Add an event handler to the specified target.
      *
      * @param {object} command The Response command object.
@@ -34,8 +14,8 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
-        _addHandler(oTarget, str.stripOnPrefix(sEvent), sFuncName);
+    self.addHandler = ({ target, prop: sEvent, data: sFuncName }) => {
+        target.addEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false)
         return true;
     };
 
@@ -50,8 +30,8 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeHandler = ({ target: oTarget, prop: sEvent, data: sFuncName }) => {
-       _removeHandler(oTarget, str.stripOnPrefix(sEvent), sFuncName);
+    self.removeHandler = ({ target, prop: sEvent, data: sFuncName }) => {
+       target.removeEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false);
        return true;
     };
 
