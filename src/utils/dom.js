@@ -120,37 +120,4 @@
         }
         return !xElement ? [null, null] : [xElement, attribute];
     };
-
-    /**
-     * Create a function by inserting its code in the page using a <script> tag.
-     *
-     * @param {string} funcCode
-     * @param {string='jaxon.cmd.script.context.delegateCall'} funcName
-     * 
-     * @returns {boolean}
-     */
-    self.createFunction = (funcCode, funcName = 'jaxon.cmd.script.context.delegateCall') => {
-        if (!funcCode) {
-            return false;
-        }
-
-        try {
-            const scriptTagId = 'jaxon_cmd_script_' + (funcName === undefined ?
-                'delegate_call' : funcName.toLowerCase().replaceAll('.', '_'));
-
-            // Remove the tag if it already exists.
-            self.removeElement(scriptTagId);
-            // Create a new tag.
-            const scriptTag = baseDocument.createElement('script');
-            scriptTag.setAttribute('id', scriptTagId);
-            scriptTag.textContent = `
-    ${funcName} = ${funcCode}
-`;
-            baseDocument.body.appendChild(scriptTag);
-        } catch (e) {
-            return false;
-        }
-
-        return true;
-    };
 })(jaxon.utils.dom, jaxon.config.baseDocument);

@@ -72,11 +72,7 @@ jaxon.isLoaded = true;
     register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
     register('s', cmd.script.sleep, 'sleep');
-    register('wf', cmd.script.waitFor, 'waitFor');
-    register('js', cmd.script.execute, 'execute Javascript');
     register('jc', cmd.script.call, 'call js function');
-    register('sf', cmd.script.setFunction, 'setFunction');
-    register('wpf', cmd.script.wrapFunction, 'wrapFunction');
     register('al', cmd.script.alert, 'alert');
     register('cc', cmd.script.confirm, 'confirm');
     register('rd', cmd.script.redirect, 'redirect');
@@ -85,7 +81,6 @@ jaxon.isLoaded = true;
     register('ii', cmd.form.insertInput, 'insertInput');
     register('iia', cmd.form.insertInputAfter, 'insertInputAfter');
 
-    register('ev', cmd.event.setEvent, 'setEvent');
     register('ah', cmd.event.addHandler, 'addHandler');
     register('rh', cmd.event.removeHandler, 'removeHandler');
 

@@ -4,23 +4,6 @@
 
 (function(self, dom, str, script) {
     /**
-     *  Set an event handler.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.prop The event name
-     * @param {string} command.data The callback code
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.setEvent = ({ target: oTarget, prop: sEvent, data: sCode }) => {
-        dom.createFunction(`(e) => { ${str.doubleQuotes(sCode)} }`);
-        oTarget[str.addOnPrefix(sEvent)] = script.context.delegateCall;
-        return true;
-    };
-
-    /**
      * @param {object} target The target element
      * @param {string} eventName The event name
      * @param {string} funcName The function name
