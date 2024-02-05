@@ -2,7 +2,7 @@
  * Class: jaxon.utils.dom
  */
 
-(function(self, baseDocument) {
+(function(self, baseDocument, jq) {
     /**
      * Shorthand for finding a uniquely named element within the document.
      *
@@ -120,4 +120,19 @@
         }
         return !xElement ? [null, null] : [xElement, attribute];
     };
-})(jaxon.utils.dom, jaxon.config.baseDocument);
+
+    /**
+     * Call the DOM selector
+     *
+     * @param {object} xTarget
+     * @param {string} sSelector
+     * @param {object} xContext
+     *
+     * @returns {object}
+     */
+    self.selector = (xTarget, sSelector = '', xContext = null) => {
+        // Todo: Allow the use of an alternative library instead of jQuery.
+        return sSelector === '' ? jq(xTarget) :
+            jq.apply(xTarget, !xContext ? [sSelector] : [sSelector, xContext]);
+    };
+})(jaxon.utils.dom, jaxon.config.baseDocument, jQuery);
