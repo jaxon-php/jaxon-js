@@ -43,9 +43,13 @@ var jaxon = {
         event: {},
     },
 
+    call: {
+        json: {},
+        query: {},
+    },
+
     utils: {
         dom: {},
-        json: {},
         form: {},
         queue: {},
         string: {},
@@ -311,4 +315,5 @@ var jaxon = {
     };
 })(jaxon.config);
 
+// Make jaxon accessible with the dom.findFunction function.
 window.jaxon = jaxon;

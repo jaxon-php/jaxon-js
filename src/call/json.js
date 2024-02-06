@@ -1,8 +1,8 @@
 /**
- * Class: jaxon.cmd.json
+ * Class: jaxon.call.json
  */
 
-(function(self, dom, form, str) {
+(function(self, query, dom, form, str) {
     /**
      * Check if a parameter is an expression.
      *
@@ -75,13 +75,13 @@
         const xCurrTarget = getCurrentTarget();
         // Make calls
         const { _type: sType, _name: sName } = xCall;
-        if (sType === 'selector') {
+        if (sType === 'select') {
             const { context: xContext = null } = xCall;
             const xTarget = sName === 'this' ?
                 // Empty parameter list => $(this), ie the last event target.
-                dom.jqSelect(xCurrTarget) :
+                query.select(xCurrTarget) :
                 // Call the selector.
-                dom.jqSelect(sName, !xContext ? null : getValue(xContext, xCurrValue));
+                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
             return xTarget;
         }
         if (sType === 'event') {
@@ -143,4 +143,4 @@
         xContext.aTargets = [xCallContext ?? window];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.utils.json, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

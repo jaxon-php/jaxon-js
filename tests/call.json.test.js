@@ -1,17 +1,17 @@
 const $ = require('jquery');
 const {
-    utils: { dom, json },
+    call: { json, query },
 } = require('../dist/jaxon.module');
 
 // Set jQuery in the DOM util.
-dom.jq = $;
+query.jq = $;
 
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
     const strValue = json.call({
         calls: [{
-            _type: 'selector',
+            _type: 'select',
             _name: '#integer'
         }, {
             _type: 'func',
@@ -27,7 +27,7 @@ test('Read str value from the DOM', () => {
 
     const strValue = json.call({
         calls: [{
-            _type: 'selector',
+            _type: 'select',
             _name: '#integer'
         }, {
             _type: 'func',
@@ -43,7 +43,7 @@ test('Read int value from the DOM', () => {
 
     const intValue = json.call({
         calls: [{
-            _type: 'selector',
+            _type: 'select',
             _name: '#integer'
         }, {
             _type: 'func',
@@ -63,7 +63,7 @@ test('Assign element inner html', () => {
 
     json.call({
         calls: [{
-            _type: 'selector',
+            _type: 'select',
             _name: '#username'
         }, {
             _type: 'func',
@@ -80,7 +80,7 @@ test('Assign element inner html', () => {
 
 //     json.call({
 //         calls: [{
-//             _type: 'selector',
+//             _type: 'select',
 //             _name: '#username'
 //         }, {
 //             _type: 'func',
