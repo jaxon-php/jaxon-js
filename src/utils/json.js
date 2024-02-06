@@ -11,22 +11,6 @@
     const xContext = { };
 
     /**
-     * Set the value of the current expression.
-     *
-     * @param {mixed} xParam
-     *
-     * @returns {boolean}
-     */
-    const setCurrentValue = (xValue) => xContext.aValues[xContext.aValues.length - 1] = xValue;
-
-    /**
-     * Get the value of the current expression.
-     *
-     * @returns {mixed}
-     */
-    const getCurrentValue = () => xContext.aValues[xContext.aValues.length - 1];
-
-    /**
      * Get the current target.
      *
      * @returns {mixed}
@@ -46,10 +30,11 @@
      * Get the value of a single parameter.
      *
      * @param {mixed} xParam
+     * @param {mixed} xCurrValue The current expression value.
      *
      * @returns {mixed}
      */
-    const getValue = (xParam) => {
+    const getValue = (xParam, xCurrValue) => {
         if (!isExpression(xParam)) {
             return xParam;
         }
@@ -59,10 +44,9 @@
             case 'html': return dom.$(sName).innerHTML;
             case 'input': return dom.$(sName).value;
             case 'checked': return dom.$(sName).checked;
-            case 'this': return getCurrentValue();
             case 'expr': return execExpression(xParam);
             case '_': switch(sName) {
-                case 'this': return getCurrentValue();
+                case 'this': return xCurrValue;
                 default: return undefined
             }
             default: return undefined;
@@ -73,21 +57,21 @@
      * Get the values of an array of parameters.
      *
      * @param {array} aParams
+     * @param {mixed} xCurrValue The current expression value.
      *
      * @returns {array}
      */
-    const getValues = (aParams) => aParams.map(xParam => getValue(xParam));
+    const getValues = (aParams, xCurrValue) => aParams.map(xParam => getValue(xParam, xCurrValue));
 
     /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xCall
+     * @param {mixed} xCurrValue The current expression value.
      *
      * @returns {void}
      */
-    const execCall = (xCall) => {
-        // The current value of the expression (the last element in the current values).
-        const xCurrValue = getCurrentValue();
+    const execCall = (xCall, xCurrValue) => {
         const xCurrTarget = getCurrentTarget();
         // Make calls
         const { _type: sType, _name: sName } = xCall;
@@ -97,9 +81,8 @@
                 // Empty parameter list => $(this), ie the last event target.
                 dom.jqSelect(xCurrTarget) :
                 // Call the selector.
-                dom.jqSelect(sName, !xContext ? null : getValue(xContext));
-            setCurrentValue(xTarget);
-            return;
+                dom.jqSelect(sName, !xContext ? null : getValue(xContext, xCurrValue));
+            return xTarget;
         }
         if (sType === 'event') {
             // Set an event handler. Takes an expression as parameter.
@@ -115,26 +98,23 @@
         if (sType === 'call') {
             const { params: aParams = [] } = xCall;
             const func = dom.findFunction(sName); // Calling a "global" function.
-            setCurrentValue(!func ? null : func.apply(xCurrTarget, getValues(aParams)));
-            return;
+            return !func ? null : func.apply(xCurrTarget, getValues(aParams, xCurrValue));
         }
         if (sType === 'func') {
             const { params: aParams = [] } = xCall;
             // Call a function with xCurrValue as "this" and an array of parameters.
             const func = dom.findFunction(sName, xCurrValue);
-            setCurrentValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
-            return;
+            return !func ? null : func.apply(xCurrValue, getValues(aParams, xCurrValue));
         }
         if (sType === 'attr') {
             const { value: xValue } = xCall;
             const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
             if (xValue !== undefined) {
                 // Assign an attribute.
-                innerElement[innerProperty] = getValue(xValue);
+                innerElement[innerProperty] = getValue(xValue, xCurrValue);
             }
             // Set the property value as "return" value.
-            setCurrentValue(innerElement[innerProperty]);
-            return;
+            return innerElement[innerProperty];
         }
         console.error('Unexpected command type: ' + JSON.stringify({ type: sType, call: xCall }));
     };
@@ -147,12 +127,8 @@
      * @returns {mixed}
      */
     const execExpression = (xExpression) => {
-        // The current value of this expression
-        xContext.aValues.push(window);
-        // Make calls
         const { calls: aCalls = [] } = xExpression;
-        aCalls.forEach(xCall => execCall(xCall));
-        return xContext.aValues.pop();
+        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
     };
 
     /**
@@ -164,7 +140,6 @@
      * @returns {mixed}
      */
     self.call = (xExpression, xCallContext) => {
-        xContext.aValues = [];
         xContext.aTargets = [xCallContext ?? window];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
