@@ -24,7 +24,6 @@ const files = {
             folders.src + 'ready.js',
             folders.src + 'jaxon.js',
         ],
-        compat: folders.src + 'compat.js',
         module: folders.src + 'module.js',
     },
     dist: {
@@ -49,7 +48,7 @@ const files = {
 
 // Concat core library files
 const js_core = () => {
-    const jsbuild = src([...files.src.core, files.src.compat])
+    const jsbuild = src(files.src.core)
         // .pipe(deporder())
         .pipe(concat(files.dist.core, {newLine: "\n\n"}));
 
