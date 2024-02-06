@@ -122,17 +122,23 @@
     };
 
     /**
-     * Call the DOM selector
+     * The jQuery object.
+     * Will be undefined if the library is not installed.
      *
-     * @param {object} xTarget
-     * @param {string} sSelector
+     * @var {object}
+     */
+    self.jq = jq;
+
+    /**
+     * Call the jQuery DOM selector
+     *
+     * @param {string|object} xSelector
      * @param {object} xContext
      *
      * @returns {object}
      */
-    self.selector = (xTarget, sSelector = '', xContext = null) => {
+    self.jqSelect = (xSelector, xContext = null) => {
         // Todo: Allow the use of an alternative library instead of jQuery.
-        return sSelector === '' ? jq(xTarget) :
-            jq.apply(xTarget, !xContext ? [sSelector] : [sSelector, xContext]);
+        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
     };
-})(jaxon.utils.dom, jaxon.config.baseDocument, jQuery);
+})(jaxon.utils.dom, jaxon.config.baseDocument, window.jQuery);

@@ -26,7 +26,7 @@
      *
      * @returns {boolean}
      */
-    const isExpression = xParam => str.typeOf(xParam) === 'object' && (xParam._type) && (xParam._name);
+    const isExpression = xParam => str.typeOf(xParam) === 'object' && (xParam._type);
 
     /**
      * Get the value of a single parameter.
@@ -68,54 +68,54 @@
      */
     const execCall = (xCall) => {
         // The current value of the expression (the last element in the current values).
-        const xCurrValue = xContext.aValues.slice(-1);
-        const xCurrTarget = xContext.aTargets.slice(-1);
+        const xCurrValue = xContext.aValues[xContext.aValues.length - 1];
+        const xCurrTarget = xContext.aTargets[xContext.aTargets.length - 1];
         // Make calls
         const { _type: sType, _name: sName } = xCall;
-        if (sType === 'attr') {
-            const { value: xValue } = xCall;
-            const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
-            if (xValue === undefined) {
-                // Read an attribute.
-                setLatestValue(innerElement[innerProperty]);
-                return;
-            }
-            // Assign an attribute.
-            setLatestValue(innerElement[innerProperty] = getValue(xValue));
-            return;
-        }
-        if (sType === 'func') {
-            if (sName === 'toInt') {
-                setLatestValue(parseInt(xCurrValue));
-                return;
-            }
-            const { params: aParams = [] } = xCall;
-            // Call a function with xContext as "this" and an array of parameters.
-            const func = dom.findFunction(sName, xCurrValue);
-            setLatestValue(func ? func.apply(xCurrTarget, getValues(aParams)) : null);
-            return;
-        }
         if (sType === 'selector') {
-            if (sName === 'this') {
-                // Empty parameter list => $(this), or the last event target.
-                setLatestValue(dom.selector(xCurrTarget));
-                return;
-            }
-            // Call the selector with the current target as "this".
             const { context: xContext = null } = xCall;
-            setLatestValue(dom.selector(dom.selector(xCurrTarget), sName, getValues(xContext)));
+            const xTarget = sName === 'this' ?
+                // Empty parameter list => $(this), ie the last event target.
+                dom.jqSelect(xCurrTarget) :
+                // Call the selector.
+                dom.jqSelect(sName, !xContext ? null : getValue(xContext));
+            setLatestValue(xTarget);
             return;
         }
         if (sType === 'event') {
             // Set an event handler. Takes an expression as parameter.
             const { handler: xExpression } = xCall;
-            xCurrValue.on(sName, (e) => {
+            xCurrValue.on(sName, (event) => {
                 // Save the current target.
-                xContext.aTargets.push(e.currentTarget);
+                xContext.aTargets.push({ event, target: event.currentTarget });
                 execExpression(xExpression);
                 xContext.aTargets.pop();
             });
+            return;
         }
+        if (sType === 'func') {
+            if (sName === 'toInt') {
+                setLatestValue(str.toInt(xCurrValue));
+                return;
+            }
+            const { params: aParams = [] } = xCall;
+            // Call a function with xCurrValue as "this" and an array of parameters.
+            const func = dom.findFunction(sName, xCurrValue);
+            setLatestValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
+            return;
+        }
+        if (sType === 'attr') {
+            const { value: xValue } = xCall;
+            const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
+            if (xValue !== undefined) {
+                // Assign an attribute.
+                innerElement[innerProperty] = getValue(xValue);
+            }
+            // Set the property value as "return" value.
+            setLatestValue(innerElement[innerProperty]);
+            return;
+        }
+        console.error('Unexpected command type: ' + JSON.stringify({ type: sType, call: xCall }));
     };
 
     /**

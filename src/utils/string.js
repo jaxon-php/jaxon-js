@@ -60,6 +60,15 @@
     self.typeOf = (xObject) => Object.prototype.toString.call(xObject).slice(8, -1).toLowerCase();
 
     /**
+     * Convert to int.
+     *
+     * @param {string} sValue
+     *
+     * @returns {integer}
+     */
+    self.toInt = (sValue) => parseInt(sValue);
+
+    /**
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
