@@ -6,7 +6,7 @@
     /**
      * Check if a parameter is an expression.
      *
-     * @var {object} xParam
+     * @var {object}
      */
     const xContext = { };
 
@@ -17,7 +17,21 @@
      *
      * @returns {boolean}
      */
-    const setLatestValue = (xValue) => xContext.aValues[xContext.aValues.length - 1] = xValue;
+    const setCurrentValue = (xValue) => xContext.aValues[xContext.aValues.length - 1] = xValue;
+
+    /**
+     * Get the value of the current expression.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentValue = () => xContext.aValues[xContext.aValues.length - 1];
+
+    /**
+     * Get the current target.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
 
     /**
      * Check if a parameter is an expression.
@@ -45,7 +59,12 @@
             case 'html': return dom.$(sName).innerHTML;
             case 'input': return dom.$(sName).value;
             case 'checked': return dom.$(sName).checked;
+            case 'this': return getCurrentValue();
             case 'expr': return execExpression(xParam);
+            case '_': switch(sName) {
+                case 'this': return getCurrentValue();
+                default: return undefined
+            }
             default: return undefined;
         }
     };
@@ -68,8 +87,8 @@
      */
     const execCall = (xCall) => {
         // The current value of the expression (the last element in the current values).
-        const xCurrValue = xContext.aValues[xContext.aValues.length - 1];
-        const xCurrTarget = xContext.aTargets[xContext.aTargets.length - 1];
+        const xCurrValue = getCurrentValue();
+        const xCurrTarget = getCurrentTarget();
         // Make calls
         const { _type: sType, _name: sName } = xCall;
         if (sType === 'selector') {
@@ -79,7 +98,7 @@
                 dom.jqSelect(xCurrTarget) :
                 // Call the selector.
                 dom.jqSelect(sName, !xContext ? null : getValue(xContext));
-            setLatestValue(xTarget);
+            setCurrentValue(xTarget);
             return;
         }
         if (sType === 'event') {
@@ -93,15 +112,17 @@
             });
             return;
         }
+        if (sType === 'call') {
+            const { params: aParams = [] } = xCall;
+            const func = dom.findFunction(sName); // Calling a "global" function.
+            setCurrentValue(!func ? null : func.apply(xCurrTarget, getValues(aParams)));
+            return;
+        }
         if (sType === 'func') {
-            if (sName === 'toInt') {
-                setLatestValue(str.toInt(xCurrValue));
-                return;
-            }
             const { params: aParams = [] } = xCall;
             // Call a function with xCurrValue as "this" and an array of parameters.
             const func = dom.findFunction(sName, xCurrValue);
-            setLatestValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
+            setCurrentValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
             return;
         }
         if (sType === 'attr') {
@@ -112,7 +133,7 @@
                 innerElement[innerProperty] = getValue(xValue);
             }
             // Set the property value as "return" value.
-            setLatestValue(innerElement[innerProperty]);
+            setCurrentValue(innerElement[innerProperty]);
             return;
         }
         console.error('Unexpected command type: ' + JSON.stringify({ type: sType, call: xCall }));
@@ -138,12 +159,13 @@
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression An object representing a command
+     * @param {object} xCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    self.execute = (xExpression) => {
+    self.call = (xExpression, xCallContext) => {
         xContext.aValues = [];
-        xContext.aTargets = [window];
+        xContext.aTargets = [xCallContext ?? window];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
 })(jaxon.utils.json, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

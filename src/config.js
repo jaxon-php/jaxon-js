@@ -310,3 +310,5 @@ var jaxon = {
         },
     };
 })(jaxon.config);
+
+window.jaxon = jaxon;

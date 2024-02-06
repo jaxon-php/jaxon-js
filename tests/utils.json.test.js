@@ -9,7 +9,7 @@ dom.jq = $;
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    const strValue = json.execute({
+    const strValue = json.call({
         calls: [{
             _type: 'selector',
             _name: '#integer'
@@ -25,7 +25,7 @@ test('Read str value from the DOM', () => {
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    const strValue = json.execute({
+    const strValue = json.call({
         calls: [{
             _type: 'selector',
             _name: '#integer'
@@ -41,7 +41,7 @@ test('Read str value from the DOM', () => {
 test('Read int value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    const intValue = json.execute({
+    const intValue = json.call({
         calls: [{
             _type: 'selector',
             _name: '#integer'
@@ -49,8 +49,9 @@ test('Read int value from the DOM', () => {
             _type: 'func',
             _name: 'text',
         }, {
-            _type: 'func',
-            _name: 'toInt',
+            _type: 'call',
+            _name: 'jaxon.utils.string.toInt',
+            params: [{ _type: '_', _name: 'this' }],
         }],
     });
 
@@ -60,7 +61,7 @@ test('Read int value from the DOM', () => {
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    json.execute({
+    json.call({
         calls: [{
             _type: 'selector',
             _name: '#username'
@@ -77,7 +78,7 @@ test('Assign element inner html', () => {
 // test('Assign element outer html', () => {
 //     document.body.innerHTML = `<div id="wrapper"><span id="username">Feuzeu</span></div>`;
 
-//     json.execute({
+//     json.call({
 //         calls: [{
 //             _type: 'selector',
 //             _name: '#username'
