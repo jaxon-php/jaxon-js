@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom) {
+(function(self, handler, json) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -67,9 +67,9 @@
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func: sFuncName, data: aFuncParams, context = {} }) => {
+        // Add the function in the context
         self.context = context;
-        const func = dom.findFunction(sFuncName);
-        func && func.apply(self.context, aFuncParams);
+        json.call({ calls: [{ _type: 'call', _name: sFuncName, params: aFuncParams }] }, self.context);
         return true;
     };
 
@@ -90,4 +90,4 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.json);

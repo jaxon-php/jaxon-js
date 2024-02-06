@@ -311,6 +311,8 @@ var jaxon = {
     };
 })(jaxon.config);
 
+window.jaxon = jaxon;
+
 
 /**
  * Class: jaxon.utils.dom
@@ -572,7 +574,7 @@ var jaxon = {
     /**
      * Check if a parameter is an expression.
      *
-     * @var {object} xParam
+     * @var {object}
      */
     const xContext = { };
 
@@ -583,7 +585,21 @@ var jaxon = {
      *
      * @returns {boolean}
      */
-    const setLatestValue = (xValue) => xContext.aValues[xContext.aValues.length - 1] = xValue;
+    const setCurrentValue = (xValue) => xContext.aValues[xContext.aValues.length - 1] = xValue;
+
+    /**
+     * Get the value of the current expression.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentValue = () => xContext.aValues[xContext.aValues.length - 1];
+
+    /**
+     * Get the current target.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
 
     /**
      * Check if a parameter is an expression.
@@ -611,7 +627,12 @@ var jaxon = {
             case 'html': return dom.$(sName).innerHTML;
             case 'input': return dom.$(sName).value;
             case 'checked': return dom.$(sName).checked;
+            case 'this': return getCurrentValue();
             case 'expr': return execExpression(xParam);
+            case '_': switch(sName) {
+                case 'this': return getCurrentValue();
+                default: return undefined
+            }
             default: return undefined;
         }
     };
@@ -634,8 +655,8 @@ var jaxon = {
      */
     const execCall = (xCall) => {
         // The current value of the expression (the last element in the current values).
-        const xCurrValue = xContext.aValues[xContext.aValues.length - 1];
-        const xCurrTarget = xContext.aTargets[xContext.aTargets.length - 1];
+        const xCurrValue = getCurrentValue();
+        const xCurrTarget = getCurrentTarget();
         // Make calls
         const { _type: sType, _name: sName } = xCall;
         if (sType === 'selector') {
@@ -645,7 +666,7 @@ var jaxon = {
                 dom.jqSelect(xCurrTarget) :
                 // Call the selector.
                 dom.jqSelect(sName, !xContext ? null : getValue(xContext));
-            setLatestValue(xTarget);
+            setCurrentValue(xTarget);
             return;
         }
         if (sType === 'event') {
@@ -659,15 +680,17 @@ var jaxon = {
             });
             return;
         }
+        if (sType === 'call') {
+            const { params: aParams = [] } = xCall;
+            const func = dom.findFunction(sName); // Calling a "global" function.
+            setCurrentValue(!func ? null : func.apply(xCurrTarget, getValues(aParams)));
+            return;
+        }
         if (sType === 'func') {
-            if (sName === 'toInt') {
-                setLatestValue(str.toInt(xCurrValue));
-                return;
-            }
             const { params: aParams = [] } = xCall;
             // Call a function with xCurrValue as "this" and an array of parameters.
             const func = dom.findFunction(sName, xCurrValue);
-            setLatestValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
+            setCurrentValue(!func ? null : func.apply(xCurrValue, getValues(aParams)));
             return;
         }
         if (sType === 'attr') {
@@ -678,7 +701,7 @@ var jaxon = {
                 innerElement[innerProperty] = getValue(xValue);
             }
             // Set the property value as "return" value.
-            setLatestValue(innerElement[innerProperty]);
+            setCurrentValue(innerElement[innerProperty]);
             return;
         }
         console.error('Unexpected command type: ' + JSON.stringify({ type: sType, call: xCall }));
@@ -704,12 +727,13 @@ var jaxon = {
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression An object representing a command
+     * @param {object} xCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    self.execute = (xExpression) => {
+    self.call = (xExpression, xCallContext) => {
         xContext.aValues = [];
-        xContext.aTargets = [window];
+        xContext.aTargets = [xCallContext ?? window];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
 })(jaxon.utils.json, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
@@ -2184,7 +2208,7 @@ var jaxon = {
  * Class: jaxon.cmd.event
  */
 
-(function(self, dom, str, script) {
+(function(self, dom, str, json) {
     /**
      * Add an event handler to the specified target.
      *
@@ -2218,6 +2242,21 @@ var jaxon = {
     };
 
     /**
+     * Call an event handler.
+     *
+     * @param {object} event
+     * @param {object} target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} func The name of the function to be called
+     * @param {array} params The function parameters
+     *
+     * @returns {void}
+     */
+    const callEventHandler = (event, target, func, params) => {
+        json.call({ calls: [{ _type: 'call', _name: func, params }] }, { event, target });
+    };
+
+    /**
      * Add an event handler with parameters to the specified target.
      *
      * @param {object} command The Response command object.
@@ -2230,9 +2269,9 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, prop: sEvent, func, data = [], options = false }) => {
-        target.addEventListener(str.stripOnPrefix(sEvent), (event) =>
-            script.call({ func, data, context: { event, target } }), options);
+    self.addEventHandler = ({ target, prop: sEvent, func, data: params = [], options }) => {
+        target.addEventListener(str.stripOnPrefix(sEvent),
+            (event) => callEventHandler(event, target, func, params), options ?? false);
         return true;
     };
 
@@ -2248,19 +2287,18 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, prop: sEvent, func, data = [] }) => {
-        target[str.addOnPrefix(sEvent)] = (event) =>
-            script.call({ func, data, context: { event, target } });
+    self.setEventHandler = ({ target, prop: sEvent, func, data: params = [] }) => {
+        target[str.addOnPrefix(sEvent)] = (event) => callEventHandler(event, target, func, params);
         return true;
     };
-})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
+})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.json);
 
 
 /**
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom) {
+(function(self, handler, json) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -2325,9 +2363,9 @@ var jaxon = {
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func: sFuncName, data: aFuncParams, context = {} }) => {
+        // Add the function in the context
         self.context = context;
-        const func = dom.findFunction(sFuncName);
-        func && func.apply(self.context, aFuncParams);
+        json.call({ calls: [{ _type: 'call', _name: sFuncName, params: aFuncParams }] }, self.context);
         return true;
     };
 
@@ -2348,7 +2386,7 @@ var jaxon = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.json);
 
 
 /**

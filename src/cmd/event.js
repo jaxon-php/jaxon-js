@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.event
  */
 
-(function(self, dom, str, script) {
+(function(self, dom, str, json) {
     /**
      * Add an event handler to the specified target.
      *
@@ -36,6 +36,21 @@
     };
 
     /**
+     * Call an event handler.
+     *
+     * @param {object} event
+     * @param {object} target The target element
+     * @param {string} command.prop The name of the event.
+     * @param {string} func The name of the function to be called
+     * @param {array} params The function parameters
+     *
+     * @returns {void}
+     */
+    const callEventHandler = (event, target, func, params) => {
+        json.call({ calls: [{ _type: 'call', _name: func, params }] }, { event, target });
+    };
+
+    /**
      * Add an event handler with parameters to the specified target.
      *
      * @param {object} command The Response command object.
@@ -48,9 +63,9 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, prop: sEvent, func, data = [], options = false }) => {
-        target.addEventListener(str.stripOnPrefix(sEvent), (event) =>
-            script.call({ func, data, context: { event, target } }), options);
+    self.addEventHandler = ({ target, prop: sEvent, func, data: params = [], options }) => {
+        target.addEventListener(str.stripOnPrefix(sEvent),
+            (event) => callEventHandler(event, target, func, params), options ?? false);
         return true;
     };
 
@@ -66,9 +81,8 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, prop: sEvent, func, data = [] }) => {
-        target[str.addOnPrefix(sEvent)] = (event) =>
-            script.call({ func, data, context: { event, target } });
+    self.setEventHandler = ({ target, prop: sEvent, func, data: params = [] }) => {
+        target[str.addOnPrefix(sEvent)] = (event) => callEventHandler(event, target, func, params);
         return true;
     };
-})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.cmd.script);
+})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.json);
