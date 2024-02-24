@@ -14,7 +14,7 @@ test('Read str value from the DOM', () => {
             _type: 'select',
             _name: '#integer'
         }, {
-            _type: 'func',
+            _type: 'method',
             _name: 'text',
         }],
     });
@@ -30,7 +30,7 @@ test('Read str value from the DOM', () => {
             _type: 'select',
             _name: '#integer'
         }, {
-            _type: 'func',
+            _type: 'method',
             _name: 'html',
         }],
     });
@@ -46,10 +46,10 @@ test('Read int value from the DOM', () => {
             _type: 'select',
             _name: '#integer'
         }, {
-            _type: 'func',
+            _type: 'method',
             _name: 'text',
         }, {
-            _type: 'call',
+            _type: 'func',
             _name: 'jaxon.utils.string.toInt',
             params: [{ _type: '_', _name: 'this' }],
         }],
@@ -66,7 +66,7 @@ test('Assign element inner html', () => {
             _type: 'select',
             _name: '#username'
         }, {
-            _type: 'func',
+            _type: 'method',
             _name: 'html',
             params: ['Mister Johnson'],
         }],
@@ -83,7 +83,7 @@ test('Assign element inner html', () => {
 //             _type: 'select',
 //             _name: '#username'
 //         }, {
-//             _type: 'func',
+//             _type: 'method',
 //             _name: 'html',
 //             params: ['Mister Johnson'],
 //         }],
