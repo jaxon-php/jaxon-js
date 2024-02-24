@@ -85,4 +85,40 @@
         target[str.addOnPrefix(sEvent)] = (event) => callEventHandler(event, target, func, params);
         return true;
     };
+
+    /**
+     * Replace the page number param with the current page number value
+     *
+     * @param {array} aParams
+     * @param {integer} nPageNumber
+     *
+     * @returns {array}
+     */
+    const setPageNumber = (aParams, nPageNumber) => aParams.map(xParam =>
+        str.typeOf(xParam) === 'object' && xParam._type === 'page' ? nPageNumber : xParam);
+
+    /**
+     * Set event handlers on pagination links.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The target element id
+     * @param {object} command.target The target element
+     * @param {string} command.call The name of the event.
+     * @param {array} command.data The function parameters
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.paginate = ({ target, call: oCall, data: aPages }) => {
+        aPages.filter(({ type }) => type === 'enabled')
+            .forEach(({ page }) => {
+                const oLink = target.querySelector(`li[data-page='${page}'] > a`);
+                if (oLink === null) {
+                    return;
+                }
+                oLink.onClick = () => json.call({
+                    calls: [{ ...oCall, params: setPageNumber(oCall.params) }],
+                });
+            });
+        return true;
+    };
 })(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.json);
