@@ -92,7 +92,22 @@
     };
 
     /**
-     * Update the databags contents.
+     * Update the databag content.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.values The databag values.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.databag = ({ values }) => {
+        for (const key in values) {
+            parameters.bags[key] = values[key];
+        }
+        return true;
+    };
+
+    /**
+     * Execute a JQuery expression beginning with selector.
      *
      * @param {object} command The Response command object.
      * @param {object} command.selector The JQuery expression

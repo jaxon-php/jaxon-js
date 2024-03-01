@@ -53,43 +53,38 @@ jaxon.isLoaded = true;
         return true;
     }, 'Response complete');
 
-    register('as', cmd.body.assign, 'assign');
-    register('ap', cmd.body.append, 'append');
-    register('pp', cmd.body.prepend, 'prepend');
-    register('rp', cmd.body.replace, 'replace');
-    register('cl', cmd.body.clear, 'clear');
-    register('rm', cmd.body.remove, 'remove');
-    register('ce', cmd.body.create, 'create');
-    register('ie', cmd.body.insert, 'insert');
-    register('ia', cmd.body.insertAfter, 'insertAfter');
+    register('dom.assign', cmd.body.assign, 'Dom::Assign');
+    register('dom.append', cmd.body.append, 'Dom::Append');
+    register('dom.prepend', cmd.body.prepend, 'Dom::Prepend');
+    register('dom.replace', cmd.body.replace, 'Dom::Replace');
+    register('dom.clear', cmd.body.clear, 'Dom::Clear');
+    register('dom.remove', cmd.body.remove, 'Dom::Remove');
+    register('dom.create', cmd.body.create, 'Dom::Create');
+    register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
+    register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
-    register('s', cmd.script.sleep, 'sleep');
-    register('jc', cmd.script.call, 'call js function');
-    register('al', cmd.script.alert, 'alert');
-    register('cc', cmd.script.confirm, 'confirm');
-    register('rd', cmd.script.redirect, 'redirect');
+    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
+    register('script.call', cmd.script.call, 'Script::CallJsFunction');
+    register('script.alert', cmd.script.alert, 'Script::Alert');
+    register('script.confirm', cmd.script.confirm, 'Script::Confirm');
+    register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
-    register('se', cmd.event.setEventHandler, 'setEventHandler');
-    register('ae', cmd.event.addEventHandler, 'addEventHandler');
-    register('ah', cmd.event.addHandler, 'addHandler');
-    register('rh', cmd.event.removeHandler, 'removeHandler');
+    register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
+    register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
+    register('handler.add', cmd.event.addHandler, 'Script::AddHandler');
+    register('handler.remove', cmd.event.removeHandler, 'Script::RemoveHandler');
 
-    // JQuery
-    register('jquery', cmd.script.jquery, 'jquery');
-    // Pagination
-    register('paginate', cmd.script.paginate, 'paginate');
-    // Data bags
-    register('bags.set', ({ bags }) => {
-        for (const bag in bags) {
-            ajax.parameters.bags[bag] = bags[bag];
-        }
-        return true;
-    }, 'updateBags');
-
-    register('dbg', ({ message }) => {
+    register('script.debug', ({ message }) => {
         console.log(message);
         return true;
     }, 'Debug message');
+
+    // JQuery
+    register('jquery.call', cmd.script.jquery, 'JQuery::CallSelector');
+    // Pagination
+    register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
+    // Data bags
+    register('databag.set', cmd.script.databag, 'Databag:SetValues');
 
     /**
      * Class: jaxon.ajax.message
