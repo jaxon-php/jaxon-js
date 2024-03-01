@@ -41,11 +41,11 @@ var jaxon = {
         body: {},
         script: {},
         event: {},
-    },
-
-    call: {
-        json: {},
-        query: {},
+        // Lib to execute calls from json expressions.
+        call: {
+            json: {},
+            query: {},
+        },
     },
 
     utils: {

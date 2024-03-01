@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.call.json
+ * Class: jaxon.cmd.call.json
  */
 
 (function(self, query, dom, form, str) {
@@ -142,7 +142,7 @@
      *
      * @returns {mixed}
      */
-    self.call = (xCall, xCallContext = window) => {
+    self.execCall = (xCall, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
         return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
     };
@@ -155,8 +155,8 @@
      *
      * @returns {mixed}
      */
-    self.expr = (xExpression, xCallContext = window) => {
+    self.execExpr = (xExpression, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.cmd.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

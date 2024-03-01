@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, parameters, json) {
+(function(self, json, handler, parameters) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -68,7 +68,7 @@
      */
     self.call = ({ func, args, context = {} }) => {
         // Add the function in the context
-        json.call({ _type: 'func', _name: func, args }, context);
+        json.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
 
@@ -114,7 +114,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.jquery = ({ selector }) => {
-        json.expr(selector);
+        json.execExpr(selector);
         return true;
     };
 
@@ -144,15 +144,14 @@
         aPages.filter(({ type }) => type === 'enabled')
             .forEach(({ number }) => {
                 const oLink = target.querySelector(`li[data-page='${number}'] > a`);
-                if (oLink === null) {
-                    return;
+                if (oLink !== null) {
+                    oLink.onClick = () => json.execCall({
+                        ...oCall,
+                        _type: 'func',
+                        args: setPageNumber(oCall.args, number),
+                    });
                 }
-                oLink.onClick = () => json.call({
-                    ...oCall,
-                    _type: 'func',
-                    args: setPageNumber(oCall.args, number),
-                });
             });
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.call.json);
+})(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
