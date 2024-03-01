@@ -68,8 +68,7 @@
      */
     self.call = ({ func, args, context = {} }) => {
         // Add the function in the context
-        self.context = context;
-        json.call({ calls: [{ _type: 'call', _name: func, args }] }, self.context);
+        json.call({ _type: 'func', _name: func, args }, context);
         return true;
     };
 
@@ -115,7 +114,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.jquery = ({ selector }) => {
-        json.call(selector);
+        json.expr(selector);
         return true;
     };
 
@@ -149,7 +148,9 @@
                     return;
                 }
                 oLink.onClick = () => json.call({
-                    calls: [{ ...oCall, args: setPageNumber(oCall.args) }],
+                    ...oCall,
+                    _type: 'func',
+                    args: setPageNumber(oCall.args, number),
                 });
             });
         return true;

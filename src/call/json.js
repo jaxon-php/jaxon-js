@@ -118,7 +118,7 @@
      *
      * @returns {void}
      */
-    const execCall = (xCall, xCurrValue) => {
+    const execCall = (xCall, xCurrValue = null) => {
         const xCommand = xCommands[xCall._type] ?? xCommands.error;
         return xCommand(xCall, xCurrValue);
     };
@@ -135,6 +135,19 @@
     };
 
     /**
+     * Execute a single javascript function call.
+     *
+     * @param {object} xCall An object representing the function call
+     * @param {object=window} xCallContext The context to execute calls in.
+     *
+     * @returns {mixed}
+     */
+    self.call = (xCall, xCallContext = window) => {
+        xContext.aTargets = [xCallContext];
+        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
+    };
+
+    /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression An object representing a command
@@ -142,7 +155,7 @@
      *
      * @returns {mixed}
      */
-    self.call = (xExpression, xCallContext = window) => {
+    self.expr = (xExpression, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };

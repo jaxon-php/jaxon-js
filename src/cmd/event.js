@@ -40,12 +40,12 @@
      *
      * @param {object} target The target element
      * @param {string} event The name of the event
-     * @param {object} call The event handler
+     * @param {object} call The expression to be executed in the event handler
      *
      * @returns {void}
      */
     const callEventHandler = (event, target, call) => {
-        json.call({ calls: [{ _type: 'call', ...call }] }, { event, target });
+        json.expr({ _type: 'expr', ...call }, { event, target });
     };
 
     /**
