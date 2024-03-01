@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, json) {
+(function(self, handler, parameters, json) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -17,7 +17,7 @@
      */
     self.sleep = (command) => {
         // Inject a delay in the queue processing and handle retry counter
-        const { prop: duration, response } = command;
+        const { duration, response } = command;
         if (handler.retry(command, duration)) {
             handler.setWakeup(response, 100);
             return false;
@@ -30,11 +30,11 @@
      * Show the specified message.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The message to display.
+     * @param {string} command.message The message to display.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.alert = ({ data: message }) => {
+    self.alert = ({ message }) => {
         handler.alert(message);
         return true;
     };
@@ -45,13 +45,13 @@
      * If the user clicks Ok, the command processing resumes normal operation.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The question to ask.
+     * @param {string} command.question The question to ask.
      * @param {integer} command.count The number of commands to skip.
      *
      * @returns {false} Stop the processing of the command queue until the user answers the question.
      */
     self.confirm = (command) => {
-        const { count, data: question } = command;
+        const { count, question } = command;
         handler.confirm(command, count, question);
         return false;
     };
@@ -60,16 +60,16 @@
      * Call a javascript function with a series of parameters using the current script context.
      *
      * @param {object} command The Response command object.
-     * @param {array} command.data  The parameters to pass to the function.
      * @param {string} command.func The name of the function to call.
+     * @param {array} command.args  The parameters to pass to the function.
      * @param {object} command.context The javascript object to be referenced as 'this' in the script.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func: sFuncName, data: aFuncParams, context = {} }) => {
+    self.call = ({ func, args, context = {} }) => {
         // Add the function in the context
         self.context = context;
-        json.call({ calls: [{ _type: 'call', _name: sFuncName, params: aFuncParams }] }, self.context);
+        json.call({ calls: [{ _type: 'call', _name: func, args }] }, self.context);
         return true;
     };
 
@@ -77,12 +77,12 @@
      * Redirects the browser to the specified URL.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The new URL to redirect to
+     * @param {string} command.url The new URL to redirect to
      * @param {integer} command.delay The time to wait before the redirect.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.redirect = ({ data: sUrl, delay: nDelay }) => {
+    self.redirect = ({ url: sUrl, delay: nDelay }) => {
         if (nDelay <= 0) {
             window.location = sUrl;
             return true;
@@ -90,4 +90,4 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.json);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.call.json);

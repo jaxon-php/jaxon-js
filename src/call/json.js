@@ -18,33 +18,33 @@
     const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
 
     /**
-     * Check if a parameter is an expression.
+     * Check if an argument is an expression.
      *
-     * @param {mixed} xParam
+     * @param {mixed} xArg
      *
      * @returns {boolean}
      */
-    const isExpression = xParam => str.typeOf(xParam) === 'object' && (xParam._type);
+    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
 
     /**
-     * Get the value of a single parameter.
+     * Get the value of a single argument.
      *
-     * @param {mixed} xParam
+     * @param {mixed} xArg
      * @param {mixed} xCurrValue The current expression value.
      *
      * @returns {mixed}
      */
-    const getValue = (xParam, xCurrValue) => {
-        if (!isExpression(xParam)) {
-            return xParam;
+    const getValue = (xArg, xCurrValue) => {
+        if (!isExpression(xArg)) {
+            return xArg;
         }
-        const { _type: sType, _name: sName } = xParam;
+        const { _type: sType, _name: sName } = xArg;
         switch(sType) {
             case 'form': return form.getValues(sName);
             case 'html': return dom.$(sName).innerHTML;
             case 'input': return dom.$(sName).value;
             case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xParam);
+            case 'expr': return execExpression(xArg);
             case '_': switch(sName) {
                 case 'this': return xCurrValue;
                 default: return undefined
@@ -54,14 +54,14 @@
     };
 
     /**
-     * Get the values of an array of parameters.
+     * Get the values of an array of arguments.
      *
-     * @param {array} aParams
+     * @param {array} aArgs
      * @param {mixed} xCurrValue The current expression value.
      *
      * @returns {array}
      */
-    const getValues = (aParams, xCurrValue) => aParams.map(xParam => getValue(xParam, xCurrValue));
+    const getValues = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
 
     /**
      * The call commands
@@ -71,13 +71,13 @@
     const xCommands = {
         select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
             return sName === 'this' ?
-                // Empty parameter list => $(this), ie the last event target.
+                // Empty argument list => $(this), ie the last event target.
                 query.select(getCurrentTarget()) :
                 // Call the selector.
                 query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
         },
         event: ({ _name: sName, handler: xExpression }, xCurrValue) => {
-            // Set an event handler. Takes an expression as parameter.
+            // Set an event handler. Takes an expression as argument.
             xCurrValue.on(sName, (event) => {
                 // Save the current target.
                 xContext.aTargets.push({ event, target: event.currentTarget });
@@ -86,15 +86,15 @@
             });
             return true;
         },
-        func: ({ _name: sName, params: aParams = [] }, xCurrValue) => {
-            // Call a "global" function with the current target as "this" and an array of parameters.
+        func: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a "global" function with the current target as "this" and an array of arguments.
             const func = dom.findFunction(sName);
-            return !func ? null : func.apply(getCurrentTarget(), getValues(aParams, xCurrValue));
+            return !func ? null : func.apply(getCurrentTarget(), getValues(aArgs, xCurrValue));
         },
-        method: ({ _name: sName, params: aParams = [] }, xCurrValue) => {
-            // Call a function with xCurrValue as "this" and an array of parameters.
+        method: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a function with xCurrValue as "this" and an array of arguments.
             const func = dom.findFunction(sName, xCurrValue);
-            return !func ? null : func.apply(xCurrValue, getValues(aParams, xCurrValue));
+            return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
         },
         attr: ({ _name: sName, value: xValue }, xCurrValue) => {
             const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
