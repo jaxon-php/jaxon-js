@@ -90,4 +90,53 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
+
+    /**
+     * Update the databags contents.
+     *
+     * @param {object} command The Response command object.
+     * @param {object} command.selector The JQuery expression
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.jquery = ({ selector }) => {
+        json.call(selector);
+        return true;
+    };
+
+    /**
+     * Replace the page number argument with the current page number value
+     *
+     * @param {array} aArgs
+     * @param {integer} nPageNumber
+     *
+     * @returns {array}
+     */
+    const setPageNumber = (aArgs, nPageNumber) => aArgs.map(xArg =>
+        str.typeOf(xArg) === 'object' && xArg._type === 'page' ? nPageNumber : xArg);
+
+    /**
+     * Set event handlers on pagination links.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The pagination wrapper id
+     * @param {object} command.target The pagination wrapper element
+     * @param {array} command.call The page call
+     * @param {array} command.pages The page list
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.paginate = ({ target, call: oCall, pages: aPages }) => {
+        aPages.filter(({ type }) => type === 'enabled')
+            .forEach(({ number }) => {
+                const oLink = target.querySelector(`li[data-page='${number}'] > a`);
+                if (oLink === null) {
+                    return;
+                }
+                oLink.onClick = () => json.call({
+                    calls: [{ ...oCall, args: setPageNumber(oCall.args) }],
+                });
+            });
+        return true;
+    };
 })(jaxon.cmd.script, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.call.json);

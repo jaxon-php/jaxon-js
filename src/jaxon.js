@@ -74,7 +74,19 @@ jaxon.isLoaded = true;
     register('ah', cmd.event.addHandler, 'addHandler');
     register('rh', cmd.event.removeHandler, 'removeHandler');
 
-    register('dbg', ({ data: message }) => {
+    // JQuery
+    register('jquery', cmd.script.jquery, 'jquery');
+    // Pagination
+    register('paginate', cmd.script.paginate, 'paginate');
+    // Data bags
+    register('bags.set', ({ bags }) => {
+        for (const bag in bags) {
+            ajax.parameters.bags[bag] = bags[bag];
+        }
+        return true;
+    }, 'updateBags');
+
+    register('dbg', ({ message }) => {
         console.log(message);
         return true;
     }, 'Debug message');
