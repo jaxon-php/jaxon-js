@@ -26,21 +26,24 @@
      *
      * @param {string} cmd The short name of the command handler.
      * @param {string} func The command handler function.
-     * @param {string=''} name The full name of the command handler.
+     * @param {string=''} desc The description of the command handler.
      *
      * @returns {void}
      */
-    self.register = (cmd, func, name = '') => handlers[cmd] = { name, func };
+    self.register = (cmd, func, desc = '') => handlers[cmd] = { desc, func };
 
     /**
      * Unregisters and returns a command handler.
      *
      * @param {string} cmd The name of the command handler.
      *
-     * @returns {callable} The unregistered function.
+     * @returns {callable|null} The unregistered function.
      */
     self.unregister = (cmd) => {
         const handler = handlers[cmd];
+        if (!handler) {
+            return null;
+        }
         delete handlers[cmd];
         return handler.func;
     };
@@ -49,10 +52,23 @@
      * @param {object} command The response command to be executed.
      * @param {string} command.cmd The name of the function.
      *
-     * @returns {boolean} (true or false): depending on whether a command handler has
-     * been registered for the specified command (object).
+     * @returns {boolean}
      */
     self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
+
+    /**
+     * Calls the registered command handler for the specified command
+     * (you should always check isRegistered before calling this function)
+     *
+     * @param {object} cmd The command name.
+     * @param {object} options The command options.
+     *
+     * @returns {boolean}
+     */
+    const callHandler = (cmd, options) => {
+        const handler = handlers[cmd];
+        return handler.func({ ...options, desc: handler.desc });
+    }
 
     /**
      * Perform a lookup on the command specified by the response command object passed
@@ -66,36 +82,23 @@
      * interval, timeout or event handler which will restart the jaxon response processing.
      * 
      * @param {object} command The response command to be executed.
+     * @param {object} command.cmd The command name.
+     * @param {object} command.options The command options.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
-        if (!self.isRegistered(command)) {
+    self.execute = ({ cmd, options, options: { id } }) => {
+        if (!self.isRegistered({ cmd })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
-        if (command.id) {
-            command.target = dom.$(command.id);
+        if (id) {
+            options.target = dom.$(id);
         }
         // Process the command
-        return self.call(command);
+        return callHandler(cmd, options);
     };
-
-    /**
-     * Calls the registered command handler for the specified command
-     * (you should always check isRegistered before calling this function)
-     *
-     * @param {object} command The response command to be executed.
-     * @param {string} command.cmd The name of the function.
-     *
-     * @returns {boolean}
-     */
-    self.call = (command) => {
-        const handler = handlers[command.cmd];
-        command.fullName = handler.name;
-        return handler.func(command);
-    }
 
     /**
      * Attempt to pop the next asynchronous request.
