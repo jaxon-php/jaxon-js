@@ -4,8 +4,7 @@
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue) {
     /**
-     * Initialize a request object, populating default settings, where call specific
-     * settings are not already provided.
+     * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
      *      in addition, be used to store all request related values.
@@ -14,8 +13,9 @@
      * @returns {boolean}
      */
     const initialize = (oRequest) => {
-        cfg.setRequestOptions(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
+        cfg.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
@@ -24,9 +24,25 @@
         // Look for upload parameter
         upload.initialize(oRequest);
 
-        // Process the request parameters
-        params.process(oRequest);
+        // No request is submitted while there are pending requests in the outgoing queue.
+        oRequest.submit = queue.empty(handler.q.send);
+        if (oRequest.mode === 'synchronous') {
+            // Synchronous requests are always queued, in both send and recv queues.
+            queue.push(handler.q.send, oRequest);
+            queue.push(handler.q.recv, oRequest);
+        }
+        // Asynchronous requests are queued in send queue only if they are not submitted.
+        oRequest.submit || queue.push(handler.q.send, oRequest);
+    };
 
+    /**
+     * Prepare a request, by setting the HTTP options, handlers and processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    const prepare = (oRequest) => {
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -62,18 +78,6 @@
         if (!oRequest.responseProcessor) {
             oRequest.responseProcessor = rsp.jsonProcessor;
         }
-
-        // No request is submitted while there are pending requests in the outgoing queue.
-        const submitRequest = queue.empty(handler.q.send);
-        if (oRequest.mode === 'synchronous') {
-            // Synchronous requests are always queued, in both send and recv queues.
-            queue.push(handler.q.send, oRequest);
-            queue.push(handler.q.recv, oRequest);
-            return submitRequest;
-        }
-        // Asynchronous requests are queued in send queue only if they are not submitted.
-        submitRequest || queue.push(handler.q.send, oRequest);
-        return submitRequest;
     };
 
     /**
@@ -151,7 +155,6 @@
         cbk.execute(oRequest, 'onExpiration');
 
         cbk.execute(oRequest, 'onRequest');
-
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
@@ -193,8 +196,6 @@
 
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
-
-        cbk.execute(oRequest, 'onInitialize');
         initialize(oRequest);
 
         cbk.execute(oRequest, 'onProcessParams');
@@ -202,7 +203,8 @@
 
         while (oRequest.requestRetry > 0) {
             try {
-                return prepare(oRequest) ? submit(oRequest) : null;
+                prepare(oRequest);
+                return oRequest.submit ? submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
