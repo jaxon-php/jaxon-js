@@ -145,8 +145,11 @@
         --oRequest.requestRetry;
         oRequest.status.onRequest();
 
+        // The onResponseDelay and onExpiration aren't called immediately, but a timer
+        // is set to call them later, using delays that are set in the config.
         cbk.execute(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'onExpiration');
+
         cbk.execute(oRequest, 'onRequest');
 
         oRequest.cursor.onWaiting();
@@ -191,9 +194,9 @@
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        cbk.execute(oRequest, 'beforeInitialize');
+        cbk.execute(oRequest, 'onInitialize');
         initialize(oRequest);
-        cbk.execute(oRequest, 'afterInitialize');
+        cbk.execute(oRequest, 'onProcessParams');
 
         params.process(oRequest);
 
