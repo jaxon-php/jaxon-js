@@ -27,8 +27,8 @@
             onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
             onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
         },
-        beforeInitialize: null,
-        afterInitialize: null,
+        onInitialize: null,
+        onProcessParams: null,
         onPrepare: null,
         onRequest: null,
         onResponseDelay: null,
@@ -45,7 +45,7 @@
      *
      * @var {array}
      */
-    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
+    self.aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
         'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
         'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 

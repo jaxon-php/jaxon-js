@@ -191,10 +191,10 @@
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        cbk.execute(oRequest, 'beforeInitialize');
+        cbk.execute(oRequest, 'onInitialize');
         initialize(oRequest);
-        cbk.execute(oRequest, 'afterInitialize');
 
+        cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
