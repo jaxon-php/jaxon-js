@@ -27,6 +27,8 @@
             onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
             onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
         },
+        beforeInitialize: null,
+        afterInitialize: null,
         onPrepare: null,
         onRequest: null,
         onResponseDelay: null,
