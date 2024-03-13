@@ -91,7 +91,7 @@
      *
      * @returns {object|null}
      */
-    self.findFunction = function (sFuncName, context = window) {
+    self.findFunction = (sFuncName, context = window) => {
         const names = sFuncName.split(".");
         for (let i = 0, length = names.length; i < length && (context); i++) {
             context = context[names[i]];
