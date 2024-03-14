@@ -6,7 +6,10 @@ This package provides client-side functions for the Jaxon Ajax libraries.
 Features
 --------
 
-- Manage Jaxon requests and responses on client side.
+- Construct and send ajax requests to registered Jaxon classes and functions.
+  - Execute various callbacks during the requests processing.
+- Receive, parse and process responses to Jaxon requests.
+  - Execute the instructions they contain in the browser.
 - Provide a jQuery's ready()-like feature, to run custom code after page load.
 
 Installation and Configuration
