@@ -406,10 +406,11 @@ var jaxon = {
      *
      * @returns {object|null}
      */
-    self.findFunction = function (sFuncName, context = window) {
-        const names = sFuncName.split(".");
-        for (let i = 0, length = names.length; i < length && (context); i++) {
-            context = context[names[i]];
+    self.findFunction = (sFuncName, context = window) => {
+        const aNames = sFuncName.split(".");
+        const nLength = aNames.length;
+        for (let i = 0; i < nLength && (context); i++) {
+            context = context[aNames[i]];
         }
         return context ?? null;
     };
@@ -424,14 +425,14 @@ var jaxon = {
      * @returns {array} The inner object and the attribute name in an array.
      */
     self.getInnerObject = (xElement, attribute) => {
-        const attributes = attribute.split('.');
+        const aNames = attribute.split('.');
+        const nLength = aNames.length;
         // Get the last element in the array.
-        attribute = attributes.pop();
+        attribute = aNames.pop();
         // Move to the inner object.
-        for (let i = 0, len = attributes.length; i < len && (xElement); i++) {
-            const attr = attributes[i];
+        for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
-            xElement = xElement[attr === 'css' ? 'style' : attr];
+            xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
         return !xElement ? [null, null] : [xElement, attribute];
     };
