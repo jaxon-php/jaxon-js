@@ -722,24 +722,20 @@ if (jaxon.dom.assign) {
 /*
     Function: jaxon.tools.queue.retry
 */
-if (jaxon.tools) {
-    if (jaxon.tools.queue) {
-        if (jaxon.tools.queue.retry) {
-            if ('undefined' == typeof jaxon.debug.tools)
-                jaxon.debug.tools = {};
-            if ('undefined' == typeof jaxon.debug.tools.queue)
-                jaxon.debug.tools.queue = {};
-            jaxon.debug.tools.queue.retry = jaxon.tools.queue.retry;
-            jaxon.tools.queue.retry = function(obj, count) {
-                if (jaxon.debug.tools.queue.retry(obj, count))
-                    return true;
-                // no 'exceeded' message for sleep command
-                if (obj.cmd && 's' == obj.cmd)
-                    return false;
-                jaxon.debug.writeMessage('Retry count exceeded.');
-                return false;
-            }
-        }
+if (jaxon.tools && jaxon.tools.queue && jaxon.tools.queue.retry) {
+    if ('undefined' == typeof jaxon.debug.tools)
+        jaxon.debug.tools = {};
+    if ('undefined' == typeof jaxon.debug.tools.queue)
+        jaxon.debug.tools.queue = {};
+    jaxon.debug.tools.queue.retry = jaxon.tools.queue.retry;
+    jaxon.tools.queue.retry = function(obj, count) {
+        if (jaxon.debug.tools.queue.retry(obj, count))
+            return true;
+        // no 'exceeded' message for sleep command
+        if (obj.cmd && 's' == obj.cmd)
+            return false;
+        jaxon.debug.writeMessage('Retry count exceeded.');
+        return false;
     }
 }
 
@@ -755,18 +751,13 @@ jaxon.debug.isLoaded = true;
     
     Must redefine these shortcuts so they point to the new debug (wrapper) versions:
     - <jxn.$>
-    - <jxn.getFormValues>
-    - <jxn.call>
+    - <jxn.request>
 
     Must redefine these shortcuts as well:
     - <jaxon.$>
-    - <jaxon.getFormValues>
 */
-jxn = {}
 
 jxn.$ = jaxon.tools.dom.$;
-jxn.getFormValues = jaxon.tools.form.getValues;
-jxn.call = jaxon.ajax.handler.call;
 jxn.request = jaxon.ajax.request.execute;
 
 jaxon.$ = jaxon.tools.dom.$;
