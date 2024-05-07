@@ -121,13 +121,15 @@
     /**
      * Replace the page number argument with the current page number value
      *
-     * @param {array} aArgs
-     * @param {integer} nPageNumber
+     * @param {object} oCall
+     * @param {array} oCall.args
+     * @param {object} oLink
      *
      * @returns {array}
      */
-    const setPageNumber = (aArgs, nPageNumber) => aArgs.map(xArg =>
-        str.typeOf(xArg) === 'object' && xArg._type === 'page' ? nPageNumber : xArg);
+    const getCallArgs = ({ args: aArgs }, oLink) => aArgs.map(xArg =>
+        str.typeOf(xArg) !== 'object' || xArg._type !== 'page' ? xArg :
+            parseInt(oLink.parentNode.getAttribute('data-page')));
 
     /**
      * Set event handlers on pagination links.
@@ -140,18 +142,13 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, call: oCall, pages: aPages }) => {
-        aPages.filter(({ type }) => type === 'enabled')
-            .forEach(({ number }) => {
-                const oLink = target.querySelector(`li[data-page='${number}'] > a`);
-                if (oLink !== null) {
-                    oLink.onClick = () => json.execCall({
-                        ...oCall,
-                        _type: 'func',
-                        args: setPageNumber(oCall.args, number),
-                    });
-                }
-            });
+    self.paginate = ({ target, call: oCall }) => {
+        const aLinks = target.querySelectorAll(`li.enabled > a`);
+        aLinks.forEach(oLink => oLink.onClick = () => json.execCall({
+            ...oCall,
+            _type: 'func',
+            args: getCallArgs(oCall, oLink),
+        }));
         return true;
     };
 })(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
