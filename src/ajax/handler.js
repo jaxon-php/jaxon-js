@@ -62,12 +62,13 @@
      *
      * @param {object} cmd The command name.
      * @param {object} options The command options.
+     * @param {object} request The Jaxon request.
      *
      * @returns {boolean}
      */
-    const callHandler = (cmd, options) => {
+    const callHandler = (cmd, options, request) => {
         const handler = handlers[cmd];
-        return handler.func({ ...options, desc: handler.desc });
+        return handler.func({ ...options, request, desc: handler.desc });
     }
 
     /**
@@ -84,20 +85,22 @@
      * @param {object} command The response command to be executed.
      * @param {object} command.cmd The command name.
      * @param {object} command.options The command options.
+     * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ cmd, options, options: { id } }) => {
+    self.execute = ({ cmd, options, request }) => {
         if (!self.isRegistered({ cmd })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
-        if (id) {
+        const id = options?.id;
+        if ((id)) {
             options.target = dom.$(id);
         }
         // Process the command
-        return callHandler(cmd, options);
+        return callHandler(cmd, options, request);
     };
 
     /**

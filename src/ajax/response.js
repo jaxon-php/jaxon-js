@@ -109,7 +109,7 @@
             sequence: _temp.sequence,
             request: oRequest,
             context: oRequest.context,
-            cmd: 'rcmplt',
+            cmd: 'response.complete',
         });
     };
 

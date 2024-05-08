@@ -81,6 +81,36 @@
     };
 
     /**
+     * Create a request object and submit the request using the specified request type;
+     * all request parameters should be finalized by this point.
+     * Upon failure of a POST, this function will fall back to a GET request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {mixed}
+     */
+    const submit = (oRequest) => {
+        --oRequest.requestRetry;
+        oRequest.status.onRequest();
+
+        // The onResponseDelay and onExpiration aren't called immediately, but a timer
+        // is set to call them later, using delays that are set in the config.
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+
+        cbk.execute(oRequest, 'onRequest');
+        oRequest.cursor.onWaiting();
+        oRequest.status.onWaiting();
+
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.responseConverter)
+            .then(oRequest.responseHandler)
+            .catch(oRequest.errorHandler);
+
+        return oRequest.returnValue;
+    };
+
+    /**
      * Clean up the request object.
      *
      * @param {object} oRequest The request context object.
@@ -127,43 +157,13 @@
             }
             // Submit the asynchronous requests sent while waiting.
             while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
-                self.submit(nextRequest);
+                submit(nextRequest);
             }
             // Submit the next synchronous request, if there's any.
             if((nextRequest = queue.peek(handler.q.send)) !== null) {
-                self.submit(nextRequest);
+                submit(nextRequest);
             }
         }
-    };
-
-    /**
-     * Create a request object and submit the request using the specified request type;
-     * all request parameters should be finalized by this point.
-     * Upon failure of a POST, this function will fall back to a GET request.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @returns {mixed}
-     */
-    const submit = (oRequest) => {
-        --oRequest.requestRetry;
-        oRequest.status.onRequest();
-
-        // The onResponseDelay and onExpiration aren't called immediately, but a timer
-        // is set to call them later, using delays that are set in the config.
-        cbk.execute(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'onExpiration');
-
-        cbk.execute(oRequest, 'onRequest');
-        oRequest.cursor.onWaiting();
-        oRequest.status.onWaiting();
-
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
-
-        return oRequest.returnValue;
     };
 
     /**

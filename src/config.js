@@ -58,6 +58,11 @@ var jaxon = {
 
     dom: {},
 
+    dialog: {
+        cmd: {},
+        lib: {},
+    },
+
     /**
      * This class contains all the default configuration settings.
      * These are application level settings; however, they can be overridden by including

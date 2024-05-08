@@ -46,9 +46,9 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax) {
+(function(register, cmd, ajax, dialog) {
     // Pseudo command needed to complete queued commands processing.
-    register('rcmplt', ({ request }) => {
+    register('response.complete', ({ request }) => {
         ajax.request.complete(request);
         return true;
     }, 'Response complete');
@@ -85,6 +85,10 @@ jaxon.isLoaded = true;
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
     register('databag.set', cmd.script.databag, 'Databag:SetValues');
+    // Dialogs
+    register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
+    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
+    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog:HideModal');
 
     /**
      * Class: jaxon.ajax.message
@@ -148,4 +152,4 @@ jaxon.isLoaded = true;
             noCallback && noCallback();
         },
     };
-})(jaxon.register, jaxon.cmd, jaxon.ajax);
+})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);

@@ -111,10 +111,10 @@
      */
     self.getInnerObject = (xElement, attribute) => {
         const aNames = attribute.split('.');
-        const nLength = aNames.length;
         // Get the last element in the array.
         attribute = aNames.pop();
         // Move to the inner object.
+        const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
             xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
