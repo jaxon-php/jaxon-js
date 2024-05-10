@@ -19,7 +19,7 @@
     self.showMessage = ({ lib: sLibName, type: sType, message }) => {
         const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
         const xLib = lib[sLibName];
-        xLib && xLib.message(sType, sMessage.supplant(aArgs), sTitle);
+        xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
         return true;
     };
 
