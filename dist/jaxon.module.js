@@ -41,11 +41,11 @@ var jaxon = {
         body: {},
         script: {},
         event: {},
-    },
-
-    call: {
-        json: {},
-        query: {},
+        // Lib to execute calls from json expressions.
+        call: {
+            json: {},
+            query: {},
+        },
     },
 
     utils: {
@@ -57,6 +57,11 @@ var jaxon = {
     },
 
     dom: {},
+
+    dialog: {
+        cmd: {},
+        lib: {},
+    },
 
     /**
      * This class contains all the default configuration settings.
@@ -412,10 +417,11 @@ window.jaxon = jaxon;
      *
      * @returns {object|null}
      */
-    self.findFunction = function (sFuncName, context = window) {
-        const names = sFuncName.split(".");
-        for (let i = 0, length = names.length; i < length && (context); i++) {
-            context = context[names[i]];
+    self.findFunction = (sFuncName, context = window) => {
+        const aNames = sFuncName.split(".");
+        const nLength = aNames.length;
+        for (let i = 0; i < nLength && (context); i++) {
+            context = context[aNames[i]];
         }
         return context ?? null;
     };
@@ -430,14 +436,14 @@ window.jaxon = jaxon;
      * @returns {array} The inner object and the attribute name in an array.
      */
     self.getInnerObject = (xElement, attribute) => {
-        const attributes = attribute.split('.');
+        const aNames = attribute.split('.');
         // Get the last element in the array.
-        attribute = attributes.pop();
+        attribute = aNames.pop();
         // Move to the inner object.
-        for (let i = 0, len = attributes.length; i < len && (xElement); i++) {
-            const attr = attributes[i];
+        const nLength = aNames.length;
+        for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
-            xElement = xElement[attr === 'css' ? 'style' : attr];
+            xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
         return !xElement ? [null, null] : [xElement, attribute];
     };
@@ -834,189 +840,10 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.call.json
- */
-
-(function(self, query, dom, form, str) {
-    /**
-     * The call contexts.
-     *
-     * @var {object}
-     */
-    const xContext = { };
-
-    /**
-     * Get the current target.
-     *
-     * @returns {mixed}
-     */
-    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
-
-    /**
-     * Check if a parameter is an expression.
-     *
-     * @param {mixed} xParam
-     *
-     * @returns {boolean}
-     */
-    const isExpression = xParam => str.typeOf(xParam) === 'object' && (xParam._type);
-
-    /**
-     * Get the value of a single parameter.
-     *
-     * @param {mixed} xParam
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {mixed}
-     */
-    const getValue = (xParam, xCurrValue) => {
-        if (!isExpression(xParam)) {
-            return xParam;
-        }
-        const { _type: sType, _name: sName } = xParam;
-        switch(sType) {
-            case 'form': return form.getValues(sName);
-            case 'html': return dom.$(sName).innerHTML;
-            case 'input': return dom.$(sName).value;
-            case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xParam);
-            case '_': switch(sName) {
-                case 'this': return xCurrValue;
-                default: return undefined
-            }
-            default: return undefined;
-        }
-    };
-
-    /**
-     * Get the values of an array of parameters.
-     *
-     * @param {array} aParams
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {array}
-     */
-    const getValues = (aParams, xCurrValue) => aParams.map(xParam => getValue(xParam, xCurrValue));
-
-    /**
-     * The call commands
-     *
-     * @var {object}
-     */
-    const xCommands = {
-        select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
-            return sName === 'this' ?
-                // Empty parameter list => $(this), ie the last event target.
-                query.select(getCurrentTarget()) :
-                // Call the selector.
-                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
-        },
-        event: ({ _name: sName, handler: xExpression }, xCurrValue) => {
-            // Set an event handler. Takes an expression as parameter.
-            xCurrValue.on(sName, (event) => {
-                // Save the current target.
-                xContext.aTargets.push({ event, target: event.currentTarget });
-                execExpression(xExpression);
-                xContext.aTargets.pop();
-            });
-            return true;
-        },
-        func: ({ _name: sName, params: aParams = [] }, xCurrValue) => {
-            // Call a "global" function with the current target as "this" and an array of parameters.
-            const func = dom.findFunction(sName);
-            return !func ? null : func.apply(getCurrentTarget(), getValues(aParams, xCurrValue));
-        },
-        method: ({ _name: sName, params: aParams = [] }, xCurrValue) => {
-            // Call a function with xCurrValue as "this" and an array of parameters.
-            const func = dom.findFunction(sName, xCurrValue);
-            return !func ? null : func.apply(xCurrValue, getValues(aParams, xCurrValue));
-        },
-        attr: ({ _name: sName, value: xValue }, xCurrValue) => {
-            const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
-            if (xValue !== undefined) {
-                // Assign an attribute.
-                innerElement[innerProperty] = getValue(xValue, xCurrValue);
-            }
-            return innerElement[innerProperty];
-        },
-        error: (xCall) => {
-            console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
-            return undefined;
-        },
-    };
-
-    /**
-     * Execute a single call.
-     *
-     * @param {object} xCall
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {void}
-     */
-    const execCall = (xCall, xCurrValue) => {
-        const xCommand = xCommands[xCall._type] ?? xCommands.error;
-        return xCommand(xCall, xCurrValue);
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression
-     *
-     * @returns {mixed}
-     */
-    const execExpression = ({ calls: aCalls = [] }) => {
-        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression An object representing a command
-     * @param {object=window} xCallContext The context to execute calls in.
-     *
-     * @returns {mixed}
-     */
-    self.call = (xExpression, xCallContext = window) => {
-        xContext.aTargets = [xCallContext];
-        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
-    };
-})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
-
-
-/**
- * Class: jaxon.call.query
- */
-
-(function(self, jq) {
-    /**
-     * The jQuery object.
-     * Will be undefined if the library is not installed.
-     *
-     * @var {object}
-     */
-    self.jq = jq;
-
-    /**
-     * Call the jQuery DOM selector
-     *
-     * @param {string|object} xSelector
-     * @param {object} xContext
-     *
-     * @returns {object}
-     */
-    self.select = (xSelector, xContext = null) => {
-        // Todo: Allow the use of an alternative library instead of jQuery.
-        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
-    };
-})(jaxon.call.query, window.jQuery);
-
-
-/**
  * Class: jaxon.ajax.callback
  */
 
-(function(self, config) {
+(function(self, str, config) {
     /**
      * Create a timer to fire an event in the future.
      * This will be used fire the onRequestDelay and onExpiration events.
@@ -1026,6 +853,15 @@ window.jaxon = jaxon;
      * @returns {object} A callback timer object.
      */
     const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
+
+    /**
+     * The names of the available callbacks.
+     *
+     * @var {array}
+     */
+    const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
      * Create a blank callback object.
@@ -1041,6 +877,8 @@ window.jaxon = jaxon;
             onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
             onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
         },
+        onInitialize: null,
+        onProcessParams: null,
         onPrepare: null,
         onRequest: null,
         onResponseDelay: null,
@@ -1051,15 +889,6 @@ window.jaxon = jaxon;
         onSuccess: null,
         onComplete: null,
     });
-
-    /**
-     * The names of the available callbacks.
-     *
-     * @var {array}
-     */
-    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
-        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
-        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
      * The global callback object which is active for every request.
@@ -1108,29 +937,39 @@ window.jaxon = jaxon;
      *
      * @returns {array}
      */
-    const getCallbacks = (oRequest) => Array.isArray(oRequest.callback) ?
-        [self.callback, ...oRequest.callback] : [self.callback, oRequest.callback];
+    const getCallbacks = (oRequest) => {
+        if(!oRequest.callback)
+        {
+            return [self.callback];
+        }
+        if(str.typeOf(oRequest.callback) === 'array')
+        {
+            return [self.callback, ...oRequest.callback];
+        }
+        return [self.callback, oRequest.callback];
+    };
 
     /**
      * Execute a callback event.
      *
      * @param {object} oCallback The callback object (or objects) which contain the event handlers to be executed.
      * @param {string} sFunction The name of the event to be triggered.
-     * @param {object} xArgs The callback argument.
+     * @param {object} oRequest The callback argument.
      *
      * @returns {void}
      */
-    const execute = (oCallback, sFunction, xArgs) => {
-        const [ func, timer ] = [ oCallback[sFunction], oCallback.timers[sFunction] ];
+    const execute = (oCallback, sFunction, oRequest) => {
+        const func = oCallback[sFunction];
+        const timer = !oCallback.timers ? null : oCallback.timers[sFunction];
         if (!func || typeof func !== 'function') {
             return;
         }
         if (!timer) {
-            func(xArgs); // Call the function directly.
+            func(oRequest); // Call the function directly.
             return;
         }
         // Call the function after the timeout.
-        timer.timer = setTimeout(() => func(xArgs), timer.delay);
+        timer.timer = setTimeout(() => func(oRequest), timer.delay);
     };
 
     /**
@@ -1167,7 +1006,7 @@ window.jaxon = jaxon;
      */
     self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
         .forEach(oCallback => clearTimer(oCallback, sFunction));
-})(jaxon.ajax.callback, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.string, jaxon.config);
 
 
 /**
@@ -1198,21 +1037,24 @@ window.jaxon = jaxon;
      *
      * @param {string} cmd The short name of the command handler.
      * @param {string} func The command handler function.
-     * @param {string=''} name The full name of the command handler.
+     * @param {string=''} desc The description of the command handler.
      *
      * @returns {void}
      */
-    self.register = (cmd, func, name = '') => handlers[cmd] = { name, func };
+    self.register = (cmd, func, desc = '') => handlers[cmd] = { desc, func };
 
     /**
      * Unregisters and returns a command handler.
      *
      * @param {string} cmd The name of the command handler.
      *
-     * @returns {callable} The unregistered function.
+     * @returns {callable|null} The unregistered function.
      */
     self.unregister = (cmd) => {
         const handler = handlers[cmd];
+        if (!handler) {
+            return null;
+        }
         delete handlers[cmd];
         return handler.func;
     };
@@ -1221,10 +1063,24 @@ window.jaxon = jaxon;
      * @param {object} command The response command to be executed.
      * @param {string} command.cmd The name of the function.
      *
-     * @returns {boolean} (true or false): depending on whether a command handler has
-     * been registered for the specified command (object).
+     * @returns {boolean}
      */
     self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
+
+    /**
+     * Calls the registered command handler for the specified command
+     * (you should always check isRegistered before calling this function)
+     *
+     * @param {object} cmd The command name.
+     * @param {object} options The command options.
+     * @param {object} request The Jaxon request.
+     *
+     * @returns {boolean}
+     */
+    const callHandler = (cmd, options, request) => {
+        const handler = handlers[cmd];
+        return handler.func({ ...options, request, desc: handler.desc });
+    }
 
     /**
      * Perform a lookup on the command specified by the response command object passed
@@ -1238,36 +1094,25 @@ window.jaxon = jaxon;
      * interval, timeout or event handler which will restart the jaxon response processing.
      * 
      * @param {object} command The response command to be executed.
+     * @param {object} command.cmd The command name.
+     * @param {object} command.options The command options.
+     * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
-        if (!self.isRegistered(command)) {
+    self.execute = ({ cmd, options, request }) => {
+        if (!self.isRegistered({ cmd })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
-        if (command.id) {
-            command.target = dom.$(command.id);
+        const id = options?.id;
+        if ((id)) {
+            options.target = dom.$(id);
         }
         // Process the command
-        return self.call(command);
+        return callHandler(cmd, options, request);
     };
-
-    /**
-     * Calls the registered command handler for the specified command
-     * (you should always check isRegistered before calling this function)
-     *
-     * @param {object} command The response command to be executed.
-     * @param {string} command.cmd The name of the function.
-     *
-     * @returns {boolean}
-     */
-    self.call = (command) => {
-        const handler = handlers[command.cmd];
-        command.fullName = handler.name;
-        return handler.func(command);
-    }
 
     /**
      * Attempt to pop the next asynchronous request.
@@ -1544,8 +1389,7 @@ window.jaxon = jaxon;
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue) {
     /**
-     * Initialize a request object, populating default settings, where call specific
-     * settings are not already provided.
+     * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
      *      in addition, be used to store all request related values.
@@ -1554,8 +1398,9 @@ window.jaxon = jaxon;
      * @returns {boolean}
      */
     const initialize = (oRequest) => {
-        cfg.setRequestOptions(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
+        cfg.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
@@ -1564,9 +1409,25 @@ window.jaxon = jaxon;
         // Look for upload parameter
         upload.initialize(oRequest);
 
-        // Process the request parameters
-        params.process(oRequest);
+        // No request is submitted while there are pending requests in the outgoing queue.
+        oRequest.submit = queue.empty(handler.q.send);
+        if (oRequest.mode === 'synchronous') {
+            // Synchronous requests are always queued, in both send and recv queues.
+            queue.push(handler.q.send, oRequest);
+            queue.push(handler.q.recv, oRequest);
+        }
+        // Asynchronous requests are queued in send queue only if they are not submitted.
+        oRequest.submit || queue.push(handler.q.send, oRequest);
+    };
 
+    /**
+     * Prepare a request, by setting the HTTP options, handlers and processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    const prepare = (oRequest) => {
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -1602,18 +1463,36 @@ window.jaxon = jaxon;
         if (!oRequest.responseProcessor) {
             oRequest.responseProcessor = rsp.jsonProcessor;
         }
+    };
 
-        // No request is submitted while there are pending requests in the outgoing queue.
-        const submitRequest = queue.empty(handler.q.send);
-        if (oRequest.mode === 'synchronous') {
-            // Synchronous requests are always queued, in both send and recv queues.
-            queue.push(handler.q.send, oRequest);
-            queue.push(handler.q.recv, oRequest);
-            return submitRequest;
-        }
-        // Asynchronous requests are queued in send queue only if they are not submitted.
-        submitRequest || queue.push(handler.q.send, oRequest);
-        return submitRequest;
+    /**
+     * Create a request object and submit the request using the specified request type;
+     * all request parameters should be finalized by this point.
+     * Upon failure of a POST, this function will fall back to a GET request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {mixed}
+     */
+    const submit = (oRequest) => {
+        --oRequest.requestRetry;
+        oRequest.status.onRequest();
+
+        // The onResponseDelay and onExpiration aren't called immediately, but a timer
+        // is set to call them later, using delays that are set in the config.
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+
+        cbk.execute(oRequest, 'onRequest');
+        oRequest.cursor.onWaiting();
+        oRequest.status.onWaiting();
+
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.responseConverter)
+            .then(oRequest.responseHandler)
+            .catch(oRequest.errorHandler);
+
+        return oRequest.returnValue;
     };
 
     /**
@@ -1663,41 +1542,13 @@ window.jaxon = jaxon;
             }
             // Submit the asynchronous requests sent while waiting.
             while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
-                self.submit(nextRequest);
+                submit(nextRequest);
             }
             // Submit the next synchronous request, if there's any.
             if((nextRequest = queue.peek(handler.q.send)) !== null) {
-                self.submit(nextRequest);
+                submit(nextRequest);
             }
         }
-    };
-
-    /**
-     * Create a request object and submit the request using the specified request type;
-     * all request parameters should be finalized by this point.
-     * Upon failure of a POST, this function will fall back to a GET request.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @returns {mixed}
-     */
-    const submit = (oRequest) => {
-        --oRequest.requestRetry;
-        oRequest.status.onRequest();
-
-        cbk.execute(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'onExpiration');
-        cbk.execute(oRequest, 'onRequest');
-
-        oRequest.cursor.onWaiting();
-        oRequest.status.onWaiting();
-
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
-
-        return oRequest.returnValue;
     };
 
     /**
@@ -1730,16 +1581,15 @@ window.jaxon = jaxon;
 
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
-
-        cbk.execute(oRequest, 'beforeInitialize');
         initialize(oRequest);
-        cbk.execute(oRequest, 'afterInitialize');
 
+        cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
             try {
-                return prepare(oRequest) ? submit(oRequest) : null;
+                prepare(oRequest);
+                return oRequest.submit ? submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
@@ -1865,7 +1715,7 @@ window.jaxon = jaxon;
             sequence: _temp.sequence,
             request: oRequest,
             context: oRequest.context,
-            cmd: 'rcmplt',
+            cmd: 'response.complete',
         });
     };
 
@@ -1986,24 +1836,24 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute to set.
-     * @param {string} command.data The new value to be applied.
+     * @param {string} command.attr The name of the attribute to set.
+     * @param {string} command.value The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data;
+    self.assign = ({ target, attr, value }) => {
+        if (attr === 'innerHTML') {
+            target.innerHTML = value;
             return true;
         }
-        if (property === 'outerHTML') {
-            element.outerHTML = data;
+        if (attr === 'outerHTML') {
+            target.outerHTML = value;
             return true;
         }
 
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
         if (innerElement !== null) {
-            innerElement[innerProperty] = data;
+            innerElement[innerAttribute] = value;
         }
         return true;
     };
@@ -2014,24 +1864,24 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute to append to.
-     * @param {string} command.data The new value to be appended.
+     * @param {string} command.attr The name of the attribute to append to.
+     * @param {string} command.value The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = element.innerHTML + data;
+    self.append = ({ target, attr, value }) => {
+        if (attr === 'innerHTML') {
+            target.innerHTML = target.innerHTML + value;
             return true;
         }
-        if (property === 'outerHTML') {
-            element.outerHTML = element.outerHTML + data;
+        if (attr === 'outerHTML') {
+            target.outerHTML = target.outerHTML + value;
             return true;
         }
 
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
         if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
+            innerElement[innerAttribute] = innerElement[innerAttribute] + value;
         }
         return true;
     };
@@ -2042,44 +1892,44 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The HTML element to effect.
-     * @param {string} command.prop The name of the attribute.
-     * @param {string} command.data The new value to be prepended.
+     * @param {string} command.attr The name of the attribute.
+     * @param {string} command.value The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data + element.innerHTML;
+    self.prepend = ({ target, attr, value }) => {
+        if (attr === 'innerHTML') {
+            target.innerHTML = value + target.innerHTML;
             return true;
         }
-        if (property === 'outerHTML') {
-            element.outerHTML = data + element.outerHTML;
+        if (attr === 'outerHTML') {
+            target.outerHTML = value + target.outerHTML;
             return true;
         }
 
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
+        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
         if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
+            innerElement[innerAttribute] = value + innerElement[innerAttribute];
         }
         return true;
     };
 
     /**
-     * Replace a text in the value of a given property in an element
+     * Replace a text in the value of a given attribute in an element
      *
      * @param {object} xElement The element to search in
-     * @param {string} sProperty The attribute to search in
+     * @param {string} sAttribute The attribute to search in
      * @param {string} sSearch The text to search
      * @param {string} sReplace The text to use as replacement
      *
      * @returns {void}
      */
-    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sProperty] === 'function');
-        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
+    const replaceText = (xElement, sAttribute, sSearch, sReplace) => {
+        const bFunction = (typeof xElement[sAttribute] === 'function');
+        const sCurText = bFunction ? xElement[sAttribute].join('') : xElement[sAttribute];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
-        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
-            xElement[sProperty] = sNewText;
+        if (bFunction || dom.willChange(xElement, sAttribute, sNewText)) {
+            xElement[sAttribute] = sNewText;
         }
     };
 
@@ -2089,17 +1939,17 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The element which is to be modified.
-     * @param {string} command.prop The name of the attribute to be set.
-     * @param {array} command.data The search text and replacement text.
+     * @param {string} command.attr The name of the attribute to be set.
+     * @param {array} command.search The search text and replacement text.
+     * @param {array} command.replace The search text and replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
-        const sReplace = aData['r'];
-        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
-        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
+    self.replace = ({ target, attr, search, replace }) => {
+        const sSearch = attr === 'innerHTML' ? dom.getBrowserHTML(search) : search;
+        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
         if (innerElement !== null) {
-            replaceText(innerElement, innerProperty, sSearch, sReplace);
+            replaceText(innerElement, innerAttribute, sSearch, replace);
         }
         return true;
     };
@@ -2109,12 +1959,13 @@ window.jaxon = jaxon;
      *
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
+     * @param {object} command.target The element which is to be modified.
+     * @param {string} command.attr The name of the attribute to clear.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.clear = ({ target: element }) => {
-        element.innerHTML = '';
+    self.clear = ({ target, attr }) => {
+        self.assign({ target, attr, value: '' });
         return true;
     };
 
@@ -2127,9 +1978,21 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = ({ target: element }) => {
-        dom.removeElement(element);
+    self.remove = ({ target }) => {
+        dom.removeElement(target);
         return true;
+    };
+
+    /**
+     * @param {string} sTag The tag name for the new element.
+     * @param {string} sId The id attribute of the new element.
+     *
+     * @returns {object}
+     */
+    const createNewTag = (sTag, sId) => {
+        const newTag = baseDocument.createElement(sTag);
+        newTag.setAttribute('id', sId);
+        return newTag;
     };
 
     /**
@@ -2138,17 +2001,13 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The element which will contain the new element.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value to be assigned to the id attribute of the new element.
+     * @param {string} command.tag.name The tag name for the new element.
+     * @param {string} command.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.create = ({ target: element, data: sTag, prop: sId }) => {
-        if (element) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.appendChild(target);
-        }
+    self.create = ({ target, tag: { id: sId, name: sTag } }) => {
+        target && target.appendChild(createNewTag(sTag, sId));
         return true;
     };
 
@@ -2158,17 +2017,14 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     * @param {string} command.tag.name The tag name for the new element.
+     * @param {string} command.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = ({ target: element, data: sTag, prop: sId }) => {
-        if (element && element.parentNode) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.parentNode.insertBefore(target, element);
-        }
+    self.insert = ({ target, tag: { id: sId, name: sTag } }) => {
+        target && target.parentNode &&
+            target.parentNode.insertBefore(createNewTag(sTag, sId), target);
         return true;
     };
 
@@ -2178,17 +2034,14 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.data The tag name for the new element.
-     * @param {string} command.prop The value that will be assigned to the new element's id attribute.
+     * @param {string} command.tag.name The tag name for the new element.
+     * @param {string} command.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertAfter = ({ target: element, data: sTag, prop: sId }) => {
-        if (element && element.parentNode) {
-            const target = baseDocument.createElement(sTag);
-            target.setAttribute('id', sId);
-            element.parentNode.insertBefore(target, element.nextSibling);
-        }
+    self.insertAfter = ({ target, tag: { id: sId, name: sTag } }) => {
+        target && target.parentNode &&
+            target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
 })(jaxon.cmd.body, jaxon.utils.dom, jaxon.config.baseDocument);
@@ -2198,19 +2051,19 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.event
  */
 
-(function(self, dom, str, json) {
+(function(self, json, dom, str) {
     /**
      * Add an event handler to the specified target.
      *
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
-     * @param {string} command.prop The name of the event.
-     * @param {string} command.data The name of the function to be called
+     * @param {string} command.event The name of the event.
+     * @param {string} command.func The name of the function to be called
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addHandler = ({ target, prop: sEvent, data: sFuncName }) => {
+    self.addHandler = ({ target, event: sEvent, func: sFuncName }) => {
         target.addEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false)
         return true;
     };
@@ -2221,12 +2074,12 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
-     * @param {string} command.prop The name of the event.
-     * @param {string} command.data The name of the function to be removed
+     * @param {string} command.event The name of the event.
+     * @param {string} command.func The name of the function to be removed
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeHandler = ({ target, prop: sEvent, data: sFuncName }) => {
+    self.removeHandler = ({ target, event: sEvent, func: sFuncName }) => {
        target.removeEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false);
        return true;
     };
@@ -2234,97 +2087,57 @@ window.jaxon = jaxon;
     /**
      * Call an event handler.
      *
-     * @param {object} event
      * @param {object} target The target element
-     * @param {string} command.prop The name of the event.
-     * @param {string} func The name of the function to be called
-     * @param {array} params The function parameters
+     * @param {string} event The name of the event
+     * @param {object} call The expression to be executed in the event handler
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, func, params) => {
-        json.call({ calls: [{ _type: 'call', _name: func, params }] }, { event, target });
+    const callEventHandler = (event, target, call) => {
+        json.execExpr({ _type: 'expr', ...call }, { event, target });
     };
 
     /**
-     * Add an event handler with parameters to the specified target.
+     * Add an event handler with arguments to the specified target.
      *
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
-     * @param {string} command.prop The name of the event.
-     * @param {string} command.func The name of the function to be called
-     * @param {array} command.data The function parameters
+     * @param {string} command.event The name of the event
+     * @param {object} command.call The event handler
      * @param {object|false} command.options The handler options
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, prop: sEvent, func, data: params = [], options }) => {
+    self.addEventHandler = ({ target, event: sEvent, call, options }) => {
         target.addEventListener(str.stripOnPrefix(sEvent),
-            (event) => callEventHandler(event, target, func, params), options ?? false);
+            (evt) => callEventHandler(evt, target, call), options ?? false);
         return true;
     };
 
     /**
-     * Set an event handler with parameters to the specified target.
+     * Set an event handler with arguments to the specified target.
      *
      * @param {object} command The Response command object.
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
-     * @param {string} command.prop The name of the event.
-     * @param {string} command.func The name of the function to be called
-     * @param {array} command.data The function parameters
+     * @param {string} command.event The name of the event
+     * @param {object} command.call The event handler
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, prop: sEvent, func, data: params = [] }) => {
-        target[str.addOnPrefix(sEvent)] = (event) => callEventHandler(event, target, func, params);
+    self.setEventHandler = ({ target, event: sEvent, call }) => {
+        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, call);
         return true;
     };
-
-    /**
-     * Replace the page number param with the current page number value
-     *
-     * @param {array} aParams
-     * @param {integer} nPageNumber
-     *
-     * @returns {array}
-     */
-    const setPageNumber = (aParams, nPageNumber) => aParams.map(xParam =>
-        str.typeOf(xParam) === 'object' && xParam._type === 'page' ? nPageNumber : xParam);
-
-    /**
-     * Set event handlers on pagination links.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.call The name of the event.
-     * @param {array} command.data The function parameters
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.paginate = ({ target, call: oCall, data: aPages }) => {
-        aPages.filter(({ type }) => type === 'enabled')
-            .forEach(({ page }) => {
-                const oLink = target.querySelector(`li[data-page='${page}'] > a`);
-                if (oLink === null) {
-                    return;
-                }
-                oLink.onClick = () => json.call({
-                    calls: [{ ...oCall, params: setPageNumber(oCall.params) }],
-                });
-            });
-        return true;
-    };
-})(jaxon.cmd.event, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.json);
+})(jaxon.cmd.event, jaxon.cmd.call.json, jaxon.utils.dom, jaxon.utils.string);
 
 
 /**
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, json) {
+(function(self, json, handler, parameters) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -2339,7 +2152,7 @@ window.jaxon = jaxon;
      */
     self.sleep = (command) => {
         // Inject a delay in the queue processing and handle retry counter
-        const { prop: duration, response } = command;
+        const { duration, response } = command;
         if (handler.retry(command, duration)) {
             handler.setWakeup(response, 100);
             return false;
@@ -2352,11 +2165,11 @@ window.jaxon = jaxon;
      * Show the specified message.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The message to display.
+     * @param {string} command.message The message to display.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.alert = ({ data: message }) => {
+    self.alert = ({ message }) => {
         handler.alert(message);
         return true;
     };
@@ -2367,13 +2180,13 @@ window.jaxon = jaxon;
      * If the user clicks Ok, the command processing resumes normal operation.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The question to ask.
+     * @param {string} command.question The question to ask.
      * @param {integer} command.count The number of commands to skip.
      *
      * @returns {false} Stop the processing of the command queue until the user answers the question.
      */
     self.confirm = (command) => {
-        const { count, data: question } = command;
+        const { count, question } = command;
         handler.confirm(command, count, question);
         return false;
     };
@@ -2382,16 +2195,15 @@ window.jaxon = jaxon;
      * Call a javascript function with a series of parameters using the current script context.
      *
      * @param {object} command The Response command object.
-     * @param {array} command.data  The parameters to pass to the function.
      * @param {string} command.func The name of the function to call.
+     * @param {array} command.args  The parameters to pass to the function.
      * @param {object} command.context The javascript object to be referenced as 'this' in the script.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func: sFuncName, data: aFuncParams, context = {} }) => {
+    self.call = ({ func, args, context = {} }) => {
         // Add the function in the context
-        self.context = context;
-        json.call({ calls: [{ _type: 'call', _name: sFuncName, params: aFuncParams }] }, self.context);
+        json.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
 
@@ -2399,12 +2211,12 @@ window.jaxon = jaxon;
      * Redirects the browser to the specified URL.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.data The new URL to redirect to
+     * @param {string} command.url The new URL to redirect to
      * @param {integer} command.delay The time to wait before the redirect.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.redirect = ({ data: sUrl, delay: nDelay }) => {
+    self.redirect = ({ url: sUrl, delay: nDelay }) => {
         if (nDelay <= 0) {
             window.location = sUrl;
             return true;
@@ -2412,7 +2224,156 @@ window.jaxon = jaxon;
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.json);
+
+    /**
+     * Update the databag content.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.values The databag values.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.databag = ({ values }) => {
+        for (const key in values) {
+            parameters.bags[key] = values[key];
+        }
+        return true;
+    };
+
+    /**
+     * Execute a JQuery expression beginning with selector.
+     *
+     * @param {object} command The Response command object.
+     * @param {object} command.selector The JQuery expression
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.jquery = ({ selector }) => {
+        json.execExpr(selector);
+        return true;
+    };
+
+    /**
+     * Replace the page number argument with the current page number value
+     *
+     * @param {object} oCall
+     * @param {array} oCall.args
+     * @param {object} oLink
+     *
+     * @returns {array}
+     */
+    const getCallArgs = ({ args: aArgs }, oLink) => aArgs.map(xArg =>
+        str.typeOf(xArg) !== 'object' || xArg._type !== 'page' ? xArg :
+            parseInt(oLink.parentNode.getAttribute('data-page')));
+
+    /**
+     * Set event handlers on pagination links.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.id The pagination wrapper id
+     * @param {object} command.target The pagination wrapper element
+     * @param {array} command.call The page call
+     * @param {array} command.pages The page list
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.paginate = ({ target, call: oCall }) => {
+        const aLinks = target.querySelectorAll(`li.enabled > a`);
+        aLinks.forEach(oLink => oLink.onClick = () => json.execCall({
+            ...oCall,
+            _type: 'func',
+            args: getCallArgs(oCall, oLink),
+        }));
+        return true;
+    };
+})(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
+
+
+/**
+ * Class: jaxon.dialog.cmd
+ */
+
+(function(self, lib) {
+    /**
+     * Add an event handler to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The message library name
+     * @param {object} command.type The message type
+     * @param {string} command.message The message content
+     * @param {string} command.message.title The message title
+     * @param {string} command.message.phrase.str The message with placeholders
+     * @param {array} command.message.phrase.args The arguments for placeholders
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showMessage = ({ lib: sLibName, type: sType, message }) => {
+        const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
+        const xLib = lib[sLibName];
+        xLib && xLib.message(sType, sMessage.supplant(aArgs), sTitle);
+        return true;
+    };
+
+    /**
+     * Remove an event handler from an target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The dialog library name
+     * @param {object} command.dialog The dialog content
+     * @param {string} command.dialog.title The dialog title
+     * @param {string} command.dialog.content The dialog HTML content
+     * @param {array} command.dialog.buttons The dialog buttons
+     * @param {array} command.dialog.options The dialog options
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
+        const xLib = lib[sLibName];
+        xLib && xLib.show(title, content, buttons, options);
+       return true;
+    };
+
+    /**
+     * Set an event handler with arguments to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The dialog library name
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.hideModal = ({ lib: sLibName }) => {
+        const xLib = lib[sLibName];
+        xLib && xLib.hide();
+        return true;
+    };
+})(jaxon.dialog.cmd, jaxon.dialog.lib);
+
+
+/**
+ * Class: jaxon.dialog.lib
+ */
+
+(function(self, str, dom, js, jq) {
+    self.labels = {
+        yes: 'Yes',
+        no: 'No',
+    };
+
+    /**
+     * Register a dialog library.
+     *
+     * @param {string} name The library name
+     * @param {callback} cb The library definition callback
+     *
+     * @returns {void}
+     */
+    self.register = (name, cb) => {
+        // Create an object for the library
+        self[name] = {};
+        // Define the library functions
+        cb(self[name], { str, dom, js, jq, labels: self.labels });
+    };
+})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.cmd.call.json, window.jQuery);
 
 
 /**
@@ -2532,38 +2493,49 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax) {
+(function(register, cmd, ajax, dialog) {
     // Pseudo command needed to complete queued commands processing.
-    register('rcmplt', ({ request }) => {
+    register('response.complete', ({ request }) => {
         ajax.request.complete(request);
         return true;
     }, 'Response complete');
 
-    register('as', cmd.body.assign, 'assign');
-    register('ap', cmd.body.append, 'append');
-    register('pp', cmd.body.prepend, 'prepend');
-    register('rp', cmd.body.replace, 'replace');
-    register('cl', cmd.body.clear, 'clear');
-    register('rm', cmd.body.remove, 'remove');
-    register('ce', cmd.body.create, 'create');
-    register('ie', cmd.body.insert, 'insert');
-    register('ia', cmd.body.insertAfter, 'insertAfter');
+    register('dom.assign', cmd.body.assign, 'Dom::Assign');
+    register('dom.append', cmd.body.append, 'Dom::Append');
+    register('dom.prepend', cmd.body.prepend, 'Dom::Prepend');
+    register('dom.replace', cmd.body.replace, 'Dom::Replace');
+    register('dom.clear', cmd.body.clear, 'Dom::Clear');
+    register('dom.remove', cmd.body.remove, 'Dom::Remove');
+    register('dom.create', cmd.body.create, 'Dom::Create');
+    register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
+    register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
-    register('s', cmd.script.sleep, 'sleep');
-    register('jc', cmd.script.call, 'call js function');
-    register('al', cmd.script.alert, 'alert');
-    register('cc', cmd.script.confirm, 'confirm');
-    register('rd', cmd.script.redirect, 'redirect');
+    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
+    register('script.call', cmd.script.call, 'Script::CallJsFunction');
+    register('script.alert', cmd.script.alert, 'Script::Alert');
+    register('script.confirm', cmd.script.confirm, 'Script::Confirm');
+    register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
-    register('se', cmd.event.setEventHandler, 'setEventHandler');
-    register('ae', cmd.event.addEventHandler, 'addEventHandler');
-    register('ah', cmd.event.addHandler, 'addHandler');
-    register('rh', cmd.event.removeHandler, 'removeHandler');
+    register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
+    register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
+    register('handler.add', cmd.event.addHandler, 'Script::AddHandler');
+    register('handler.remove', cmd.event.removeHandler, 'Script::RemoveHandler');
 
-    register('dbg', ({ data: message }) => {
+    register('script.debug', ({ message }) => {
         console.log(message);
         return true;
     }, 'Debug message');
+
+    // JQuery
+    register('jquery.call', cmd.script.jquery, 'JQuery::CallSelector');
+    // Pagination
+    register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
+    // Data bags
+    register('databag.set', cmd.script.databag, 'Databag:SetValues');
+    // Dialogs
+    register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
+    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
+    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog:HideModal');
 
     /**
      * Class: jaxon.ajax.message
@@ -2627,7 +2599,7 @@ jaxon.isLoaded = true;
             noCallback && noCallback();
         },
     };
-})(jaxon.register, jaxon.cmd, jaxon.ajax);
+})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);
 
 
 module.exports = jaxon;
