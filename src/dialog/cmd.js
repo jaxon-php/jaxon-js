@@ -4,6 +4,27 @@
 
 (function(self, lib) {
     /**
+     * Find a library to execute a given function.
+     *
+     * @param {string} sLibName The dialog library name
+     * @param {string} sFunc The dialog library function
+     *
+     * @returns {object|null}
+     */
+    const getLib = (sLibName, sFunc) => {
+        if(!lib.has(sLibName)) {
+            console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
+        }
+
+        const xLib = lib.get(sLibName);
+        if(!xLib[sFunc]) {
+            console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
+            return null;
+        }
+        return xLib;
+    };
+
+    /**
      * Add an event handler to the specified target.
      *
      * @param {object} command The Response command object.
@@ -18,7 +39,7 @@
      */
     self.showMessage = ({ lib: sLibName, type: sType, message }) => {
         const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'alert');
         xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
         return true;
     };
@@ -37,7 +58,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'show');
         xLib && xLib.show(title, content, buttons, options);
        return true;
     };
@@ -51,7 +72,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.hideModal = ({ lib: sLibName }) => {
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'hide');
         xLib && xLib.hide();
         return true;
     };

@@ -2555,6 +2555,27 @@ window.jaxon = jaxon;
 
 (function(self, lib) {
     /**
+     * Find a library to execute a given function.
+     *
+     * @param {string} sLibName The dialog library name
+     * @param {string} sFunc The dialog library function
+     *
+     * @returns {object|null}
+     */
+    const getLib = (sLibName, sFunc) => {
+        const xOrigLib = lib.get(sLibName);
+        if(!xOrigLib) {
+            console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
+        }
+        const xLib = xOrigLib ?? lib.get();
+        if(!xLib[sFunc]) {
+            console.warn(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
+            return null;
+        }
+        return xLib;
+    };
+
+    /**
      * Add an event handler to the specified target.
      *
      * @param {object} command The Response command object.
@@ -2569,7 +2590,7 @@ window.jaxon = jaxon;
      */
     self.showMessage = ({ lib: sLibName, type: sType, message }) => {
         const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'alert');
         xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
         return true;
     };
@@ -2588,7 +2609,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'show');
         xLib && xLib.show(title, content, buttons, options);
        return true;
     };
@@ -2602,7 +2623,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.hideModal = ({ lib: sLibName }) => {
-        const xLib = lib[sLibName];
+        const xLib = getLib(sLibName, 'hide');
         xLib && xLib.hide();
         return true;
     };
@@ -2614,26 +2635,71 @@ window.jaxon = jaxon;
  */
 
 (function(self, str, dom, js, jq) {
-    self.labels = {
+    const labels = {
         yes: 'Yes',
         no: 'No',
     };
 
     /**
+     * Get a dialog library.
+     *
+     * @param {string=default} sName The library name
+     *
+     * @returns {object|null}
+     */
+    self.get = (sName = 'default') => self[sName] ?? null;
+
+    /**
      * Register a dialog library.
      *
-     * @param {string} name The library name
-     * @param {callback} cb The library definition callback
+     * @param {string} sName The library name
+     * @param {callback} xCallback The library definition callback
      *
      * @returns {void}
      */
-    self.register = (name, cb) => {
+    self.register = (sName, xCallback) => {
         // Create an object for the library
-        self[name] = {};
+        self[sName] = {};
         // Define the library functions
-        cb(self[name], { str, dom, js, jq, labels: self.labels });
+        xCallback(self[sName], { str, dom, js, jq, labels });
     };
 })(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.call.json, window.jQuery);
+
+/**
+ * Default dialog plugin, based on js alert and confirm functions
+ * Class: jaxon.dialog.lib.default
+ */
+
+jaxon.dialog.lib.register('default', (self) => {
+    /**
+     * Show an alert message
+     *
+     * @param {string} type The message type
+     * @param {string} text The message text
+     * @param {string} title The message title
+     *
+     * @returns {void}
+     */
+    self.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
+
+    /**
+     * Ask a confirm question to the user.
+     *
+     * @param {string} question The question to ask
+     * @param {string} title The question title
+     * @param {callback} yesCallback The function to call if the answer is yes
+     * @param {callback} noCallback The function to call if the answer is no
+     *
+     * @returns {void}
+     */
+    self.confirm = (question, title, yesCallback, noCallback) => {
+        if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
+            yesCallback();
+            return;
+        }
+        noCallback && noCallback();
+    };
+});
 
 
 /*
@@ -2722,67 +2788,4 @@ jaxon.isLoaded = true;
     register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
     register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog:HideModal');
-
-    /**
-     * Class: jaxon.ajax.message
-     */
-    ajax.message = {
-        /**
-         * Print a success message on the screen.
-         *
-         * @param {string} content The message content.
-         * @param {string} title The message title.
-         *
-         * @returns {void}
-         */
-        success: (content, title) => alert(content),
-
-        /**
-         * Print an info message on the screen.
-         *
-         * @param {string} content The message content.
-         * @param {string} title The message title.
-         *
-         * @returns {void}
-         */
-        info: (content, title) => alert(content),
-
-        /**
-         * Print a warning message on the screen.
-         *
-         * @param {string} content The message content.
-         * @param {string} title The message title.
-         *
-         * @returns {void}
-         */
-        warning: (content, title) => alert(content),
-
-        /**
-         * Print an error message on the screen.
-         *
-         * @param {string} content The message content.
-         * @param {string} title The message title.
-         *
-         * @returns {void}
-         */
-        error: (content, title) => alert(content),
-
-        /**
-         * Ask a confirm question to the user.
-         *
-         * @param {string} question The confirm question.
-         * @param {string} title The confirm title.
-         * @param {callable} yesCallback The function to call if the user answers yesn.
-         * @param {callable} noCallback The function to call if the user answers no.
-         *
-         * @returns {void}
-         */
-        confirm: (question, title, yesCallback, noCallback) => {
-            if(confirm(question)) {
-                yesCallback();
-                return;
-            }
-            noCallback && noCallback();
-        },
-    };
 })(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);
