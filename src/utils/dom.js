@@ -107,7 +107,7 @@
      * @param {object} xElement The outer element.
      * @param {string} attribute The attribute name.
      *
-     * @returns {array} The inner object and the attribute name in an array.
+     * @returns {object|null} The inner object and the attribute name in an object.
      */
     self.getInnerObject = (xElement, attribute) => {
         const aNames = attribute.split('.');
@@ -119,6 +119,6 @@
             // The real name for the "css" object is "style".
             xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
-        return !xElement ? [null, null] : [xElement, attribute];
+        return !xElement ? null : { node: xElement, attr: attribute };
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);

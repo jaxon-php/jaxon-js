@@ -433,7 +433,7 @@ window.jaxon = jaxon;
      * @param {object} xElement The outer element.
      * @param {string} attribute The attribute name.
      *
-     * @returns {array} The inner object and the attribute name in an array.
+     * @returns {object|null} The inner object and the attribute name in an object.
      */
     self.getInnerObject = (xElement, attribute) => {
         const aNames = attribute.split('.');
@@ -445,7 +445,7 @@ window.jaxon = jaxon;
             // The real name for the "css" object is "style".
             xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
-        return !xElement ? [null, null] : [xElement, attribute];
+        return !xElement ? null : { node: xElement, attr: attribute };
     };
 })(jaxon.utils.dom, jaxon.config.baseDocument);
 
@@ -1851,9 +1851,9 @@ window.jaxon = jaxon;
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = value;
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -1879,9 +1879,9 @@ window.jaxon = jaxon;
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = innerElement[innerAttribute] + value;
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -1907,9 +1907,9 @@ window.jaxon = jaxon;
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = value + innerElement[innerAttribute];
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };
@@ -1947,9 +1947,9 @@ window.jaxon = jaxon;
      */
     self.replace = ({ target, attr, search, replace }) => {
         const sSearch = attr === 'innerHTML' ? dom.getBrowserHTML(search) : search;
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            replaceText(innerElement, innerAttribute, sSearch, replace);
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            replaceText(xElt.node, xElt.attr, sSearch, replace);
         }
         return true;
     };
@@ -2089,12 +2089,12 @@ window.jaxon = jaxon;
      *
      * @param {object} target The target element
      * @param {string} event The name of the event
-     * @param {object} call The expression to be executed in the event handler
+     * @param {object} func The expression to be executed in the event handler
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, call) => {
-        json.execExpr({ _type: 'expr', ...call }, { event, target });
+    const callEventHandler = (event, target, func) => {
+        json.execExpr({ _type: 'expr', ...func }, { event, target });
     };
 
     /**
@@ -2104,14 +2104,14 @@ window.jaxon = jaxon;
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
      * @param {string} command.event The name of the event
-     * @param {object} command.call The event handler
+     * @param {object} command.func The event handler
      * @param {object|false} command.options The handler options
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, event: sEvent, call, options }) => {
+    self.addEventHandler = ({ target, event: sEvent, func, options }) => {
         target.addEventListener(str.stripOnPrefix(sEvent),
-            (evt) => callEventHandler(evt, target, call), options ?? false);
+            (evt) => callEventHandler(evt, target, func), options ?? false);
         return true;
     };
 
@@ -2122,12 +2122,12 @@ window.jaxon = jaxon;
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
      * @param {string} command.event The name of the event
-     * @param {object} command.call The event handler
+     * @param {object} command.func The event handler
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, event: sEvent, call }) => {
-        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, call);
+    self.setEventHandler = ({ target, event: sEvent, func }) => {
+        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
 })(jaxon.cmd.event, jaxon.cmd.call.json, jaxon.utils.dom, jaxon.utils.string);
@@ -2287,6 +2287,198 @@ window.jaxon = jaxon;
         return true;
     };
 })(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
+
+
+/**
+ * Class: jaxon.cmd.call.json
+ */
+
+(function(self, query, dom, form, str) {
+    /**
+     * The call contexts.
+     *
+     * @var {object}
+     */
+    const xContext = { };
+
+    /**
+     * Get the current target.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
+
+    /**
+     * Check if an argument is an expression.
+     *
+     * @param {mixed} xArg
+     *
+     * @returns {boolean}
+     */
+    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
+
+    /**
+     * Get the value of a single argument.
+     *
+     * @param {mixed} xArg
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xArg, xCurrValue) => {
+        if (!isExpression(xArg)) {
+            return xArg;
+        }
+        const { _type: sType, _name: sName } = xArg;
+        switch(sType) {
+            case 'form': return form.getValues(sName);
+            case 'html': return dom.$(sName).innerHTML;
+            case 'input': return dom.$(sName).value;
+            case 'checked': return dom.$(sName).checked;
+            case 'expr': return execExpression(xArg);
+            case '_': switch(sName) {
+                case 'this': return xCurrValue;
+                default: return undefined
+            }
+            default: return undefined;
+        }
+    };
+
+    /**
+     * Get the values of an array of arguments.
+     *
+     * @param {array} aArgs
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {array}
+     */
+    const getValues = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
+
+    /**
+     * The call commands
+     *
+     * @var {object}
+     */
+    const xCommands = {
+        select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
+            return sName === 'this' ?
+                // Empty argument list => $(this), ie the last event target.
+                query.select(getCurrentTarget()) :
+                // Call the selector.
+                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
+        },
+        event: ({ _name: sName, func: xExpression }, xCurrValue) => {
+            // Set an event handler. Takes an expression as argument.
+            xCurrValue.on(sName, (event) => {
+                // Save the current target.
+                xContext.aTargets.push({ event, target: event.currentTarget });
+                execExpression(xExpression);
+                xContext.aTargets.pop();
+            });
+            return true;
+        },
+        func: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a "global" function with the current target as "this" and an array of arguments.
+            const func = dom.findFunction(sName);
+            return !func ? null : func.apply(getCurrentTarget(), getValues(aArgs, xCurrValue));
+        },
+        method: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a function with xCurrValue as "this" and an array of arguments.
+            const func = dom.findFunction(sName, xCurrValue);
+            return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
+        },
+        attr: ({ _name: sName, value: xValue }, xCurrValue) => {
+            const xElt = dom.getInnerObject(xCurrValue, sName);
+            if (xValue !== undefined) {
+                // Assign an attribute.
+                xElt.node[xElt.attr] = getValue(xValue, xCurrValue);
+            }
+            return xElt.node[xElt.attr];
+        },
+        error: (xCall) => {
+            console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
+            return undefined;
+        },
+    };
+
+    /**
+     * Execute a single call.
+     *
+     * @param {object} xCall
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {void}
+     */
+    const execCall = (xCall, xCurrValue = null) => {
+        const xCommand = xCommands[xCall._type] ?? xCommands.error;
+        return xCommand(xCall, xCurrValue);
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const execExpression = ({ calls: aCalls = [] }) => {
+        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
+    };
+
+    /**
+     * Execute a single javascript function call.
+     *
+     * @param {object} xCall An object representing the function call
+     * @param {object=window} xCallContext The context to execute calls in.
+     *
+     * @returns {mixed}
+     */
+    self.execCall = (xCall, xCallContext = window) => {
+        xContext.aTargets = [xCallContext];
+        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression An object representing a command
+     * @param {object=window} xCallContext The context to execute calls in.
+     *
+     * @returns {mixed}
+     */
+    self.execExpr = (xExpression, xCallContext = window) => {
+        xContext.aTargets = [xCallContext];
+        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
+    };
+})(jaxon.cmd.call.json, jaxon.cmd.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+
+
+/**
+ * Class: jaxon.cmd.call.query
+ */
+
+(function(self, jq) {
+    /**
+     * The jQuery object.
+     * Will be undefined if the library is not installed.
+     *
+     * @var {object}
+     */
+    self.jq = jq;
+
+    /**
+     * Call the jQuery DOM selector
+     *
+     * @param {string|object} xSelector
+     * @param {object} xContext
+     *
+     * @returns {object}
+     */
+    self.select = (xSelector, xContext = null) => {
+        // Todo: Allow the use of an alternative library instead of jQuery.
+        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
+    };
+})(jaxon.cmd.call.query, window.jQuery);
 
 
 /**

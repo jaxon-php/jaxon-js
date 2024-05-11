@@ -40,12 +40,12 @@
      *
      * @param {object} target The target element
      * @param {string} event The name of the event
-     * @param {object} call The expression to be executed in the event handler
+     * @param {object} func The expression to be executed in the event handler
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, call) => {
-        json.execExpr({ _type: 'expr', ...call }, { event, target });
+    const callEventHandler = (event, target, func) => {
+        json.execExpr({ _type: 'expr', ...func }, { event, target });
     };
 
     /**
@@ -55,14 +55,14 @@
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
      * @param {string} command.event The name of the event
-     * @param {object} command.call The event handler
+     * @param {object} command.func The event handler
      * @param {object|false} command.options The handler options
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, event: sEvent, call, options }) => {
+    self.addEventHandler = ({ target, event: sEvent, func, options }) => {
         target.addEventListener(str.stripOnPrefix(sEvent),
-            (evt) => callEventHandler(evt, target, call), options ?? false);
+            (evt) => callEventHandler(evt, target, func), options ?? false);
         return true;
     };
 
@@ -73,12 +73,12 @@
      * @param {string} command.id The target element id
      * @param {object} command.target The target element
      * @param {string} command.event The name of the event
-     * @param {object} command.call The event handler
+     * @param {object} command.func The event handler
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, event: sEvent, call }) => {
-        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, call);
+    self.setEventHandler = ({ target, event: sEvent, func }) => {
+        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
 })(jaxon.cmd.event, jaxon.cmd.call.json, jaxon.utils.dom, jaxon.utils.string);

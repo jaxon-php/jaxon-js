@@ -76,7 +76,7 @@
                 // Call the selector.
                 query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
         },
-        event: ({ _name: sName, handler: xExpression }, xCurrValue) => {
+        event: ({ _name: sName, func: xExpression }, xCurrValue) => {
             // Set an event handler. Takes an expression as argument.
             xCurrValue.on(sName, (event) => {
                 // Save the current target.
@@ -97,12 +97,12 @@
             return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
         },
         attr: ({ _name: sName, value: xValue }, xCurrValue) => {
-            const [innerElement, innerProperty] = dom.getInnerObject(xCurrValue, sName);
+            const xElt = dom.getInnerObject(xCurrValue, sName);
             if (xValue !== undefined) {
                 // Assign an attribute.
-                innerElement[innerProperty] = getValue(xValue, xCurrValue);
+                xElt.node[xElt.attr] = getValue(xValue, xCurrValue);
             }
-            return innerElement[innerProperty];
+            return xElt.node[xElt.attr];
         },
         error: (xCall) => {
             console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
@@ -159,4 +159,4 @@
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.cmd.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.cmd.call.json, jaxon.cmd.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

@@ -24,9 +24,9 @@
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = value;
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -52,9 +52,9 @@
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = innerElement[innerAttribute] + value;
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -80,9 +80,9 @@
             return true;
         }
 
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            innerElement[innerAttribute] = value + innerElement[innerAttribute];
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };
@@ -120,9 +120,9 @@
      */
     self.replace = ({ target, attr, search, replace }) => {
         const sSearch = attr === 'innerHTML' ? dom.getBrowserHTML(search) : search;
-        const [innerElement, innerAttribute] = dom.getInnerObject(target, attr);
-        if (innerElement !== null) {
-            replaceText(innerElement, innerAttribute, sSearch, replace);
+        const xElt = dom.getInnerObject(target, attr);
+        if (xElt !== null) {
+            replaceText(xElt.node, xElt.attr, sSearch, replace);
         }
         return true;
     };
