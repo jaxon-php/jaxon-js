@@ -151,4 +151,4 @@
         }));
         return true;
     };
-})(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
+})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);

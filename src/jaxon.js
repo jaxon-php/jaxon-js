@@ -24,19 +24,14 @@ jaxon.register = jaxon.ajax.handler.register;
 jaxon.$ = jaxon.utils.dom.$;
 
 /**
+ * Shortcut to <jaxon.utils.dom.ready>.
+ */
+jaxon.dom.ready = jaxon.utils.dom.ready;
+
+/**
  * Shortcut to <jaxon.utils.form.getValues>.
  */
 jaxon.getFormValues = jaxon.utils.form.getValues;
-
-/**
- * Prints various types of messages on the user screen.
- */
-jaxon.msg = jaxon.ajax.message;
-
-/**
- * Shortcut to <jaxon.cmd.script>.
- */
-jaxon.js = jaxon.cmd.script;
 
 /**
  * Indicates if jaxon module is loaded.

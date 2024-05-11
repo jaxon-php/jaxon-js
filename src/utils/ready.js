@@ -24,7 +24,7 @@
         // this must be set to true before we start calling callbacks
         readyFired = true;
         // if a callback here happens to add new ready handlers,
-        // the jaxon.dom.ready() function will see that it already fired
+        // the jaxon.utils.dom.ready() function will see that it already fired
         // and will schedule the callback to run right after
         // this event loop finishes so all handlers will still execute
         // in order and no new ones will be added to the readyList
@@ -34,11 +34,12 @@
         readyList = [];
     }
 
-    const readyStateChange = () => document.readyState === "complete" && ready();
+    // Was used with the document.attachEvent() function.
+    // const readyStateChange = () => document.readyState === "complete" && ready();
 
     /**
      * This is the one public interface
-     * jaxon.dom.ready(fn, context);
+     * jaxon.utils.dom.ready(fn, context);
      * The context argument is optional - if present, it will be passed as an argument to the callback
      */
     self.ready = function(callback, context) {
@@ -64,4 +65,4 @@
             readyEventHandlersInstalled = true;
         }
     }
-})(jaxon.dom);
+})(jaxon.utils.dom);

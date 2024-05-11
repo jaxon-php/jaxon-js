@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-1',
+        patch: '0rc-2',
     },
 
     debug: {
@@ -41,11 +41,11 @@ var jaxon = {
         body: {},
         script: {},
         event: {},
-        // Lib to execute calls from json expressions.
-        call: {
-            json: {},
-            query: {},
-        },
+    },
+
+    call: {
+        json: {},
+        query: {},
     },
 
     utils: {
@@ -63,146 +63,142 @@ var jaxon = {
         lib: {},
     },
 
-    /**
-     * This class contains all the default configuration settings.
-     * These are application level settings; however, they can be overridden by including
-     * a jaxon.config definition prior to including the <jaxon_core.js> file, or by
-     * specifying the appropriate configuration options on a per call basis.
-     */
-    config: {
-        /**
-         * An array of header entries where the array key is the header option name and
-         * the associated value is the value that will set when the request object is initialized.
-         *
-         * These headers will be set for both POST and GET requests.
-         */
-        commonHeaders: {
-            'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
-        },
-
-        /**
-         * An array of header entries where the array key is the header option name and the
-         * associated value is the value that will set when the request object is initialized.
-         */
-        postHeaders: {},
-
-        /**
-         * An array of header entries where the array key is the header option name and the
-         * associated value is the value that will set when the request object is initialized.
-         */
-        getHeaders: {},
-
-        /**
-         * true if jaxon should display a wait cursor when making a request, false otherwise.
-         */
-        waitCursor: false,
-
-        /**
-         * true if jaxon should log the status to the console during a request, false otherwise.
-         */
-        statusMessages: false,
-
-        /**
-         * The base document that will be used throughout the code for locating elements by ID.
-         */
-        baseDocument: document,
-
-        /**
-         * The URI that requests will be sent to.
-         *
-         * @var {string}
-         */
-        requestURI: document.URL,
-
-        /**
-         * The request mode.
-         * - 'asynchronous' - The request will immediately return, the response will be processed
-         *   when (and if) it is received.
-         * - 'synchronous' - The request will block, waiting for the response.
-         *   This option allows the server to return a value directly to the caller.
-         */
-        defaultMode: 'asynchronous',
-
-        /**
-         * The Hyper Text Transport Protocol version designated in the header of the request.
-         */
-        defaultHttpVersion: 'HTTP/1.1',
-
-        /**
-         * The content type designated in the header of the request.
-         */
-        defaultContentType: 'application/x-www-form-urlencoded',
-
-        /**
-         * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
-         */
-        defaultResponseDelayTime: 1000,
-
-        /**
-         * Always convert the reponse content to json.
-         */
-        convertResponseToJson: true,
-
-        /**
-         * The amount of time to wait, in milliseconds, before a request is considered expired.
-         * This is used to trigger the <jaxon.callback.onExpiration event.
-         */
-        defaultExpirationTime: 10000,
-
-        /**
-         * The method used to send requests to the server.
-         * - 'POST': Generate a form POST request
-         * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
-         */
-        defaultMethod: 'POST', // W3C: Method is case sensitive
-
-        /**
-         * The number of times a request should be retried if it expires.
-         */
-        defaultRetry: 5,
-
-        /**
-         * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
-         * does not specify the return value.
-         */
-        defaultReturnValue: false,
-
-        /**
-         * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
-         */
-        maxObjectDepth: 20,
-
-        /**
-         * The maximum number of members allowed when serializing objects to be sent to the server in a request.
-         */
-        maxObjectSize: 2000,
-
-        /**
-         * The maximum number of commands allowed in a single response.
-         */
-        commandQueueSize: 1000,
-
-        /**
-         * The maximum number of requests that can be processed simultaneously.
-         */
-        requestQueueSize: 1000,
-
-        /**
-         * Common options for all HTTP requests to the server.
-         */
-        httpRequestOptions: {
-            mode: "cors", // no-cors, *cors, same-origin
-            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: "same-origin", // include, *same-origin, omit
-            redirect: "manual", // manual, *follow, error
-        },
-    },
+    config: {},
 };
 
 /**
- * Register the command handlers provided by the library.
+ * This object contains all the default configuration settings.
+ * These are application level settings; however, they can be overridden by
+ * specifying the appropriate configuration options on a per call basis.
  */
-(function(cfg) {
+(function(self) {
+    /**
+     * An array of header entries where the array key is the header option name and
+     * the associated value is the value that will set when the request object is initialized.
+     *
+     * These headers will be set for both POST and GET requests.
+     */
+    self.commonHeaders = {
+        'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
+    };
+
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
+    self.postHeaders = {};
+
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
+    self.getHeaders = {};
+
+    /**
+     * true if jaxon should display a wait cursor when making a request, false otherwise.
+     */
+    self.waitCursor = false;
+
+    /**
+     * true if jaxon should log the status to the console during a request, false otherwise.
+     */
+    self.statusMessages = false;
+
+    /**
+     * The base document that will be used throughout the code for locating elements by ID.
+     */
+    self.baseDocument = document;
+
+    /**
+     * The URI that requests will be sent to.
+     *
+     * @var {string}
+     */
+    self.requestURI = document.URL;
+
+    /**
+     * The request mode.
+     * - 'asynchronous' - The request will immediately return, the response will be processed
+     *   when (and if) it is received.
+     * - 'synchronous' - The request will block, waiting for the response.
+     *   This option allows the server to return a value directly to the caller.
+     */
+    self.defaultMode = 'asynchronous';
+
+    /**
+     * The Hyper Text Transport Protocol version designated in the header of the request.
+     */
+    self.defaultHttpVersion = 'HTTP/1.1';
+
+    /**
+     * The content type designated in the header of the request.
+     */
+    self.defaultContentType = 'application/x-www-form-urlencoded';
+
+    /**
+     * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
+     */
+    self.defaultResponseDelayTime = 1000;
+
+    /**
+     * Always convert the reponse content to json.
+     */
+    self.convertResponseToJson = true;
+
+    /**
+     * The amount of time to wait, in milliseconds, before a request is considered expired.
+     * This is used to trigger the <jaxon.callback.onExpiration event.
+     */
+    self.defaultExpirationTime = 10000;
+
+    /**
+     * The method used to send requests to the server.
+     * - 'POST': Generate a form POST request
+     * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
+     */
+    self.defaultMethod = 'POST'; // W3C = Method is case sensitive
+
+    /**
+     * The number of times a request should be retried if it expires.
+     */
+    self.defaultRetry = 5;
+
+    /**
+     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
+     * does not specify the return value.
+     */
+    self.defaultReturnValue = false;
+
+    /**
+     * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
+     */
+    self.maxObjectDepth = 20;
+
+    /**
+     * The maximum number of members allowed when serializing objects to be sent to the server in a request.
+     */
+    self.maxObjectSize = 2000;
+
+    /**
+     * The maximum number of commands allowed in a single response.
+     */
+    self.commandQueueSize = 1000;
+
+    /**
+     * The maximum number of requests that can be processed simultaneously.
+     */
+    self.requestQueueSize = 1000;
+
+    /**
+     * Common options for all HTTP requests to the server.
+     */
+    self.httpRequestOptions = {
+        mode: "cors", // no-cors, *cors, same-origin
+        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: "same-origin", // include, *same-origin, omit
+        redirect: "manual", // manual, *follow, error
+    };
+
     /**
      * Set the options in the request object
      *
@@ -210,27 +206,27 @@ var jaxon = {
      *
      * @returns {void}
      */
-    cfg.setRequestOptions = (oRequest) => {
-        if (cfg.requestURI === undefined) {
+    self.setRequestOptions = (oRequest) => {
+        if (self.requestURI === undefined) {
             throw { code: 10005 };
         }
 
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...self[sHeader], ...oRequest[sHeader] });
 
         const oDefaultOptions = {
-            statusMessages: cfg.statusMessages,
-            waitCursor: cfg.waitCursor,
-            mode: cfg.defaultMode,
-            method: cfg.defaultMethod,
-            URI: cfg.requestURI,
-            httpVersion: cfg.defaultHttpVersion,
-            contentType: cfg.defaultContentType,
-            convertResponseToJson: cfg.convertResponseToJson,
-            retry: cfg.defaultRetry,
-            returnValue: cfg.defaultReturnValue,
-            maxObjectDepth: cfg.maxObjectDepth,
-            maxObjectSize: cfg.maxObjectSize,
+            statusMessages: self.statusMessages,
+            waitCursor: self.waitCursor,
+            mode: self.defaultMode,
+            method: self.defaultMethod,
+            URI: self.requestURI,
+            httpVersion: self.defaultHttpVersion,
+            contentType: self.defaultContentType,
+            convertResponseToJson: self.convertResponseToJson,
+            retry: self.defaultRetry,
+            returnValue: self.defaultReturnValue,
+            maxObjectDepth: self.maxObjectDepth,
+            maxObjectSize: self.maxObjectSize,
             context: window,
             upload: false,
             aborted: false,
@@ -252,7 +248,7 @@ var jaxon = {
      * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
      * to customize the status bar messages prior to sending jaxon requests.
      */
-    cfg.status = {
+    self.status = {
         /**
          * A set of event handlers that will be called by the
          * jaxon framework to set the status bar messages.
@@ -287,7 +283,7 @@ var jaxon = {
      * By splitting this functionality into an object of it's own, jaxon developers can now
      * customize the functionality prior to submitting requests.
      */
-    cfg.cursor = {
+    self.cursor = {
         /**
          * Constructs and returns a set of event handlers that will be called by the
          * jaxon framework to effect the status of the cursor during requests.
@@ -683,6 +679,76 @@ window.jaxon = jaxon;
 
 
 /**
+ * Class: jaxon.dom
+ */
+
+/**
+ * Plain javascript replacement for jQuery's .ready() function.
+ * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
+ */
+(function(self) {
+    "use strict";
+
+    let readyList = [];
+    let readyFired = false;
+    let readyEventHandlersInstalled = false;
+
+    /**
+     * Call this when the document is ready.
+     * This function protects itself against being called more than once
+     */
+    const ready = () => {
+        if (readyFired) {
+            return;
+        }
+        // this must be set to true before we start calling callbacks
+        readyFired = true;
+        // if a callback here happens to add new ready handlers,
+        // the jaxon.utils.dom.ready() function will see that it already fired
+        // and will schedule the callback to run right after
+        // this event loop finishes so all handlers will still execute
+        // in order and no new ones will be added to the readyList
+        // while we are processing the list
+        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
+        // allow any closures held by these functions to free
+        readyList = [];
+    }
+
+    // Was used with the document.attachEvent() function.
+    // const readyStateChange = () => document.readyState === "complete" && ready();
+
+    /**
+     * This is the one public interface
+     * jaxon.utils.dom.ready(fn, context);
+     * The context argument is optional - if present, it will be passed as an argument to the callback
+     */
+    self.ready = function(callback, context) {
+        // if ready has already fired, then just schedule the callback
+        // to fire asynchronously, but right away
+        if (readyFired) {
+            setTimeout(function() { callback(context); }, 1);
+            return;
+        }
+        // add the function and context to the list
+        readyList.push({ fn: callback, ctx: context });
+        // if document already ready to go, schedule the ready function to run
+        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+            setTimeout(ready, 1);
+            return;
+        }
+        if (!readyEventHandlersInstalled) {
+            // first choice is DOMContentLoaded event
+            document.addEventListener("DOMContentLoaded", ready, false);
+            // backup is window load event
+            window.addEventListener("load", ready, false);
+
+            readyEventHandlersInstalled = true;
+        }
+    }
+})(jaxon.utils.dom);
+
+
+/**
  * Class: jaxon.utils.string
  */
 
@@ -837,6 +903,200 @@ window.jaxon = jaxon;
         }
     }
 })(jaxon.utils.upload, jaxon.utils.dom, console);
+
+
+/**
+ * Class: jaxon.call.json
+ *
+ * Execute calls from json expressions.
+ */
+
+(function(self, query, dom, form, str) {
+    /**
+     * The call contexts.
+     *
+     * @var {object}
+     */
+    const xContext = { };
+
+    /**
+     * Get the current target.
+     *
+     * @returns {mixed}
+     */
+    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
+
+    /**
+     * Check if an argument is an expression.
+     *
+     * @param {mixed} xArg
+     *
+     * @returns {boolean}
+     */
+    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
+
+    /**
+     * Get the value of a single argument.
+     *
+     * @param {mixed} xArg
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xArg, xCurrValue) => {
+        if (!isExpression(xArg)) {
+            return xArg;
+        }
+        const { _type: sType, _name: sName } = xArg;
+        switch(sType) {
+            case 'form': return form.getValues(sName);
+            case 'html': return dom.$(sName).innerHTML;
+            case 'input': return dom.$(sName).value;
+            case 'checked': return dom.$(sName).checked;
+            case 'expr': return execExpression(xArg);
+            case '_': switch(sName) {
+                case 'this': return xCurrValue;
+                default: return undefined
+            }
+            default: return undefined;
+        }
+    };
+
+    /**
+     * Get the values of an array of arguments.
+     *
+     * @param {array} aArgs
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {array}
+     */
+    const getValues = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
+
+    /**
+     * The call commands
+     *
+     * @var {object}
+     */
+    const xCommands = {
+        select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
+            return sName === 'this' ?
+                // Empty argument list => $(this), ie the last event target.
+                query.select(getCurrentTarget()) :
+                // Call the selector.
+                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
+        },
+        event: ({ _name: sName, func: xExpression }, xCurrValue) => {
+            // Set an event handler. Takes an expression as argument.
+            xCurrValue.on(sName, (event) => {
+                // Save the current target.
+                xContext.aTargets.push({ event, target: event.currentTarget });
+                execExpression(xExpression);
+                xContext.aTargets.pop();
+            });
+            return true;
+        },
+        func: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a "global" function with the current target as "this" and an array of arguments.
+            const func = dom.findFunction(sName);
+            return !func ? null : func.apply(getCurrentTarget(), getValues(aArgs, xCurrValue));
+        },
+        method: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
+            // Call a function with xCurrValue as "this" and an array of arguments.
+            const func = dom.findFunction(sName, xCurrValue);
+            return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
+        },
+        attr: ({ _name: sName, value: xValue }, xCurrValue) => {
+            const xElt = dom.getInnerObject(xCurrValue, sName);
+            if (xValue !== undefined) {
+                // Assign an attribute.
+                xElt.node[xElt.attr] = getValue(xValue, xCurrValue);
+            }
+            return xElt.node[xElt.attr];
+        },
+        error: (xCall) => {
+            console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
+            return undefined;
+        },
+    };
+
+    /**
+     * Execute a single call.
+     *
+     * @param {object} xCall
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {void}
+     */
+    const execCall = (xCall, xCurrValue = null) => {
+        const xCommand = xCommands[xCall._type] ?? xCommands.error;
+        return xCommand(xCall, xCurrValue);
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const execExpression = ({ calls: aCalls = [] }) => {
+        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
+    };
+
+    /**
+     * Execute a single javascript function call.
+     *
+     * @param {object} xCall An object representing the function call
+     * @param {object=window} xCallContext The context to execute calls in.
+     *
+     * @returns {mixed}
+     */
+    self.execCall = (xCall, xCallContext = window) => {
+        xContext.aTargets = [xCallContext];
+        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression An object representing a command
+     * @param {object=window} xCallContext The context to execute calls in.
+     *
+     * @returns {mixed}
+     */
+    self.execExpr = (xExpression, xCallContext = window) => {
+        xContext.aTargets = [xCallContext];
+        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
+    };
+})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+
+
+/**
+ * Class: jaxon.call.query
+ */
+
+(function(self, jq) {
+    /**
+     * The jQuery object.
+     * Will be undefined if the library is not installed.
+     *
+     * @var {object}
+     */
+    self.jq = jq;
+
+    /**
+     * Call the jQuery DOM selector
+     *
+     * @param {string|object} xSelector
+     * @param {object} xContext
+     *
+     * @returns {object}
+     */
+    self.select = (xSelector, xContext = null) => {
+        // Todo: Allow the use of an alternative library instead of jQuery.
+        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
+    };
+})(jaxon.call.query, window.jQuery);
 
 
 /**
@@ -2130,7 +2390,7 @@ window.jaxon = jaxon;
         target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
-})(jaxon.cmd.event, jaxon.cmd.call.json, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.event, jaxon.call.json, jaxon.utils.dom, jaxon.utils.string);
 
 
 /**
@@ -2286,199 +2546,7 @@ window.jaxon = jaxon;
         }));
         return true;
     };
-})(jaxon.cmd.script, jaxon.cmd.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
-
-
-/**
- * Class: jaxon.cmd.call.json
- */
-
-(function(self, query, dom, form, str) {
-    /**
-     * The call contexts.
-     *
-     * @var {object}
-     */
-    const xContext = { };
-
-    /**
-     * Get the current target.
-     *
-     * @returns {mixed}
-     */
-    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
-
-    /**
-     * Check if an argument is an expression.
-     *
-     * @param {mixed} xArg
-     *
-     * @returns {boolean}
-     */
-    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
-
-    /**
-     * Get the value of a single argument.
-     *
-     * @param {mixed} xArg
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {mixed}
-     */
-    const getValue = (xArg, xCurrValue) => {
-        if (!isExpression(xArg)) {
-            return xArg;
-        }
-        const { _type: sType, _name: sName } = xArg;
-        switch(sType) {
-            case 'form': return form.getValues(sName);
-            case 'html': return dom.$(sName).innerHTML;
-            case 'input': return dom.$(sName).value;
-            case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xArg);
-            case '_': switch(sName) {
-                case 'this': return xCurrValue;
-                default: return undefined
-            }
-            default: return undefined;
-        }
-    };
-
-    /**
-     * Get the values of an array of arguments.
-     *
-     * @param {array} aArgs
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {array}
-     */
-    const getValues = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
-
-    /**
-     * The call commands
-     *
-     * @var {object}
-     */
-    const xCommands = {
-        select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
-            return sName === 'this' ?
-                // Empty argument list => $(this), ie the last event target.
-                query.select(getCurrentTarget()) :
-                // Call the selector.
-                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
-        },
-        event: ({ _name: sName, func: xExpression }, xCurrValue) => {
-            // Set an event handler. Takes an expression as argument.
-            xCurrValue.on(sName, (event) => {
-                // Save the current target.
-                xContext.aTargets.push({ event, target: event.currentTarget });
-                execExpression(xExpression);
-                xContext.aTargets.pop();
-            });
-            return true;
-        },
-        func: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
-            // Call a "global" function with the current target as "this" and an array of arguments.
-            const func = dom.findFunction(sName);
-            return !func ? null : func.apply(getCurrentTarget(), getValues(aArgs, xCurrValue));
-        },
-        method: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
-            // Call a function with xCurrValue as "this" and an array of arguments.
-            const func = dom.findFunction(sName, xCurrValue);
-            return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
-        },
-        attr: ({ _name: sName, value: xValue }, xCurrValue) => {
-            const xElt = dom.getInnerObject(xCurrValue, sName);
-            if (xValue !== undefined) {
-                // Assign an attribute.
-                xElt.node[xElt.attr] = getValue(xValue, xCurrValue);
-            }
-            return xElt.node[xElt.attr];
-        },
-        error: (xCall) => {
-            console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
-            return undefined;
-        },
-    };
-
-    /**
-     * Execute a single call.
-     *
-     * @param {object} xCall
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {void}
-     */
-    const execCall = (xCall, xCurrValue = null) => {
-        const xCommand = xCommands[xCall._type] ?? xCommands.error;
-        return xCommand(xCall, xCurrValue);
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression
-     *
-     * @returns {mixed}
-     */
-    const execExpression = ({ calls: aCalls = [] }) => {
-        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
-    };
-
-    /**
-     * Execute a single javascript function call.
-     *
-     * @param {object} xCall An object representing the function call
-     * @param {object=window} xCallContext The context to execute calls in.
-     *
-     * @returns {mixed}
-     */
-    self.execCall = (xCall, xCallContext = window) => {
-        xContext.aTargets = [xCallContext];
-        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
-    };
-
-    /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression An object representing a command
-     * @param {object=window} xCallContext The context to execute calls in.
-     *
-     * @returns {mixed}
-     */
-    self.execExpr = (xExpression, xCallContext = window) => {
-        xContext.aTargets = [xCallContext];
-        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
-    };
-})(jaxon.cmd.call.json, jaxon.cmd.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
-
-
-/**
- * Class: jaxon.cmd.call.query
- */
-
-(function(self, jq) {
-    /**
-     * The jQuery object.
-     * Will be undefined if the library is not installed.
-     *
-     * @var {object}
-     */
-    self.jq = jq;
-
-    /**
-     * Call the jQuery DOM selector
-     *
-     * @param {string|object} xSelector
-     * @param {object} xContext
-     *
-     * @returns {object}
-     */
-    self.select = (xSelector, xContext = null) => {
-        // Todo: Allow the use of an alternative library instead of jQuery.
-        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
-    };
-})(jaxon.cmd.call.query, window.jQuery);
+})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
 
 
 /**
@@ -2565,76 +2633,7 @@ window.jaxon = jaxon;
         // Define the library functions
         cb(self[name], { str, dom, js, jq, labels: self.labels });
     };
-})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.cmd.call.json, window.jQuery);
-
-
-/**
- * Class: jaxon.dom
- */
-
-/**
- * Plain javascript replacement for jQuery's .ready() function.
- * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
- */
-(function(self) {
-    "use strict";
-
-    let readyList = [];
-    let readyFired = false;
-    let readyEventHandlersInstalled = false;
-
-    /**
-     * Call this when the document is ready.
-     * This function protects itself against being called more than once
-     */
-    const ready = () => {
-        if (readyFired) {
-            return;
-        }
-        // this must be set to true before we start calling callbacks
-        readyFired = true;
-        // if a callback here happens to add new ready handlers,
-        // the jaxon.dom.ready() function will see that it already fired
-        // and will schedule the callback to run right after
-        // this event loop finishes so all handlers will still execute
-        // in order and no new ones will be added to the readyList
-        // while we are processing the list
-        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
-        // allow any closures held by these functions to free
-        readyList = [];
-    }
-
-    const readyStateChange = () => document.readyState === "complete" && ready();
-
-    /**
-     * This is the one public interface
-     * jaxon.dom.ready(fn, context);
-     * The context argument is optional - if present, it will be passed as an argument to the callback
-     */
-    self.ready = function(callback, context) {
-        // if ready has already fired, then just schedule the callback
-        // to fire asynchronously, but right away
-        if (readyFired) {
-            setTimeout(function() { callback(context); }, 1);
-            return;
-        }
-        // add the function and context to the list
-        readyList.push({ fn: callback, ctx: context });
-        // if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
-            setTimeout(ready, 1);
-            return;
-        }
-        if (!readyEventHandlersInstalled) {
-            // first choice is DOMContentLoaded event
-            document.addEventListener("DOMContentLoaded", ready, false);
-            // backup is window load event
-            window.addEventListener("load", ready, false);
-
-            readyEventHandlersInstalled = true;
-        }
-    }
-})(jaxon.dom);
+})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.call.json, window.jQuery);
 
 
 /*
@@ -2663,19 +2662,14 @@ jaxon.register = jaxon.ajax.handler.register;
 jaxon.$ = jaxon.utils.dom.$;
 
 /**
+ * Shortcut to <jaxon.utils.dom.ready>.
+ */
+jaxon.dom.ready = jaxon.utils.dom.ready;
+
+/**
  * Shortcut to <jaxon.utils.form.getValues>.
  */
 jaxon.getFormValues = jaxon.utils.form.getValues;
-
-/**
- * Prints various types of messages on the user screen.
- */
-jaxon.msg = jaxon.ajax.message;
-
-/**
- * Shortcut to <jaxon.cmd.script>.
- */
-jaxon.js = jaxon.cmd.script;
 
 /**
  * Indicates if jaxon module is loaded.

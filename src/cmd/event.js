@@ -81,4 +81,4 @@
         target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
-})(jaxon.cmd.event, jaxon.cmd.call.json, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.event, jaxon.call.json, jaxon.utils.dom, jaxon.utils.string);

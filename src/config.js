@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-1',
+        patch: '0rc-2',
     },
 
     debug: {
@@ -41,11 +41,11 @@ var jaxon = {
         body: {},
         script: {},
         event: {},
-        // Lib to execute calls from json expressions.
-        call: {
-            json: {},
-            query: {},
-        },
+    },
+
+    call: {
+        json: {},
+        query: {},
     },
 
     utils: {
@@ -63,146 +63,142 @@ var jaxon = {
         lib: {},
     },
 
-    /**
-     * This class contains all the default configuration settings.
-     * These are application level settings; however, they can be overridden by including
-     * a jaxon.config definition prior to including the <jaxon_core.js> file, or by
-     * specifying the appropriate configuration options on a per call basis.
-     */
-    config: {
-        /**
-         * An array of header entries where the array key is the header option name and
-         * the associated value is the value that will set when the request object is initialized.
-         *
-         * These headers will be set for both POST and GET requests.
-         */
-        commonHeaders: {
-            'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
-        },
-
-        /**
-         * An array of header entries where the array key is the header option name and the
-         * associated value is the value that will set when the request object is initialized.
-         */
-        postHeaders: {},
-
-        /**
-         * An array of header entries where the array key is the header option name and the
-         * associated value is the value that will set when the request object is initialized.
-         */
-        getHeaders: {},
-
-        /**
-         * true if jaxon should display a wait cursor when making a request, false otherwise.
-         */
-        waitCursor: false,
-
-        /**
-         * true if jaxon should log the status to the console during a request, false otherwise.
-         */
-        statusMessages: false,
-
-        /**
-         * The base document that will be used throughout the code for locating elements by ID.
-         */
-        baseDocument: document,
-
-        /**
-         * The URI that requests will be sent to.
-         *
-         * @var {string}
-         */
-        requestURI: document.URL,
-
-        /**
-         * The request mode.
-         * - 'asynchronous' - The request will immediately return, the response will be processed
-         *   when (and if) it is received.
-         * - 'synchronous' - The request will block, waiting for the response.
-         *   This option allows the server to return a value directly to the caller.
-         */
-        defaultMode: 'asynchronous',
-
-        /**
-         * The Hyper Text Transport Protocol version designated in the header of the request.
-         */
-        defaultHttpVersion: 'HTTP/1.1',
-
-        /**
-         * The content type designated in the header of the request.
-         */
-        defaultContentType: 'application/x-www-form-urlencoded',
-
-        /**
-         * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
-         */
-        defaultResponseDelayTime: 1000,
-
-        /**
-         * Always convert the reponse content to json.
-         */
-        convertResponseToJson: true,
-
-        /**
-         * The amount of time to wait, in milliseconds, before a request is considered expired.
-         * This is used to trigger the <jaxon.callback.onExpiration event.
-         */
-        defaultExpirationTime: 10000,
-
-        /**
-         * The method used to send requests to the server.
-         * - 'POST': Generate a form POST request
-         * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
-         */
-        defaultMethod: 'POST', // W3C: Method is case sensitive
-
-        /**
-         * The number of times a request should be retried if it expires.
-         */
-        defaultRetry: 5,
-
-        /**
-         * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
-         * does not specify the return value.
-         */
-        defaultReturnValue: false,
-
-        /**
-         * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
-         */
-        maxObjectDepth: 20,
-
-        /**
-         * The maximum number of members allowed when serializing objects to be sent to the server in a request.
-         */
-        maxObjectSize: 2000,
-
-        /**
-         * The maximum number of commands allowed in a single response.
-         */
-        commandQueueSize: 1000,
-
-        /**
-         * The maximum number of requests that can be processed simultaneously.
-         */
-        requestQueueSize: 1000,
-
-        /**
-         * Common options for all HTTP requests to the server.
-         */
-        httpRequestOptions: {
-            mode: "cors", // no-cors, *cors, same-origin
-            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: "same-origin", // include, *same-origin, omit
-            redirect: "manual", // manual, *follow, error
-        },
-    },
+    config: {},
 };
 
 /**
- * Register the command handlers provided by the library.
+ * This object contains all the default configuration settings.
+ * These are application level settings; however, they can be overridden by
+ * specifying the appropriate configuration options on a per call basis.
  */
-(function(cfg) {
+(function(self) {
+    /**
+     * An array of header entries where the array key is the header option name and
+     * the associated value is the value that will set when the request object is initialized.
+     *
+     * These headers will be set for both POST and GET requests.
+     */
+    self.commonHeaders = {
+        'If-Modified-Since': 'Sat, 1 Jan 2000 00:00:00 GMT'
+    };
+
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
+    self.postHeaders = {};
+
+    /**
+     * An array of header entries where the array key is the header option name and the
+     * associated value is the value that will set when the request object is initialized.
+     */
+    self.getHeaders = {};
+
+    /**
+     * true if jaxon should display a wait cursor when making a request, false otherwise.
+     */
+    self.waitCursor = false;
+
+    /**
+     * true if jaxon should log the status to the console during a request, false otherwise.
+     */
+    self.statusMessages = false;
+
+    /**
+     * The base document that will be used throughout the code for locating elements by ID.
+     */
+    self.baseDocument = document;
+
+    /**
+     * The URI that requests will be sent to.
+     *
+     * @var {string}
+     */
+    self.requestURI = document.URL;
+
+    /**
+     * The request mode.
+     * - 'asynchronous' - The request will immediately return, the response will be processed
+     *   when (and if) it is received.
+     * - 'synchronous' - The request will block, waiting for the response.
+     *   This option allows the server to return a value directly to the caller.
+     */
+    self.defaultMode = 'asynchronous';
+
+    /**
+     * The Hyper Text Transport Protocol version designated in the header of the request.
+     */
+    self.defaultHttpVersion = 'HTTP/1.1';
+
+    /**
+     * The content type designated in the header of the request.
+     */
+    self.defaultContentType = 'application/x-www-form-urlencoded';
+
+    /**
+     * The delay time, in milliseconds, associated with the <jaxon.callback.onRequestDelay> event.
+     */
+    self.defaultResponseDelayTime = 1000;
+
+    /**
+     * Always convert the reponse content to json.
+     */
+    self.convertResponseToJson = true;
+
+    /**
+     * The amount of time to wait, in milliseconds, before a request is considered expired.
+     * This is used to trigger the <jaxon.callback.onExpiration event.
+     */
+    self.defaultExpirationTime = 10000;
+
+    /**
+     * The method used to send requests to the server.
+     * - 'POST': Generate a form POST request
+     * - 'GET': Generate a GET request; parameters are appended to <jaxon.config.requestURI> to form a URL.
+     */
+    self.defaultMethod = 'POST'; // W3C = Method is case sensitive
+
+    /**
+     * The number of times a request should be retried if it expires.
+     */
+    self.defaultRetry = 5;
+
+    /**
+     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
+     * does not specify the return value.
+     */
+    self.defaultReturnValue = false;
+
+    /**
+     * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
+     */
+    self.maxObjectDepth = 20;
+
+    /**
+     * The maximum number of members allowed when serializing objects to be sent to the server in a request.
+     */
+    self.maxObjectSize = 2000;
+
+    /**
+     * The maximum number of commands allowed in a single response.
+     */
+    self.commandQueueSize = 1000;
+
+    /**
+     * The maximum number of requests that can be processed simultaneously.
+     */
+    self.requestQueueSize = 1000;
+
+    /**
+     * Common options for all HTTP requests to the server.
+     */
+    self.httpRequestOptions = {
+        mode: "cors", // no-cors, *cors, same-origin
+        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: "same-origin", // include, *same-origin, omit
+        redirect: "manual", // manual, *follow, error
+    };
+
     /**
      * Set the options in the request object
      *
@@ -210,27 +206,27 @@ var jaxon = {
      *
      * @returns {void}
      */
-    cfg.setRequestOptions = (oRequest) => {
-        if (cfg.requestURI === undefined) {
+    self.setRequestOptions = (oRequest) => {
+        if (self.requestURI === undefined) {
             throw { code: 10005 };
         }
 
         const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...cfg[sHeader], ...oRequest[sHeader] });
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...self[sHeader], ...oRequest[sHeader] });
 
         const oDefaultOptions = {
-            statusMessages: cfg.statusMessages,
-            waitCursor: cfg.waitCursor,
-            mode: cfg.defaultMode,
-            method: cfg.defaultMethod,
-            URI: cfg.requestURI,
-            httpVersion: cfg.defaultHttpVersion,
-            contentType: cfg.defaultContentType,
-            convertResponseToJson: cfg.convertResponseToJson,
-            retry: cfg.defaultRetry,
-            returnValue: cfg.defaultReturnValue,
-            maxObjectDepth: cfg.maxObjectDepth,
-            maxObjectSize: cfg.maxObjectSize,
+            statusMessages: self.statusMessages,
+            waitCursor: self.waitCursor,
+            mode: self.defaultMode,
+            method: self.defaultMethod,
+            URI: self.requestURI,
+            httpVersion: self.defaultHttpVersion,
+            contentType: self.defaultContentType,
+            convertResponseToJson: self.convertResponseToJson,
+            retry: self.defaultRetry,
+            returnValue: self.defaultReturnValue,
+            maxObjectDepth: self.maxObjectDepth,
+            maxObjectSize: self.maxObjectSize,
             context: window,
             upload: false,
             aborted: false,
@@ -252,7 +248,7 @@ var jaxon = {
      * By splitting the status bar functionality into an object, the jaxon developer has the opportunity
      * to customize the status bar messages prior to sending jaxon requests.
      */
-    cfg.status = {
+    self.status = {
         /**
          * A set of event handlers that will be called by the
          * jaxon framework to set the status bar messages.
@@ -287,7 +283,7 @@ var jaxon = {
      * By splitting this functionality into an object of it's own, jaxon developers can now
      * customize the functionality prior to submitting requests.
      */
-    cfg.cursor = {
+    self.cursor = {
         /**
          * Constructs and returns a set of event handlers that will be called by the
          * jaxon framework to effect the status of the cursor during requests.

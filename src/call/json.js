@@ -1,5 +1,7 @@
 /**
- * Class: jaxon.cmd.call.json
+ * Class: jaxon.call.json
+ *
+ * Execute calls from json expressions.
  */
 
 (function(self, query, dom, form, str) {
@@ -159,4 +161,4 @@
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.cmd.call.json, jaxon.cmd.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

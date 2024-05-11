@@ -22,4 +22,4 @@
         // Define the library functions
         cb(self[name], { str, dom, js, jq, labels: self.labels });
     };
-})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.cmd.call.json, window.jQuery);
+})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.call.json, window.jQuery);
