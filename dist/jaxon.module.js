@@ -52,6 +52,7 @@ var jaxon = {
         dom: {},
         form: {},
         queue: {},
+        types: {},
         string: {},
         upload: {},
     },
@@ -324,7 +325,7 @@ window.jaxon = jaxon;
  * Class: jaxon.utils.dom
  */
 
-(function(self, baseDocument) {
+(function(self, types, baseDocument) {
     /**
      * Shorthand for finding a uniquely named element within the document.
      *
@@ -414,6 +415,10 @@ window.jaxon = jaxon;
      * @returns {object|null}
      */
     self.findFunction = (sFuncName, context = window) => {
+        if (sFuncName === 'toInt' && context === window) {
+            return types.toInt;
+        }
+
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {
@@ -443,7 +448,7 @@ window.jaxon = jaxon;
         }
         return !xElement ? null : { node: xElement, attr: attribute };
     };
-})(jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);
 
 
 /**
@@ -800,25 +805,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Get the type of an object. Unlike typeof, this function distinguishes
-     * objects from arrays, and the first letter is capitalized.
-     *
-     * @param {mixed} xObject The object to check
-     *
-     * @returns {string}
-     */
-    self.typeOf = (xObject) => Object.prototype.toString.call(xObject).slice(8, -1).toLowerCase();
-
-    /**
-     * Convert to int.
-     *
-     * @param {string} sValue
-     *
-     * @returns {integer}
-     */
-    self.toInt = (sValue) => parseInt(sValue);
-
-    /**
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
@@ -842,6 +828,50 @@ window.jaxon = jaxon;
         };
     }
 })(jaxon.utils.string);
+
+
+/**
+ * Class: jaxon.utils.string
+ */
+
+(function(self) {
+    /**
+     * Get the type of an object.
+     * Unlike typeof, this function distinguishes objects from arrays.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {string}
+     */
+    self.of = (xVar) => Object.prototype.toString.call(xVar).slice(8, -1).toLowerCase();
+
+    /**
+     * Check if a var is an object.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isObject = (xVar) => self.of(xVar) === 'object';
+
+    /**
+     * Check if a var is an array.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isArray = (xVar) => self.of(xVar) === 'array';
+
+    /**
+     * Convert to int.
+     *
+     * @param {string} sValue
+     *
+     * @returns {integer}
+     */
+    self.toInt = (sValue) => parseInt(sValue);
+})(jaxon.utils.types);
 
 
 /**
@@ -911,7 +941,7 @@ window.jaxon = jaxon;
  * Execute calls from json expressions.
  */
 
-(function(self, query, dialog, dom, form, str) {
+(function(self, query, dialog, dom, form, types) {
     /**
      * The call contexts.
      *
@@ -933,7 +963,7 @@ window.jaxon = jaxon;
      *
      * @returns {boolean}
      */
-    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
+    const isExpression = xArg => types.isObject(xArg) && (xArg._type);
 
     /**
      * Get the value of a single argument.
@@ -1042,17 +1072,17 @@ window.jaxon = jaxon;
      */
     self.execCall = (xCall, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
-        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
+        return types.isObject(xCall) ? execCall(xCall) : null;
     };
 
     /**
      * Execute the javascript code represented by an expression object.
      *
-     * @param {object} xExpression
+     * @param {array} aCalls
      *
      * @returns {mixed}
      */
-    const _execExpression = ({ calls: aCalls }) => {
+    const execCalls = (aCalls) => {
         return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
     };
 
@@ -1093,6 +1123,13 @@ window.jaxon = jaxon;
     };
 
     /**
+     * The dfault comparison operator.
+     *
+     * @var {function}
+     */
+    const xDefaultComparator = () => false;
+
+    /**
      * The comparison operators.
      *
      * @var {object}
@@ -1106,7 +1143,6 @@ window.jaxon = jaxon;
         ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
-        __: () => false,
     };
 
     /**
@@ -1114,19 +1150,14 @@ window.jaxon = jaxon;
      *
      * @returns {boolean}
      */
-    const checkCondition = (xExpression) => {
+    const execWithCondition = (xExpression) => {
         const {
             condition: [sOperator, xLeftArg, xRightArg],
-            calls,
-            message,
+            calls: aCalls,
+            message: oMessage,
         } = xExpression;
-        const xComparator = xComparators[sOperator] ?? xComparators.__;
-        if(xComparator(getValue(xLeftArg), getValue(xRightArg))) {
-            _execExpression({ calls });
-            return;
-        }
-        showMessage(message);
-        return;
+        const xComparator = xComparators[sOperator] ?? xDefaultComparator;
+        xComparator(getValue(xLeftArg), getValue(xRightArg)) ? execCalls(aCalls) : showMessage(oMessage);
     };
 
     /**
@@ -1134,14 +1165,14 @@ window.jaxon = jaxon;
      *
      * @returns {boolean}
      */
-    const askConfirmation = (xExpression) => {
+    const execWithConfirmation = (xExpression) => {
         const {
             question: { lib: sLibName, phrase },
-            calls,
-            message,
+            calls: aCalls,
+            message: oMessage,
         } = xExpression;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(self.makePhrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
+        xLib.confirm(self.makePhrase(phrase), '', () => execCalls(aCalls), () => showMessage(oMessage));
     };
 
     /**
@@ -1152,16 +1183,16 @@ window.jaxon = jaxon;
      * @returns {mixed}
      */
     const execExpression = (xExpression) => {
-        const { calls, question, condition } = xExpression;
+        const { calls: aCalls, question, condition } = xExpression;
         if((question)) {
-            askConfirmation(xExpression);
+            execWithConfirmation(xExpression);
             return;
         }
         if((condition)) {
-            checkCondition(xExpression);
+            execWithCondition(xExpression);
             return;
         }
-        return _execExpression({ calls });
+        return execCalls(aCalls);
     };
 
     /**
@@ -1174,9 +1205,10 @@ window.jaxon = jaxon;
      */
     self.execExpr = (xExpression, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
-        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
+        return types.isObject(xExpression) ? execExpression(xExpression) : null;
     };
-})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
+    jaxon.utils.form, jaxon.utils.types);
 
 
 /**
@@ -1211,7 +1243,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.callback
  */
 
-(function(self, str, config) {
+(function(self, types, config) {
     /**
      * Create a timer to fire an event in the future.
      * This will be used fire the onRequestDelay and onExpiration events.
@@ -1310,7 +1342,7 @@ window.jaxon = jaxon;
         {
             return [self.callback];
         }
-        if(str.typeOf(oRequest.callback) === 'array')
+        if(types.isArray(oRequest.callback))
         {
             return [self.callback, ...oRequest.callback];
         }
@@ -1374,7 +1406,7 @@ window.jaxon = jaxon;
      */
     self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
         .forEach(oCallback => clearTimer(oCallback, sFunction));
-})(jaxon.ajax.callback, jaxon.utils.string, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.types, jaxon.config);
 
 
 /**
@@ -1604,7 +1636,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.parameters
  */
 
-(function(self, str, version) {
+(function(self, types, version) {
     /**
      * The array of data bags
      *
@@ -1623,7 +1655,7 @@ window.jaxon = jaxon;
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
-        const sType = str.typeOf(oVal);
+        const sType = types.of(oVal);
         if (sType === 'object' || sType === 'array') {
             try {
                 return encodeURIComponent(JSON.stringify(oVal));
@@ -1748,7 +1780,7 @@ window.jaxon = jaxon;
         oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
     };
-})(jaxon.ajax.parameters, jaxon.utils.string, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);
 
 
 /**
@@ -1976,7 +2008,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue, str) {
+(function(self, config, handler, req, cbk, queue, types) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -2055,7 +2087,7 @@ window.jaxon = jaxon;
      * @return {void}
      */
     const queueCommands = (oRequest) => {
-        if (str.typeOf(oRequest.responseContent) !== 'object') {
+        if (!types.isObject(oRequest.responseContent)) {
             return;
         }
         const {
@@ -2193,7 +2225,7 @@ window.jaxon = jaxon;
         return oRequest.responseProcessor(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.string);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.types);
 
 
 /**
@@ -2508,7 +2540,7 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.script
  */
 
-(function(self, json, handler, parameters) {
+(function(self, json, handler, parameters, types) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -2634,8 +2666,8 @@ window.jaxon = jaxon;
      * @returns {array}
      */
     const getCallArgs = ({ args: aArgs }, oLink) => aArgs.map(xArg =>
-        str.typeOf(xArg) !== 'object' || xArg._type !== 'page' ? xArg :
-            parseInt(oLink.parentNode.getAttribute('data-page')));
+        types.isObject(xArg) && xArg._type === 'page' ?
+        parseInt(oLink.parentNode.getAttribute('data-page')) : xArg);
 
     /**
      * Set event handlers on pagination links.
@@ -2657,7 +2689,7 @@ window.jaxon = jaxon;
         }));
         return true;
     };
-})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
+})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.utils.types);
 
 
 /**

@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.callback
  */
 
-(function(self, str, config) {
+(function(self, types, config) {
     /**
      * Create a timer to fire an event in the future.
      * This will be used fire the onRequestDelay and onExpiration events.
@@ -101,7 +101,7 @@
         {
             return [self.callback];
         }
-        if(str.typeOf(oRequest.callback) === 'array')
+        if(types.isArray(oRequest.callback))
         {
             return [self.callback, ...oRequest.callback];
         }
@@ -165,4 +165,4 @@
      */
     self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
         .forEach(oCallback => clearTimer(oCallback, sFunction));
-})(jaxon.ajax.callback, jaxon.utils.string, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.types, jaxon.config);

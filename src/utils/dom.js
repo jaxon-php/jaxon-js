@@ -2,7 +2,7 @@
  * Class: jaxon.utils.dom
  */
 
-(function(self, baseDocument) {
+(function(self, types, baseDocument) {
     /**
      * Shorthand for finding a uniquely named element within the document.
      *
@@ -92,6 +92,10 @@
      * @returns {object|null}
      */
     self.findFunction = (sFuncName, context = window) => {
+        if (sFuncName === 'toInt' && context === window) {
+            return types.toInt;
+        }
+
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {
@@ -121,4 +125,4 @@
         }
         return !xElement ? null : { node: xElement, attr: attribute };
     };
-})(jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);

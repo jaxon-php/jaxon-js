@@ -4,7 +4,7 @@
  * Execute calls from json expressions.
  */
 
-(function(self, query, dialog, dom, form, str) {
+(function(self, query, dialog, dom, form, types) {
     /**
      * The call contexts.
      *
@@ -26,7 +26,7 @@
      *
      * @returns {boolean}
      */
-    const isExpression = xArg => str.typeOf(xArg) === 'object' && (xArg._type);
+    const isExpression = xArg => types.isObject(xArg) && (xArg._type);
 
     /**
      * Get the value of a single argument.
@@ -135,17 +135,17 @@
      */
     self.execCall = (xCall, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
-        return str.typeOf(xCall) === 'object' ? execCall(xCall) : null;
+        return types.isObject(xCall) ? execCall(xCall) : null;
     };
 
     /**
      * Execute the javascript code represented by an expression object.
      *
-     * @param {object} xExpression
+     * @param {array} aCalls
      *
      * @returns {mixed}
      */
-    const _execExpression = ({ calls: aCalls }) => {
+    const execCalls = (aCalls) => {
         return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
     };
 
@@ -186,6 +186,13 @@
     };
 
     /**
+     * The dfault comparison operator.
+     *
+     * @var {function}
+     */
+    const xDefaultComparator = () => false;
+
+    /**
      * The comparison operators.
      *
      * @var {object}
@@ -199,7 +206,6 @@
         ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
-        __: () => false,
     };
 
     /**
@@ -207,19 +213,14 @@
      *
      * @returns {boolean}
      */
-    const checkCondition = (xExpression) => {
+    const execWithCondition = (xExpression) => {
         const {
             condition: [sOperator, xLeftArg, xRightArg],
-            calls,
-            message,
+            calls: aCalls,
+            message: oMessage,
         } = xExpression;
-        const xComparator = xComparators[sOperator] ?? xComparators.__;
-        if(xComparator(getValue(xLeftArg), getValue(xRightArg))) {
-            _execExpression({ calls });
-            return;
-        }
-        showMessage(message);
-        return;
+        const xComparator = xComparators[sOperator] ?? xDefaultComparator;
+        xComparator(getValue(xLeftArg), getValue(xRightArg)) ? execCalls(aCalls) : showMessage(oMessage);
     };
 
     /**
@@ -227,14 +228,14 @@
      *
      * @returns {boolean}
      */
-    const askConfirmation = (xExpression) => {
+    const execWithConfirmation = (xExpression) => {
         const {
             question: { lib: sLibName, phrase },
-            calls,
-            message,
+            calls: aCalls,
+            message: oMessage,
         } = xExpression;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(self.makePhrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
+        xLib.confirm(self.makePhrase(phrase), '', () => execCalls(aCalls), () => showMessage(oMessage));
     };
 
     /**
@@ -245,16 +246,16 @@
      * @returns {mixed}
      */
     const execExpression = (xExpression) => {
-        const { calls, question, condition } = xExpression;
+        const { calls: aCalls, question, condition } = xExpression;
         if((question)) {
-            askConfirmation(xExpression);
+            execWithConfirmation(xExpression);
             return;
         }
         if((condition)) {
-            checkCondition(xExpression);
+            execWithCondition(xExpression);
             return;
         }
-        return _execExpression({ calls });
+        return execCalls(aCalls);
     };
 
     /**
@@ -267,6 +268,7 @@
      */
     self.execExpr = (xExpression, xCallContext = window) => {
         xContext.aTargets = [xCallContext];
-        return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
+        return types.isObject(xExpression) ? execExpression(xExpression) : null;
     };
-})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
+    jaxon.utils.form, jaxon.utils.types);

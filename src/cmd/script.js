@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, json, handler, parameters) {
+(function(self, json, handler, parameters, types) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -128,8 +128,8 @@
      * @returns {array}
      */
     const getCallArgs = ({ args: aArgs }, oLink) => aArgs.map(xArg =>
-        str.typeOf(xArg) !== 'object' || xArg._type !== 'page' ? xArg :
-            parseInt(oLink.parentNode.getAttribute('data-page')));
+        types.isObject(xArg) && xArg._type === 'page' ?
+        parseInt(oLink.parentNode.getAttribute('data-page')) : xArg);
 
     /**
      * Set event handlers on pagination links.
@@ -151,4 +151,4 @@
         }));
         return true;
     };
-})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters);
+})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.utils.types);

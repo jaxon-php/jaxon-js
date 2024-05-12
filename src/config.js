@@ -52,6 +52,7 @@ var jaxon = {
         dom: {},
         form: {},
         queue: {},
+        types: {},
         string: {},
         upload: {},
     },

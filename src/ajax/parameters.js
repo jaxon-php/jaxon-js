@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.parameters
  */
 
-(function(self, str, version) {
+(function(self, types, version) {
     /**
      * The array of data bags
      *
@@ -21,7 +21,7 @@
         if (oVal === undefined ||  oVal === null) {
             return '*';
         }
-        const sType = str.typeOf(oVal);
+        const sType = types.of(oVal);
         if (sType === 'object' || sType === 'array') {
             try {
                 return encodeURIComponent(JSON.stringify(oVal));
@@ -146,4 +146,4 @@
         oRequest.requestData = hasUpload(oRequest) ?
             getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
     };
-})(jaxon.ajax.parameters, jaxon.utils.string, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);

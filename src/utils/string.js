@@ -50,25 +50,6 @@
     };
 
     /**
-     * Get the type of an object. Unlike typeof, this function distinguishes
-     * objects from arrays, and the first letter is capitalized.
-     *
-     * @param {mixed} xObject The object to check
-     *
-     * @returns {string}
-     */
-    self.typeOf = (xObject) => Object.prototype.toString.call(xObject).slice(8, -1).toLowerCase();
-
-    /**
-     * Convert to int.
-     *
-     * @param {string} sValue
-     *
-     * @returns {integer}
-     */
-    self.toInt = (sValue) => parseInt(sValue);
-
-    /**
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */

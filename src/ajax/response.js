@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue, str) {
+(function(self, config, handler, req, cbk, queue, types) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -81,7 +81,7 @@
      * @return {void}
      */
     const queueCommands = (oRequest) => {
-        if (str.typeOf(oRequest.responseContent) !== 'object') {
+        if (!types.isObject(oRequest.responseContent)) {
             return;
         }
         const {
@@ -219,4 +219,4 @@
         return oRequest.responseProcessor(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.string);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.types);
