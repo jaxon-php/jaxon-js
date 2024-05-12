@@ -8,9 +8,9 @@
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
      * to execute during this delay.
      *
-     * @param {object} command The Response command object.
-     * @param {integer} command.prop The number of 10ths of a second to sleep.
-     * @param {object} command.response The Response object.
+     * @param {object} args The command arguments.
+     * @param {integer} args.prop The number of 10ths of a second to sleep.
+     * @param {object} args.response The Response object.
      *
      * @returns {true} The sleep operation completed.
      * @returns {false} The sleep time has not yet expired, continue sleeping.
@@ -31,9 +31,9 @@
      * then skip the specified number of commands in the response command queue.
      * If the user clicks Ok, the command processing resumes normal operation.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.question The question to ask.
-     * @param {integer} command.count The number of commands to skip.
+     * @param {object} args The command arguments.
+     * @param {string} args.question The question to ask.
+     * @param {integer} args.count The number of commands to skip.
      *
      * @returns {false} Stop the processing of the command queue until the user answers the question.
      */
@@ -46,10 +46,10 @@
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.func The name of the function to call.
-     * @param {array} command.args  The parameters to pass to the function.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     * @param {object} args The command arguments.
+     * @param {string} args.func The name of the function to call.
+     * @param {array} args.args  The parameters to pass to the function.
+     * @param {object} args.context The javascript object to be referenced as 'this' in the script.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -62,9 +62,9 @@
     /**
      * Redirects the browser to the specified URL.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.url The new URL to redirect to
-     * @param {integer} command.delay The time to wait before the redirect.
+     * @param {object} args The command arguments.
+     * @param {string} args.url The new URL to redirect to
+     * @param {integer} args.delay The time to wait before the redirect.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -80,8 +80,8 @@
     /**
      * Update the databag content.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.values The databag values.
+     * @param {object} args The command arguments.
+     * @param {string} args.values The databag values.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -95,8 +95,8 @@
     /**
      * Execute a JQuery expression beginning with selector.
      *
-     * @param {object} command The Response command object.
-     * @param {object} command.selector The JQuery expression
+     * @param {object} args The command arguments.
+     * @param {object} args.selector The JQuery expression
      *
      * @returns {true} The operation completed successfully.
      */
@@ -121,11 +121,11 @@
     /**
      * Set event handlers on pagination links.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The pagination wrapper id
-     * @param {object} command.target The pagination wrapper element
-     * @param {array} command.call The page call
-     * @param {array} command.pages The page list
+     * @param {object} args The command arguments.
+     * @param {string} args.id The pagination wrapper id
+     * @param {object} args.target The pagination wrapper element
+     * @param {array} args.call The page call
+     * @param {array} args.pages The page list
      *
      * @returns {true} The operation completed successfully.
      */

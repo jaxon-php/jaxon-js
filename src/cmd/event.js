@@ -6,11 +6,11 @@
     /**
      * Add an event handler to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event.
-     * @param {string} command.func The name of the function to be called
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event.
+     * @param {string} args.func The name of the function to be called
      *
      * @returns {true} The operation completed successfully.
      */
@@ -22,11 +22,11 @@
     /**
      * Remove an event handler from an target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event.
-     * @param {string} command.func The name of the function to be removed
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event.
+     * @param {string} args.func The name of the function to be removed
      *
      * @returns {true} The operation completed successfully.
      */
@@ -51,12 +51,12 @@
     /**
      * Add an event handler with arguments to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event
-     * @param {object} command.func The event handler
-     * @param {object|false} command.options The handler options
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event
+     * @param {object} args.func The event handler
+     * @param {object|false} args.options The handler options
      *
      * @returns {true} The operation completed successfully.
      */
@@ -69,11 +69,11 @@
     /**
      * Set an event handler with arguments to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event
-     * @param {object} command.func The event handler
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event
+     * @param {object} args.func The event handler
      *
      * @returns {true} The operation completed successfully.
      */

@@ -6,11 +6,11 @@
     /**
      * Assign an element's attribute to the specified value.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute to set.
-     * @param {string} command.value The new value to be applied.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute to set.
+     * @param {string} args.value The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -34,11 +34,11 @@
     /**
      * Append the specified value to an element's attribute.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute to append to.
-     * @param {string} command.value The new value to be appended.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute to append to.
+     * @param {string} args.value The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -62,11 +62,11 @@
     /**
      * Prepend the specified value to an element's attribute.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute.
-     * @param {string} command.value The new value to be prepended.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute.
+     * @param {string} args.value The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -109,12 +109,12 @@
     /**
      * Search and replace the specified text.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
-     * @param {string} command.attr The name of the attribute to be set.
-     * @param {array} command.search The search text and replacement text.
-     * @param {array} command.replace The search text and replacement text.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which is to be modified.
+     * @param {string} args.attr The name of the attribute to be set.
+     * @param {array} args.search The search text and replacement text.
+     * @param {array} args.replace The search text and replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -130,10 +130,10 @@
     /**
      * Clear an element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
-     * @param {string} command.attr The name of the attribute to clear.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which is to be modified.
+     * @param {string} args.attr The name of the attribute to clear.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -145,9 +145,9 @@
     /**
      * Delete an element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which will be deleted.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -171,11 +171,11 @@
     /**
      * Create a new element and append it to the specified parent element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will contain the new element.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which will contain the new element.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -187,11 +187,11 @@
     /**
      * Insert a new element before the specified element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -204,11 +204,11 @@
     /**
      * Insert a new element after the specified element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
