@@ -159,15 +159,6 @@
     };
 
     /**
-     * Show the specified message.
-     *
-     * @param {string} message The message to display.
-     *
-     * @returns {void}
-     */
-    self.alert = (message) => ajax.message.info(message);
-
-    /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
      * @param {object} commandQueue The queue to process.

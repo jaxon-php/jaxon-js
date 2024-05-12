@@ -60,7 +60,6 @@ jaxon.isLoaded = true;
 
     register('script.sleep', cmd.script.sleep, 'Script::Sleep');
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.alert', cmd.script.alert, 'Script::Alert');
     register('script.confirm', cmd.script.confirm, 'Script::Confirm');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 

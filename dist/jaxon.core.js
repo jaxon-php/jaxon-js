@@ -575,7 +575,8 @@ window.jaxon = jaxon;
         size: size,
         end: 0,
         elements: [],
-        timeout: null
+        timeout: null,
+        paused: false,
     });
 
     /**
@@ -1570,15 +1571,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Show the specified message.
-     *
-     * @param {string} message The message to display.
-     *
-     * @returns {void}
-     */
-    self.alert = (message) => ajax.message.info(message);
-
-    /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
      * @param {object} commandQueue The queue to process.
@@ -2565,19 +2557,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Show the specified message.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.message The message to display.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.alert = ({ message }) => {
-        handler.alert(message);
-        return true;
-    };
-
-    /**
      * Prompt the user with the specified question, if the user responds by clicking cancel,
      * then skip the specified number of commands in the response command queue.
      * If the user clicks Ok, the command processing resumes normal operation.
@@ -2918,7 +2897,6 @@ jaxon.isLoaded = true;
 
     register('script.sleep', cmd.script.sleep, 'Script::Sleep');
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.alert', cmd.script.alert, 'Script::Alert');
     register('script.confirm', cmd.script.confirm, 'Script::Confirm');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 

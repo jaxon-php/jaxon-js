@@ -27,19 +27,6 @@
     };
 
     /**
-     * Show the specified message.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.message The message to display.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.alert = ({ message }) => {
-        handler.alert(message);
-        return true;
-    };
-
-    /**
      * Prompt the user with the specified question, if the user responds by clicking cancel,
      * then skip the specified number of commands in the response command queue.
      * If the user clicks Ok, the command processing resumes normal operation.
