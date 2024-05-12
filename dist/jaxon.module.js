@@ -911,7 +911,7 @@ window.jaxon = jaxon;
  * Execute calls from json expressions.
  */
 
-(function(self, query, dom, form, str) {
+(function(self, query, dialog, dom, form, str) {
     /**
      * The call contexts.
      *
@@ -1033,17 +1033,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression
-     *
-     * @returns {mixed}
-     */
-    const execExpression = ({ calls: aCalls = [] }) => {
-        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
-    };
-
-    /**
      * Execute a single javascript function call.
      *
      * @param {object} xCall An object representing the function call
@@ -1059,6 +1048,116 @@ window.jaxon = jaxon;
     /**
      * Execute the javascript code represented by an expression object.
      *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const _execExpression = ({ calls: aCalls }) => {
+        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
+    };
+
+    self.phrase = ({ str: sStr, args: aArgs }) => {
+        const oArgs = {};
+        let nIndex = 1;
+        aArgs.forEach(xArg => oArgs[nIndex++] = getValue(xArg));
+        return sStr.supplant(oArgs);
+    };
+
+    /**
+     * Show an alert message
+     *
+     * @param {object} message The message content
+     *
+     * @returns {void}
+     */
+    const showMessage = (message) => {
+        if(!message) {
+            return;
+        }
+        const {
+            lib: sLibName,
+            type: sType,
+            content: { title: sTitle, phrase },
+        } = message;
+        const xLib = dialog.get(sLibName);
+        xLib.alert(sType, self.phrase(phrase), sTitle);
+    };
+
+    /**
+     * The comparison operators.
+     *
+     * @var {object}
+     */
+    const xComparators = {
+        eq: (xLeftArg, xRightArg) => xLeftArg == xRightArg,
+        teq: (xLeftArg, xRightArg) => xLeftArg === xRightArg,
+        ne: (xLeftArg, xRightArg) => xLeftArg != xRightArg,
+        nte: (xLeftArg, xRightArg) => xLeftArg !== xRightArg,
+        gt: (xLeftArg, xRightArg) => xLeftArg > xRightArg,
+        ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
+        lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
+        le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
+        __: () => false,
+    };
+
+    /**
+     * @param {object} xExpression
+     *
+     * @returns {boolean}
+     */
+    const checkCondition = (xExpression) => {
+        const {
+            condition: [sOperator, xLeftArg, xRightArg],
+            calls,
+            message,
+        } = xExpression;
+        const xComparator = xComparators[sOperator] ?? xComparators.__;
+        if(xComparator(getValue(xLeftArg), getValue(xRightArg))) {
+            _execExpression({ calls });
+            return;
+        }
+        showMessage(message);
+        return;
+    };
+
+    /**
+     * @param {object} xExpression
+     *
+     * @returns {boolean}
+     */
+    const askConfirmation = (xExpression) => {
+        const {
+            question: { lib: sLibName, phrase },
+            calls,
+            message,
+        } = xExpression;
+        const xLib = dialog.get(sLibName);
+        xLib.confirm(self.phrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const execExpression = (xExpression) => {
+        const { calls, question, condition } = xExpression;
+        if((question)) {
+            askConfirmation(xExpression);
+            return;
+        }
+        if((condition)) {
+            checkCondition(xExpression);
+            return;
+        }
+        return _execExpression({ calls });
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
      * @param {object} xExpression An object representing a command
      * @param {object=window} xCallContext The context to execute calls in.
      *
@@ -1068,7 +1167,7 @@ window.jaxon = jaxon;
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
 
 
 /**
@@ -2563,13 +2662,13 @@ window.jaxon = jaxon;
      * @returns {object|null}
      */
     const getLib = (sLibName, sFunc) => {
-        const xOrigLib = lib.get(sLibName);
-        if(!xOrigLib) {
+        if(!lib.has(sLibName)) {
             console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
         }
-        const xLib = xOrigLib ?? lib.get();
+
+        const xLib = lib.get(sLibName);
         if(!xLib[sFunc]) {
-            console.warn(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
+            console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
             return null;
         }
         return xLib;
@@ -2581,15 +2680,15 @@ window.jaxon = jaxon;
      * @param {object} command The Response command object.
      * @param {string} command.lib The message library name
      * @param {object} command.type The message type
-     * @param {string} command.message The message content
-     * @param {string} command.message.title The message title
-     * @param {string} command.message.phrase.str The message with placeholders
-     * @param {array} command.message.phrase.args The arguments for placeholders
+     * @param {string} command.content The message content
+     * @param {string} command.content.title The message title
+     * @param {string} command.content.phrase.str The message text with placeholders
+     * @param {array} command.content.phrase.args The arguments for placeholders
      *
      * @returns {true} The operation completed successfully.
      */
-    self.showMessage = ({ lib: sLibName, type: sType, message }) => {
-        const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
+    self.showMessage = ({ lib: sLibName, type: sType, content }) => {
+        const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = content;
         const xLib = getLib(sLibName, 'alert');
         xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
         return true;
@@ -2640,6 +2739,17 @@ window.jaxon = jaxon;
         no: 'No',
     };
 
+    self.default = {};
+
+    /**
+     * Check if a dialog library is defined.
+     *
+     * @param {string} sName The library name
+     *
+     * @returns {bool}
+     */
+    self.has = (sName) => !!self[sName];
+
     /**
      * Get a dialog library.
      *
@@ -2647,7 +2757,7 @@ window.jaxon = jaxon;
      *
      * @returns {object|null}
      */
-    self.get = (sName = 'default') => self[sName] ?? null;
+    self.get = (sName) => self[sName] ?? self.default;
 
     /**
      * Register a dialog library.

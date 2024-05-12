@@ -4,7 +4,7 @@
  * Execute calls from json expressions.
  */
 
-(function(self, query, dom, form, str) {
+(function(self, query, dialog, dom, form, str) {
     /**
      * The call contexts.
      *
@@ -126,17 +126,6 @@
     };
 
     /**
-     * Execute the javascript code represented by an expression object.
-     *
-     * @param {object} xExpression
-     *
-     * @returns {mixed}
-     */
-    const execExpression = ({ calls: aCalls = [] }) => {
-        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
-    };
-
-    /**
      * Execute a single javascript function call.
      *
      * @param {object} xCall An object representing the function call
@@ -152,6 +141,125 @@
     /**
      * Execute the javascript code represented by an expression object.
      *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const _execExpression = ({ calls: aCalls }) => {
+        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
+    };
+
+    /**
+     * Replace placeholders in a given string with values
+     * 
+     * @param {object} phrase
+     * @param {string} phrase.str The string to be processed
+     * @param {array} phrase.args The values for placeholders
+     *
+     * @returns {string}
+     */
+    self.makePhrase = ({ str: sStr, args: aArgs }) => {
+        const oArgs = {};
+        let nIndex = 1;
+        aArgs.forEach(xArg => oArgs[nIndex++] = getValue(xArg));
+        return sStr.supplant(oArgs);
+    };
+
+    /**
+     * Show an alert message
+     *
+     * @param {object} message The message content
+     *
+     * @returns {void}
+     */
+    const showMessage = (message) => {
+        if(!message) {
+            return;
+        }
+        const {
+            lib: sLibName,
+            type: sType,
+            content: { title: sTitle, phrase },
+        } = message;
+        const xLib = dialog.get(sLibName);
+        xLib.alert(sType, self.makePhrase(phrase), sTitle);
+    };
+
+    /**
+     * The comparison operators.
+     *
+     * @var {object}
+     */
+    const xComparators = {
+        eq: (xLeftArg, xRightArg) => xLeftArg == xRightArg,
+        teq: (xLeftArg, xRightArg) => xLeftArg === xRightArg,
+        ne: (xLeftArg, xRightArg) => xLeftArg != xRightArg,
+        nte: (xLeftArg, xRightArg) => xLeftArg !== xRightArg,
+        gt: (xLeftArg, xRightArg) => xLeftArg > xRightArg,
+        ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
+        lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
+        le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
+        __: () => false,
+    };
+
+    /**
+     * @param {object} xExpression
+     *
+     * @returns {boolean}
+     */
+    const checkCondition = (xExpression) => {
+        const {
+            condition: [sOperator, xLeftArg, xRightArg],
+            calls,
+            message,
+        } = xExpression;
+        const xComparator = xComparators[sOperator] ?? xComparators.__;
+        if(xComparator(getValue(xLeftArg), getValue(xRightArg))) {
+            _execExpression({ calls });
+            return;
+        }
+        showMessage(message);
+        return;
+    };
+
+    /**
+     * @param {object} xExpression
+     *
+     * @returns {boolean}
+     */
+    const askConfirmation = (xExpression) => {
+        const {
+            question: { lib: sLibName, phrase },
+            calls,
+            message,
+        } = xExpression;
+        const xLib = dialog.get(sLibName);
+        xLib.confirm(self.makePhrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
+     * @param {object} xExpression
+     *
+     * @returns {mixed}
+     */
+    const execExpression = (xExpression) => {
+        const { calls, question, condition } = xExpression;
+        if((question)) {
+            askConfirmation(xExpression);
+            return;
+        }
+        if((condition)) {
+            checkCondition(xExpression);
+            return;
+        }
+        return _execExpression({ calls });
+    };
+
+    /**
+     * Execute the javascript code represented by an expression object.
+     *
      * @param {object} xExpression An object representing a command
      * @param {object=window} xCallContext The context to execute calls in.
      *
@@ -161,4 +269,4 @@
         xContext.aTargets = [xCallContext];
         return str.typeOf(xExpression) === 'object' ? execExpression(xExpression) : null;
     };
-})(jaxon.call.json, jaxon.call.query, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);
+})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom, jaxon.utils.form, jaxon.utils.string);

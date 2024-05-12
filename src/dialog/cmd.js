@@ -2,7 +2,7 @@
  * Class: jaxon.dialog.cmd
  */
 
-(function(self, lib) {
+(function(self, lib, json) {
     /**
      * Find a library to execute a given function.
      *
@@ -30,17 +30,17 @@
      * @param {object} command The Response command object.
      * @param {string} command.lib The message library name
      * @param {object} command.type The message type
-     * @param {string} command.message The message content
-     * @param {string} command.message.title The message title
-     * @param {string} command.message.phrase.str The message with placeholders
-     * @param {array} command.message.phrase.args The arguments for placeholders
+     * @param {string} command.content The message content
+     * @param {string} command.content.title The message title
+     * @param {string} command.content.phrase.str The message text with placeholders
+     * @param {array} command.content.phrase.args The arguments for placeholders
      *
      * @returns {true} The operation completed successfully.
      */
-    self.showMessage = ({ lib: sLibName, type: sType, message }) => {
-        const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = message;
+    self.showMessage = ({ lib: sLibName, type: sType, content }) => {
+        const { title: sTitle, phrase } = content;
         const xLib = getLib(sLibName, 'alert');
-        xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
+        xLib && xLib.alert(sType, json.makePhrase(phrase), sTitle);
         return true;
     };
 
@@ -76,4 +76,4 @@
         xLib && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib);
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.call.json);

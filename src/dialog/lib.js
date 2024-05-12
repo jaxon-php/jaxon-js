@@ -8,6 +8,8 @@
         no: 'No',
     };
 
+    self.default = {};
+
     /**
      * Check if a dialog library is defined.
      *
@@ -24,7 +26,7 @@
      *
      * @returns {object|null}
      */
-    self.get = (sName = 'default') => self[sName] ?? null;
+    self.get = (sName) => self[sName] ?? self.default;
 
     /**
      * Register a dialog library.
