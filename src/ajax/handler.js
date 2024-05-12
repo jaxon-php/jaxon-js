@@ -24,50 +24,50 @@
     /**
      * Registers a new command handler.
      *
-     * @param {string} cmd The short name of the command handler.
+     * @param {string} name The short name of the command handler.
      * @param {string} func The command handler function.
      * @param {string=''} desc The description of the command handler.
      *
      * @returns {void}
      */
-    self.register = (cmd, func, desc = '') => handlers[cmd] = { desc, func };
+    self.register = (name, func, desc = '') => handlers[name] = { desc, func };
 
     /**
      * Unregisters and returns a command handler.
      *
-     * @param {string} cmd The name of the command handler.
+     * @param {string} name The name of the command handler.
      *
      * @returns {callable|null} The unregistered function.
      */
-    self.unregister = (cmd) => {
-        const handler = handlers[cmd];
+    self.unregister = (name) => {
+        const handler = handlers[name];
         if (!handler) {
             return null;
         }
-        delete handlers[cmd];
+        delete handlers[name];
         return handler.func;
     };
 
     /**
      * @param {object} command The response command to be executed.
-     * @param {string} command.cmd The name of the function.
+     * @param {string} command.name The name of the function.
      *
      * @returns {boolean}
      */
-    self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
+    self.isRegistered = ({ name }) => name !== undefined && handlers[name] !== undefined;
 
     /**
      * Calls the registered command handler for the specified command
      * (you should always check isRegistered before calling this function)
      *
-     * @param {object} cmd The command name.
+     * @param {object} name The command name.
      * @param {object} options The command options.
      * @param {object} request The Jaxon request.
      *
      * @returns {boolean}
      */
-    const callHandler = (cmd, options, request) => {
-        const handler = handlers[cmd];
+    const callHandler = (name, options, request) => {
+        const handler = handlers[name];
         return handler.func({ ...options, request, desc: handler.desc });
     }
 
@@ -83,15 +83,15 @@
      * interval, timeout or event handler which will restart the jaxon response processing.
      * 
      * @param {object} command The response command to be executed.
-     * @param {object} command.cmd The command name.
+     * @param {object} command.name The command name.
      * @param {object} command.options The command options.
      * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ cmd, options, request }) => {
-        if (!self.isRegistered({ cmd })) {
+    self.execute = ({ name, options, request }) => {
+        if (!self.isRegistered({ name })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
@@ -100,7 +100,7 @@
             options.target = dom.$(id);
         }
         // Process the command
-        return callHandler(cmd, options, request);
+        return callHandler(name, options, request);
     };
 
     /**

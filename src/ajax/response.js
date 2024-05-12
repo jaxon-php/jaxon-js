@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue) {
+(function(self, config, handler, req, cbk, queue, str) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -81,23 +81,26 @@
      * @return {void}
      */
     const queueCommands = (oRequest) => {
-        const responseContent = oRequest.responseContent;
-        if (!responseContent || !responseContent.jxnobj) {
+        if (str.typeOf(oRequest.responseContent) !== 'object') {
             return;
         }
+        const {
+            debug: { message } = {},
+            jxn: { value, commands = [] } = {},
+        } = oRequest.responseContent;
 
         oRequest.status.onProcessing();
 
-        if (responseContent.jxnrv) {
-            oRequest.returnValue = responseContent.jxnrv;
+        if (value) {
+            oRequest.returnValue = value;
         }
 
-        responseContent.debugmsg && console.log(responseContent.debugmsg);
+        message && console.log(message);
 
         _temp.sequence = 0;
-        responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
-            ...command,
+        commands.forEach(command => queue.push(oRequest.commandQueue, {
             fullName: '*unknown*',
+            ...command,
             sequence: _temp.sequence++,
             response: oRequest.commandQueue,
             request: oRequest,
@@ -105,11 +108,11 @@
         }));
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
+            name: 'response.complete',
             fullName: 'Response Complete',
             sequence: _temp.sequence,
             request: oRequest,
             context: oRequest.context,
-            cmd: 'response.complete',
         });
     };
 
@@ -216,4 +219,4 @@
         return oRequest.responseProcessor(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.string);

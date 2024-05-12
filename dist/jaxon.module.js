@@ -1056,7 +1056,16 @@ window.jaxon = jaxon;
         return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
     };
 
-    self.phrase = ({ str: sStr, args: aArgs }) => {
+    /**
+     * Replace placeholders in a given string with values
+     * 
+     * @param {object} phrase
+     * @param {string} phrase.str The string to be processed
+     * @param {array} phrase.args The values for placeholders
+     *
+     * @returns {string}
+     */
+    self.makePhrase = ({ str: sStr, args: aArgs }) => {
         const oArgs = {};
         let nIndex = 1;
         aArgs.forEach(xArg => oArgs[nIndex++] = getValue(xArg));
@@ -1080,7 +1089,7 @@ window.jaxon = jaxon;
             content: { title: sTitle, phrase },
         } = message;
         const xLib = dialog.get(sLibName);
-        xLib.alert(sType, self.phrase(phrase), sTitle);
+        xLib.alert(sType, self.makePhrase(phrase), sTitle);
     };
 
     /**
@@ -1132,7 +1141,7 @@ window.jaxon = jaxon;
             message,
         } = xExpression;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(self.phrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
+        xLib.confirm(self.makePhrase(phrase), '', () => _execExpression({ calls }), () => showMessage(message));
     };
 
     /**
@@ -1394,50 +1403,50 @@ window.jaxon = jaxon;
     /**
      * Registers a new command handler.
      *
-     * @param {string} cmd The short name of the command handler.
+     * @param {string} name The short name of the command handler.
      * @param {string} func The command handler function.
      * @param {string=''} desc The description of the command handler.
      *
      * @returns {void}
      */
-    self.register = (cmd, func, desc = '') => handlers[cmd] = { desc, func };
+    self.register = (name, func, desc = '') => handlers[name] = { desc, func };
 
     /**
      * Unregisters and returns a command handler.
      *
-     * @param {string} cmd The name of the command handler.
+     * @param {string} name The name of the command handler.
      *
      * @returns {callable|null} The unregistered function.
      */
-    self.unregister = (cmd) => {
-        const handler = handlers[cmd];
+    self.unregister = (name) => {
+        const handler = handlers[name];
         if (!handler) {
             return null;
         }
-        delete handlers[cmd];
+        delete handlers[name];
         return handler.func;
     };
 
     /**
      * @param {object} command The response command to be executed.
-     * @param {string} command.cmd The name of the function.
+     * @param {string} command.name The name of the function.
      *
      * @returns {boolean}
      */
-    self.isRegistered = ({ cmd }) => cmd !== undefined && handlers[cmd] !== undefined;
+    self.isRegistered = ({ name }) => name !== undefined && handlers[name] !== undefined;
 
     /**
      * Calls the registered command handler for the specified command
      * (you should always check isRegistered before calling this function)
      *
-     * @param {object} cmd The command name.
+     * @param {object} name The command name.
      * @param {object} options The command options.
      * @param {object} request The Jaxon request.
      *
      * @returns {boolean}
      */
-    const callHandler = (cmd, options, request) => {
-        const handler = handlers[cmd];
+    const callHandler = (name, options, request) => {
+        const handler = handlers[name];
         return handler.func({ ...options, request, desc: handler.desc });
     }
 
@@ -1453,15 +1462,15 @@ window.jaxon = jaxon;
      * interval, timeout or event handler which will restart the jaxon response processing.
      * 
      * @param {object} command The response command to be executed.
-     * @param {object} command.cmd The command name.
+     * @param {object} command.name The command name.
      * @param {object} command.options The command options.
      * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ cmd, options, request }) => {
-        if (!self.isRegistered({ cmd })) {
+    self.execute = ({ name, options, request }) => {
+        if (!self.isRegistered({ name })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
@@ -1470,7 +1479,7 @@ window.jaxon = jaxon;
             options.target = dom.$(id);
         }
         // Process the command
-        return callHandler(cmd, options, request);
+        return callHandler(name, options, request);
     };
 
     /**
@@ -1967,7 +1976,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue) {
+(function(self, config, handler, req, cbk, queue, str) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -2046,23 +2055,26 @@ window.jaxon = jaxon;
      * @return {void}
      */
     const queueCommands = (oRequest) => {
-        const responseContent = oRequest.responseContent;
-        if (!responseContent || !responseContent.jxnobj) {
+        if (str.typeOf(oRequest.responseContent) !== 'object') {
             return;
         }
+        const {
+            debug: { message } = {},
+            jxn: { value, commands = [] } = {},
+        } = oRequest.responseContent;
 
         oRequest.status.onProcessing();
 
-        if (responseContent.jxnrv) {
-            oRequest.returnValue = responseContent.jxnrv;
+        if (value) {
+            oRequest.returnValue = value;
         }
 
-        responseContent.debugmsg && console.log(responseContent.debugmsg);
+        message && console.log(message);
 
         _temp.sequence = 0;
-        responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
-            ...command,
+        commands.forEach(command => queue.push(oRequest.commandQueue, {
             fullName: '*unknown*',
+            ...command,
             sequence: _temp.sequence++,
             response: oRequest.commandQueue,
             request: oRequest,
@@ -2070,11 +2082,11 @@ window.jaxon = jaxon;
         }));
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
+            name: 'response.complete',
             fullName: 'Response Complete',
             sequence: _temp.sequence,
             request: oRequest,
             context: oRequest.context,
-            cmd: 'response.complete',
         });
     };
 
@@ -2181,7 +2193,7 @@ window.jaxon = jaxon;
         return oRequest.responseProcessor(oRequest);
     };
 })(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue);
+    jaxon.ajax.callback, jaxon.utils.queue, jaxon.utils.string);
 
 
 /**
@@ -2652,7 +2664,7 @@ window.jaxon = jaxon;
  * Class: jaxon.dialog.cmd
  */
 
-(function(self, lib) {
+(function(self, lib, json) {
     /**
      * Find a library to execute a given function.
      *
@@ -2688,9 +2700,9 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.showMessage = ({ lib: sLibName, type: sType, content }) => {
-        const { title: sTitle, phrase : { str: sMessage, args: aArgs } } = content;
+        const { title: sTitle, phrase } = content;
         const xLib = getLib(sLibName, 'alert');
-        xLib && xLib.alert(sType, sMessage.supplant(aArgs), sTitle);
+        xLib && xLib.alert(sType, json.makePhrase(phrase), sTitle);
         return true;
     };
 
@@ -2726,7 +2738,7 @@ window.jaxon = jaxon;
         xLib && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib);
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.call.json);
 
 
 /**
