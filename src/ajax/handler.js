@@ -61,14 +61,14 @@
      * (you should always check isRegistered before calling this function)
      *
      * @param {object} name The command name.
-     * @param {object} options The command options.
+     * @param {object} args The command arguments.
      * @param {object} request The Jaxon request.
      *
      * @returns {boolean}
      */
-    const callHandler = (name, options, request) => {
+    const callHandler = (name, args, request) => {
         const handler = handlers[name];
-        return handler.func({ ...options, request, desc: handler.desc });
+        return handler.func({ ...args, request, desc: handler.desc });
     }
 
     /**
@@ -84,23 +84,23 @@
      * 
      * @param {object} command The response command to be executed.
      * @param {object} command.name The command name.
-     * @param {object} command.options The command options.
+     * @param {object} command.args The command arguments.
      * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ name, options, request }) => {
+    self.execute = ({ name, args, request }) => {
         if (!self.isRegistered({ name })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom element.
-        const id = options?.id;
+        const id = args?.id;
         if ((id)) {
-            options.target = dom.$(id);
+            args.target = dom.$(id);
         }
         // Process the command
-        return callHandler(name, options, request);
+        return callHandler(name, args, request);
     };
 
     /**
