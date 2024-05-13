@@ -24,6 +24,11 @@ jaxon.register = jaxon.ajax.handler.register;
 jaxon.$ = jaxon.utils.dom.$;
 
 /**
+ * Shortcut to the JQuery selector function>.
+ */
+jaxon.jq = jaxon.call.query.jq;
+
+/**
  * Shortcut to <jaxon.utils.dom.ready>.
  */
 jaxon.dom.ready = jaxon.utils.dom.ready;

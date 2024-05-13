@@ -2666,7 +2666,7 @@ window.jaxon = jaxon;
  * Class: jaxon.dialog.lib
  */
 
-(function(self, str, dom, js, jq) {
+(function(self, types, dom, js, jq) {
     const labels = {
         yes: 'Yes',
         no: 'No',
@@ -2704,9 +2704,9 @@ window.jaxon = jaxon;
         // Create an object for the library
         self[sName] = {};
         // Define the library functions
-        xCallback(self[sName], { str, dom, js, jq, labels });
+        xCallback(self[sName], { types, dom, js, jq, labels });
     };
-})(jaxon.dialog.lib, jaxon.utils.string, jaxon.dom, jaxon.call.json, window.jQuery);
+})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);
 
 /**
  * Default dialog plugin, based on js alert and confirm functions
@@ -2769,6 +2769,11 @@ jaxon.register = jaxon.ajax.handler.register;
  * Shortcut to <jaxon.utils.dom.$>.
  */
 jaxon.$ = jaxon.utils.dom.$;
+
+/**
+ * Shortcut to the JQuery selector function>.
+ */
+jaxon.jq = jaxon.call.query.jq;
 
 /**
  * Shortcut to <jaxon.utils.dom.ready>.
