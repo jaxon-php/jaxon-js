@@ -67,13 +67,6 @@
     const redirectCodes = [301, 302, 307];
 
     /**
-     * An object that will hold temp vars
-     *
-     * @type {object}
-     */
-    const _temp = {};
-
-    /**
      * Parse the JSON response into a series of commands.
      *
      * @param {object} oRequest The request context object.
@@ -97,12 +90,12 @@
 
         message && console.log(message);
 
-        _temp.sequence = 0;
+        let sequence = 0;
         commands.forEach(command => queue.push(oRequest.commandQueue, {
             fullName: '*unknown*',
             ...command,
-            sequence: _temp.sequence++,
-            response: oRequest.commandQueue,
+            sequence: sequence++,
+            commandQueue: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
         }));
@@ -110,7 +103,8 @@
         queue.push(oRequest.commandQueue, {
             name: 'response.complete',
             fullName: 'Response Complete',
-            sequence: _temp.sequence,
+            sequence: sequence,
+            commandQueue: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
         });
@@ -119,18 +113,15 @@
     /**
      * Process a single command
      * 
-     * @param {object} commandQueue A queue containing the commands to execute.
      * @param {object} command The command to process
      *
      * @returns {boolean}
      */
-    const processCommand = (commandQueue, command) => {
+    const processCommand = (command) => {
         try {
-            if (handler.execute(command) === true || !command.requeue) {
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
+            return handler.execute(command);
+            // queue.pushFront(commandQueue, command);
+            // return false;
         } catch (e) {
             console.log(e);
         }
@@ -139,27 +130,22 @@
 
     /**
      * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
+     * When commandQueue.paused is set to true, the processing is halted.
      *
      * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
-     * @param {object} oRequest The request context object.
-     * @param {object} oRequest.commandQueue A queue containing the commands to execute.
+     * @param {object} commandQueue A queue containing the commands to execute.
      *
      * @returns {true} The queue was fully processed and is now empty.
      * @returns {false} The queue processing was halted before the queue was fully processed.
      */
-    const processCommands = ({ commandQueue }) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
-        while ((_temp.command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(commandQueue, _temp.command)) {
+    self.processCommands = (commandQueue) => {
+        // Stop processing the commands if the queue is paused.
+        let command = null;
+        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(command)) {
                 return false;
             }
         }
@@ -178,7 +164,7 @@
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            processCommands(oRequest);
+            self.processCommands(oRequest.commandQueue);
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {

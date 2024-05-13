@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, ajax, rsp, queue, dom) {
+(function(self, config, rsp, json, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -62,13 +62,13 @@
      *
      * @param {object} name The command name.
      * @param {object} args The command arguments.
-     * @param {object} request The Jaxon request.
+     * @param {object} command The response command to be executed.
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, request) => {
-        const handler = handlers[name];
-        return handler.func({ ...args, request, desc: handler.desc });
+    const callHandler = (name, args, command) => {
+        const { func, desc } = handlers[name];
+        return func(args, { ...command, desc });
     }
 
     /**
@@ -77,20 +77,13 @@
      * the command references a DOM object by ID; if so, the object is located within
      * the DOM and added to the command data.  The command handler is then called.
      * 
-     * If the command handler returns true, it is assumed that the command completed
-     * successfully.  If the command handler returns false, then the command is considered
-     * pending; jaxon enters a wait state.  It is up to the command handler to set an
-     * interval, timeout or event handler which will restart the jaxon response processing.
-     * 
      * @param {object} command The response command to be executed.
-     * @param {object} command.name The command name.
-     * @param {object} command.args The command arguments.
-     * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ name, args, request }) => {
+    self.execute = (command) => {
+        const { name, args } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
@@ -100,7 +93,7 @@
             args.target = dom.$(id);
         }
         // Process the command
-        return callHandler(name, args, request);
+        return callHandler(name, args, command);
     };
 
     /**
@@ -118,95 +111,67 @@
     }
 
     /**
-     * Maintains a retry counter for the given object.
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} args The command arguments.
+     * @param {integer} args.duration The number of 10ths of a second to sleep.
+     * @param {object} command The Response command object.
+     * @param {object} command.commandQueue The command queue.
      *
-     * @returns {true} The object has not exhausted all the retries.
-     * @returns {false} The object has exhausted the retry count specified.
+     * @returns {true} The queue processing is temporarily paused.
      */
-    self.retry = (command, count) => {
-        if(command.retries > 0) {
-            if(--command.retries < 1) {
-                return false;
-            }
-        } else {
-            command.retries = count;
-        }
-        // This command must be processed again.
-        command.requeue = true;
+    self.sleep = ({ duration }, { commandQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        commandQueue.paused = true;
+        setTimeout(() => {
+            commandQueue.paused = false;
+            rsp.processCommands(commandQueue);
+        }, duration * 100);
         return true;
-    };
-
-    /**
-     * Set or reset a timeout that is used to restart processing of the queue.
-     *
-     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
-     * to process pending events, like loading files)
-     *
-     * @param {object} commandQueue The queue to process.
-     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
-     *
-     * @returns {void}
-     */
-    self.setWakeup = (commandQueue, when) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
     };
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} commandQueue The queue to process.
-     * @param {boolean} requeue True if the last command must be processed again.
-     * @param {integer} count The number of commands to skip.
+     * @param {object} commandQueue The command queue.
+     * @param {integer=0} skipCount The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (commandQueue, requeue, count) => {
+    const restartProcessing = (commandQueue, skipCount = 0) => {
+        // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
-            --count;
+        while (skipCount > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
+            --skipCount;
         }
-        // Run a different command depending on whether this callback executes
-        // before of after the confirm function returns;
-        if(requeue === true) {
-            // Before => the processing is delayed.
-            self.setWakeup(commandQueue, 30);
-            return;
-        }
-        // After => the processing is executed.
-        rsp.process(commandQueue);
+        commandQueue.paused = false;
+        rsp.processCommands(commandQueue);
     };
 
     /**
-     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     * Prompt the user with the specified question, if the user responds by clicking cancel,
+     * then skip the specified number of commands in the response command queue.
+     * If the user clicks Ok, the command processing resumes normal operation.
      *
-     * The processing of the queue after the question is delayed so it occurs after this function returns.
-     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
-     * before (when using the blocking confirm() function) or after this function returns.
-     * @see confirmCallback
+     * @param {object} args The command arguments.
+     * @param {integer} args.count The number of commands to skip.
+     * @param {object} args.question The question to ask.
+     * @param {string} args.question.lib The dialog library to use.
+     * @param {object} args.question.phrase The question content.
+     * @param {object} command The Response command object.
+     * @param {object} command.commandQueue The command queue.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of commands to skip.
-     * @param {string} question The question to ask to the user.
-     *
-     * @returns {void}
+     * @returns {true} The queue processing is temporarily paused.
      */
-    self.confirm = (command, count, question) => {
-        // This will be checked in the callback.
-        command.requeue = true;
-        const { response: commandQueue, requeue } = command;
-        ajax.message.confirm(question, '',
-            () => confirmCallback(commandQueue, requeue, 0),
-            () => confirmCallback(commandQueue, requeue, count));
-
-        // This command must not be processed again.
-        command.requeue = false;
+    self.confirm = ({ count: skipCount, question: { lib: sLibName, phrase } }, { commandQueue }) => {
+        // The command queue is paused, and will be restarted after the confirm question is answered.
+        commandQueue.paused = true;
+        const xLib = dialog.get(sLibName);
+        xLib.confirm(json.makePhrase(phrase), '', () => restartProcessing(commandQueue),
+            () => restartProcessing(commandQueue, skipCount));
+        return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
-    jaxon.utils.queue, jaxon.utils.dom);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);

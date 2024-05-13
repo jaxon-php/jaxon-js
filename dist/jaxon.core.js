@@ -575,7 +575,6 @@ window.jaxon = jaxon;
         size: size,
         end: 0,
         elements: [],
-        timeout: null,
         paused: false,
     });
 
@@ -1414,7 +1413,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, ajax, rsp, queue, dom) {
+(function(self, config, rsp, json, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1474,13 +1473,13 @@ window.jaxon = jaxon;
      *
      * @param {object} name The command name.
      * @param {object} args The command arguments.
-     * @param {object} request The Jaxon request.
+     * @param {object} command The response command to be executed.
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, request) => {
-        const handler = handlers[name];
-        return handler.func({ ...args, request, desc: handler.desc });
+    const callHandler = (name, args, command) => {
+        const { func, desc } = handlers[name];
+        return func(args, { ...command, desc });
     }
 
     /**
@@ -1489,20 +1488,13 @@ window.jaxon = jaxon;
      * the command references a DOM object by ID; if so, the object is located within
      * the DOM and added to the command data.  The command handler is then called.
      * 
-     * If the command handler returns true, it is assumed that the command completed
-     * successfully.  If the command handler returns false, then the command is considered
-     * pending; jaxon enters a wait state.  It is up to the command handler to set an
-     * interval, timeout or event handler which will restart the jaxon response processing.
-     * 
      * @param {object} command The response command to be executed.
-     * @param {object} command.name The command name.
-     * @param {object} command.args The command arguments.
-     * @param {object} command.request The Jaxon request.
      *
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = ({ name, args, request }) => {
+    self.execute = (command) => {
+        const { name, args } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
@@ -1512,7 +1504,7 @@ window.jaxon = jaxon;
             args.target = dom.$(id);
         }
         // Process the command
-        return callHandler(name, args, request);
+        return callHandler(name, args, command);
     };
 
     /**
@@ -1530,98 +1522,70 @@ window.jaxon = jaxon;
     }
 
     /**
-     * Maintains a retry counter for the given object.
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} args The command arguments.
+     * @param {integer} args.duration The number of 10ths of a second to sleep.
+     * @param {object} command The Response command object.
+     * @param {object} command.commandQueue The command queue.
      *
-     * @returns {true} The object has not exhausted all the retries.
-     * @returns {false} The object has exhausted the retry count specified.
+     * @returns {true} The queue processing is temporarily paused.
      */
-    self.retry = (command, count) => {
-        if(command.retries > 0) {
-            if(--command.retries < 1) {
-                return false;
-            }
-        } else {
-            command.retries = count;
-        }
-        // This command must be processed again.
-        command.requeue = true;
+    self.sleep = ({ duration }, { commandQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        commandQueue.paused = true;
+        setTimeout(() => {
+            commandQueue.paused = false;
+            rsp.processCommands(commandQueue);
+        }, duration * 100);
         return true;
-    };
-
-    /**
-     * Set or reset a timeout that is used to restart processing of the queue.
-     *
-     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
-     * to process pending events, like loading files)
-     *
-     * @param {object} commandQueue The queue to process.
-     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
-     *
-     * @returns {void}
-     */
-    self.setWakeup = (commandQueue, when) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
     };
 
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} commandQueue The queue to process.
-     * @param {boolean} requeue True if the last command must be processed again.
-     * @param {integer} count The number of commands to skip.
+     * @param {object} commandQueue The command queue.
+     * @param {integer=0} skipCount The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (commandQueue, requeue, count) => {
+    const restartProcessing = (commandQueue, skipCount = 0) => {
+        // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
-            --count;
+        while (skipCount > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
+            --skipCount;
         }
-        // Run a different command depending on whether this callback executes
-        // before of after the confirm function returns;
-        if(requeue === true) {
-            // Before => the processing is delayed.
-            self.setWakeup(commandQueue, 30);
-            return;
-        }
-        // After => the processing is executed.
-        rsp.process(commandQueue);
+        commandQueue.paused = false;
+        rsp.processCommands(commandQueue);
     };
 
     /**
-     * Ask a confirm question and skip the specified number of commands if the answer is ok.
+     * Prompt the user with the specified question, if the user responds by clicking cancel,
+     * then skip the specified number of commands in the response command queue.
+     * If the user clicks Ok, the command processing resumes normal operation.
      *
-     * The processing of the queue after the question is delayed so it occurs after this function returns.
-     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
-     * before (when using the blocking confirm() function) or after this function returns.
-     * @see confirmCallback
+     * @param {object} args The command arguments.
+     * @param {integer} args.count The number of commands to skip.
+     * @param {object} args.question The question to ask.
+     * @param {string} args.question.lib The dialog library to use.
+     * @param {object} args.question.phrase The question content.
+     * @param {object} command The Response command object.
+     * @param {object} command.commandQueue The command queue.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of commands to skip.
-     * @param {string} question The question to ask to the user.
-     *
-     * @returns {void}
+     * @returns {true} The queue processing is temporarily paused.
      */
-    self.confirm = (command, count, question) => {
-        // This will be checked in the callback.
-        command.requeue = true;
-        const { response: commandQueue, requeue } = command;
-        ajax.message.confirm(question, '',
-            () => confirmCallback(commandQueue, requeue, 0),
-            () => confirmCallback(commandQueue, requeue, count));
-
-        // This command must not be processed again.
-        command.requeue = false;
+    self.confirm = ({ count: skipCount, question: { lib: sLibName, phrase } }, { commandQueue }) => {
+        // The command queue is paused, and will be restarted after the confirm question is answered.
+        commandQueue.paused = true;
+        const xLib = dialog.get(sLibName);
+        xLib.confirm(json.makePhrase(phrase), '', () => restartProcessing(commandQueue),
+            () => restartProcessing(commandQueue, skipCount));
+        return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
-    jaxon.utils.queue, jaxon.utils.dom);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
 
 
 /**
@@ -2065,13 +2029,6 @@ window.jaxon = jaxon;
     const redirectCodes = [301, 302, 307];
 
     /**
-     * An object that will hold temp vars
-     *
-     * @type {object}
-     */
-    const _temp = {};
-
-    /**
      * Parse the JSON response into a series of commands.
      *
      * @param {object} oRequest The request context object.
@@ -2095,12 +2052,12 @@ window.jaxon = jaxon;
 
         message && console.log(message);
 
-        _temp.sequence = 0;
+        let sequence = 0;
         commands.forEach(command => queue.push(oRequest.commandQueue, {
             fullName: '*unknown*',
             ...command,
-            sequence: _temp.sequence++,
-            response: oRequest.commandQueue,
+            sequence: sequence++,
+            commandQueue: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
         }));
@@ -2108,7 +2065,8 @@ window.jaxon = jaxon;
         queue.push(oRequest.commandQueue, {
             name: 'response.complete',
             fullName: 'Response Complete',
-            sequence: _temp.sequence,
+            sequence: sequence,
+            commandQueue: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
         });
@@ -2117,18 +2075,15 @@ window.jaxon = jaxon;
     /**
      * Process a single command
      * 
-     * @param {object} commandQueue A queue containing the commands to execute.
      * @param {object} command The command to process
      *
      * @returns {boolean}
      */
-    const processCommand = (commandQueue, command) => {
+    const processCommand = (command) => {
         try {
-            if (handler.execute(command) === true || !command.requeue) {
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
+            return handler.execute(command);
+            // queue.pushFront(commandQueue, command);
+            // return false;
         } catch (e) {
             console.log(e);
         }
@@ -2137,27 +2092,22 @@ window.jaxon = jaxon;
 
     /**
      * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
+     * When commandQueue.paused is set to true, the processing is halted.
      *
      * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
-     * @param {object} oRequest The request context object.
-     * @param {object} oRequest.commandQueue A queue containing the commands to execute.
+     * @param {object} commandQueue A queue containing the commands to execute.
      *
      * @returns {true} The queue was fully processed and is now empty.
      * @returns {false} The queue processing was halted before the queue was fully processed.
      */
-    const processCommands = ({ commandQueue }) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
-        while ((_temp.command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(commandQueue, _temp.command)) {
+    self.processCommands = (commandQueue) => {
+        // Stop processing the commands if the queue is paused.
+        let command = null;
+        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(command)) {
                 return false;
             }
         }
@@ -2176,7 +2126,7 @@ window.jaxon = jaxon;
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            processCommands(oRequest);
+            self.processCommands(oRequest.commandQueue);
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
@@ -2228,11 +2178,11 @@ window.jaxon = jaxon;
     /**
      * Assign an element's attribute to the specified value.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute to set.
-     * @param {string} command.value The new value to be applied.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute to set.
+     * @param {string} args.value The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2256,11 +2206,11 @@ window.jaxon = jaxon;
     /**
      * Append the specified value to an element's attribute.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute to append to.
-     * @param {string} command.value The new value to be appended.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute to append to.
+     * @param {string} args.value The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2284,11 +2234,11 @@ window.jaxon = jaxon;
     /**
      * Prepend the specified value to an element's attribute.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
-     * @param {string} command.attr The name of the attribute.
-     * @param {string} command.value The new value to be prepended.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The HTML element to effect.
+     * @param {string} args.attr The name of the attribute.
+     * @param {string} args.value The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2331,12 +2281,12 @@ window.jaxon = jaxon;
     /**
      * Search and replace the specified text.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
-     * @param {string} command.attr The name of the attribute to be set.
-     * @param {array} command.search The search text and replacement text.
-     * @param {array} command.replace The search text and replacement text.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which is to be modified.
+     * @param {string} args.attr The name of the attribute to be set.
+     * @param {array} args.search The search text and replacement text.
+     * @param {array} args.replace The search text and replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2352,10 +2302,10 @@ window.jaxon = jaxon;
     /**
      * Clear an element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
-     * @param {string} command.attr The name of the attribute to clear.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which is to be modified.
+     * @param {string} args.attr The name of the attribute to clear.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2367,9 +2317,9 @@ window.jaxon = jaxon;
     /**
      * Delete an element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which will be deleted.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2393,11 +2343,11 @@ window.jaxon = jaxon;
     /**
      * Create a new element and append it to the specified parent element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will contain the new element.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element which will contain the new element.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2409,11 +2359,11 @@ window.jaxon = jaxon;
     /**
      * Insert a new element before the specified element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2426,11 +2376,11 @@ window.jaxon = jaxon;
     /**
      * Insert a new element after the specified element.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
-     * @param {string} command.tag.name The tag name for the new element.
-     * @param {string} command.tag.id The id attribute of the new element.
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {string} args.tag.name The tag name for the new element.
+     * @param {string} args.tag.id The id attribute of the new element.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2450,11 +2400,11 @@ window.jaxon = jaxon;
     /**
      * Add an event handler to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event.
-     * @param {string} command.func The name of the function to be called
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event.
+     * @param {string} args.func The name of the function to be called
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2466,11 +2416,11 @@ window.jaxon = jaxon;
     /**
      * Remove an event handler from an target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event.
-     * @param {string} command.func The name of the function to be removed
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event.
+     * @param {string} args.func The name of the function to be removed
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2495,12 +2445,12 @@ window.jaxon = jaxon;
     /**
      * Add an event handler with arguments to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event
-     * @param {object} command.func The event handler
-     * @param {object|false} command.options The handler options
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event
+     * @param {object} args.func The event handler
+     * @param {object|false} args.options The handler options
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2513,11 +2463,11 @@ window.jaxon = jaxon;
     /**
      * Set an event handler with arguments to the specified target.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The target element
-     * @param {string} command.event The name of the event
-     * @param {object} command.func The event handler
+     * @param {object} args The command arguments.
+     * @param {string} args.id The target element id
+     * @param {object} args.target The target element
+     * @param {string} args.event The name of the event
+     * @param {object} args.func The event handler
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2532,58 +2482,19 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.script
  */
 
-(function(self, json, handler, parameters, types) {
-    /**
-     * Causes the processing of items in the queue to be delayed for the specified amount of time.
-     * This is an asynchronous operation, therefore, other operations will be given an opportunity
-     * to execute during this delay.
-     *
-     * @param {object} command The Response command object.
-     * @param {integer} command.prop The number of 10ths of a second to sleep.
-     * @param {object} command.response The Response object.
-     *
-     * @returns {true} The sleep operation completed.
-     * @returns {false} The sleep time has not yet expired, continue sleeping.
-     */
-    self.sleep = (command) => {
-        // Inject a delay in the queue processing and handle retry counter
-        const { duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 100);
-            return false;
-        }
-        // Wake up, continue processing queue
-        return true;
-    };
-
-    /**
-     * Prompt the user with the specified question, if the user responds by clicking cancel,
-     * then skip the specified number of commands in the response command queue.
-     * If the user clicks Ok, the command processing resumes normal operation.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.question The question to ask.
-     * @param {integer} command.count The number of commands to skip.
-     *
-     * @returns {false} Stop the processing of the command queue until the user answers the question.
-     */
-    self.confirm = (command) => {
-        const { count, question } = command;
-        handler.confirm(command, count, question);
-        return false;
-    };
-
+(function(self, json, parameters, types) {
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
+     * @param {object} args The command arguments.
+     * @param {string} args.func The name of the function to call.
+     * @param {array} args.args  The parameters to pass to the function.
      * @param {object} command The Response command object.
-     * @param {string} command.func The name of the function to call.
-     * @param {array} command.args  The parameters to pass to the function.
      * @param {object} command.context The javascript object to be referenced as 'this' in the script.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args, context = {} }) => {
+    self.call = ({ func, args }, { context = {} }) => {
         // Add the function in the context
         json.execCall({ _type: 'func', _name: func, args }, context);
         return true;
@@ -2592,9 +2503,9 @@ window.jaxon = jaxon;
     /**
      * Redirects the browser to the specified URL.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.url The new URL to redirect to
-     * @param {integer} command.delay The time to wait before the redirect.
+     * @param {object} args The command arguments.
+     * @param {string} args.url The new URL to redirect to
+     * @param {integer} args.delay The time to wait before the redirect.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2610,8 +2521,8 @@ window.jaxon = jaxon;
     /**
      * Update the databag content.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.values The databag values.
+     * @param {object} args The command arguments.
+     * @param {string} args.values The databag values.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2625,8 +2536,8 @@ window.jaxon = jaxon;
     /**
      * Execute a JQuery expression beginning with selector.
      *
-     * @param {object} command The Response command object.
-     * @param {object} command.selector The JQuery expression
+     * @param {object} args The command arguments.
+     * @param {object} args.selector The JQuery expression
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2651,11 +2562,11 @@ window.jaxon = jaxon;
     /**
      * Set event handlers on pagination links.
      *
-     * @param {object} command The Response command object.
-     * @param {string} command.id The pagination wrapper id
-     * @param {object} command.target The pagination wrapper element
-     * @param {array} command.call The page call
-     * @param {array} command.pages The page list
+     * @param {object} args The command arguments.
+     * @param {string} args.id The pagination wrapper id
+     * @param {object} args.target The pagination wrapper element
+     * @param {array} args.call The page call
+     * @param {array} args.pages The page list
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2668,7 +2579,7 @@ window.jaxon = jaxon;
         }));
         return true;
     };
-})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.handler, jaxon.ajax.parameters, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.parameters, jaxon.utils.types);
 
 
 /**
@@ -2880,7 +2791,7 @@ jaxon.isLoaded = true;
  */
 (function(register, cmd, ajax, dialog) {
     // Pseudo command needed to complete queued commands processing.
-    register('response.complete', ({ request }) => {
+    register('response.complete', (args, { request }) => {
         ajax.request.complete(request);
         return true;
     }, 'Response complete');
@@ -2895,10 +2806,11 @@ jaxon.isLoaded = true;
     register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
-    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.confirm', cmd.script.confirm, 'Script::Confirm');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
+
+    register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');
+    register('script.confirm', ajax.handler.confirm, 'Handler::Confirm');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');

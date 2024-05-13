@@ -43,7 +43,7 @@ jaxon.isLoaded = true;
  */
 (function(register, cmd, ajax, dialog) {
     // Pseudo command needed to complete queued commands processing.
-    register('response.complete', ({ request }) => {
+    register('response.complete', (args, { request }) => {
         ajax.request.complete(request);
         return true;
     }, 'Response complete');
@@ -58,10 +58,11 @@ jaxon.isLoaded = true;
     register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
-    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.confirm', cmd.script.confirm, 'Script::Confirm');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
+
+    register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');
+    register('script.confirm', ajax.handler.confirm, 'Handler::Confirm');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
