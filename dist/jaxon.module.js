@@ -2549,13 +2549,12 @@ window.jaxon = jaxon;
     /**
      * Replace the page number argument with the current page number value
      *
-     * @param {object} oCall
-     * @param {array} oCall.args
+     * @param {array} aArgs
      * @param {object} oLink
      *
      * @returns {array}
      */
-    const getCallArgs = ({ args: aArgs }, oLink) => aArgs.map(xArg =>
+    const getCallArgs = (aArgs, oLink) => aArgs.map(xArg =>
         types.isObject(xArg) && xArg._type === 'page' ?
         parseInt(oLink.parentNode.getAttribute('data-page')) : xArg);
 
@@ -2565,18 +2564,18 @@ window.jaxon = jaxon;
      * @param {object} args The command arguments.
      * @param {string} args.id The pagination wrapper id
      * @param {object} args.target The pagination wrapper element
-     * @param {array} args.call The page call
-     * @param {array} args.pages The page list
+     * @param {object} args.func The page call expression
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, call: oCall }) => {
+    self.paginate = ({ target, func: { calls: [oCall] } }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
-        aLinks.forEach(oLink => oLink.onClick = () => json.execCall({
+        const { args: aArgs } = oCall;
+        aLinks.forEach(oLink => oLink.addEventListener('click', () => json.execCall({
             ...oCall,
             _type: 'func',
-            args: getCallArgs(oCall, oLink),
-        }));
+            args: getCallArgs(aArgs, oLink),
+        })));
         return true;
     };
 })(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.parameters, jaxon.utils.types);
