@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.utils.string
+ * Class: jaxon.utils.types
  */
 
 (function(self) {
