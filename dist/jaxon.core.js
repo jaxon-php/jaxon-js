@@ -2776,6 +2776,11 @@ jaxon.$ = jaxon.utils.dom.$;
 jaxon.jq = jaxon.call.query.jq;
 
 /**
+ * Shortcut to <jaxon.call.json.execExpr>.
+ */
+jaxon.exec = jaxon.call.json.execExpr;
+
+/**
  * Shortcut to <jaxon.utils.dom.ready>.
  */
 jaxon.dom.ready = jaxon.utils.dom.ready;
