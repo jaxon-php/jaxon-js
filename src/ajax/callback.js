@@ -120,7 +120,7 @@
     const execute = (oCallback, sFunction, oRequest) => {
         const func = oCallback[sFunction];
         const timer = !oCallback.timers ? null : oCallback.timers[sFunction];
-        if (!func || typeof func !== 'function') {
+        if (!func || !types.isFunction(func)) {
             return;
         }
         if (!timer) {

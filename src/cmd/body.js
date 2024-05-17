@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.body
  */
 
-(function(self, dom, baseDocument) {
+(function(self, dom, types, baseDocument) {
     /**
      * Assign an element's attribute to the specified value.
      *
@@ -98,7 +98,7 @@
      * @returns {void}
      */
     const replaceText = (xElement, sAttribute, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sAttribute] === 'function');
+        const bFunction = types.isFunction(xElement[sAttribute]);
         const sCurText = bFunction ? xElement[sAttribute].join('') : xElement[sAttribute];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
         if (bFunction || dom.willChange(xElement, sAttribute, sNewText)) {
@@ -217,4 +217,4 @@
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
-})(jaxon.cmd.body, jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.body, jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);

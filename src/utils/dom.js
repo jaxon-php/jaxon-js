@@ -12,8 +12,7 @@
      *
      * @see <self.$>
      */
-    self.$ = (sId) => !sId ? null :
-        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
+    self.$ = (sId) => !sId ? null : (types.isString(sId) ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.

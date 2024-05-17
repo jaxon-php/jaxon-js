@@ -32,6 +32,24 @@
     self.isArray = (xVar) => self.of(xVar) === 'array';
 
     /**
+     * Check if a var is a string.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isString = (xVar) => self.of(xVar) === 'string';
+
+    /**
+     * Check if a var is a function.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isFunction = (xVar) => self.of(xVar) === 'function';
+
+    /**
      * Convert to int.
      *
      * @param {string} sValue
@@ -39,4 +57,15 @@
      * @returns {integer}
      */
     self.toInt = (sValue) => parseInt(sValue);
+
+    if (!Array.prototype.top) {
+        /**
+         * Get the last element in an array
+         *
+         * @returns {mixed}
+         */
+        Array.prototype.top = function() {
+            return this.length > 0 ? this[this.length - 1] : undefined;
+        };
+    };
 })(jaxon.utils.types);
