@@ -335,8 +335,7 @@ window.jaxon = jaxon;
      *
      * @see <self.$>
      */
-    self.$ = (sId) => !sId ? null :
-        (typeof sId === 'string' ? baseDocument.getElementById(sId) : sId);
+    self.$ = (sId) => !sId ? null : (types.isString(sId) ? baseDocument.getElementById(sId) : sId);
 
     /**
      * Create a div as workspace for the getBrowserHTML() function.
@@ -864,6 +863,24 @@ window.jaxon = jaxon;
     self.isArray = (xVar) => self.of(xVar) === 'array';
 
     /**
+     * Check if a var is a string.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isString = (xVar) => self.of(xVar) === 'string';
+
+    /**
+     * Check if a var is a function.
+     *
+     * @param {mixed} xVar The var to check
+     *
+     * @returns {bool}
+     */
+    self.isFunction = (xVar) => self.of(xVar) === 'function';
+
+    /**
      * Convert to int.
      *
      * @param {string} sValue
@@ -871,6 +888,17 @@ window.jaxon = jaxon;
      * @returns {integer}
      */
     self.toInt = (sValue) => parseInt(sValue);
+
+    if (!Array.prototype.top) {
+        /**
+         * Get the last element in an array
+         *
+         * @returns {mixed}
+         */
+        Array.prototype.top = function() {
+            return this.length > 0 ? this[this.length - 1] : undefined;
+        };
+    };
 })(jaxon.utils.types);
 
 
@@ -943,18 +971,28 @@ window.jaxon = jaxon;
 
 (function(self, query, dialog, dom, form, types) {
     /**
-     * The call contexts.
+     * @var {object}
+     */
+    const xErrors = {
+        comparator: () => false, // The default comparison operator.
+        command: (xCall) => console.error('Unexpected command: ' + JSON.stringify({ call: xCall })),
+    };
+
+    /**
+     * The comparison operators.
      *
      * @var {object}
      */
-    const xContext = {};
-
-    /**
-     * Get the current target.
-     *
-     * @returns {mixed}
-     */
-    const getCurrentTarget = () => xContext.aTargets[xContext.aTargets.length - 1];
+    const xComparators = {
+        eq: (xLeftArg, xRightArg) => xLeftArg == xRightArg,
+        teq: (xLeftArg, xRightArg) => xLeftArg === xRightArg,
+        ne: (xLeftArg, xRightArg) => xLeftArg != xRightArg,
+        nte: (xLeftArg, xRightArg) => xLeftArg !== xRightArg,
+        gt: (xLeftArg, xRightArg) => xLeftArg > xRightArg,
+        ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
+        lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
+        le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
+    };
 
     /**
      * Check if an argument is an expression.
@@ -984,10 +1022,7 @@ window.jaxon = jaxon;
             case 'input': return dom.$(sName).value;
             case 'checked': return dom.$(sName).checked;
             case 'expr': return execExpression(xArg);
-            case '_': switch(sName) {
-                case 'this': return xCurrValue;
-                default: return undefined
-            }
+            case '_': return sName === 'this' ? xCurrValue : undefined
             default: return undefined;
         }
     };
@@ -1000,7 +1035,7 @@ window.jaxon = jaxon;
      *
      * @returns {array}
      */
-    const getValues = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
+    const getArgs = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
 
     /**
      * The call commands
@@ -1008,32 +1043,39 @@ window.jaxon = jaxon;
      * @var {object}
      */
     const xCommands = {
-        select: ({ _name: sName, context: xContext = null }, xCurrValue) => {
-            return sName === 'this' ?
-                // Empty argument list => $(this), ie the last event target.
-                query.select(getCurrentTarget()) :
-                // Call the selector.
-                query.select(sName, !xContext ? null : getValue(xContext, xCurrValue));
+        select: ({ _name: sName, context: xSelectContext = null }, xCurrValue, oCallContext) => {
+            switch(sName) {
+                case 'this':
+                    return query.select(oCallContext.target); // The last event target.
+                case 'event':
+                    return oCallContext.event; // The last event
+                case 'window':
+                    return window;
+                default: // Call the selector.
+                    return query.select(sName, getValue(xSelectContext, xCurrValue));
+            }
         },
-        event: ({ _name: sName, func: xExpression }, xCurrValue) => {
+        event: ({ _name: sName, func: xExpression }, xCurrValue, oCallContext) => {
             // Set an event handler. Takes an expression as argument.
-            xCurrValue.on(sName, (event) => {
-                // Save the current target.
-                xContext.aTargets.push({ event, target: event.currentTarget });
-                execExpression(xExpression);
-                xContext.aTargets.pop();
-            });
-            return true;
+            xCurrValue.on(sName, (event) => execExpression(xExpression, {
+                ...oCallContext,
+                event,
+                target: event.currentTarget,
+                value: null,
+            }));
+            return xCurrValue;
         },
-        func: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
-            // Call a "global" function with the current target as "this" and an array of arguments.
-            const func = sName === 'toInt' ? types.toInt : dom.findFunction(sName);
-            return !func ? null : func.apply(getCurrentTarget(), getValues(aArgs, xCurrValue));
+        func: ({ _name: sName, args: aArgs = [] }, xCurrValue, oCallContext) => {
+            // Call a "global" function with the current context as "this".
+            const func = dom.findFunction(sName);
+            return !func ? null : func.apply(oCallContext, getArgs(aArgs, xCurrValue));
         },
         method: ({ _name: sName, args: aArgs = [] }, xCurrValue) => {
-            // Call a function with xCurrValue as "this" and an array of arguments.
+            // Call a function with the current value as "this".
             const func = dom.findFunction(sName, xCurrValue);
-            return !func ? null : func.apply(xCurrValue, getValues(aArgs, xCurrValue));
+            // toInt() is a peudo-method that converts the current value to int.
+            return !func ? (sName === 'toInt' ? types.toInt(xCurrValue) : null) :
+                func.apply(xCurrValue, getArgs(aArgs, xCurrValue));
         },
         attr: ({ _name: sName, value: xValue }, xCurrValue) => {
             const xElt = dom.getInnerObject(xCurrValue, sName);
@@ -1043,48 +1085,43 @@ window.jaxon = jaxon;
             }
             return xElt.node[xElt.attr];
         },
-        error: (xCall) => {
-            console.error('Unexpected command type: ' + JSON.stringify({ call: xCall }));
-            return undefined;
-        },
     };
 
     /**
      * Execute a single call.
      *
      * @param {object} xCall
-     * @param {mixed} xCurrValue The current expression value.
+     * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {void}
      */
-    const execCall = (xCall, xCurrValue = null) => {
-        const xCommand = xCommands[xCall._type] ?? xCommands.error;
-        return xCommand(xCall, xCurrValue);
+    const execCall = (xCall, oCallContext) => {
+        const { value: xCurrValue } = oCallContext;
+        const xCommand = xCommands[xCall._type] ?? xErrors.command;
+        return xCommand(xCall, xCurrValue, oCallContext);
     };
 
     /**
      * Execute a single javascript function call.
      *
      * @param {object} xCall An object representing the function call
-     * @param {object=window} xCallContext The context to execute calls in.
+     * @param {object=} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xCallContext = window) => {
-        xContext.aTargets = [xCallContext];
-        return types.isObject(xCall) ? execCall(xCall) : null;
-    };
+    self.execCall = (xCall, oCallContext) => !types.isObject(xCall) ? null :
+        execCall(xCall, oCallContext || { target: window, value: null });
 
     /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {array} aCalls The calls to execute
+     * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    const execCalls = (aCalls) => {
-        return aCalls.reduce((xCurrValue, xCall) => execCall(xCall, xCurrValue), null);
-    };
+    const execCalls = (aCalls, oCallContext) =>
+        aCalls.reduce((xValue, xCall) => execCall(xCall, { ...oCallContext, value: xValue }), null);
 
     /**
      * Replace placeholders in a given string with values
@@ -1122,86 +1159,66 @@ window.jaxon = jaxon;
     };
 
     /**
-     * The default comparison operator.
-     *
-     * @var {function}
-     */
-    const xDefaultComparator = () => false;
-
-    /**
-     * The comparison operators.
-     *
-     * @var {object}
-     */
-    const xComparators = {
-        eq: (xLeftArg, xRightArg) => xLeftArg == xRightArg,
-        teq: (xLeftArg, xRightArg) => xLeftArg === xRightArg,
-        ne: (xLeftArg, xRightArg) => xLeftArg != xRightArg,
-        nte: (xLeftArg, xRightArg) => xLeftArg !== xRightArg,
-        gt: (xLeftArg, xRightArg) => xLeftArg > xRightArg,
-        ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
-        lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
-        le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
-    };
-
-    /**
      * @param {array} aCalls The calls to execute
      * @param {array} aCondition The condition to chek
      * @param {object} oMessage The message to show if the condition is not met
+     * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {boolean}
      */
-    const execWithCondition = (aCalls, aCondition, oMessage) => {
+    const execWithCondition = (aCalls, aCondition, oMessage, oCallContext) => {
         const [sOperator, xLeftArg, xRightArg] = aCondition;
-        const xComparator = xComparators[sOperator] ?? xDefaultComparator;
-        xComparator(getValue(xLeftArg), getValue(xRightArg)) ? execCalls(aCalls) : showMessage(oMessage);
+        const xComparator = xComparators[sOperator] ?? xErrors.comparator;
+        xComparator(getValue(xLeftArg), getValue(xRightArg)) ?
+            execCalls(aCalls, oCallContext) : showMessage(oMessage);
     };
 
     /**
      * @param {array} aCalls The calls to execute
      * @param {object} oQuestion The confirmation question
      * @param {object} oMessage The message to show if the user anwsers no to the question
+     * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {boolean}
      */
-    const execWithConfirmation = (aCalls, oQuestion, oMessage) => {
+    const execWithConfirmation = (aCalls, oQuestion, oMessage, oCallContext) => {
         const { lib: sLibName, phrase } = oQuestion;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(self.makePhrase(phrase), '', () => execCalls(aCalls), () => showMessage(oMessage));
+        xLib.confirm(self.makePhrase(phrase), '',
+            () => execCalls(aCalls, oCallContext), () => showMessage(oMessage));
     };
 
     /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression
+     * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    const execExpression = (xExpression) => {
+    const execExpression = (xExpression, oCallContext) => {
         const { calls, question, condition, message } = xExpression;
         if((question)) {
-            execWithConfirmation(calls, question, message);
+            execWithConfirmation(calls, question, message, oCallContext);
             return;
         }
         if((condition)) {
-            execWithCondition(calls, condition, message);
+            execWithCondition(calls, condition, message, oCallContext);
             return;
         }
-        return execCalls(calls);
+        return execCalls(calls, oCallContext);
     };
 
     /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression An object representing a command
-     * @param {object=window} xCallContext The context to execute calls in.
+     * @param {object=} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    self.execExpr = (xExpression, xCallContext = window) => {
-        xContext.aTargets = [xCallContext];
-        return types.isObject(xExpression) ? execExpression(xExpression) : null;
-    };
+    self.execExpr = (xExpression, oCallContext) => !types.isObject(xExpression) ? null :
+        execExpression(xExpression, oCallContext || { target: window, value: null });
 })(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
 
@@ -1356,7 +1373,7 @@ window.jaxon = jaxon;
     const execute = (oCallback, sFunction, oRequest) => {
         const func = oCallback[sFunction];
         const timer = !oCallback.timers ? null : oCallback.timers[sFunction];
-        if (!func || typeof func !== 'function') {
+        if (!func || !types.isFunction(func)) {
             return;
         }
         if (!timer) {
@@ -2169,7 +2186,7 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.body
  */
 
-(function(self, dom, baseDocument) {
+(function(self, dom, types, baseDocument) {
     /**
      * Assign an element's attribute to the specified value.
      *
@@ -2265,7 +2282,7 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const replaceText = (xElement, sAttribute, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sAttribute] === 'function');
+        const bFunction = types.isFunction(xElement[sAttribute]);
         const sCurText = bFunction ? xElement[sAttribute].join('') : xElement[sAttribute];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
         if (bFunction || dom.willChange(xElement, sAttribute, sNewText)) {
@@ -2384,7 +2401,7 @@ window.jaxon = jaxon;
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
-})(jaxon.cmd.body, jaxon.utils.dom, jaxon.config.baseDocument);
+})(jaxon.cmd.body, jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);
 
 
 /**
