@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-2',
+        patch: '0rc-6',
     },
 
     debug: {
@@ -1128,7 +1128,7 @@ window.jaxon = jaxon;
         for (let i = 0; i < nLength; i++) {
             xCurrValue = execCall(aCalls[i], oCallContext, xCurrValue);
             if (xCurrValue === undefined) {
-                return xCurrValue; // Exit the loop if a call return an undefined value.
+                return xCurrValue; // Exit the loop if a call returns an undefined value.
             }
         }
         return xCurrValue;
