@@ -24,7 +24,7 @@
             return true;
         }
 
-        const xElt = dom.getInnerObject(target, attr);
+        const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value;
         }
@@ -52,7 +52,7 @@
             return true;
         }
 
-        const xElt = dom.getInnerObject(target, attr);
+        const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
@@ -80,7 +80,7 @@
             return true;
         }
 
-        const xElt = dom.getInnerObject(target, attr);
+        const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
@@ -120,7 +120,7 @@
      */
     self.replace = ({ target, attr, search, replace }) => {
         const sSearch = attr === 'innerHTML' ? dom.getBrowserHTML(search) : search;
-        const xElt = dom.getInnerObject(target, attr);
+        const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             replaceText(xElt.node, xElt.attr, sSearch, replace);
         }
