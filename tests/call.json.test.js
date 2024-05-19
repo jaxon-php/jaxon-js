@@ -9,7 +9,7 @@ query.jq = $;
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // JQuery code: const strValue = $('#integer')->text()
+    // Javascript code: const strValue = $('#integer')->text()
     const strValue = json.execExpr({
         calls: [{
             _type: 'select',
@@ -26,7 +26,7 @@ test('Read str value from the DOM', () => {
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // JQuery code: const strValue = $('#integer')->html()
+    // Javascript code: const strValue = $('#integer')->html()
     const strValue = json.execExpr({
         calls: [{
             _type: 'select',
@@ -43,7 +43,7 @@ test('Read str value from the DOM', () => {
 test('Read int value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // JQuery code: const intValue = parseInt($('#integer')->text())
+    // Javascript code: const intValue = parseInt($('#integer')->text())
     const intValue = json.execExpr({
         calls: [{
             _type: 'func',
@@ -67,7 +67,7 @@ test('Read int value from the DOM', () => {
 test('Read int value from the DOM, with the toInt() "method"', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // JQuery code: const intValue = parseInt($('#integer')->text())
+    // Javascript code: const intValue = parseInt($('#integer')->text())
     const intValue = json.execExpr({
         calls: [{
             _type: 'select',
@@ -87,7 +87,7 @@ test('Read int value from the DOM, with the toInt() "method"', () => {
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    // JQuery code: $('#username')->html('Mister Johnson')
+    // Javascript code: $('#username')->html('Mister Johnson')
     json.execExpr({
         calls: [{
             _type: 'select',
@@ -105,7 +105,7 @@ test('Assign element inner html', () => {
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username">Feuzeu</span></div>`;
 
-    // JQuery code: $('#username')->prop('outerHTML', 'Mister Johnson')
+    // Javascript code: $('#username')->prop('outerHTML', 'Mister Johnson')
     json.execExpr({
         calls: [{
             _type: 'select',
@@ -124,7 +124,7 @@ test('Set an event handler', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     // Set an event handler
-    // JQuery code: $('#username')->on('click', () => $('#username')->html('Mister Johnson'))
+    // Javascript code: $('#username')->on('click', () => $('#username')->html('Mister Johnson'))
     json.execExpr({
         calls: [{
             _type: 'select',
@@ -158,7 +158,7 @@ test('Use "this" in an event handler', () => {
     document.body.innerHTML = `<div id="wrapper"><span class="username"></span></div>`;
 
     // Set an event handler
-    // JQuery code: $('.username')->on('click', () => $(this)->html('Mister Johnson'))
+    // Javascript code: $('.username')->on('click', () => $(this)->html('Mister Johnson'))
     json.execExpr({
         calls: [{
             _type: 'select',
@@ -188,14 +188,73 @@ test('Use "this" in an event handler', () => {
     expect($('.username').text()).toBe('Mister Johnson');
 });
 
-test('Access to "window" with the selector', () => {
-    expect(window.strValue).toBe(undefined);
+test('Access to undefined vars', () => {
+    expect(window.defValue).toBe(undefined);
 
+    // Javascript code: const undefValue1 = window.defValue
+    const undefValue1 = json.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'defValue',
+        }],
+    });
+
+    expect(undefValue1).toBe(undefined);
+
+    // Javascript code: window.defValue = '1024'
     json.execExpr({
         calls: [{
-            _type: 'select',
-            _name: 'window',
-        }, {
+            _type: 'attr',
+            _name: 'defValue',
+            value: '1024',
+        }],
+    });
+
+    expect(window.defValue).toBe('1024');
+
+    // Javascript code: const defValue = window.defValue
+    const defValue = json.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'defValue',
+        }],
+    });
+
+    expect(defValue).toBe('1024');
+
+    // Javascript code: const undefValue2 = window.defValue.intValue
+    const undefValue2 = json.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'defValue',
+        },{
+            _type: 'attr',
+            _name: 'intValue',
+        }],
+    });
+
+    expect(undefValue2).toBe(undefined);
+
+    // Javascript code: const undefValue3 = window.intValue.defValue
+    const undefValue3 = json.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'intValue',
+        },{
+            _type: 'attr',
+            _name: 'defValue',
+        }],
+    });
+
+    expect(undefValue3).toBe(undefined);
+});
+
+test('Access to "global" vars', () => {
+    expect(window.strValue).toBe(undefined);
+
+    // Javascript code: window.strValue = '1024'
+    json.execExpr({
+        calls: [{
             _type: 'attr',
             _name: 'strValue',
             value: '1024',
@@ -203,4 +262,31 @@ test('Access to "window" with the selector', () => {
     });
 
     expect(window.strValue).toBe('1024');
+
+    // Javascript code: const strValue = window.strValue
+    const strValue = json.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'strValue',
+        }],
+    });
+
+    expect(strValue).toBe('1024');
+
+    // Javascript code: const intValue = parseInt(window.strValue)
+    const intValue = json.execExpr({
+        calls: [{
+            _type: 'func',
+            _name: 'parseInt',
+            args: [{
+                _type: 'expr',
+                calls: [{
+                    _type: 'attr',
+                    _name: 'strValue',
+                }],
+            }],
+        }],
+    });
+
+    expect(intValue).toBe(1024);
 });
