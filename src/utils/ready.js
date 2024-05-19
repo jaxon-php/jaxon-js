@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.dom
+ * Class: jaxon.utils.dom
  */
 
 /**
@@ -52,7 +52,8 @@
         // add the function and context to the list
         readyList.push({ fn: callback, ctx: context });
         // if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+        if (document.readyState === "complete" ||
+            (!document.attachEvent && document.readyState === "interactive")) {
             setTimeout(ready, 1);
             return;
         }

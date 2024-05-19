@@ -88,7 +88,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, func: { calls: [oCall] } }) => {
+    self.paginate = ({ target, func: oCall }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
         aLinks.forEach(oLink => oLink.addEventListener('click', () => json.execCall({

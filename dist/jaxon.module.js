@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-6',
+        patch: '0rc-7',
     },
 
     debug: {
@@ -683,7 +683,7 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.dom
+ * Class: jaxon.utils.dom
  */
 
 /**
@@ -736,7 +736,8 @@ window.jaxon = jaxon;
         // add the function and context to the list
         readyList.push({ fn: callback, ctx: context });
         // if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+        if (document.readyState === "complete" ||
+            (!document.attachEvent && document.readyState === "interactive")) {
             setTimeout(ready, 1);
             return;
         }
@@ -2591,7 +2592,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, func: { calls: [oCall] } }) => {
+    self.paginate = ({ target, func: oCall }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
         aLinks.forEach(oLink => oLink.addEventListener('click', () => json.execCall({
