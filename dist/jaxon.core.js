@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-7',
+        patch: '0rc-8',
     },
 
     debug: {
@@ -1053,6 +1053,8 @@ window.jaxon = jaxon;
                     return query.select(oCallContext.target); // The last event target.
                 case 'event':
                     return oCallContext.event; // The last event
+                case 'window':
+                    return window;
                 default: // Call the selector.
                     return query.select(sName, xSelectContext);
             }
@@ -1622,7 +1624,7 @@ window.jaxon = jaxon;
      *
      * @type {object}
      */
-    self.bags = {};
+    const databags = {};
 
     /**
      * Stringify a parameter of an ajax call.
@@ -1659,15 +1661,43 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Save data in the data bag.
+     *
+     * @param {string} sBag   The data bag name.
+     * @param {object} oValues The values to save in the data bag.
+     *
+     * @return {void}
+     */
+    self.setBag = (sBag, oValues) => databags[sBag] = oValues;
+
+    /**
+     * Save data in the data bag.
+     *
+     * @param {object} oValues The values to save in the data bag.
+     *
+     * @return {void}
+     */
+    self.setBags = (oValues) => Object.keys(oValues).forEach(sBag => self.setBag(sBag, oValues[sBag]));
+
+    /**
+     * Clear an entry in the data bag.
+     *
+     * @param {string} sBag   The data bag name.
+     *
+     * @return {void}
+     */
+    self.clearBag = (sBag) => delete databags[sBag];
+
+    /**
      * Make the databag object to send in the HTTP request.
      *
-     * @param {array} aKeys The keys of values to get from the data bag.
+     * @param {array} aBags The data bag names.
      *
      * @return {object}
      */
-    const getBagsParam = (aKeys) => JSON.stringify(aKeys.reduce((oValues, sKey) => ({
+    const getBagsValues = (aBags) => JSON.stringify(aBags.reduce((oValues, sBag) => ({
         ...oValues,
-        [sKey]: self.bags[sKey] ?? '*' }
+        [sBag]: databags[sBag] ?? '*' }
     ), {}));
 
     /**
@@ -1693,7 +1723,7 @@ window.jaxon = jaxon;
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
-        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsParam(bags)));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsValues(bags)));
     };
 
     /**
@@ -1728,8 +1758,7 @@ window.jaxon = jaxon;
             return rd.join('&');
         }
         // Move the parameters to the URL for HTTP GET requests
-        oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
-        oRequest.requestURI += rd.join('&');
+        oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
         return ''; // The request body is empty
     };
 
@@ -2550,10 +2579,8 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.databag = ({ values }) => {
-        for (const key in values) {
-            parameters.bags[key] = values[key];
-        }
+    self.setDatabag = ({ values }) => {
+        parameters.setBags(values);
         return true;
     };
 
@@ -2815,6 +2842,11 @@ jaxon.dom.ready = jaxon.utils.dom.ready;
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /**
+ * Shortcut to <jaxon.ajax.parameters.setBag>.
+ */
+jaxon.setBag = jaxon.ajax.parameters.setBag;
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;
@@ -2860,7 +2892,8 @@ jaxon.isLoaded = true;
     // Pagination
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
-    register('databag.set', cmd.script.databag, 'Databag:SetValues');
+    register('databag.set', cmd.script.setDatabag, 'Databag:SetValues');
+    register('databag.clear', cmd.script.clearDatabag, 'Databag:ClearValue');
     // Dialogs
     register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
