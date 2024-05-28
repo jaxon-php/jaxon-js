@@ -8,7 +8,7 @@
      *
      * @type {object}
      */
-    self.bags = {};
+    const databags = {};
 
     /**
      * Stringify a parameter of an ajax call.
@@ -45,15 +45,43 @@
     };
 
     /**
+     * Save data in the data bag.
+     *
+     * @param {string} sBag   The data bag name.
+     * @param {object} oValues The values to save in the data bag.
+     *
+     * @return {void}
+     */
+    self.setBag = (sBag, oValues) => databags[sBag] = oValues;
+
+    /**
+     * Save data in the data bag.
+     *
+     * @param {object} oValues The values to save in the data bag.
+     *
+     * @return {void}
+     */
+    self.setBags = (oValues) => Object.keys(oValues).forEach(sBag => self.setBag(sBag, oValues[sBag]));
+
+    /**
+     * Clear an entry in the data bag.
+     *
+     * @param {string} sBag   The data bag name.
+     *
+     * @return {void}
+     */
+    self.clearBag = (sBag) => delete databags[sBag];
+
+    /**
      * Make the databag object to send in the HTTP request.
      *
-     * @param {array} aKeys The keys of values to get from the data bag.
+     * @param {array} aBags The data bag names.
      *
      * @return {object}
      */
-    const getBagsParam = (aKeys) => JSON.stringify(aKeys.reduce((oValues, sKey) => ({
+    const getBagsValues = (aBags) => JSON.stringify(aBags.reduce((oValues, sBag) => ({
         ...oValues,
-        [sKey]: self.bags[sKey] ?? '*' }
+        [sBag]: databags[sBag] ?? '*' }
     ), {}));
 
     /**
@@ -79,7 +107,7 @@
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
 
-        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsParam(bags)));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsValues(bags)));
     };
 
     /**
@@ -114,8 +142,7 @@
             return rd.join('&');
         }
         // Move the parameters to the URL for HTTP GET requests
-        oRequest.requestURI += oRequest.requestURI.indexOf('?') === -1 ? '?' : '&';
-        oRequest.requestURI += rd.join('&');
+        oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
         return ''; // The request body is empty
     };
 

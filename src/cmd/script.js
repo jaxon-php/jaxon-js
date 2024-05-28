@@ -46,10 +46,8 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.databag = ({ values }) => {
-        for (const key in values) {
-            parameters.bags[key] = values[key];
-        }
+    self.setDatabag = ({ values }) => {
+        parameters.setBags(values);
         return true;
     };
 

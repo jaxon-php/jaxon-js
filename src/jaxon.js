@@ -44,6 +44,11 @@ jaxon.dom.ready = jaxon.utils.dom.ready;
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /**
+ * Shortcut to <jaxon.ajax.parameters.setBag>.
+ */
+jaxon.setBag = jaxon.ajax.parameters.setBag;
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;
@@ -89,7 +94,8 @@ jaxon.isLoaded = true;
     // Pagination
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
-    register('databag.set', cmd.script.databag, 'Databag:SetValues');
+    register('databag.set', cmd.script.setDatabag, 'Databag:SetValues');
+    register('databag.clear', cmd.script.clearDatabag, 'Databag:ClearValue');
     // Dialogs
     register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
