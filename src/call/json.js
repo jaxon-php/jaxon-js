@@ -87,6 +87,8 @@
                     return query.select(oCallContext.target); // The last event target.
                 case 'event':
                     return oCallContext.event; // The last event
+                case 'window':
+                    return window;
                 default: // Call the selector.
                     return query.select(sName, xSelectContext);
             }
