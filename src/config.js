@@ -44,6 +44,7 @@ var jaxon = {
     },
 
     call: {
+        attr: {},
         json: {},
         query: {},
     },

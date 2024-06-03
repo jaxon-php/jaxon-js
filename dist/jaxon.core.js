@@ -44,6 +44,7 @@ var jaxon = {
     },
 
     call: {
+        attr: {},
         json: {},
         query: {},
     },
@@ -965,6 +966,76 @@ window.jaxon = jaxon;
 
 
 /**
+ * Class: jaxon.call.attr
+ *
+ * Process Jaxon custom HTML attributes
+ */
+
+(function(self, event) {
+    /**
+     * The DOM nodes associated to Jaxon components
+     *
+     * @var {object}
+     */
+    const xComponentNodes = {};
+
+    /**
+     * The DOM nodes associated to Jaxon components
+     *
+     * @var {string}
+     */
+    const sDefaultComponentItem = 'main';
+
+    /**
+     * Process the custom attributes in a given DOM node.
+     *
+     * @param {Element} xContainer The DOM node.
+     *
+     * @returns {void}
+     */
+    self.process = (xContainer = document) => {
+        // Set event handlers on nodes
+        const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
+        aEvents.forEach(xNode => {
+            if(!xNode.hasAttribute('jxn-func'))
+            {
+                return;
+            }
+            const sEvent = xNode.getAttribute('jxn-on');
+            const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
+            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
+            xNode.removeAttribute('jxn-on');
+            xNode.removeAttribute('jxn-func');
+        });
+
+        // Associate DOM nodes to Jaxon components
+        const aComponents = xContainer.querySelectorAll(':scope [jxn-component]');
+        aComponents.forEach(xNode => {
+            // if(!xNode.hasAttribute('jxn-item'))
+            // {
+            //     return;
+            // }
+            const sComponentName = xNode.getAttribute('jxn-component');
+            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
+            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+            xNode.removeAttribute('jxn-component');
+        });
+    };
+
+    /**
+     * Get the DOM node of a given component.
+     *
+     * @param {string} sComponentName The component name.
+     * @param {string|} sComponentItem The component item.
+     *
+     * @returns {Element|null}
+     */
+    self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
+        xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
+})(jaxon.call.attr, jaxon.cmd.event);
+
+
+/**
  * Class: jaxon.call.json
  *
  * Execute calls from json expressions.
@@ -1439,7 +1510,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, json, queue, dom, dialog) {
+(function(self, config, rsp, json, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1524,13 +1595,20 @@ window.jaxon = jaxon;
         if (!self.isRegistered({ name })) {
             return true;
         }
-        // If the command has an "id" attr, find the corresponding dom element.
+        // If the command has an "id" attr, find the corresponding dom node.
+        const sComponentName = args?.component?.name;
+        if ((sComponentName)) {
+            args.target = attr.node(sComponentName, args.component.item);
+        }
         const id = args?.id;
-        if ((id)) {
+        if (!args?.target && (id)) {
             args.target = dom.$(id);
         }
         // Process the command
-        return callHandler(name, args, command);
+        const bReturnValue = callHandler(name, args, command);
+        // Process Jaxon custom attributes in the new node HTML content.
+        name === 'dom.assign' && attr.process(args.target);
+        return bReturnValue;
     };
 
     /**
@@ -1611,7 +1689,7 @@ window.jaxon = jaxon;
         return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+    jaxon.call.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
 
 
 /**
@@ -2548,8 +2626,20 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func, args }, { context = {} }) => {
-        // Add the function in the context
         json.execCall({ _type: 'func', _name: func, args }, context);
+        return true;
+    };
+
+    /**
+     * Call a javascript function with a series of parameters using the current script context.
+     *
+     * @param {object} args The command arguments.
+     * @param {string} args.func The name of the function to call.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.exec = ({ expr }) => {
+        json.execExpr(expr);
         return true;
     };
 
@@ -2757,43 +2847,43 @@ window.jaxon = jaxon;
         // Define the library functions
         xCallback(self[sName], { types, dom, js, jq, labels });
     };
+
+    /**
+     * Default dialog plugin, based on js alert and confirm functions
+     * Class: jaxon.dialog.lib.default
+     */
+
+    self.register('default', (lib) => {
+        /**
+         * Show an alert message
+         *
+         * @param {string} type The message type
+         * @param {string} text The message text
+         * @param {string} title The message title
+         *
+         * @returns {void}
+         */
+        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {string} question The question to ask
+         * @param {string} title The question title
+         * @param {callback} yesCallback The function to call if the answer is yes
+         * @param {callback} noCallback The function to call if the answer is no
+         *
+         * @returns {void}
+         */
+        lib.confirm = (question, title, yesCallback, noCallback) => {
+            if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
+                yesCallback();
+                return;
+            }
+            noCallback && noCallback();
+        };
+    });
 })(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);
-
-/**
- * Default dialog plugin, based on js alert and confirm functions
- * Class: jaxon.dialog.lib.default
- */
-
-jaxon.dialog.lib.register('default', (self) => {
-    /**
-     * Show an alert message
-     *
-     * @param {string} type The message type
-     * @param {string} text The message text
-     * @param {string} title The message title
-     *
-     * @returns {void}
-     */
-    self.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
-
-    /**
-     * Ask a confirm question to the user.
-     *
-     * @param {string} question The question to ask
-     * @param {string} title The question title
-     * @param {callback} yesCallback The function to call if the answer is yes
-     * @param {callback} noCallback The function to call if the answer is no
-     *
-     * @returns {void}
-     */
-    self.confirm = (question, title, yesCallback, noCallback) => {
-        if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
-            yesCallback();
-            return;
-        }
-        noCallback && noCallback();
-    };
-});
 
 
 /*
@@ -2847,6 +2937,11 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
+ * Shortcut to <jaxon.call.attr.process>.
+ */
+jaxon.processCustomAttrs = () => jaxon.call.attr.process();
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;
@@ -2872,6 +2967,7 @@ jaxon.isLoaded = true;
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
+    register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
     register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');

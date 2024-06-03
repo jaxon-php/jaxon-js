@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, json, queue, dom, dialog) {
+(function(self, config, rsp, json, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -87,13 +87,20 @@
         if (!self.isRegistered({ name })) {
             return true;
         }
-        // If the command has an "id" attr, find the corresponding dom element.
+        // If the command has an "id" attr, find the corresponding dom node.
+        const sComponentName = args?.component?.name;
+        if ((sComponentName)) {
+            args.target = attr.node(sComponentName, args.component.item);
+        }
         const id = args?.id;
-        if ((id)) {
+        if (!args?.target && (id)) {
             args.target = dom.$(id);
         }
         // Process the command
-        return callHandler(name, args, command);
+        const bReturnValue = callHandler(name, args, command);
+        // Process Jaxon custom attributes in the new node HTML content.
+        name === 'dom.assign' && attr.process(args.target);
+        return bReturnValue;
     };
 
     /**
@@ -174,4 +181,4 @@
         return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+    jaxon.call.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);

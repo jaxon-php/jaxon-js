@@ -49,6 +49,11 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
+ * Shortcut to <jaxon.call.attr.process>.
+ */
+jaxon.processCustomAttrs = () => jaxon.call.attr.process();
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;
