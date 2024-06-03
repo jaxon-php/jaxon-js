@@ -74,6 +74,7 @@ jaxon.isLoaded = true;
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
+    register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
     register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');

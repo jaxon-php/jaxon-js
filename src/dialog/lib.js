@@ -42,40 +42,40 @@
         // Define the library functions
         xCallback(self[sName], { types, dom, js, jq, labels });
     };
+
+    /**
+     * Default dialog plugin, based on js alert and confirm functions
+     * Class: jaxon.dialog.lib.default
+     */
+
+    self.register('default', (lib) => {
+        /**
+         * Show an alert message
+         *
+         * @param {string} type The message type
+         * @param {string} text The message text
+         * @param {string} title The message title
+         *
+         * @returns {void}
+         */
+        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {string} question The question to ask
+         * @param {string} title The question title
+         * @param {callback} yesCallback The function to call if the answer is yes
+         * @param {callback} noCallback The function to call if the answer is no
+         *
+         * @returns {void}
+         */
+        lib.confirm = (question, title, yesCallback, noCallback) => {
+            if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
+                yesCallback();
+                return;
+            }
+            noCallback && noCallback();
+        };
+    });
 })(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);
-
-/**
- * Default dialog plugin, based on js alert and confirm functions
- * Class: jaxon.dialog.lib.default
- */
-
-jaxon.dialog.lib.register('default', (self) => {
-    /**
-     * Show an alert message
-     *
-     * @param {string} type The message type
-     * @param {string} text The message text
-     * @param {string} title The message title
-     *
-     * @returns {void}
-     */
-    self.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
-
-    /**
-     * Ask a confirm question to the user.
-     *
-     * @param {string} question The question to ask
-     * @param {string} title The question title
-     * @param {callback} yesCallback The function to call if the answer is yes
-     * @param {callback} noCallback The function to call if the answer is no
-     *
-     * @returns {void}
-     */
-    self.confirm = (question, title, yesCallback, noCallback) => {
-        if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
-            yesCallback();
-            return;
-        }
-        noCallback && noCallback();
-    };
-});

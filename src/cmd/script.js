@@ -15,8 +15,20 @@
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func, args }, { context = {} }) => {
-        // Add the function in the context
         json.execCall({ _type: 'func', _name: func, args }, context);
+        return true;
+    };
+
+    /**
+     * Call a javascript function with a series of parameters using the current script context.
+     *
+     * @param {object} args The command arguments.
+     * @param {string} args.func The name of the function to call.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.exec = ({ expr }) => {
+        json.execExpr(expr);
         return true;
     };
 
