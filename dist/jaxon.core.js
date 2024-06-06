@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-8',
+        patch: '0rc-9',
     },
 
     debug: {
@@ -457,42 +457,47 @@ window.jaxon = jaxon;
 
 (function(self, dom) {
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {object} child
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
+     * @param {string} child.type
+     * @param {string} child.name
+     * @param {string} child.tagName
+     * @param {boolean} child.checked
+     * @param {boolean} child.disabled
+     * @param {mixed} child.value
+     * @param {array} child.options
      *
      * @returns {void}
      */
-    const _getValue = (aFormValues, child, submitDisabledElements, prefix) => {
-        if (!child.name || 'PARAM' === child.tagName)
+    const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
+        if (!name || 'PARAM' === tagName)
             return;
-        if (!submitDisabledElements && child.disabled)
+        if (!xOptions.disabled && disabled)
             return;
-        if (prefix !== child.name.substring(0, prefix.length))
+        const { prefix } = xOptions;
+        if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
             return;
-        if ((child.type === 'radio' || child.type === 'checkbox') && !child.checked)
+        if ((type === 'radio' || type === 'checkbox') && !checked)
             return;
-        if (child.type === 'file')
+        if (type === 'file')
             return;
 
-        const name = child.name;
-        const values = child.type !== 'select-multiple' ? child.value :
-            child.options.filter(({ selected }) => selected).map(({ value }) => value);
+        const values = type !== 'select-multiple' ? value :
+            options.filter(({ selected }) => selected).map(({ value: v }) => v);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
-            aFormValues[name] = values;
+            xOptions.values[name] = values;
             return;
         }
 
         // Parse names into brackets
         let k = name.substring(0, keyBegin);
         let a = name.substring(keyBegin);
-        if (aFormValues[k] === undefined) {
-            aFormValues[k] = {};
+        if (xOptions.values[k] === undefined) {
+            xOptions.values[k] = {};
         }
-        let p = aFormValues; // pointer reset
+        let p = xOptions.values; // pointer reset
         while (a.length > 0) {
             const sa = a.substring(0, a.indexOf(']') + 1);
             const lastKey = k; //save last key
@@ -502,7 +507,7 @@ window.jaxon = jaxon;
             p = p[k];
             k = sa.substring(1, sa.length - 1);
             if (k === '') {
-                if ('select-multiple' === child.type) {
+                if ('select-multiple' === type) {
                     k = lastKey; //restore last key
                     p = lastRef;
                 } else {
@@ -510,7 +515,7 @@ window.jaxon = jaxon;
                 }
             }
             if (k === undefined) {
-                /*check against the global aFormValues Stack wich is the next(last) usable index */
+                /*check against the global xOptions.values Stack wich is the next(last) usable index */
                 k = Object.keys(lastRef[lastKey]).length;
             }
             p[k] = p[k] || {};
@@ -519,19 +524,18 @@ window.jaxon = jaxon;
     };
 
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {array} children
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
      *
      * @returns {void}
      */
-    const _getValues = (aFormValues, children, submitDisabledElements, prefix) => {
+    const _getValues = (xOptions, children) => {
         children.forEach(child => {
-            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
-                _getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
+            const { childNodes, type } = child;
+            if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
+                _getValues(xOptions, childNodes);
             }
-           _getValue(aFormValues, child, submitDisabledElements, prefix);
+           _getValue(xOptions, child);
         });
     };
 
@@ -539,20 +543,26 @@ window.jaxon = jaxon;
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled, prefix = '') => {
-        const submitDisabledElements = (disabled === true);
-        const prefixValue = prefix ?? '';
+    self.getValues = (formId, disabled = false, prefix = '') => {
+        const xOptions = {
+            // Submit disabled fields
+            disabled: (disabled === true),
+            // Only submit fields with a prefix
+            prefix: prefix ?? '',
+            // Form values
+            values: {},
+        };
+
         const form = dom.$(formId);
-        const aFormValues = {};
         if (form && form.childNodes) {
-            _getValues(aFormValues, form.childNodes, submitDisabledElements, prefixValue);
+            _getValues(xOptions, form.childNodes);
         }
-        return aFormValues;
+        return xOptions.values;
     };
 })(jaxon.utils.form, jaxon.utils.dom);
 
@@ -987,9 +997,59 @@ window.jaxon = jaxon;
     const sDefaultComponentItem = 'main';
 
     /**
+     * The commands to check for changes
+     *
+     * @var {array}
+     */
+    const aCommands = ['dom.assign', 'dom.append', 'dom.prepend', 'dom.replace'];
+
+    /**
+     * The attributes to check for changes
+     *
+     * @var {array}
+     */
+    const aAttributes = ['innerHTML', 'outerHTML'];
+
+    /**
+     * Check if a the attributes on a targeted node must be processed after a command is executed.
+     *
+     * @param {Element} xTarget A DOM node.
+     * @param {string} sCommand The command name.
+     * @param {string} sAttribute The attribute name.
+     *
+     * @returns {void}
+     */
+    self.changed = (xTarget, sCommand, sAttribute) => (xTarget) &&
+        aAttributes.some(sVal => sVal === sAttribute) &&
+        aCommands.some(sVal => sVal === sCommand);
+
+    /**
+     * @param {Element} xNode A DOM node.
+     *
+     * @returns {void}
+     */
+    const setEventHandlers = (xNode) => {
+        const sEvent = xNode.getAttribute('jxn-on');
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
+        if(!xNode.hasAttribute('jxn-select'))
+        {
+            // Set the event handler on the node.
+            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
+            return;
+        }
+        // Set the event handler on the selected children nodes.
+        const sSelector = xNode.getAttribute('jxn-select');
+        const aChildren = xNode.querySelectorAll(`:scope ${sSelector}`);
+        aChildren.forEach(xChild => {
+            // Set the event handler on the child node.
+            event.setEventHandler({ target: xChild , event: sEvent, func: oHandler });
+        });
+    };
+
+    /**
      * Process the custom attributes in a given DOM node.
      *
-     * @param {Element} xContainer The DOM node.
+     * @param {Element} xContainer A DOM node.
      *
      * @returns {void}
      */
@@ -997,15 +1057,13 @@ window.jaxon = jaxon;
         // Set event handlers on nodes
         const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
         aEvents.forEach(xNode => {
-            if(!xNode.hasAttribute('jxn-func'))
+            if(xNode.hasAttribute('jxn-func'))
             {
-                return;
+                setEventHandlers(xNode);
             }
-            const sEvent = xNode.getAttribute('jxn-on');
-            const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
-            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
             xNode.removeAttribute('jxn-on');
             xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-select');
         });
 
         // Associate DOM nodes to Jaxon components
@@ -1369,23 +1427,16 @@ window.jaxon = jaxon;
      *
      * @returns {object} The callback object.
      */
-    self.create = (responseDelayTime, expirationTime) => ({
-        timers: {
-            onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
-            onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
-        },
-        onInitialize: null,
-        onProcessParams: null,
-        onPrepare: null,
-        onRequest: null,
-        onResponseDelay: null,
-        onExpiration: null,
-        beforeResponseProcessing: null,
-        onFailure: null,
-        onRedirect: null,
-        onSuccess: null,
-        onComplete: null,
-    });
+    self.create = (responseDelayTime, expirationTime) => {
+        const oCallback = {
+            timers: {
+                onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+                onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+            },
+        };
+        aCallbackNames.forEach(sName => oCallback[sName] = null);
+        return oCallback;
+    };
 
     /**
      * The global callback object which is active for every request.
@@ -1403,9 +1454,22 @@ window.jaxon = jaxon;
      * @return {void}
      */
     self.initCallbacks = (oRequest) => {
-        const callback = self.create();
+        if (types.isObject(oRequest.callback)) {
+            oRequest.callback = [oRequest.callback];
+        }
+        if (types.isArray(oRequest.callback)) {
+            oRequest.callback.forEach(oCallback => {
+                // Add the timers attribute, if it is not defined.
+                if (oCallback.timers === undefined) {
+                    oCallback.timers = {};
+                }
+            });
+            return;
+        }
 
         let callbackFound = false;
+        // Check if any callback is defined in the request object by its own name.
+        const callback = self.create();
         aCallbackNames.forEach(sName => {
             if (oRequest[sName] !== undefined) {
                 callback[sName] = oRequest[sName];
@@ -1413,38 +1477,18 @@ window.jaxon = jaxon;
                 delete oRequest[sName];
             }
         });
-
-        if (oRequest.callback === undefined) {
-            oRequest.callback = callback;
-            return;
-        }
-        // Add the timers attribute, if it is not defined.
-        if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = {};
-        }
-        if (callbackFound) {
-            oRequest.callback = [oRequest.callback, callback];
-        }
+        oRequest.callback = callbackFound ? [callback] : [];
     };
 
     /**
      * Get a flatten array of callbacks
      *
      * @param {object} oRequest The request context object.
+     * @param {array=} oRequest.callback The request callback(s).
      *
      * @returns {array}
      */
-    const getCallbacks = (oRequest) => {
-        if(!oRequest.callback)
-        {
-            return [self.callback];
-        }
-        if(types.isArray(oRequest.callback))
-        {
-            return [self.callback, ...oRequest.callback];
-        }
-        return [self.callback, oRequest.callback];
-    };
+    const getCallbacks = ({ callback = [] }) => [self.callback, ...callback];
 
     /**
      * Execute a callback event.
@@ -1457,10 +1501,10 @@ window.jaxon = jaxon;
      */
     const execute = (oCallback, sFunction, oRequest) => {
         const func = oCallback[sFunction];
-        const timer = !oCallback.timers ? null : oCallback.timers[sFunction];
         if (!func || !types.isFunction(func)) {
             return;
         }
+        const timer = oCallback.timers[sFunction];
         if (!timer) {
             func(oRequest); // Call the function directly.
             return;
@@ -1591,23 +1635,23 @@ window.jaxon = jaxon;
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        const { name, args } = command;
+        const { name, args = {} } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom node.
-        const sComponentName = args?.component?.name;
+        const sComponentName = args.component?.name;
         if ((sComponentName)) {
             args.target = attr.node(sComponentName, args.component.item);
         }
-        const id = args?.id;
-        if (!args?.target && (id)) {
+        const id = args.id;
+        if (!args.target && (id)) {
             args.target = dom.$(id);
         }
         // Process the command
         const bReturnValue = callHandler(name, args, command);
         // Process Jaxon custom attributes in the new node HTML content.
-        name === 'dom.assign' && attr.process(args.target);
+        attr.changed(args.target, name, args.attr) && attr.process(args.target);
         return bReturnValue;
     };
 
@@ -1885,10 +1929,9 @@ window.jaxon = jaxon;
      * @returns {boolean}
      */
     const initialize = (oRequest) => {
-        cbk.execute(oRequest, 'onInitialize');
-
         cfg.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
@@ -1915,6 +1958,7 @@ window.jaxon = jaxon;
      * @return {void}
      */
     const prepare = (oRequest) => {
+        --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -1962,7 +2006,6 @@ window.jaxon = jaxon;
      * @returns {mixed}
      */
     const submit = (oRequest) => {
-        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         // The onResponseDelay and onExpiration aren't called immediately, but a timer
@@ -2080,7 +2123,7 @@ window.jaxon = jaxon;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
-                if (oRequest.requestRetry === 0) {
+                if (oRequest.requestRetry <= 0) {
                     throw e;
                 }
             }
@@ -2310,23 +2353,13 @@ window.jaxon = jaxon;
      * Assign an element's attribute to the specified value.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The HTML element to effect.
+     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to set.
      * @param {string} args.value The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
     self.assign = ({ target, attr, value }) => {
-        if (attr === 'innerHTML') {
-            target.innerHTML = value;
-            return true;
-        }
-        if (attr === 'outerHTML') {
-            target.outerHTML = value;
-            return true;
-        }
-
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value;
@@ -2338,23 +2371,13 @@ window.jaxon = jaxon;
      * Append the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The HTML element to effect.
+     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to append to.
      * @param {string} args.value The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
     self.append = ({ target, attr, value }) => {
-        if (attr === 'innerHTML') {
-            target.innerHTML = target.innerHTML + value;
-            return true;
-        }
-        if (attr === 'outerHTML') {
-            target.outerHTML = target.outerHTML + value;
-            return true;
-        }
-
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
@@ -2366,23 +2389,13 @@ window.jaxon = jaxon;
      * Prepend the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The HTML element to effect.
+     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute.
      * @param {string} args.value The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
     self.prepend = ({ target, attr, value }) => {
-        if (attr === 'innerHTML') {
-            target.innerHTML = value + target.innerHTML;
-            return true;
-        }
-        if (attr === 'outerHTML') {
-            target.outerHTML = value + target.outerHTML;
-            return true;
-        }
-
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
@@ -2393,19 +2406,18 @@ window.jaxon = jaxon;
     /**
      * Replace a text in the value of a given attribute in an element
      *
-     * @param {object} xElement The element to search in
-     * @param {string} sAttribute The attribute to search in
+     * @param {object} xElt The value returned by the dom.getInnerObject() function
      * @param {string} sSearch The text to search
      * @param {string} sReplace The text to use as replacement
      *
      * @returns {void}
      */
-    const replaceText = (xElement, sAttribute, sSearch, sReplace) => {
-        const bFunction = types.isFunction(xElement[sAttribute]);
-        const sCurText = bFunction ? xElement[sAttribute].join('') : xElement[sAttribute];
+    const replaceText = (xElt, sSearch, sReplace) => {
+        const bFunction = types.isFunction(xElt.node[xElt.attr]);
+        const sCurText = bFunction ? xElt.node[xElt.attr].join('') : xElt.node[xElt.attr];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
-        if (bFunction || dom.willChange(xElement, sAttribute, sNewText)) {
-            xElement[sAttribute] = sNewText;
+        if (bFunction || dom.willChange(xElt.node, xElt.attr, sNewText)) {
+            xElt.node[xElt.attr] = sNewText;
         }
     };
 
@@ -2413,19 +2425,17 @@ window.jaxon = jaxon;
      * Search and replace the specified text.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element which is to be modified.
+     * @param {Element} args.target The element which is to be modified.
      * @param {string} args.attr The name of the attribute to be set.
-     * @param {array} args.search The search text and replacement text.
-     * @param {array} args.replace The search text and replacement text.
+     * @param {string} args.search The search text and replacement text.
+     * @param {string} args.replace The search text and replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
     self.replace = ({ target, attr, search, replace }) => {
-        const sSearch = attr === 'innerHTML' ? dom.getBrowserHTML(search) : search;
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            replaceText(xElt.node, xElt.attr, sSearch, replace);
+            replaceText(xElt, attr === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
         }
         return true;
     };
@@ -2434,8 +2444,7 @@ window.jaxon = jaxon;
      * Clear an element.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element which is to be modified.
+     * @param {Element} args.target The element which is to be modified.
      * @param {string} args.attr The name of the attribute to clear.
      *
      * @returns {true} The operation completed successfully.
@@ -2449,8 +2458,7 @@ window.jaxon = jaxon;
      * Delete an element.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element which will be deleted.
+     * @param {Element} args.target The element which will be deleted.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -2475,8 +2483,7 @@ window.jaxon = jaxon;
      * Create a new element and append it to the specified parent element.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element which will contain the new element.
+     * @param {Element} args.target The element which will contain the new element.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
      *
@@ -2491,8 +2498,7 @@ window.jaxon = jaxon;
      * Insert a new element before the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
      *
@@ -2508,8 +2514,7 @@ window.jaxon = jaxon;
      * Insert a new element after the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The element that will be used as the reference point for insertion.
+     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
      *

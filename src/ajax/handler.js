@@ -83,23 +83,23 @@
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        const { name, args } = command;
+        const { name, args = {} } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
         // If the command has an "id" attr, find the corresponding dom node.
-        const sComponentName = args?.component?.name;
+        const sComponentName = args.component?.name;
         if ((sComponentName)) {
             args.target = attr.node(sComponentName, args.component.item);
         }
-        const id = args?.id;
-        if (!args?.target && (id)) {
+        const id = args.id;
+        if (!args.target && (id)) {
             args.target = dom.$(id);
         }
         // Process the command
         const bReturnValue = callHandler(name, args, command);
         // Process Jaxon custom attributes in the new node HTML content.
-        name === 'dom.assign' && attr.process(args.target);
+        attr.changed(args.target, name, args.attr) && attr.process(args.target);
         return bReturnValue;
     };
 

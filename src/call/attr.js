@@ -20,9 +20,59 @@
     const sDefaultComponentItem = 'main';
 
     /**
+     * The commands to check for changes
+     *
+     * @var {array}
+     */
+    const aCommands = ['dom.assign', 'dom.append', 'dom.prepend', 'dom.replace'];
+
+    /**
+     * The attributes to check for changes
+     *
+     * @var {array}
+     */
+    const aAttributes = ['innerHTML', 'outerHTML'];
+
+    /**
+     * Check if a the attributes on a targeted node must be processed after a command is executed.
+     *
+     * @param {Element} xTarget A DOM node.
+     * @param {string} sCommand The command name.
+     * @param {string} sAttribute The attribute name.
+     *
+     * @returns {void}
+     */
+    self.changed = (xTarget, sCommand, sAttribute) => (xTarget) &&
+        aAttributes.some(sVal => sVal === sAttribute) &&
+        aCommands.some(sVal => sVal === sCommand);
+
+    /**
+     * @param {Element} xNode A DOM node.
+     *
+     * @returns {void}
+     */
+    const setEventHandlers = (xNode) => {
+        const sEvent = xNode.getAttribute('jxn-on');
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
+        if(!xNode.hasAttribute('jxn-select'))
+        {
+            // Set the event handler on the node.
+            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
+            return;
+        }
+        // Set the event handler on the selected children nodes.
+        const sSelector = xNode.getAttribute('jxn-select');
+        const aChildren = xNode.querySelectorAll(`:scope ${sSelector}`);
+        aChildren.forEach(xChild => {
+            // Set the event handler on the child node.
+            event.setEventHandler({ target: xChild , event: sEvent, func: oHandler });
+        });
+    };
+
+    /**
      * Process the custom attributes in a given DOM node.
      *
-     * @param {Element} xContainer The DOM node.
+     * @param {Element} xContainer A DOM node.
      *
      * @returns {void}
      */
@@ -30,15 +80,13 @@
         // Set event handlers on nodes
         const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
         aEvents.forEach(xNode => {
-            if(!xNode.hasAttribute('jxn-func'))
+            if(xNode.hasAttribute('jxn-func'))
             {
-                return;
+                setEventHandlers(xNode);
             }
-            const sEvent = xNode.getAttribute('jxn-on');
-            const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
-            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
             xNode.removeAttribute('jxn-on');
             xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-select');
         });
 
         // Associate DOM nodes to Jaxon components
