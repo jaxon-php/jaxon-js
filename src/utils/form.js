@@ -4,42 +4,47 @@
 
 (function(self, dom) {
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {object} child
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
+     * @param {string} child.type
+     * @param {string} child.name
+     * @param {string} child.tagName
+     * @param {boolean} child.checked
+     * @param {boolean} child.disabled
+     * @param {mixed} child.value
+     * @param {array} child.options
      *
      * @returns {void}
      */
-    const _getValue = (aFormValues, child, submitDisabledElements, prefix) => {
-        if (!child.name || 'PARAM' === child.tagName)
+    const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
+        if (!name || 'PARAM' === tagName)
             return;
-        if (!submitDisabledElements && child.disabled)
+        if (!xOptions.disabled && disabled)
             return;
-        if (prefix !== child.name.substring(0, prefix.length))
+        const { prefix } = xOptions;
+        if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
             return;
-        if ((child.type === 'radio' || child.type === 'checkbox') && !child.checked)
+        if ((type === 'radio' || type === 'checkbox') && !checked)
             return;
-        if (child.type === 'file')
+        if (type === 'file')
             return;
 
-        const name = child.name;
-        const values = child.type !== 'select-multiple' ? child.value :
-            child.options.filter(({ selected }) => selected).map(({ value }) => value);
+        const values = type !== 'select-multiple' ? value :
+            options.filter(({ selected }) => selected).map(({ value: v }) => v);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
-            aFormValues[name] = values;
+            xOptions.values[name] = values;
             return;
         }
 
         // Parse names into brackets
         let k = name.substring(0, keyBegin);
         let a = name.substring(keyBegin);
-        if (aFormValues[k] === undefined) {
-            aFormValues[k] = {};
+        if (xOptions.values[k] === undefined) {
+            xOptions.values[k] = {};
         }
-        let p = aFormValues; // pointer reset
+        let p = xOptions.values; // pointer reset
         while (a.length > 0) {
             const sa = a.substring(0, a.indexOf(']') + 1);
             const lastKey = k; //save last key
@@ -49,7 +54,7 @@
             p = p[k];
             k = sa.substring(1, sa.length - 1);
             if (k === '') {
-                if ('select-multiple' === child.type) {
+                if ('select-multiple' === type) {
                     k = lastKey; //restore last key
                     p = lastRef;
                 } else {
@@ -57,7 +62,7 @@
                 }
             }
             if (k === undefined) {
-                /*check against the global aFormValues Stack wich is the next(last) usable index */
+                /*check against the global xOptions.values Stack wich is the next(last) usable index */
                 k = Object.keys(lastRef[lastKey]).length;
             }
             p[k] = p[k] || {};
@@ -66,19 +71,18 @@
     };
 
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {array} children
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
      *
      * @returns {void}
      */
-    const _getValues = (aFormValues, children, submitDisabledElements, prefix) => {
+    const _getValues = (xOptions, children) => {
         children.forEach(child => {
-            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
-                _getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
+            const { childNodes, type } = child;
+            if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
+                _getValues(xOptions, childNodes);
             }
-           _getValue(aFormValues, child, submitDisabledElements, prefix);
+           _getValue(xOptions, child);
         });
     };
 
@@ -86,19 +90,25 @@
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled, prefix = '') => {
-        const submitDisabledElements = (disabled === true);
-        const prefixValue = prefix ?? '';
+    self.getValues = (formId, disabled = false, prefix = '') => {
+        const xOptions = {
+            // Submit disabled fields
+            disabled: (disabled === true),
+            // Only submit fields with a prefix
+            prefix: prefix ?? '',
+            // Form values
+            values: {},
+        };
+
         const form = dom.$(formId);
-        const aFormValues = {};
         if (form && form.childNodes) {
-            _getValues(aFormValues, form.childNodes, submitDisabledElements, prefixValue);
+            _getValues(xOptions, form.childNodes);
         }
-        return aFormValues;
+        return xOptions.values;
     };
 })(jaxon.utils.form, jaxon.utils.dom);

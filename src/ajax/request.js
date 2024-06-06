@@ -13,10 +13,9 @@
      * @returns {boolean}
      */
     const initialize = (oRequest) => {
-        cbk.execute(oRequest, 'onInitialize');
-
         cfg.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
@@ -43,6 +42,7 @@
      * @return {void}
      */
     const prepare = (oRequest) => {
+        --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -90,7 +90,6 @@
      * @returns {mixed}
      */
     const submit = (oRequest) => {
-        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         // The onResponseDelay and onExpiration aren't called immediately, but a timer
@@ -208,7 +207,7 @@
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
-                if (oRequest.requestRetry === 0) {
+                if (oRequest.requestRetry <= 0) {
                     throw e;
                 }
             }

@@ -31,23 +31,16 @@
      *
      * @returns {object} The callback object.
      */
-    self.create = (responseDelayTime, expirationTime) => ({
-        timers: {
-            onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
-            onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
-        },
-        onInitialize: null,
-        onProcessParams: null,
-        onPrepare: null,
-        onRequest: null,
-        onResponseDelay: null,
-        onExpiration: null,
-        beforeResponseProcessing: null,
-        onFailure: null,
-        onRedirect: null,
-        onSuccess: null,
-        onComplete: null,
-    });
+    self.create = (responseDelayTime, expirationTime) => {
+        const oCallback = {
+            timers: {
+                onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+                onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+            },
+        };
+        aCallbackNames.forEach(sName => oCallback[sName] = null);
+        return oCallback;
+    };
 
     /**
      * The global callback object which is active for every request.
@@ -65,9 +58,22 @@
      * @return {void}
      */
     self.initCallbacks = (oRequest) => {
-        const callback = self.create();
+        if (types.isObject(oRequest.callback)) {
+            oRequest.callback = [oRequest.callback];
+        }
+        if (types.isArray(oRequest.callback)) {
+            oRequest.callback.forEach(oCallback => {
+                // Add the timers attribute, if it is not defined.
+                if (oCallback.timers === undefined) {
+                    oCallback.timers = {};
+                }
+            });
+            return;
+        }
 
         let callbackFound = false;
+        // Check if any callback is defined in the request object by its own name.
+        const callback = self.create();
         aCallbackNames.forEach(sName => {
             if (oRequest[sName] !== undefined) {
                 callback[sName] = oRequest[sName];
@@ -75,38 +81,18 @@
                 delete oRequest[sName];
             }
         });
-
-        if (oRequest.callback === undefined) {
-            oRequest.callback = callback;
-            return;
-        }
-        // Add the timers attribute, if it is not defined.
-        if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = {};
-        }
-        if (callbackFound) {
-            oRequest.callback = [oRequest.callback, callback];
-        }
+        oRequest.callback = callbackFound ? [callback] : [];
     };
 
     /**
      * Get a flatten array of callbacks
      *
      * @param {object} oRequest The request context object.
+     * @param {array=} oRequest.callback The request callback(s).
      *
      * @returns {array}
      */
-    const getCallbacks = (oRequest) => {
-        if(!oRequest.callback)
-        {
-            return [self.callback];
-        }
-        if(types.isArray(oRequest.callback))
-        {
-            return [self.callback, ...oRequest.callback];
-        }
-        return [self.callback, oRequest.callback];
-    };
+    const getCallbacks = ({ callback = [] }) => [self.callback, ...callback];
 
     /**
      * Execute a callback event.
@@ -119,10 +105,10 @@
      */
     const execute = (oCallback, sFunction, oRequest) => {
         const func = oCallback[sFunction];
-        const timer = !oCallback.timers ? null : oCallback.timers[sFunction];
         if (!func || !types.isFunction(func)) {
             return;
         }
+        const timer = oCallback.timers[sFunction];
         if (!timer) {
             func(oRequest); // Call the function directly.
             return;
