@@ -104,22 +104,22 @@
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *
-     * @param {object} xElement The outer element.
-     * @param {string} attribute The attribute name.
+     * @param {string} sAttrName The attribute name.
+     * @param {object=} xElement The outer element.
      *
-     * @returns {array} The inner object and the attribute name in an array.
+     * @returns {object|null} The inner object and the attribute name in an object.
      */
-    self.getInnerObject = (xElement, attribute) => {
-        const aNames = attribute.split('.');
-        const nLength = aNames.length;
+    self.getInnerObject = (sAttrName, xElement = window) => {
+        const aNames = sAttrName.split('.');
         // Get the last element in the array.
-        attribute = aNames.pop();
+        sAttrName = aNames.pop();
         // Move to the inner object.
+        const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
             xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
-        return !xElement ? [null, null] : [xElement, attribute];
+        return !xElement ? null : { node: xElement, attr: sAttrName };
     };
 
     /**

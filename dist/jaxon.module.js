@@ -419,22 +419,22 @@ var jaxon = {
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *
-     * @param {object} xElement The outer element.
-     * @param {string} attribute The attribute name.
+     * @param {string} sAttrName The attribute name.
+     * @param {object=} xElement The outer element.
      *
-     * @returns {array} The inner object and the attribute name in an array.
+     * @returns {object|null} The inner object and the attribute name in an object.
      */
-    self.getInnerObject = (xElement, attribute) => {
-        const aNames = attribute.split('.');
-        const nLength = aNames.length;
+    self.getInnerObject = (sAttrName, xElement = window) => {
+        const aNames = sAttrName.split('.');
         // Get the last element in the array.
-        attribute = aNames.pop();
+        sAttrName = aNames.pop();
         // Move to the inner object.
+        const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
             xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
         }
-        return !xElement ? [null, null] : [xElement, attribute];
+        return !xElement ? null : { node: xElement, attr: sAttrName };
     };
 
     /**
@@ -478,42 +478,47 @@ var jaxon = {
 
 (function(self, dom) {
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {object} child
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
+     * @param {string} child.type
+     * @param {string} child.name
+     * @param {string} child.tagName
+     * @param {boolean} child.checked
+     * @param {boolean} child.disabled
+     * @param {mixed} child.value
+     * @param {array} child.options
      *
      * @returns {void}
      */
-    const _getValue = (aFormValues, child, submitDisabledElements, prefix) => {
-        if (!child.name || 'PARAM' === child.tagName)
+    const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
+        if (!name || 'PARAM' === tagName)
             return;
-        if (!submitDisabledElements && child.disabled)
+        if (!xOptions.disabled && disabled)
             return;
-        if (prefix !== child.name.substring(0, prefix.length))
+        const { prefix } = xOptions;
+        if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
             return;
-        if ((child.type === 'radio' || child.type === 'checkbox') && !child.checked)
+        if ((type === 'radio' || type === 'checkbox') && !checked)
             return;
-        if (child.type === 'file')
+        if (type === 'file')
             return;
 
-        const name = child.name;
-        const values = child.type !== 'select-multiple' ? child.value :
-            child.options.filter(({ selected }) => selected).map(({ value }) => value);
+        const values = type !== 'select-multiple' ? value :
+            options.filter(({ selected }) => selected).map(({ value: v }) => v);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
-            aFormValues[name] = values;
+            xOptions.values[name] = values;
             return;
         }
 
         // Parse names into brackets
         let k = name.substring(0, keyBegin);
         let a = name.substring(keyBegin);
-        if (aFormValues[k] === undefined) {
-            aFormValues[k] = {};
+        if (xOptions.values[k] === undefined) {
+            xOptions.values[k] = {};
         }
-        let p = aFormValues; // pointer reset
+        let p = xOptions.values; // pointer reset
         while (a.length > 0) {
             const sa = a.substring(0, a.indexOf(']') + 1);
             const lastKey = k; //save last key
@@ -523,7 +528,7 @@ var jaxon = {
             p = p[k];
             k = sa.substring(1, sa.length - 1);
             if (k === '') {
-                if ('select-multiple' === child.type) {
+                if ('select-multiple' === type) {
                     k = lastKey; //restore last key
                     p = lastRef;
                 } else {
@@ -531,7 +536,7 @@ var jaxon = {
                 }
             }
             if (k === undefined) {
-                /*check against the global aFormValues Stack wich is the next(last) usable index */
+                /*check against the global xOptions.values Stack wich is the next(last) usable index */
                 k = Object.keys(lastRef[lastKey]).length;
             }
             p[k] = p[k] || {};
@@ -540,19 +545,18 @@ var jaxon = {
     };
 
     /**
-     * @param {object} aFormValues
+     * @param {object} xOptions
      * @param {array} children
-     * @param {boolean} submitDisabledElements
-     * @param {string} prefix
      *
      * @returns {void}
      */
-    const _getValues = (aFormValues, children, submitDisabledElements, prefix) => {
+    const _getValues = (xOptions, children) => {
         children.forEach(child => {
-            if (child.childNodes !== undefined && child.type !== 'select-one' && child.type !== 'select-multiple') {
-                _getValues(aFormValues, child.childNodes, submitDisabledElements, prefix);
+            const { childNodes, type } = child;
+            if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
+                _getValues(xOptions, childNodes);
             }
-           _getValue(aFormValues, child, submitDisabledElements, prefix);
+           _getValue(xOptions, child);
         });
     };
 
@@ -560,20 +564,26 @@ var jaxon = {
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled, prefix = '') => {
-        const submitDisabledElements = (disabled === true);
-        const prefixValue = prefix ?? '';
+    self.getValues = (formId, disabled = false, prefix = '') => {
+        const xOptions = {
+            // Submit disabled fields
+            disabled: (disabled === true),
+            // Only submit fields with a prefix
+            prefix: prefix ?? '',
+            // Form values
+            values: {},
+        };
+
         const form = dom.$(formId);
-        const aFormValues = {};
         if (form && form.childNodes) {
-            _getValues(aFormValues, form.childNodes, submitDisabledElements, prefixValue);
+            _getValues(xOptions, form.childNodes);
         }
-        return aFormValues;
+        return xOptions.values;
     };
 })(jaxon.utils.form, jaxon.utils.dom);
 
@@ -702,6 +712,75 @@ var jaxon = {
         return oQueue.elements[oQueue.start];
     };
 })(jaxon.utils.queue);
+
+
+/**
+ * Class: jaxon.dom
+ */
+
+/**
+ * Plain javascript replacement for jQuery's .ready() function.
+ * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
+ */
+(function(self) {
+    "use strict";
+
+    let readyList = [];
+    let readyFired = false;
+    let readyEventHandlersInstalled = false;
+
+    /**
+     * Call this when the document is ready.
+     * This function protects itself against being called more than once
+     */
+    const ready = () => {
+        if (readyFired) {
+            return;
+        }
+        // this must be set to true before we start calling callbacks
+        readyFired = true;
+        // if a callback here happens to add new ready handlers,
+        // the jaxon.dom.ready() function will see that it already fired
+        // and will schedule the callback to run right after
+        // this event loop finishes so all handlers will still execute
+        // in order and no new ones will be added to the readyList
+        // while we are processing the list
+        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
+        // allow any closures held by these functions to free
+        readyList = [];
+    }
+
+    const readyStateChange = () => document.readyState === "complete" && ready();
+
+    /**
+     * This is the one public interface
+     * jaxon.dom.ready(fn, context);
+     * The context argument is optional - if present, it will be passed as an argument to the callback
+     */
+    self.ready = function(callback, context) {
+        // if ready has already fired, then just schedule the callback
+        // to fire asynchronously, but right away
+        if (readyFired) {
+            setTimeout(function() { callback(context); }, 1);
+            return;
+        }
+        // add the function and context to the list
+        readyList.push({ fn: callback, ctx: context });
+        // if document already ready to go, schedule the ready function to run
+        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+            setTimeout(ready, 1);
+            return;
+        }
+        if (!readyEventHandlersInstalled) {
+            // first choice is DOMContentLoaded event
+            document.addEventListener("DOMContentLoaded", ready, false);
+            // backup is window load event
+            window.addEventListener("load", ready, false);
+
+            readyEventHandlersInstalled = true;
+        }
+    }
+})(jaxon.dom);
 
 
 /**
@@ -856,7 +935,7 @@ var jaxon = {
  * Class: jaxon.ajax.callback
  */
 
-(function(self, config) {
+(function(self, str, config) {
     /**
      * Create a timer to fire an event in the future.
      * This will be used fire the onRequestDelay and onExpiration events.
@@ -868,6 +947,15 @@ var jaxon = {
     const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
 
     /**
+     * The names of the available callbacks.
+     *
+     * @var {array}
+     */
+    const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+
+    /**
      * Create a blank callback object.
      * Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
      *
@@ -876,30 +964,16 @@ var jaxon = {
      *
      * @returns {object} The callback object.
      */
-    self.create = (responseDelayTime, expirationTime) => ({
-        timers: {
-            onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
-            onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
-        },
-        onPrepare: null,
-        onRequest: null,
-        onResponseDelay: null,
-        onExpiration: null,
-        beforeResponseProcessing: null,
-        onFailure: null,
-        onRedirect: null,
-        onSuccess: null,
-        onComplete: null,
-    });
-
-    /**
-     * The names of the available callbacks.
-     *
-     * @var {array}
-     */
-    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
-        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
-        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+    self.create = (responseDelayTime, expirationTime) => {
+        const oCallback = {
+            timers: {
+                onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+                onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+            },
+        };
+        aCallbackNames.forEach(sName => oCallback[sName] = null);
+        return oCallback;
+    };
 
     /**
      * The global callback object which is active for every request.
@@ -917,9 +991,22 @@ var jaxon = {
      * @return {void}
      */
     self.initCallbacks = (oRequest) => {
-        const callback = self.create();
+        if (str.typeOf(oRequest.callback) === 'object') {
+            oRequest.callback = [oRequest.callback];
+        }
+        if (str.typeOf(oRequest.callback) === 'array') {
+            oRequest.callback.forEach(oCallback => {
+                // Add the timers attribute, if it is not defined.
+                if (oCallback.timers === undefined) {
+                    oCallback.timers = {};
+                }
+            });
+            return;
+        }
 
         let callbackFound = false;
+        // Check if any callback is defined in the request object by its own name.
+        const callback = self.create();
         aCallbackNames.forEach(sName => {
             if (oRequest[sName] !== undefined) {
                 callback[sName] = oRequest[sName];
@@ -927,29 +1014,18 @@ var jaxon = {
                 delete oRequest[sName];
             }
         });
-
-        if (oRequest.callback === undefined) {
-            oRequest.callback = callback;
-            return;
-        }
-        // Add the timers attribute, if it is not defined.
-        if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = {};
-        }
-        if (callbackFound) {
-            oRequest.callback = [oRequest.callback, callback];
-        }
+        oRequest.callback = callbackFound ? [callback] : [];
     };
 
     /**
      * Get a flatten array of callbacks
      *
      * @param {object} oRequest The request context object.
+     * @param {array=} oRequest.callback The request callback(s).
      *
      * @returns {array}
      */
-    const getCallbacks = (oRequest) => Array.isArray(oRequest.callback) ?
-        [self.callback, ...oRequest.callback] : [self.callback, oRequest.callback];
+    const getCallbacks = ({ callback = [] }) => [self.callback, ...callback];
 
     /**
      * Execute a callback event.
@@ -961,10 +1037,11 @@ var jaxon = {
      * @returns {void}
      */
     const execute = (oCallback, sFunction, xArgs) => {
-        const [ func, timer ] = [ oCallback[sFunction], oCallback.timers[sFunction] ];
-        if (!func || typeof func !== 'function') {
+        const func = oCallback[sFunction];
+        if (!func || str.typeOf(func) !== 'function') {
             return;
         }
+        const timer = oCallback.timers[sFunction];
         if (!timer) {
             func(xArgs); // Call the function directly.
             return;
@@ -1007,7 +1084,7 @@ var jaxon = {
      */
     self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
         .forEach(oCallback => clearTimer(oCallback, sFunction));
-})(jaxon.ajax.callback, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.string, jaxon.config);
 
 
 /**
@@ -1397,6 +1474,7 @@ var jaxon = {
         cfg.setRequestOptions(oRequest);
 
         cbk.initCallbacks(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
@@ -1406,7 +1484,17 @@ var jaxon = {
 
         // Process the request parameters
         params.process(oRequest);
+    };
 
+    /**
+     * Prepare a request, by setting the HTTP options, handlers and processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    const prepare = (oRequest) => {
+        --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -1522,7 +1610,6 @@ var jaxon = {
      * @returns {mixed}
      */
     const submit = (oRequest) => {
-        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -1571,10 +1658,9 @@ var jaxon = {
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        cbk.execute(oRequest, 'beforeInitialize');
         initialize(oRequest);
-        cbk.execute(oRequest, 'afterInitialize');
 
+        cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
@@ -1583,7 +1669,7 @@ var jaxon = {
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
-                if (oRequest.requestRetry === 0) {
+                if (oRequest.requestRetry <= 0) {
                     throw e;
                 }
             }
@@ -1824,26 +1910,16 @@ var jaxon = {
      * Assign an element's attribute to the specified value.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute to set.
      * @param {string} command.data The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
+    self.assign = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -1852,26 +1928,16 @@ var jaxon = {
      * Append the specified value to an element's attribute.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute to append to.
      * @param {string} command.data The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = element.innerHTML + data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = element.outerHTML + data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
+    self.append = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -1880,26 +1946,16 @@ var jaxon = {
      * Prepend the specified value to an element's attribute.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute.
      * @param {string} command.data The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data + element.innerHTML;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data + element.outerHTML;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
+    self.prepend = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };
@@ -1907,19 +1963,18 @@ var jaxon = {
     /**
      * Replace a text in the value of a given property in an element
      *
-     * @param {object} xElement The element to search in
-     * @param {string} sProperty The attribute to search in
+     * @param {object} xElt The value returned by the dom.getInnerObject() function
      * @param {string} sSearch The text to search
      * @param {string} sReplace The text to use as replacement
      *
      * @returns {void}
      */
-    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sProperty] === 'function');
-        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
+    const replaceText = (xElt, sSearch, sReplace) => {
+        const bFunction = (typeof xElt.node[xElt.attr] === 'function');
+        const sCurText = bFunction ? xElt.node[xElt.attr].join('') : xElt.node[xElt.attr];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
-        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
-            xElement[sProperty] = sNewText;
+        if (bFunction || dom.willChange(xElt.node, xElt.attr, sNewText)) {
+            xElt.node[xElt.attr] = sNewText;
         }
     };
 
@@ -1927,19 +1982,18 @@ var jaxon = {
      * Search and replace the specified text.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
+     * @param {Element} command.target The element which is to be modified.
      * @param {string} command.prop The name of the attribute to be set.
-     * @param {array} command.data The search text and replacement text.
+     * @param {object} command.data The search text and replacement text.
+     * @param {object} command.data.s The search text.
+     * @param {object} command.data.r The replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
-        const sReplace = aData['r'];
-        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
-        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
-        if (innerElement !== null) {
-            replaceText(innerElement, innerProperty, sSearch, sReplace);
+    self.replace = ({ target: element, prop, data: { s: search, r: replace } }) => {
+        const xElt = dom.getInnerObject(prop, element);
+        if (xElt !== null) {
+            replaceText(xElt, prop === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
         }
         return true;
     };
@@ -1948,8 +2002,7 @@ var jaxon = {
      * Delete an element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
+     * @param {Element} command.target The element which will be deleted.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -1962,8 +2015,7 @@ var jaxon = {
      * Create a new element and append it to the specified parent element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will contain the new element.
+     * @param {Element} command.target The element which will contain the new element.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value to be assigned to the id attribute of the new element.
      *
@@ -1982,8 +2034,7 @@ var jaxon = {
      * Insert a new element before the specified element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {Element} command.target The element that will be used as the reference point for insertion.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value that will be assigned to the new element's id attribute.
      *
@@ -2002,8 +2053,7 @@ var jaxon = {
      * Insert a new element after the specified element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {Element} command.target The element that will be used as the reference point for insertion.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value that will be assigned to the new element's id attribute.
      *
@@ -2028,10 +2078,10 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAssign = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
+    self.contextAssign = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -2046,10 +2096,10 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAppend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
+    self.contextAppend = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -2064,10 +2114,10 @@ var jaxon = {
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
+    self.contextPrepend = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };
@@ -2365,7 +2415,7 @@ var jaxon = {
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom) {
+(function(self, handler, dom, str) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -2589,76 +2639,7 @@ var jaxon = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom);
-
-
-/**
- * Class: jaxon.dom
- */
-
-/**
- * Plain javascript replacement for jQuery's .ready() function.
- * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
- */
-(function(self) {
-    "use strict";
-
-    let readyList = [];
-    let readyFired = false;
-    let readyEventHandlersInstalled = false;
-
-    /**
-     * Call this when the document is ready.
-     * This function protects itself against being called more than once
-     */
-    const ready = () => {
-        if (readyFired) {
-            return;
-        }
-        // this must be set to true before we start calling callbacks
-        readyFired = true;
-        // if a callback here happens to add new ready handlers,
-        // the jaxon.dom.ready() function will see that it already fired
-        // and will schedule the callback to run right after
-        // this event loop finishes so all handlers will still execute
-        // in order and no new ones will be added to the readyList
-        // while we are processing the list
-        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
-        // allow any closures held by these functions to free
-        readyList = [];
-    }
-
-    const readyStateChange = () => document.readyState === "complete" && ready();
-
-    /**
-     * This is the one public interface
-     * jaxon.dom.ready(fn, context);
-     * The context argument is optional - if present, it will be passed as an argument to the callback
-     */
-    self.ready = function(callback, context) {
-        // if ready has already fired, then just schedule the callback
-        // to fire asynchronously, but right away
-        if (readyFired) {
-            setTimeout(function() { callback(context); }, 1);
-            return;
-        }
-        // add the function and context to the list
-        readyList.push({ fn: callback, ctx: context });
-        // if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
-            setTimeout(ready, 1);
-            return;
-        }
-        if (!readyEventHandlersInstalled) {
-            // first choice is DOMContentLoaded event
-            document.addEventListener("DOMContentLoaded", ready, false);
-            // backup is window load event
-            window.addEventListener("load", ready, false);
-
-            readyEventHandlersInstalled = true;
-        }
-    }
-})(jaxon.dom);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string);
 
 
 /*

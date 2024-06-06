@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom) {
+(function(self, handler, dom, str) {
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
      * This is an asynchronous operation, therefore, other operations will be given an opportunity
@@ -226,4 +226,4 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string);

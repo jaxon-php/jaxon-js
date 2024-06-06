@@ -21,7 +21,6 @@ const files = {
             folders.src + 'utils/*.js',
             folders.src + 'ajax/*.js',
             folders.src + 'cmd/*.js',
-            folders.src + 'ready.js',
             folders.src + 'jaxon.js',
         ],
         compat: folders.src + 'compat.js',

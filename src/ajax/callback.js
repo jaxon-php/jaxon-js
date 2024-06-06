@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.callback
  */
 
-(function(self, config) {
+(function(self, str, config) {
     /**
      * Create a timer to fire an event in the future.
      * This will be used fire the onRequestDelay and onExpiration events.
@@ -14,6 +14,15 @@
     const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
 
     /**
+     * The names of the available callbacks.
+     *
+     * @var {array}
+     */
+    const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+
+    /**
      * Create a blank callback object.
      * Two optional arguments let you set the delay time for the onResponseDelay and onExpiration events.
      *
@@ -22,30 +31,16 @@
      *
      * @returns {object} The callback object.
      */
-    self.create = (responseDelayTime, expirationTime) => ({
-        timers: {
-            onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
-            onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
-        },
-        onPrepare: null,
-        onRequest: null,
-        onResponseDelay: null,
-        onExpiration: null,
-        beforeResponseProcessing: null,
-        onFailure: null,
-        onRedirect: null,
-        onSuccess: null,
-        onComplete: null,
-    });
-
-    /**
-     * The names of the available callbacks.
-     *
-     * @var {array}
-     */
-    self.aCallbackNames = ['beforeInitialize', 'afterInitialize', 'onPrepare',
-        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
-        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+    self.create = (responseDelayTime, expirationTime) => {
+        const oCallback = {
+            timers: {
+                onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+                onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+            },
+        };
+        aCallbackNames.forEach(sName => oCallback[sName] = null);
+        return oCallback;
+    };
 
     /**
      * The global callback object which is active for every request.
@@ -63,9 +58,22 @@
      * @return {void}
      */
     self.initCallbacks = (oRequest) => {
-        const callback = self.create();
+        if (str.typeOf(oRequest.callback) === 'object') {
+            oRequest.callback = [oRequest.callback];
+        }
+        if (str.typeOf(oRequest.callback) === 'array') {
+            oRequest.callback.forEach(oCallback => {
+                // Add the timers attribute, if it is not defined.
+                if (oCallback.timers === undefined) {
+                    oCallback.timers = {};
+                }
+            });
+            return;
+        }
 
         let callbackFound = false;
+        // Check if any callback is defined in the request object by its own name.
+        const callback = self.create();
         aCallbackNames.forEach(sName => {
             if (oRequest[sName] !== undefined) {
                 callback[sName] = oRequest[sName];
@@ -73,29 +81,18 @@
                 delete oRequest[sName];
             }
         });
-
-        if (oRequest.callback === undefined) {
-            oRequest.callback = callback;
-            return;
-        }
-        // Add the timers attribute, if it is not defined.
-        if (oRequest.callback.timers === undefined) {
-            oRequest.callback.timers = {};
-        }
-        if (callbackFound) {
-            oRequest.callback = [oRequest.callback, callback];
-        }
+        oRequest.callback = callbackFound ? [callback] : [];
     };
 
     /**
      * Get a flatten array of callbacks
      *
      * @param {object} oRequest The request context object.
+     * @param {array=} oRequest.callback The request callback(s).
      *
      * @returns {array}
      */
-    const getCallbacks = (oRequest) => Array.isArray(oRequest.callback) ?
-        [self.callback, ...oRequest.callback] : [self.callback, oRequest.callback];
+    const getCallbacks = ({ callback = [] }) => [self.callback, ...callback];
 
     /**
      * Execute a callback event.
@@ -107,10 +104,11 @@
      * @returns {void}
      */
     const execute = (oCallback, sFunction, xArgs) => {
-        const [ func, timer ] = [ oCallback[sFunction], oCallback.timers[sFunction] ];
-        if (!func || typeof func !== 'function') {
+        const func = oCallback[sFunction];
+        if (!func || str.typeOf(func) !== 'function') {
             return;
         }
+        const timer = oCallback.timers[sFunction];
         if (!timer) {
             func(xArgs); // Call the function directly.
             return;
@@ -153,4 +151,4 @@
      */
     self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
         .forEach(oCallback => clearTimer(oCallback, sFunction));
-})(jaxon.ajax.callback, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.string, jaxon.config);

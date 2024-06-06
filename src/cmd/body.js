@@ -7,26 +7,16 @@
      * Assign an element's attribute to the specified value.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute to set.
      * @param {string} command.data The new value to be applied.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
+    self.assign = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -35,26 +25,16 @@
      * Append the specified value to an element's attribute.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute to append to.
      * @param {string} command.data The new value to be appended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = element.innerHTML + data;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = element.outerHTML + data;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
+    self.append = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -63,26 +43,16 @@
      * Prepend the specified value to an element's attribute.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The HTML element to effect.
+     * @param {Element} command.target The HTML element to effect.
      * @param {string} command.prop The name of the attribute.
      * @param {string} command.data The new value to be prepended.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ target: element, prop: property, data }) => {
-        if (property === 'innerHTML') {
-            element.innerHTML = data + element.innerHTML;
-            return true;
-        }
-        if (property === 'outerHTML') {
-            element.outerHTML = data + element.outerHTML;
-            return true;
-        }
-
-        const [innerElement, innerProperty] = dom.getInnerObject(element, property);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
+    self.prepend = ({ target: element, prop: property, data: value }) => {
+        const xElt = dom.getInnerObject(property, element);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };
@@ -90,19 +60,18 @@
     /**
      * Replace a text in the value of a given property in an element
      *
-     * @param {object} xElement The element to search in
-     * @param {string} sProperty The attribute to search in
+     * @param {object} xElt The value returned by the dom.getInnerObject() function
      * @param {string} sSearch The text to search
      * @param {string} sReplace The text to use as replacement
      *
      * @returns {void}
      */
-    const replaceText = (xElement, sProperty, sSearch, sReplace) => {
-        const bFunction = (typeof xElement[sProperty] === 'function');
-        const sCurText = bFunction ? xElement[sProperty].join('') : xElement[sProperty];
+    const replaceText = (xElt, sSearch, sReplace) => {
+        const bFunction = (typeof xElt.node[xElt.attr] === 'function');
+        const sCurText = bFunction ? xElt.node[xElt.attr].join('') : xElt.node[xElt.attr];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
-        if (bFunction || dom.willChange(xElement, sProperty, sNewText)) {
-            xElement[sProperty] = sNewText;
+        if (bFunction || dom.willChange(xElt.node, xElt.attr, sNewText)) {
+            xElt.node[xElt.attr] = sNewText;
         }
     };
 
@@ -110,19 +79,18 @@
      * Search and replace the specified text.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which is to be modified.
+     * @param {Element} command.target The element which is to be modified.
      * @param {string} command.prop The name of the attribute to be set.
-     * @param {array} command.data The search text and replacement text.
+     * @param {object} command.data The search text and replacement text.
+     * @param {object} command.data.s The search text.
+     * @param {object} command.data.r The replacement text.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ target: element, prop: sAttribute, data: aData }) => {
-        const sReplace = aData['r'];
-        const sSearch = sAttribute === 'innerHTML' ? dom.getBrowserHTML(aData['s']) : aData['s'];
-        const [innerElement, innerProperty] = dom.getInnerObject(element, sAttribute);
-        if (innerElement !== null) {
-            replaceText(innerElement, innerProperty, sSearch, sReplace);
+    self.replace = ({ target: element, prop, data: { s: search, r: replace } }) => {
+        const xElt = dom.getInnerObject(prop, element);
+        if (xElt !== null) {
+            replaceText(xElt, prop === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
         }
         return true;
     };
@@ -131,8 +99,7 @@
      * Delete an element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will be deleted.
+     * @param {Element} command.target The element which will be deleted.
      *
      * @returns {true} The operation completed successfully.
      */
@@ -145,8 +112,7 @@
      * Create a new element and append it to the specified parent element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element which will contain the new element.
+     * @param {Element} command.target The element which will contain the new element.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value to be assigned to the id attribute of the new element.
      *
@@ -165,8 +131,7 @@
      * Insert a new element before the specified element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {Element} command.target The element that will be used as the reference point for insertion.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value that will be assigned to the new element's id attribute.
      *
@@ -185,8 +150,7 @@
      * Insert a new element after the specified element.
      *
      * @param {object} command The Response command object.
-     * @param {string} command.id The target element id
-     * @param {object} command.target The element that will be used as the reference point for insertion.
+     * @param {Element} command.target The element that will be used as the reference point for insertion.
      * @param {string} command.data The tag name for the new element.
      * @param {string} command.prop The value that will be assigned to the new element's id attribute.
      *
@@ -211,10 +175,10 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAssign = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data;
+    self.contextAssign = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value;
         }
         return true;
     };
@@ -229,10 +193,10 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextAppend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = innerElement[innerProperty] + data;
+    self.contextAppend = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
         }
         return true;
     };
@@ -247,10 +211,10 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.contextPrepend = ({ context, prop: sAttribute, data }) => {
-        const [innerElement, innerProperty] = dom.getInnerObject(context, sAttribute);
-        if (innerElement !== null) {
-            innerElement[innerProperty] = data + innerElement[innerProperty];
+    self.contextPrepend = ({ context, prop: sAttribute, data: value }) => {
+        const xElt = dom.getInnerObject(sAttribute, context);
+        if (xElt !== null) {
+            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
         }
         return true;
     };

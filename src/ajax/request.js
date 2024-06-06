@@ -17,6 +17,7 @@
         cfg.setRequestOptions(oRequest);
 
         cbk.initCallbacks(oRequest);
+        cbk.execute(oRequest, 'onInitialize');
 
         oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
@@ -26,7 +27,17 @@
 
         // Process the request parameters
         params.process(oRequest);
+    };
 
+    /**
+     * Prepare a request, by setting the HTTP options, handlers and processor.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {void}
+     */
+    const prepare = (oRequest) => {
+        --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -142,7 +153,6 @@
      * @returns {mixed}
      */
     const submit = (oRequest) => {
-        --oRequest.requestRetry;
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -191,10 +201,9 @@
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        cbk.execute(oRequest, 'beforeInitialize');
         initialize(oRequest);
-        cbk.execute(oRequest, 'afterInitialize');
 
+        cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
@@ -203,7 +212,7 @@
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
-                if (oRequest.requestRetry === 0) {
+                if (oRequest.requestRetry <= 0) {
                     throw e;
                 }
             }
