@@ -44,12 +44,12 @@
      * @param {object} oMessage The message in the command
      * @param {string} oMessage.lib The dialog library to use for the message
      * @param {string} oMessage.type The message type
-     * @param {object} oMessage.title The message title
-     * @param {string} sMessage The message text
+     * @param {string} oMessage.text The message text
+     * @param {string=} oMessage.title The message title
      *
      * @returns {void}
      */
-    self.alert = ({ lib: sLibName, type: sType, title: sTitle }, sMessage) =>
+    self.alert = ({ lib: sLibName, type: sType, title: sTitle = '', text: sMessage }) =>
         self.get(sLibName).alert(sType, sMessage, sTitle);
 
     /**
@@ -57,13 +57,14 @@
      *
      * @param {object} oQuestion The question in the command
      * @param {string} oQuestion.lib The dialog library to use for the question
-     * @param {string} sQuestion The question text
+     * @param {string} oQuestion.text The question text
+     * @param {string=} oQuestion.title The question title
      * @param {function} fYesCb The function to call if the question is confirmed
      * @param {function} fNoCb The function to call if the question is not confirmed
      *
      * @returns {void}
      */
-    self.confirm = ({ lib: sLibName, title: sTitle }, sQuestion, fYesCb, fNoCb) =>
+    self.confirm = ({ lib: sLibName, title: sTitle = '', text: sQuestion }, fYesCb, fNoCb) =>
         self.get(sLibName).confirm(sQuestion, sTitle, fYesCb, fNoCb);
 
     /**

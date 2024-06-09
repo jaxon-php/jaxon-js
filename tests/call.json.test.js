@@ -1,6 +1,6 @@
 const $ = require('jquery');
 const {
-    call: { json, query },
+    parser: { call, query },
 } = require('../dist/jaxon.module');
 
 // Set jQuery in the DOM util.
@@ -10,7 +10,7 @@ test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
     // Javascript code: const strValue = $('#integer')->text()
-    const strValue = json.execExpr({
+    const strValue = call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#integer',
@@ -27,7 +27,7 @@ test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
     // Javascript code: const strValue = $('#integer')->html()
-    const strValue = json.execExpr({
+    const strValue = call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#integer',
@@ -44,7 +44,7 @@ test('Read int value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
     // Javascript code: const intValue = parseInt($('#integer')->text())
-    const intValue = json.execExpr({
+    const intValue = call.execExpr({
         calls: [{
             _type: 'func',
             _name: 'parseInt',
@@ -68,7 +68,7 @@ test('Read int value from the DOM, with the toInt() "method"', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
     // Javascript code: const intValue = parseInt($('#integer')->text())
-    const intValue = json.execExpr({
+    const intValue = call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#integer',
@@ -88,7 +88,7 @@ test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     // Javascript code: $('#username')->html('Mister Johnson')
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#username',
@@ -106,7 +106,7 @@ test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username">Feuzeu</span></div>`;
 
     // Javascript code: $('#username')->prop('outerHTML', 'Mister Johnson')
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#username',
@@ -125,7 +125,7 @@ test('Set an event handler', () => {
 
     // Set an event handler
     // Javascript code: $('#username')->on('click', () => $('#username')->html('Mister Johnson'))
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'select',
             _name: '#username',
@@ -159,7 +159,7 @@ test('Use "this" in an event handler', () => {
 
     // Set an event handler
     // Javascript code: $('.username')->on('click', () => $(this)->html('Mister Johnson'))
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'select',
             _name: '.username',
@@ -192,7 +192,7 @@ test('Access to undefined vars', () => {
     expect(window.defValue).toBe(undefined);
 
     // Javascript code: const undefValue1 = window.defValue
-    const undefValue1 = json.execExpr({
+    const undefValue1 = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'defValue',
@@ -202,7 +202,7 @@ test('Access to undefined vars', () => {
     expect(undefValue1).toBe(undefined);
 
     // Javascript code: window.defValue = '1024'
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'defValue',
@@ -213,7 +213,7 @@ test('Access to undefined vars', () => {
     expect(window.defValue).toBe('1024');
 
     // Javascript code: const defValue = window.defValue
-    const defValue = json.execExpr({
+    const defValue = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'defValue',
@@ -223,7 +223,7 @@ test('Access to undefined vars', () => {
     expect(defValue).toBe('1024');
 
     // Javascript code: const undefValue2 = window.defValue.intValue
-    const undefValue2 = json.execExpr({
+    const undefValue2 = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'defValue',
@@ -236,7 +236,7 @@ test('Access to undefined vars', () => {
     expect(undefValue2).toBe(undefined);
 
     // Javascript code: const undefValue3 = window.intValue.defValue
-    const undefValue3 = json.execExpr({
+    const undefValue3 = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'intValue',
@@ -253,7 +253,7 @@ test('Access to "global" vars', () => {
     expect(window.strValue).toBe(undefined);
 
     // Javascript code: window.strValue = '1024'
-    json.execExpr({
+    call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'strValue',
@@ -264,7 +264,7 @@ test('Access to "global" vars', () => {
     expect(window.strValue).toBe('1024');
 
     // Javascript code: const strValue = window.strValue
-    const strValue = json.execExpr({
+    const strValue = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'strValue',
@@ -274,7 +274,7 @@ test('Access to "global" vars', () => {
     expect(strValue).toBe('1024');
 
     // Javascript code: const intValue = parseInt(window.strValue)
-    const intValue = json.execExpr({
+    const intValue = call.execExpr({
         calls: [{
             _type: 'func',
             _name: 'parseInt',

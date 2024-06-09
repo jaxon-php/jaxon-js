@@ -185,7 +185,7 @@
      * @returns {void}
      */
     const showMessage = (message) => !!message &&
-        dialog.alert(message, self.makePhrase(message.phrase));
+        dialog.alert({ ...message, text: self.makePhrase(message.phrase) });
 
     /**
      * @param {object} question The confirmation question
@@ -196,7 +196,7 @@
      * @returns {boolean}
      */
     const execWithConfirmation = (question, message, aCalls, oCallContext) =>
-        dialog.confirm(question, self.makePhrase(question.phrase),
+        dialog.confirm({ ...question, text: self.makePhrase(question.phrase) },
             () => execCalls(aCalls, oCallContext), () => showMessage(message));
 
     /**
@@ -220,7 +220,7 @@
      * @param {object} xExpression
      * @param {object} oCallContext The context to execute calls in.
      *
-     * @returns {void}
+     * @returns {mixed}
      */
     const execExpression = (xExpression, oCallContext) => {
         const { calls, question, condition, message } = xExpression;
@@ -232,7 +232,7 @@
             execWithCondition(condition, message, calls, oCallContext);
             return;
         }
-        execCalls(calls, oCallContext);
+        return execCalls(calls, oCallContext);
     };
 
     /**
