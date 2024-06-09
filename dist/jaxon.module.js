@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-10',
+        patch: '0rc-11',
     },
 
     debug: {
