@@ -3,12 +3,22 @@
  */
 
 (function(self, types, dom, js, jq) {
+    /**
+     * Labels for confirm question.
+     *
+     * @var {object}
+     */
     const labels = {
         yes: 'Yes',
         no: 'No',
     };
 
-    self.default = {};
+    /**
+     * Dialog libraries.
+     *
+     * @var {object}
+     */
+    const libs = {};
 
     /**
      * Check if a dialog library is defined.
@@ -17,7 +27,7 @@
      *
      * @returns {bool}
      */
-    self.has = (sName) => !!self[sName];
+    self.has = (sName) => !!libs[sName];
 
     /**
      * Get a dialog library.
@@ -26,7 +36,35 @@
      *
      * @returns {object|null}
      */
-    self.get = (sName) => self[sName] ?? self.default;
+    self.get = (sName) => libs[sName] ?? libs.default;
+
+    /**
+     * Show a message using a dialog library.
+     *
+     * @param {object} oMessage The message in the command
+     * @param {string} oMessage.lib The dialog library to use for the message
+     * @param {string} oMessage.type The message type
+     * @param {object} oMessage.title The message title
+     * @param {string} sMessage The message text
+     *
+     * @returns {void}
+     */
+    self.alert = ({ lib: sLibName, type: sType, title: sTitle }, sMessage) =>
+        self.get(sLibName).alert(sType, sMessage, sTitle);
+
+    /**
+     * Call a function after user confirmation.
+     *
+     * @param {object} oQuestion The question in the command
+     * @param {string} oQuestion.lib The dialog library to use for the question
+     * @param {string} sQuestion The question text
+     * @param {function} fYesCb The function to call if the question is confirmed
+     * @param {function} fNoCb The function to call if the question is not confirmed
+     *
+     * @returns {void}
+     */
+    self.confirm = ({ lib: sLibName, title: sTitle }, sQuestion, fYesCb, fNoCb) =>
+        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb(), fNoCb());
 
     /**
      * Register a dialog library.
@@ -38,16 +76,14 @@
      */
     self.register = (sName, xCallback) => {
         // Create an object for the library
-        self[sName] = {};
+        libs[sName] = {};
         // Define the library functions
-        xCallback(self[sName], { types, dom, js, jq, labels });
+        xCallback(libs[sName], { types, dom, js, jq, labels });
     };
 
     /**
      * Default dialog plugin, based on js alert and confirm functions
-     * Class: jaxon.dialog.lib.default
      */
-
     self.register('default', (lib) => {
         /**
          * Show an alert message
@@ -71,11 +107,8 @@
          * @returns {void}
          */
         lib.confirm = (question, title, yesCallback, noCallback) => {
-            if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
-                yesCallback();
-                return;
-            }
-            noCallback && noCallback();
+            confirm(!title ? question : `<b>${title}</b><br/>${question}`) ?
+                yesCallback() : (noCallback && noCallback());
         };
     });
 })(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);

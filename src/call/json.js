@@ -6,17 +6,6 @@
 
 (function(self, query, dialog, dom, form, types) {
     /**
-     * @var {object}
-     */
-    const xErrors = {
-        comparator: () => false, // The default comparison operator.
-        command: (xCall) => {
-            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
-            return undefined;
-        },
-    };
-
-    /**
      * The comparison operators.
      *
      * @var {object}
@@ -31,49 +20,6 @@
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
     };
-
-    /**
-     * Check if an argument is an expression.
-     *
-     * @param {mixed} xArg
-     *
-     * @returns {boolean}
-     */
-    const isValidCall = xArg => types.isObject(xArg) && (xArg._type);
-
-    /**
-     * Get the value of a single argument.
-     *
-     * @param {mixed} xArg
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {mixed}
-     */
-    const getValue = (xArg, xCurrValue) => {
-        if (!isValidCall(xArg)) {
-            return xArg;
-        }
-        const { _type: sType, _name: sName } = xArg;
-        switch(sType) {
-            case 'form': return form.getValues(sName);
-            case 'html': return dom.$(sName).innerHTML;
-            case 'input': return dom.$(sName).value;
-            case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xArg, { target: window });
-            case '_': return sName === 'this' ? xCurrValue : undefined;
-            default: return undefined;
-        }
-    };
-
-    /**
-     * Get the values of an array of arguments.
-     *
-     * @param {array} aArgs
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {array}
-     */
-    const getArgs = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
 
     /**
      * The call commands
@@ -128,6 +74,62 @@
     };
 
     /**
+     * The function to call if one of the above is not found.
+     *
+     * @var {object}
+     */
+    const xErrors = {
+        comparator: () => false, // The default comparison operator.
+        command: (xCall) => {
+            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
+            return undefined;
+        },
+    };
+
+    /**
+     * Check if an argument is an expression.
+     *
+     * @param {mixed} xArg
+     *
+     * @returns {boolean}
+     */
+    const isValidCall = xArg => types.isObject(xArg) && !!xArg._type;
+
+    /**
+     * Get the value of a single argument.
+     *
+     * @param {mixed} xArg
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xArg, xCurrValue) => {
+        if (!isValidCall(xArg)) {
+            return xArg;
+        }
+        const { _type: sType, _name: sName } = xArg;
+        switch(sType) {
+            case 'form': return form.getValues(sName);
+            case 'html': return dom.$(sName).innerHTML;
+            case 'input': return dom.$(sName).value;
+            case 'checked': return dom.$(sName).checked;
+            case 'expr': return execExpression(xArg, { target: window });
+            case '_': return sName === 'this' ? xCurrValue : undefined;
+            default: return undefined;
+        }
+    };
+
+    /**
+     * Get the values of an array of arguments.
+     *
+     * @param {array} aArgs
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {array}
+     */
+    const getArgs = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
+
+    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -153,23 +155,15 @@
 
     /**
      * Execute the javascript code represented by an expression object.
+     * If a call returns "undefined", it will be the final return value.
      *
      * @param {array} aCalls The calls to execute
      * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    const execCalls = (aCalls, oCallContext) => {
-        let xCurrValue = undefined;
-        const nLength = aCalls.length;
-        for (let i = 0; i < nLength; i++) {
-            xCurrValue = execCall(aCalls[i], oCallContext, xCurrValue);
-            if (xCurrValue === undefined) {
-                return xCurrValue; // Exit the loop if a call returns an undefined value.
-            }
-        }
-        return xCurrValue;
-    };
+    const execCalls = (aCalls, oCallContext) => aCalls.reduce((xValue, xCall) =>
+        xValue === undefined ? undefined : execCall(xCall, oCallContext, xValue), null);
 
     /**
      * Replace placeholders in a given string with values
@@ -180,12 +174,8 @@
      *
      * @returns {string}
      */
-    self.makePhrase = ({ str: sStr, args: aArgs }) => {
-        const oArgs = {};
-        let nIndex = 1;
-        aArgs.forEach(xArg => oArgs[nIndex++] = getValue(xArg));
-        return sStr.supplant(oArgs);
-    };
+    self.makePhrase = ({ str, args }) => str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+        ({ ...oArgs, [nIndex + 1]: getValue(xArg) }), {}));
 
     /**
      * Show an alert message
@@ -194,46 +184,34 @@
      *
      * @returns {void}
      */
-    const showMessage = (message) => {
-        if ((message)) {
-            const {
-                lib: sLibName,
-                type: sType,
-                content: { title: sTitle, phrase },
-            } = message;
-            const xLib = dialog.get(sLibName);
-            xLib.alert(sType, self.makePhrase(phrase), sTitle);
-        }
-    };
+    const showMessage = (message) => !!message &&
+        dialog.alert(message, self.makePhrase(message.phrase));
 
     /**
+     * @param {object} question The confirmation question
+     * @param {object} message The message to show if the user anwsers no to the question
      * @param {array} aCalls The calls to execute
-     * @param {array} aCondition The condition to chek
-     * @param {object} oMessage The message to show if the condition is not met
      * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {boolean}
      */
-    const execWithCondition = (aCalls, aCondition, oMessage, oCallContext) => {
+    const execWithConfirmation = (question, message, aCalls, oCallContext) =>
+        dialog.confirm(question, self.makePhrase(question.phrase),
+            () => execCalls(aCalls, oCallContext), () => showMessage(message));
+
+    /**
+     * @param {array} aCondition The condition to chek
+     * @param {object} oMessage The message to show if the condition is not met
+     * @param {array} aCalls The calls to execute
+     * @param {object} oCallContext The context to execute calls in.
+     *
+     * @returns {boolean}
+     */
+    const execWithCondition = (aCondition, oMessage, aCalls, oCallContext) => {
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg), getValue(xRightArg)) ?
             execCalls(aCalls, oCallContext) : showMessage(oMessage);
-    };
-
-    /**
-     * @param {array} aCalls The calls to execute
-     * @param {object} oQuestion The confirmation question
-     * @param {object} oMessage The message to show if the user anwsers no to the question
-     * @param {object} oCallContext The context to execute calls in.
-     *
-     * @returns {boolean}
-     */
-    const execWithConfirmation = (aCalls, oQuestion, oMessage, oCallContext) => {
-        const { lib: sLibName, phrase } = oQuestion;
-        const xLib = dialog.get(sLibName);
-        xLib.confirm(self.makePhrase(phrase), '',
-            () => execCalls(aCalls, oCallContext), () => showMessage(oMessage));
     };
 
     /**
@@ -242,19 +220,19 @@
      * @param {object} xExpression
      * @param {object} oCallContext The context to execute calls in.
      *
-     * @returns {mixed}
+     * @returns {void}
      */
     const execExpression = (xExpression, oCallContext) => {
         const { calls, question, condition, message } = xExpression;
         if((question)) {
-            execWithConfirmation(calls, question, message, oCallContext);
+            execWithConfirmation(question, message, calls, oCallContext);
             return;
         }
         if((condition)) {
-            execWithCondition(calls, condition, message, oCallContext);
+            execWithCondition(condition, message, calls, oCallContext);
             return;
         }
-        return execCalls(calls, oCallContext);
+        execCalls(calls, oCallContext);
     };
 
     /**
@@ -263,9 +241,9 @@
      * @param {object} xExpression An object representing a command
      * @param {object=} oCallContext The context to execute calls in.
      *
-     * @returns {mixed}
+     * @returns {void}
      */
-    self.execExpr = (xExpression, oCallContext) => !types.isObject(xExpression) ? null :
+    self.execExpr = (xExpression, oCallContext) => types.isObject(xExpression) &&
         execExpression(xExpression, { target: window, ...oCallContext });
 })(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
