@@ -26,12 +26,12 @@ jaxon.$ = jaxon.utils.dom.$;
 /**
  * Shortcut to the JQuery selector function>.
  */
-jaxon.jq = jaxon.call.query.jq;
+jaxon.jq = jaxon.parser.query.jq;
 
 /**
- * Shortcut to <jaxon.call.json.execExpr>.
+ * Shortcut to <jaxon.parser.call.execExpr>.
  */
-jaxon.exec = jaxon.call.json.execExpr;
+jaxon.exec = jaxon.parser.call.execExpr;
 
 /**
  * Shortcut to <jaxon.utils.dom.ready>.
@@ -49,9 +49,9 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
- * Shortcut to <jaxon.call.attr.process>.
+ * Shortcut to <jaxon.parser.attr.process>.
  */
-jaxon.processCustomAttrs = () => jaxon.call.attr.process();
+jaxon.processCustomAttrs = () => jaxon.parser.attr.process();
 
 /**
  * Indicates if jaxon module is loaded.

@@ -64,7 +64,7 @@
      * @returns {void}
      */
     self.confirm = ({ lib: sLibName, title: sTitle }, sQuestion, fYesCb, fNoCb) =>
-        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb(), fNoCb());
+        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb, fNoCb);
 
     /**
      * Register a dialog library.
@@ -111,4 +111,4 @@
                 yesCallback() : (noCallback && noCallback());
         };
     });
-})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);
+})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, window.jQuery);

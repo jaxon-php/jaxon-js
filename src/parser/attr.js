@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.call.attr
+ * Class: jaxon.parser.attr
  *
  * Process Jaxon custom HTML attributes
  */
@@ -113,4 +113,4 @@
      */
     self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
         xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
-})(jaxon.call.attr, jaxon.cmd.event);
+})(jaxon.parser.attr, jaxon.cmd.event);

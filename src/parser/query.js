@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.call.query
+ * Class: jaxon.parser.query
  */
 
 (function(self, jq) {
@@ -23,4 +23,4 @@
         // Todo: Allow the use of an alternative library instead of jQuery.
         return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
     };
-})(jaxon.call.query, window.jQuery);
+})(jaxon.parser.query, window.jQuery);

@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, json, attr, queue, dom, dialog) {
+(function(self, config, rsp, call, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -166,19 +166,24 @@
      * @param {integer} args.count The number of commands to skip.
      * @param {object} args.question The question to ask.
      * @param {string} args.question.lib The dialog library to use.
+     * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} command The Response command object.
      * @param {object} command.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.confirm = ({ count: skipCount, question: { lib: sLibName, phrase } }, { commandQueue }) => {
+    self.confirm = ({
+        count: skipCount,
+        question: { lib: sLibName, title: sTitle, phrase },
+    }, { commandQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
-        commandQueue.paused = true;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(json.makePhrase(phrase), '', () => restartProcessing(commandQueue),
+        commandQueue.paused = true;
+        xLib.confirm(call.makePhrase(phrase), sTitle,
+            () => restartProcessing(commandQueue),
             () => restartProcessing(commandQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
-    jaxon.call.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,
+    jaxon.parser.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);

@@ -2,7 +2,7 @@
  * Class: jaxon.dialog.cmd
  */
 
-(function(self, lib, json) {
+(function(self, lib, parser) {
     /**
      * Find a library to execute a given function.
      *
@@ -35,7 +35,7 @@
      */
     self.showMessage = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
         const xLib = getLib(sLibName, 'alert');
-        xLib.alert && xLib.alert(sType, json.makePhrase(phrase), sTitle);
+        xLib.alert && xLib.alert(sType, parser.makePhrase(phrase), sTitle);
         return true;
     };
 
@@ -71,4 +71,4 @@
         xLib.hide && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.call.json);
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call);

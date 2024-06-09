@@ -43,9 +43,9 @@ var jaxon = {
         event: {},
     },
 
-    call: {
+    parser: {
         attr: {},
-        json: {},
+        call: {},
         query: {},
     },
 

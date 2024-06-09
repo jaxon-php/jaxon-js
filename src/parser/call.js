@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.call.json
+ * Class: jaxon.parser.call
  *
  * Execute calls from json expressions.
  */
@@ -245,5 +245,5 @@
      */
     self.execExpr = (xExpression, oCallContext) => types.isObject(xExpression) &&
         execExpression(xExpression, { target: window, ...oCallContext });
-})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
+})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);

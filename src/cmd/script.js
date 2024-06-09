@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, json, parameters, types) {
+(function(self, call, parameters, types) {
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
@@ -15,7 +15,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func, args }, { context = {} }) => {
-        json.execCall({ _type: 'func', _name: func, args }, context);
+        call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
 
@@ -28,7 +28,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.exec = ({ expr }) => {
-        json.execExpr(expr);
+        call.execExpr(expr);
         return true;
     };
 
@@ -72,7 +72,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.jquery = ({ selector }) => {
-        json.execExpr(selector);
+        call.execExpr(selector);
         return true;
     };
 
@@ -101,11 +101,11 @@
     self.paginate = ({ target, func: oCall }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
-        aLinks.forEach(oLink => oLink.addEventListener('click', () => json.execCall({
+        aLinks.forEach(oLink => oLink.addEventListener('click', () => call.execCall({
             ...oCall,
             _type: 'func',
             args: getCallArgs(aArgs, oLink),
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.parameters, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.utils.types);

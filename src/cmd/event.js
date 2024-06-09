@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.event
  */
 
-(function(self, json, dom, str) {
+(function(self, call, dom, str) {
     /**
      * Add an event handler to the specified target.
      *
@@ -44,9 +44,8 @@
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, func) => {
-        json.execExpr({ _type: 'expr', ...func }, { event, target });
-    };
+    const callEventHandler = (event, target, func) =>
+        call.execExpr({ _type: 'expr', ...func }, { event, target });
 
     /**
      * Add an event handler with arguments to the specified target.
@@ -81,4 +80,4 @@
         target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
-})(jaxon.cmd.event, jaxon.call.json, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.event, jaxon.parser.call, jaxon.utils.dom, jaxon.utils.string);
