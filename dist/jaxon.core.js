@@ -43,9 +43,9 @@ var jaxon = {
         event: {},
     },
 
-    call: {
+    parser: {
         attr: {},
-        json: {},
+        call: {},
         query: {},
     },
 
@@ -976,7 +976,7 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.call.attr
+ * Class: jaxon.parser.attr
  *
  * Process Jaxon custom HTML attributes
  */
@@ -1090,27 +1090,16 @@ window.jaxon = jaxon;
      */
     self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
         xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
-})(jaxon.call.attr, jaxon.cmd.event);
+})(jaxon.parser.attr, jaxon.cmd.event);
 
 
 /**
- * Class: jaxon.call.json
+ * Class: jaxon.parser.call
  *
  * Execute calls from json expressions.
  */
 
 (function(self, query, dialog, dom, form, types) {
-    /**
-     * @var {object}
-     */
-    const xErrors = {
-        comparator: () => false, // The default comparison operator.
-        command: (xCall) => {
-            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
-            return undefined;
-        },
-    };
-
     /**
      * The comparison operators.
      *
@@ -1126,49 +1115,6 @@ window.jaxon = jaxon;
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
     };
-
-    /**
-     * Check if an argument is an expression.
-     *
-     * @param {mixed} xArg
-     *
-     * @returns {boolean}
-     */
-    const isValidCall = xArg => types.isObject(xArg) && (xArg._type);
-
-    /**
-     * Get the value of a single argument.
-     *
-     * @param {mixed} xArg
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {mixed}
-     */
-    const getValue = (xArg, xCurrValue) => {
-        if (!isValidCall(xArg)) {
-            return xArg;
-        }
-        const { _type: sType, _name: sName } = xArg;
-        switch(sType) {
-            case 'form': return form.getValues(sName);
-            case 'html': return dom.$(sName).innerHTML;
-            case 'input': return dom.$(sName).value;
-            case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xArg, { target: window });
-            case '_': return sName === 'this' ? xCurrValue : undefined;
-            default: return undefined;
-        }
-    };
-
-    /**
-     * Get the values of an array of arguments.
-     *
-     * @param {array} aArgs
-     * @param {mixed} xCurrValue The current expression value.
-     *
-     * @returns {array}
-     */
-    const getArgs = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
 
     /**
      * The call commands
@@ -1223,6 +1169,62 @@ window.jaxon = jaxon;
     };
 
     /**
+     * The function to call if one of the above is not found.
+     *
+     * @var {object}
+     */
+    const xErrors = {
+        comparator: () => false, // The default comparison operator.
+        command: (xCall) => {
+            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
+            return undefined;
+        },
+    };
+
+    /**
+     * Check if an argument is an expression.
+     *
+     * @param {mixed} xArg
+     *
+     * @returns {boolean}
+     */
+    const isValidCall = xArg => types.isObject(xArg) && !!xArg._type;
+
+    /**
+     * Get the value of a single argument.
+     *
+     * @param {mixed} xArg
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {mixed}
+     */
+    const getValue = (xArg, xCurrValue) => {
+        if (!isValidCall(xArg)) {
+            return xArg;
+        }
+        const { _type: sType, _name: sName } = xArg;
+        switch(sType) {
+            case 'form': return form.getValues(sName);
+            case 'html': return dom.$(sName).innerHTML;
+            case 'input': return dom.$(sName).value;
+            case 'checked': return dom.$(sName).checked;
+            case 'expr': return execExpression(xArg, { target: window });
+            case '_': return sName === 'this' ? xCurrValue : undefined;
+            default: return undefined;
+        }
+    };
+
+    /**
+     * Get the values of an array of arguments.
+     *
+     * @param {array} aArgs
+     * @param {mixed} xCurrValue The current expression value.
+     *
+     * @returns {array}
+     */
+    const getArgs = (aArgs, xCurrValue) => aArgs.map(xArg => getValue(xArg, xCurrValue));
+
+    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -1248,23 +1250,15 @@ window.jaxon = jaxon;
 
     /**
      * Execute the javascript code represented by an expression object.
+     * If a call returns "undefined", it will be the final return value.
      *
      * @param {array} aCalls The calls to execute
      * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {mixed}
      */
-    const execCalls = (aCalls, oCallContext) => {
-        let xCurrValue = undefined;
-        const nLength = aCalls.length;
-        for (let i = 0; i < nLength; i++) {
-            xCurrValue = execCall(aCalls[i], oCallContext, xCurrValue);
-            if (xCurrValue === undefined) {
-                return xCurrValue; // Exit the loop if a call returns an undefined value.
-            }
-        }
-        return xCurrValue;
-    };
+    const execCalls = (aCalls, oCallContext) => aCalls.reduce((xValue, xCall) =>
+        xValue === undefined ? undefined : execCall(xCall, oCallContext, xValue), null);
 
     /**
      * Replace placeholders in a given string with values
@@ -1275,12 +1269,8 @@ window.jaxon = jaxon;
      *
      * @returns {string}
      */
-    self.makePhrase = ({ str: sStr, args: aArgs }) => {
-        const oArgs = {};
-        let nIndex = 1;
-        aArgs.forEach(xArg => oArgs[nIndex++] = getValue(xArg));
-        return sStr.supplant(oArgs);
-    };
+    self.makePhrase = ({ str, args }) => str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+        ({ ...oArgs, [nIndex + 1]: getValue(xArg) }), {}));
 
     /**
      * Show an alert message
@@ -1289,46 +1279,34 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const showMessage = (message) => {
-        if ((message)) {
-            const {
-                lib: sLibName,
-                type: sType,
-                content: { title: sTitle, phrase },
-            } = message;
-            const xLib = dialog.get(sLibName);
-            xLib.alert(sType, self.makePhrase(phrase), sTitle);
-        }
-    };
+    const showMessage = (message) => !!message &&
+        dialog.alert({ ...message, text: self.makePhrase(message.phrase) });
 
     /**
+     * @param {object} question The confirmation question
+     * @param {object} message The message to show if the user anwsers no to the question
      * @param {array} aCalls The calls to execute
-     * @param {array} aCondition The condition to chek
-     * @param {object} oMessage The message to show if the condition is not met
      * @param {object} oCallContext The context to execute calls in.
      *
      * @returns {boolean}
      */
-    const execWithCondition = (aCalls, aCondition, oMessage, oCallContext) => {
+    const execWithConfirmation = (question, message, aCalls, oCallContext) =>
+        dialog.confirm({ ...question, text: self.makePhrase(question.phrase) },
+            () => execCalls(aCalls, oCallContext), () => showMessage(message));
+
+    /**
+     * @param {array} aCondition The condition to chek
+     * @param {object} oMessage The message to show if the condition is not met
+     * @param {array} aCalls The calls to execute
+     * @param {object} oCallContext The context to execute calls in.
+     *
+     * @returns {boolean}
+     */
+    const execWithCondition = (aCondition, oMessage, aCalls, oCallContext) => {
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg), getValue(xRightArg)) ?
             execCalls(aCalls, oCallContext) : showMessage(oMessage);
-    };
-
-    /**
-     * @param {array} aCalls The calls to execute
-     * @param {object} oQuestion The confirmation question
-     * @param {object} oMessage The message to show if the user anwsers no to the question
-     * @param {object} oCallContext The context to execute calls in.
-     *
-     * @returns {boolean}
-     */
-    const execWithConfirmation = (aCalls, oQuestion, oMessage, oCallContext) => {
-        const { lib: sLibName, phrase } = oQuestion;
-        const xLib = dialog.get(sLibName);
-        xLib.confirm(self.makePhrase(phrase), '',
-            () => execCalls(aCalls, oCallContext), () => showMessage(oMessage));
     };
 
     /**
@@ -1342,11 +1320,11 @@ window.jaxon = jaxon;
     const execExpression = (xExpression, oCallContext) => {
         const { calls, question, condition, message } = xExpression;
         if((question)) {
-            execWithConfirmation(calls, question, message, oCallContext);
+            execWithConfirmation(question, message, calls, oCallContext);
             return;
         }
         if((condition)) {
-            execWithCondition(calls, condition, message, oCallContext);
+            execWithCondition(condition, message, calls, oCallContext);
             return;
         }
         return execCalls(calls, oCallContext);
@@ -1358,16 +1336,16 @@ window.jaxon = jaxon;
      * @param {object} xExpression An object representing a command
      * @param {object=} oCallContext The context to execute calls in.
      *
-     * @returns {mixed}
+     * @returns {void}
      */
-    self.execExpr = (xExpression, oCallContext) => !types.isObject(xExpression) ? null :
+    self.execExpr = (xExpression, oCallContext) => types.isObject(xExpression) &&
         execExpression(xExpression, { target: window, ...oCallContext });
-})(jaxon.call.json, jaxon.call.query, jaxon.dialog.lib, jaxon.utils.dom,
+})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
 
 
 /**
- * Class: jaxon.call.query
+ * Class: jaxon.parser.query
  */
 
 (function(self, jq) {
@@ -1391,7 +1369,200 @@ window.jaxon = jaxon;
         // Todo: Allow the use of an alternative library instead of jQuery.
         return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
     };
-})(jaxon.call.query, window.jQuery);
+})(jaxon.parser.query, window.jQuery);
+
+
+/**
+ * Class: jaxon.dialog.cmd
+ */
+
+(function(self, lib, parser) {
+    /**
+     * Find a library to execute a given function.
+     *
+     * @param {string} sLibName The dialog library name
+     * @param {string} sFunc The dialog library function
+     *
+     * @returns {object}
+     */
+    const getLib = (sLibName, sFunc) => {
+        !lib.has(sLibName) &&
+            console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
+
+        const xLib = lib.get(sLibName);
+        !xLib[sFunc] &&
+            console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
+
+        return xLib;
+    };
+
+    /**
+     * Add an event handler to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The message library name
+     * @param {object} command.type The message type
+     * @param {string} command.title The message title
+     * @param {object} command.phrase The message content
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showMessage = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
+        const xLib = getLib(sLibName, 'alert');
+        xLib.alert && xLib.alert(sType, parser.makePhrase(phrase), sTitle);
+        return true;
+    };
+
+    /**
+     * Remove an event handler from an target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The dialog library name
+     * @param {object} command.dialog The dialog content
+     * @param {string} command.dialog.title The dialog title
+     * @param {string} command.dialog.content The dialog HTML content
+     * @param {array} command.dialog.buttons The dialog buttons
+     * @param {array} command.dialog.options The dialog options
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
+        const xLib = getLib(sLibName, 'show');
+        xLib.show && xLib.show(title, content, buttons, options);
+        return true;
+    };
+
+    /**
+     * Set an event handler with arguments to the specified target.
+     *
+     * @param {object} command The Response command object.
+     * @param {string} command.lib The dialog library name
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.hideModal = ({ lib: sLibName }) => {
+        const xLib = getLib(sLibName, 'hide');
+        xLib.hide && xLib.hide();
+        return true;
+    };
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call);
+
+
+/**
+ * Class: jaxon.dialog.lib
+ */
+
+(function(self, types, dom, js, jq) {
+    /**
+     * Labels for confirm question.
+     *
+     * @var {object}
+     */
+    const labels = {
+        yes: 'Yes',
+        no: 'No',
+    };
+
+    /**
+     * Dialog libraries.
+     *
+     * @var {object}
+     */
+    const libs = {};
+
+    /**
+     * Check if a dialog library is defined.
+     *
+     * @param {string} sName The library name
+     *
+     * @returns {bool}
+     */
+    self.has = (sName) => !!libs[sName];
+
+    /**
+     * Get a dialog library.
+     *
+     * @param {string=default} sName The library name
+     *
+     * @returns {object|null}
+     */
+    self.get = (sName) => libs[sName] ?? libs.default;
+
+    /**
+     * Show a message using a dialog library.
+     *
+     * @param {object} oMessage The message in the command
+     * @param {string} oMessage.lib The dialog library to use for the message
+     * @param {string} oMessage.type The message type
+     * @param {string} oMessage.text The message text
+     * @param {string=} oMessage.title The message title
+     *
+     * @returns {void}
+     */
+    self.alert = ({ lib: sLibName, type: sType, title: sTitle = '', text: sMessage }) =>
+        self.get(sLibName).alert(sType, sMessage, sTitle);
+
+    /**
+     * Call a function after user confirmation.
+     *
+     * @param {object} oQuestion The question in the command
+     * @param {string} oQuestion.lib The dialog library to use for the question
+     * @param {string} oQuestion.text The question text
+     * @param {string=} oQuestion.title The question title
+     * @param {function} fYesCb The function to call if the question is confirmed
+     * @param {function} fNoCb The function to call if the question is not confirmed
+     *
+     * @returns {void}
+     */
+    self.confirm = ({ lib: sLibName, title: sTitle = '', text: sQuestion }, fYesCb, fNoCb) =>
+        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb, fNoCb);
+
+    /**
+     * Register a dialog library.
+     *
+     * @param {string} sName The library name
+     * @param {callback} xCallback The library definition callback
+     *
+     * @returns {void}
+     */
+    self.register = (sName, xCallback) => {
+        // Create an object for the library
+        libs[sName] = {};
+        // Define the library functions
+        xCallback(libs[sName], { types, dom, js, jq, labels });
+    };
+
+    /**
+     * Default dialog plugin, based on js alert and confirm functions
+     */
+    self.register('default', (lib) => {
+        /**
+         * Show an alert message
+         *
+         * @param {string} type The message type
+         * @param {string} text The message text
+         * @param {string} title The message title
+         *
+         * @returns {void}
+         */
+        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {string} question The question to ask
+         * @param {string} title The question title
+         * @param {callback} yesCallback The function to call if the answer is yes
+         * @param {callback} noCallback The function to call if the answer is no
+         *
+         * @returns {void}
+         */
+        lib.confirm = (question, title, yesCallback, noCallback) => {
+            confirm(!title ? question : `<b>${title}</b><br/>${question}`) ?
+                yesCallback() : (noCallback && noCallback());
+        };
+    });
+})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, window.jQuery);
 
 
 /**
@@ -1554,7 +1725,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, json, attr, queue, dom, dialog) {
+(function(self, config, rsp, call, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1718,22 +1889,27 @@ window.jaxon = jaxon;
      * @param {integer} args.count The number of commands to skip.
      * @param {object} args.question The question to ask.
      * @param {string} args.question.lib The dialog library to use.
+     * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} command The Response command object.
      * @param {object} command.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.confirm = ({ count: skipCount, question: { lib: sLibName, phrase } }, { commandQueue }) => {
+    self.confirm = ({
+        count: skipCount,
+        question: { lib: sLibName, title: sTitle, phrase },
+    }, { commandQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
-        commandQueue.paused = true;
         const xLib = dialog.get(sLibName);
-        xLib.confirm(json.makePhrase(phrase), '', () => restartProcessing(commandQueue),
+        commandQueue.paused = true;
+        xLib.confirm(call.makePhrase(phrase), sTitle,
+            () => restartProcessing(commandQueue),
             () => restartProcessing(commandQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.call.json,
-    jaxon.call.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,
+    jaxon.parser.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
 
 
 /**
@@ -2532,7 +2708,7 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.event
  */
 
-(function(self, json, dom, str) {
+(function(self, call, dom, str) {
     /**
      * Add an event handler to the specified target.
      *
@@ -2574,9 +2750,8 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, func) => {
-        json.execExpr({ _type: 'expr', ...func }, { event, target });
-    };
+    const callEventHandler = (event, target, func) =>
+        call.execExpr({ _type: 'expr', ...func }, { event, target });
 
     /**
      * Add an event handler with arguments to the specified target.
@@ -2611,14 +2786,14 @@ window.jaxon = jaxon;
         target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
         return true;
     };
-})(jaxon.cmd.event, jaxon.call.json, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.event, jaxon.parser.call, jaxon.utils.dom, jaxon.utils.string);
 
 
 /**
  * Class: jaxon.cmd.script
  */
 
-(function(self, json, parameters, types) {
+(function(self, call, parameters, types) {
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
@@ -2631,7 +2806,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.call = ({ func, args }, { context = {} }) => {
-        json.execCall({ _type: 'func', _name: func, args }, context);
+        call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
 
@@ -2644,7 +2819,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.exec = ({ expr }) => {
-        json.execExpr(expr);
+        call.execExpr(expr);
         return true;
     };
 
@@ -2688,7 +2863,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.jquery = ({ selector }) => {
-        json.execExpr(selector);
+        call.execExpr(selector);
         return true;
     };
 
@@ -2717,178 +2892,14 @@ window.jaxon = jaxon;
     self.paginate = ({ target, func: oCall }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
-        aLinks.forEach(oLink => oLink.addEventListener('click', () => json.execCall({
+        aLinks.forEach(oLink => oLink.addEventListener('click', () => call.execCall({
             ...oCall,
             _type: 'func',
             args: getCallArgs(aArgs, oLink),
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.call.json, jaxon.ajax.parameters, jaxon.utils.types);
-
-
-/**
- * Class: jaxon.dialog.cmd
- */
-
-(function(self, lib, json) {
-    /**
-     * Find a library to execute a given function.
-     *
-     * @param {string} sLibName The dialog library name
-     * @param {string} sFunc The dialog library function
-     *
-     * @returns {object|null}
-     */
-    const getLib = (sLibName, sFunc) => {
-        if(!lib.has(sLibName)) {
-            console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
-        }
-
-        const xLib = lib.get(sLibName);
-        if(!xLib[sFunc]) {
-            console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
-            return null;
-        }
-        return xLib;
-    };
-
-    /**
-     * Add an event handler to the specified target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The message library name
-     * @param {object} command.type The message type
-     * @param {string} command.content The message content
-     * @param {string} command.content.title The message title
-     * @param {string} command.content.phrase.str The message text with placeholders
-     * @param {array} command.content.phrase.args The arguments for placeholders
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.showMessage = ({ lib: sLibName, type: sType, content }) => {
-        const { title: sTitle, phrase } = content;
-        const xLib = getLib(sLibName, 'alert');
-        xLib && xLib.alert(sType, json.makePhrase(phrase), sTitle);
-        return true;
-    };
-
-    /**
-     * Remove an event handler from an target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The dialog library name
-     * @param {object} command.dialog The dialog content
-     * @param {string} command.dialog.title The dialog title
-     * @param {string} command.dialog.content The dialog HTML content
-     * @param {array} command.dialog.buttons The dialog buttons
-     * @param {array} command.dialog.options The dialog options
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
-        const xLib = getLib(sLibName, 'show');
-        xLib && xLib.show(title, content, buttons, options);
-       return true;
-    };
-
-    /**
-     * Set an event handler with arguments to the specified target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The dialog library name
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.hideModal = ({ lib: sLibName }) => {
-        const xLib = getLib(sLibName, 'hide');
-        xLib && xLib.hide();
-        return true;
-    };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.call.json);
-
-
-/**
- * Class: jaxon.dialog.lib
- */
-
-(function(self, types, dom, js, jq) {
-    const labels = {
-        yes: 'Yes',
-        no: 'No',
-    };
-
-    self.default = {};
-
-    /**
-     * Check if a dialog library is defined.
-     *
-     * @param {string} sName The library name
-     *
-     * @returns {bool}
-     */
-    self.has = (sName) => !!self[sName];
-
-    /**
-     * Get a dialog library.
-     *
-     * @param {string=default} sName The library name
-     *
-     * @returns {object|null}
-     */
-    self.get = (sName) => self[sName] ?? self.default;
-
-    /**
-     * Register a dialog library.
-     *
-     * @param {string} sName The library name
-     * @param {callback} xCallback The library definition callback
-     *
-     * @returns {void}
-     */
-    self.register = (sName, xCallback) => {
-        // Create an object for the library
-        self[sName] = {};
-        // Define the library functions
-        xCallback(self[sName], { types, dom, js, jq, labels });
-    };
-
-    /**
-     * Default dialog plugin, based on js alert and confirm functions
-     * Class: jaxon.dialog.lib.default
-     */
-
-    self.register('default', (lib) => {
-        /**
-         * Show an alert message
-         *
-         * @param {string} type The message type
-         * @param {string} text The message text
-         * @param {string} title The message title
-         *
-         * @returns {void}
-         */
-        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
-
-        /**
-         * Ask a confirm question to the user.
-         *
-         * @param {string} question The question to ask
-         * @param {string} title The question title
-         * @param {callback} yesCallback The function to call if the answer is yes
-         * @param {callback} noCallback The function to call if the answer is no
-         *
-         * @returns {void}
-         */
-        lib.confirm = (question, title, yesCallback, noCallback) => {
-            if(confirm(!title ? question : `<b>${title}</b><br/>${question}`)) {
-                yesCallback();
-                return;
-            }
-            noCallback && noCallback();
-        };
-    });
-})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.call.json, window.jQuery);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.utils.types);
 
 
 /*
@@ -2919,12 +2930,22 @@ jaxon.$ = jaxon.utils.dom.$;
 /**
  * Shortcut to the JQuery selector function>.
  */
-jaxon.jq = jaxon.call.query.jq;
+jaxon.jq = jaxon.parser.query.jq;
 
 /**
- * Shortcut to <jaxon.call.json.execExpr>.
+ * Shortcut to <jaxon.parser.call.execExpr>.
  */
-jaxon.exec = jaxon.call.json.execExpr;
+jaxon.exec = jaxon.parser.call.execExpr;
+
+/**
+ * Shortcut to <jaxon.dialog.lib.confirm>.
+ */
+jaxon.confirm = jaxon.dialog.lib.confirm;
+
+/**
+ * Shortcut to <jaxon.dialog.lib.alert>.
+ */
+jaxon.alert = jaxon.dialog.lib.alert;
 
 /**
  * Shortcut to <jaxon.utils.dom.ready>.
@@ -2942,9 +2963,9 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
- * Shortcut to <jaxon.call.attr.process>.
+ * Shortcut to <jaxon.parser.attr.process>.
  */
-jaxon.processCustomAttrs = () => jaxon.call.attr.process();
+jaxon.processCustomAttrs = () => jaxon.parser.attr.process();
 
 /**
  * Indicates if jaxon module is loaded.
