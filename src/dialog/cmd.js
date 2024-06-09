@@ -9,18 +9,16 @@
      * @param {string} sLibName The dialog library name
      * @param {string} sFunc The dialog library function
      *
-     * @returns {object|null}
+     * @returns {object}
      */
     const getLib = (sLibName, sFunc) => {
-        if(!lib.has(sLibName)) {
+        !lib.has(sLibName) &&
             console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
-        }
 
         const xLib = lib.get(sLibName);
-        if(!xLib[sFunc]) {
+        !xLib[sFunc] &&
             console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
-            return null;
-        }
+
         return xLib;
     };
 
@@ -30,17 +28,14 @@
      * @param {object} command The Response command object.
      * @param {string} command.lib The message library name
      * @param {object} command.type The message type
-     * @param {string} command.content The message content
-     * @param {string} command.content.title The message title
-     * @param {string} command.content.phrase.str The message text with placeholders
-     * @param {array} command.content.phrase.args The arguments for placeholders
+     * @param {string} command.title The message title
+     * @param {object} command.phrase The message content
      *
      * @returns {true} The operation completed successfully.
      */
-    self.showMessage = ({ lib: sLibName, type: sType, content }) => {
-        const { title: sTitle, phrase } = content;
+    self.showMessage = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
         const xLib = getLib(sLibName, 'alert');
-        xLib && xLib.alert(sType, json.makePhrase(phrase), sTitle);
+        xLib.alert && xLib.alert(sType, json.makePhrase(phrase), sTitle);
         return true;
     };
 
@@ -59,8 +54,8 @@
      */
     self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
         const xLib = getLib(sLibName, 'show');
-        xLib && xLib.show(title, content, buttons, options);
-       return true;
+        xLib.show && xLib.show(title, content, buttons, options);
+        return true;
     };
 
     /**
@@ -73,7 +68,7 @@
      */
     self.hideModal = ({ lib: sLibName }) => {
         const xLib = getLib(sLibName, 'hide');
-        xLib && xLib.hide();
+        xLib.hide && xLib.hide();
         return true;
     };
 })(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.call.json);
