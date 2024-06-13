@@ -62,13 +62,14 @@
      *
      * @param {object} name The command name.
      * @param {object} args The command arguments.
-     * @param {object} command The response command to be executed.
+     * @param {object} context The command context.
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, command) => {
+    const callHandler = (name, args, context) => {
         const { func, desc } = handlers[name];
-        return func(args, { ...command, desc });
+        context.command.desc = desc;
+        return func(args, context);
     }
 
     /**
@@ -83,23 +84,22 @@
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        const { name, args = {} } = command;
+        const { name, args = {}, component = {}, options = {} } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
+        const context = { command, options };
         // If the command has an "id" attr, find the corresponding dom node.
-        const sComponentName = args.component?.name;
-        if ((sComponentName)) {
-            args.target = attr.node(sComponentName, args.component.item);
+        if ((component.name)) {
+            context.target = attr.node(component.name, component.item);
         }
-        const id = args.id;
-        if (!args.target && (id)) {
-            args.target = dom.$(id);
+        if (!context.target && (args.id)) {
+            context.target = dom.$(args.id);
         }
         // Process the command
-        const bReturnValue = callHandler(name, args, command);
+        const bReturnValue = callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
-        attr.changed(args.target, name, args.attr) && attr.process(args.target);
+        attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return bReturnValue;
     };
 

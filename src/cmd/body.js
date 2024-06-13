@@ -7,13 +7,14 @@
      * Assign an element's attribute to the specified value.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to set.
      * @param {string} args.value The new value to be applied.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ target, attr, value }) => {
+    self.assign = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value;
@@ -25,13 +26,14 @@
      * Append the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to append to.
      * @param {string} args.value The new value to be appended.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ target, attr, value }) => {
+    self.append = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
@@ -43,13 +45,14 @@
      * Prepend the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute.
      * @param {string} args.value The new value to be prepended.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ target, attr, value }) => {
+    self.prepend = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
@@ -79,14 +82,15 @@
      * Search and replace the specified text.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which is to be modified.
      * @param {string} args.attr The name of the attribute to be set.
      * @param {string} args.search The search text and replacement text.
      * @param {string} args.replace The search text and replacement text.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ target, attr, search, replace }) => {
+    self.replace = ({ attr, search, replace }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             replaceText(xElt, attr === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
@@ -98,13 +102,12 @@
      * Clear an element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which is to be modified.
-     * @param {string} args.attr The name of the attribute to clear.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.clear = ({ target, attr }) => {
-        self.assign({ target, attr, value: '' });
+    self.clear = (args, context) => {
+        self.assign({ ...args, value: '' }, context);
         return true;
     };
 
@@ -112,11 +115,12 @@
      * Delete an element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which will be deleted.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = ({ target }) => {
+    self.remove = (args, { target }) => {
         dom.removeElement(target);
         return true;
     };
@@ -137,13 +141,14 @@
      * Create a new element and append it to the specified parent element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which will contain the new element.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.create = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.create = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.appendChild(createNewTag(sTag, sId));
         return true;
     };
@@ -152,13 +157,14 @@
      * Insert a new element before the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.insert = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target);
         return true;
@@ -168,13 +174,14 @@
      * Insert a new element after the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertAfter = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.insertAfter = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;

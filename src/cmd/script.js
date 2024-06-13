@@ -9,12 +9,11 @@
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
-     * @param {object} command The Response command object.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args }, { context = {} }) => {
+    self.call = ({ func, args }, context) => {
         call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
@@ -24,11 +23,12 @@
      *
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr }) => {
-        call.execExpr(expr);
+    self.exec = ({ expr }, context) => {
+        call.execExpr(expr, context);
         return true;
     };
 
@@ -68,11 +68,12 @@
      *
      * @param {object} args The command arguments.
      * @param {object} args.selector The JQuery expression
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.jquery = ({ selector }) => {
-        call.execExpr(selector);
+    self.jquery = ({ selector }, context) => {
+        call.execExpr(selector, context);
         return true;
     };
 
@@ -92,13 +93,13 @@
      * Set event handlers on pagination links.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The pagination wrapper id
-     * @param {object} args.target The pagination wrapper element
      * @param {object} args.func The page call expression
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, func: oCall }) => {
+    self.paginate = ({ func: oCall }, { target }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
         aLinks.forEach(oLink => oLink.addEventListener('click', () => call.execCall({

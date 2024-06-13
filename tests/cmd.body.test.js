@@ -9,10 +9,10 @@ test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     body.assign({
-        id: 'username',
-        target: dom.$('username'),
         attr: 'innerHTML',
         value: 'Mister Johnson',
+    }, {
+        target: dom.$('username'),
     });
 
     expect($('#username').text()).toBe('Mister Johnson');
@@ -37,10 +37,10 @@ test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     body.assign({
-        id: 'username',
-        target: dom.$('username'),
         attr: 'outerHTML',
         value: 'Mister Johnson',
+    }, {
+        target: dom.$('username'),
     });
 
     expect($('#wrapper').text()).toBe('Mister Johnson');

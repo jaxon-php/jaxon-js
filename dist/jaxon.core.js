@@ -1028,6 +1028,17 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
+    const setClickHandler = (xNode) => {
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
+        // Set the event handler on the node.
+        event.setEventHandler({ target: xNode, event: 'click', func: oHandler });
+    };
+
+    /**
+     * @param {Element} xNode A DOM node.
+     *
+     * @returns {void}
+     */
     const setEventHandlers = (xNode) => {
         const sEvent = xNode.getAttribute('jxn-on');
         const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
@@ -1055,6 +1066,13 @@ window.jaxon = jaxon;
      */
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
+        const aClicks = xContainer.querySelectorAll(':scope [jxn-click]');
+        aClicks.forEach(xNode => {
+            setClickHandler(xNode);
+            xNode.removeAttribute('jxn-click');
+        });
+
+        // Set event handlers on nodes
         const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
         aEvents.forEach(xNode => {
             if(xNode.hasAttribute('jxn-func'))
@@ -1067,16 +1085,16 @@ window.jaxon = jaxon;
         });
 
         // Associate DOM nodes to Jaxon components
-        const aComponents = xContainer.querySelectorAll(':scope [jxn-component]');
+        const aComponents = xContainer.querySelectorAll(':scope [jxn-show]');
         aComponents.forEach(xNode => {
             // if(!xNode.hasAttribute('jxn-item'))
             // {
             //     return;
             // }
-            const sComponentName = xNode.getAttribute('jxn-component');
+            const sComponentName = xNode.getAttribute('jxn-show');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            xNode.removeAttribute('jxn-component');
+            xNode.removeAttribute('jxn-show');
         });
     };
 
@@ -1785,13 +1803,14 @@ window.jaxon = jaxon;
      *
      * @param {object} name The command name.
      * @param {object} args The command arguments.
-     * @param {object} command The response command to be executed.
+     * @param {object} context The command context.
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, command) => {
+    const callHandler = (name, args, context) => {
         const { func, desc } = handlers[name];
-        return func(args, { ...command, desc });
+        context.command.desc = desc;
+        return func(args, context);
     }
 
     /**
@@ -1806,23 +1825,22 @@ window.jaxon = jaxon;
      * @returns {false} The command signalled that it needs to pause processing.
      */
     self.execute = (command) => {
-        const { name, args = {} } = command;
+        const { name, args = {}, component = {}, options = {} } = command;
         if (!self.isRegistered({ name })) {
             return true;
         }
+        const context = { command, options };
         // If the command has an "id" attr, find the corresponding dom node.
-        const sComponentName = args.component?.name;
-        if ((sComponentName)) {
-            args.target = attr.node(sComponentName, args.component.item);
+        if ((component.name)) {
+            context.target = attr.node(component.name, component.item);
         }
-        const id = args.id;
-        if (!args.target && (id)) {
-            args.target = dom.$(id);
+        if (!context.target && (args.id)) {
+            context.target = dom.$(args.id);
         }
         // Process the command
-        const bReturnValue = callHandler(name, args, command);
+        const bReturnValue = callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
-        attr.changed(args.target, name, args.attr) && attr.process(args.target);
+        attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return bReturnValue;
     };
 
@@ -2529,13 +2547,14 @@ window.jaxon = jaxon;
      * Assign an element's attribute to the specified value.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to set.
      * @param {string} args.value The new value to be applied.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ target, attr, value }) => {
+    self.assign = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value;
@@ -2547,13 +2566,14 @@ window.jaxon = jaxon;
      * Append the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute to append to.
      * @param {string} args.value The new value to be appended.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ target, attr, value }) => {
+    self.append = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
@@ -2565,13 +2585,14 @@ window.jaxon = jaxon;
      * Prepend the specified value to an element's attribute.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The HTML element to effect.
      * @param {string} args.attr The name of the attribute.
      * @param {string} args.value The new value to be prepended.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ target, attr, value }) => {
+    self.prepend = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
@@ -2601,14 +2622,15 @@ window.jaxon = jaxon;
      * Search and replace the specified text.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which is to be modified.
      * @param {string} args.attr The name of the attribute to be set.
      * @param {string} args.search The search text and replacement text.
      * @param {string} args.replace The search text and replacement text.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ target, attr, search, replace }) => {
+    self.replace = ({ attr, search, replace }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
             replaceText(xElt, attr === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
@@ -2620,13 +2642,12 @@ window.jaxon = jaxon;
      * Clear an element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which is to be modified.
-     * @param {string} args.attr The name of the attribute to clear.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.clear = ({ target, attr }) => {
-        self.assign({ target, attr, value: '' });
+    self.clear = (args, context) => {
+        self.assign({ ...args, value: '' }, context);
         return true;
     };
 
@@ -2634,11 +2655,12 @@ window.jaxon = jaxon;
      * Delete an element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which will be deleted.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.remove = ({ target }) => {
+    self.remove = (args, { target }) => {
         dom.removeElement(target);
         return true;
     };
@@ -2659,13 +2681,14 @@ window.jaxon = jaxon;
      * Create a new element and append it to the specified parent element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element which will contain the new element.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.create = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.create = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.appendChild(createNewTag(sTag, sId));
         return true;
     };
@@ -2674,13 +2697,14 @@ window.jaxon = jaxon;
      * Insert a new element before the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.insert = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target);
         return true;
@@ -2690,13 +2714,14 @@ window.jaxon = jaxon;
      * Insert a new element after the specified element.
      *
      * @param {object} args The command arguments.
-     * @param {Element} args.target The element that will be used as the reference point for insertion.
      * @param {string} args.tag.name The tag name for the new element.
      * @param {string} args.tag.id The id attribute of the new element.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insertAfter = ({ target, tag: { id: sId, name: sTag } }) => {
+    self.insertAfter = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
@@ -2713,14 +2738,14 @@ window.jaxon = jaxon;
      * Add an event handler to the specified target.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The target element
      * @param {string} args.event The name of the event.
      * @param {string} args.func The name of the function to be called
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addHandler = ({ target, event: sEvent, func: sFuncName }) => {
+    self.addHandler = ({ event: sEvent, func: sFuncName }, { target }) => {
         target.addEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false)
         return true;
     };
@@ -2729,14 +2754,14 @@ window.jaxon = jaxon;
      * Remove an event handler from an target.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The target element
      * @param {string} args.event The name of the event.
      * @param {string} args.func The name of the function to be removed
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.removeHandler = ({ target, event: sEvent, func: sFuncName }) => {
+    self.removeHandler = ({ event: sEvent, func: sFuncName }, { target }) => {
        target.removeEventListener(str.stripOnPrefix(sEvent), dom.findFunction(sFuncName), false);
        return true;
     };
@@ -2744,30 +2769,30 @@ window.jaxon = jaxon;
     /**
      * Call an event handler.
      *
-     * @param {object} target The target element
      * @param {string} event The name of the event
      * @param {object} func The expression to be executed in the event handler
+     * @param {object} target The target element
      *
      * @returns {void}
      */
-    const callEventHandler = (event, target, func) =>
+    const callEventHandler = (event, func, target) =>
         call.execExpr({ _type: 'expr', ...func }, { event, target });
 
     /**
      * Add an event handler with arguments to the specified target.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The target element
      * @param {string} args.event The name of the event
      * @param {object} args.func The event handler
      * @param {object|false} args.options The handler options
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.addEventHandler = ({ target, event: sEvent, func, options }) => {
+    self.addEventHandler = ({ event: sEvent, func, options }, { target }) => {
         target.addEventListener(str.stripOnPrefix(sEvent),
-            (evt) => callEventHandler(evt, target, func), options ?? false);
+            (event) => callEventHandler(event, func, target), options ?? false);
         return true;
     };
 
@@ -2775,15 +2800,15 @@ window.jaxon = jaxon;
      * Set an event handler with arguments to the specified target.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The target element id
-     * @param {object} args.target The target element
      * @param {string} args.event The name of the event
      * @param {object} args.func The event handler
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.setEventHandler = ({ target, event: sEvent, func }) => {
-        target[str.addOnPrefix(sEvent)] = (evt) => callEventHandler(evt, target, func);
+    self.setEventHandler = ({ event: sEvent, func }, { target }) => {
+        target[str.addOnPrefix(sEvent)] = (event) => callEventHandler(event, func, target);
         return true;
     };
 })(jaxon.cmd.event, jaxon.parser.call, jaxon.utils.dom, jaxon.utils.string);
@@ -2800,12 +2825,11 @@ window.jaxon = jaxon;
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
-     * @param {object} command The Response command object.
-     * @param {object} command.context The javascript object to be referenced as 'this' in the script.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args }, { context = {} }) => {
+    self.call = ({ func, args }, context) => {
         call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
@@ -2815,11 +2839,12 @@ window.jaxon = jaxon;
      *
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr }) => {
-        call.execExpr(expr);
+    self.exec = ({ expr }, context) => {
+        call.execExpr(expr, context);
         return true;
     };
 
@@ -2859,11 +2884,12 @@ window.jaxon = jaxon;
      *
      * @param {object} args The command arguments.
      * @param {object} args.selector The JQuery expression
+     * @param {object} context The command context.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.jquery = ({ selector }) => {
-        call.execExpr(selector);
+    self.jquery = ({ selector }, context) => {
+        call.execExpr(selector, context);
         return true;
     };
 
@@ -2883,13 +2909,13 @@ window.jaxon = jaxon;
      * Set event handlers on pagination links.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.id The pagination wrapper id
-     * @param {object} args.target The pagination wrapper element
      * @param {object} args.func The page call expression
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.paginate = ({ target, func: oCall }) => {
+    self.paginate = ({ func: oCall }, { target }) => {
         const aLinks = target.querySelectorAll(`li.enabled > a`);
         const { args: aArgs } = oCall;
         aLinks.forEach(oLink => oLink.addEventListener('click', () => call.execCall({
