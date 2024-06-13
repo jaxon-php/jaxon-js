@@ -108,16 +108,16 @@
         });
 
         // Associate DOM nodes to Jaxon components
-        const aComponents = xContainer.querySelectorAll(':scope [jxn-component]');
+        const aComponents = xContainer.querySelectorAll(':scope [jxn-show]');
         aComponents.forEach(xNode => {
             // if(!xNode.hasAttribute('jxn-item'))
             // {
             //     return;
             // }
-            const sComponentName = xNode.getAttribute('jxn-component');
+            const sComponentName = xNode.getAttribute('jxn-show');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            xNode.removeAttribute('jxn-component');
+            xNode.removeAttribute('jxn-show');
         });
     };
 
