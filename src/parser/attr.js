@@ -51,6 +51,17 @@
      *
      * @returns {void}
      */
+    const setClickHandler = (xNode) => {
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
+        // Set the event handler on the node.
+        event.setEventHandler({ target: xNode, event: 'click', func: oHandler });
+    };
+
+    /**
+     * @param {Element} xNode A DOM node.
+     *
+     * @returns {void}
+     */
     const setEventHandlers = (xNode) => {
         const sEvent = xNode.getAttribute('jxn-on');
         const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
@@ -77,6 +88,13 @@
      * @returns {void}
      */
     self.process = (xContainer = document) => {
+        // Set event handlers on nodes
+        const aClicks = xContainer.querySelectorAll(':scope [jxn-click]');
+        aClicks.forEach(xNode => {
+            setClickHandler(xNode);
+            xNode.removeAttribute('jxn-click');
+        });
+
         // Set event handlers on nodes
         const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
         aEvents.forEach(xNode => {
