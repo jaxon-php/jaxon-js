@@ -105,8 +105,6 @@ jaxon.isLoaded = true;
         return true;
     }, 'Debug message');
 
-    // JQuery
-    register('jquery.call', cmd.script.jquery, 'JQuery::CallSelector');
     // Pagination
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags

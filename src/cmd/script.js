@@ -64,20 +64,6 @@
     };
 
     /**
-     * Execute a JQuery expression beginning with selector.
-     *
-     * @param {object} args The command arguments.
-     * @param {object} args.selector The JQuery expression
-     * @param {object} context The command context.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.jquery = ({ selector }, context) => {
-        call.execExpr(selector, context);
-        return true;
-    };
-
-    /**
      * Replace the page number argument with the current page number value
      *
      * @param {array} aArgs
