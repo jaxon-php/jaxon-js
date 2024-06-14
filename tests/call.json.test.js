@@ -14,6 +14,7 @@ test('Read str value from the DOM', () => {
         calls: [{
             _type: 'select',
             _name: '#integer',
+            mode: 'jq',
         }, {
             _type: 'method',
             _name: 'text',
@@ -31,6 +32,7 @@ test('Read str value from the DOM', () => {
         calls: [{
             _type: 'select',
             _name: '#integer',
+            mode: 'jq',
         }, {
             _type: 'method',
             _name: 'html',
@@ -53,6 +55,7 @@ test('Read int value from the DOM', () => {
                 calls: [{
                     _type: 'select',
                     _name: '#integer',
+                    mode: 'jq',
                 }, {
                     _type: 'method',
                     _name: 'text',
@@ -72,6 +75,7 @@ test('Read int value from the DOM, with the toInt() "method"', () => {
         calls: [{
             _type: 'select',
             _name: '#integer',
+            mode: 'jq',
         }, {
             _type: 'method',
             _name: 'text',
@@ -92,6 +96,7 @@ test('Assign element inner html', () => {
         calls: [{
             _type: 'select',
             _name: '#username',
+            mode: 'jq',
         }, {
             _type: 'method',
             _name: 'html',
@@ -110,6 +115,7 @@ test('Assign element outer html', () => {
         calls: [{
             _type: 'select',
             _name: '#username',
+            mode: 'jq',
         }, {
             _type: 'method',
             _name: 'prop',
@@ -129,6 +135,7 @@ test('Set an event handler', () => {
         calls: [{
             _type: 'select',
             _name: '#username',
+            mode: 'jq',
         }, {
             _type: 'event',
             _name: 'click',
@@ -163,6 +170,7 @@ test('Use "this" in an event handler', () => {
         calls: [{
             _type: 'select',
             _name: '.username',
+            mode: 'jq',
         }, {
             _type: 'event',
             _name: 'click',

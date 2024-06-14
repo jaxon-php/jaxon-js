@@ -27,12 +27,12 @@
      * @var {object}
      */
     const xCommands = {
-        select: ({ _name: sName, context: xSelectContext = null }, oCallContext) => {
+        select: ({ _name: sName, mode, context: xSelectContext = null }, { target, event }) => {
             switch(sName) {
                 case 'this':
-                    return query.select(oCallContext.target); // The last event target.
+                    return mode === 'js' ? target : query.select(target); // The current event target.
                 case 'event':
-                    return oCallContext.event; // The last event
+                    return event; // The current event
                 case 'window':
                     return window;
                 default: // Call the selector.
