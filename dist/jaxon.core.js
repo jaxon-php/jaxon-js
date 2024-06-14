@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-11',
+        patch: '0rc-12',
     },
 
     debug: {
@@ -1140,12 +1140,12 @@ window.jaxon = jaxon;
      * @var {object}
      */
     const xCommands = {
-        select: ({ _name: sName, context: xSelectContext = null }, oCallContext) => {
+        select: ({ _name: sName, mode, context: xSelectContext = null }, { target, event }) => {
             switch(sName) {
                 case 'this':
-                    return query.select(oCallContext.target); // The last event target.
+                    return mode === 'js' ? target : query.select(target); // The current event target.
                 case 'event':
-                    return oCallContext.event; // The last event
+                    return event; // The current event
                 case 'window':
                     return window;
                 default: // Call the selector.
@@ -2880,20 +2880,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Execute a JQuery expression beginning with selector.
-     *
-     * @param {object} args The command arguments.
-     * @param {object} args.selector The JQuery expression
-     * @param {object} context The command context.
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.jquery = ({ selector }, context) => {
-        call.execExpr(selector, context);
-        return true;
-    };
-
-    /**
      * Replace the page number argument with the current page number value
      *
      * @param {array} aArgs
@@ -3035,8 +3021,6 @@ jaxon.isLoaded = true;
         return true;
     }, 'Debug message');
 
-    // JQuery
-    register('jquery.call', cmd.script.jquery, 'JQuery::CallSelector');
     // Pagination
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
