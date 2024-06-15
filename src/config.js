@@ -166,12 +166,6 @@ var jaxon = {
     self.defaultRetry = 5;
 
     /**
-     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
-     * does not specify the return value.
-     */
-    self.defaultReturnValue = false;
-
-    /**
      * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
      */
     self.maxObjectDepth = 20;
@@ -226,7 +220,6 @@ var jaxon = {
             contentType: self.defaultContentType,
             convertResponseToJson: self.convertResponseToJson,
             retry: self.defaultRetry,
-            returnValue: self.defaultReturnValue,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
             context: window,

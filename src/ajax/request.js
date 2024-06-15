@@ -87,7 +87,7 @@
      *
      * @param {object} oRequest The request context object.
      *
-     * @returns {mixed}
+     * @returns {void}
      */
     const submit = (oRequest) => {
         oRequest.status.onRequest();
@@ -105,8 +105,6 @@
             .then(oRequest.responseConverter)
             .then(oRequest.responseHandler)
             .catch(oRequest.errorHandler);
-
-        return oRequest.returnValue;
     };
 
     /**
@@ -186,11 +184,11 @@
      *      This object will be used by jaxon to store all the request parameters as well as
      *      temporary variables needed during the processing of the request.
      *
-     * @returns {boolean}
+     * @returns {void}
      */
     self.execute = (func, funcArgs) => {
         if (func === undefined) {
-            return false;
+            return;
         }
 
         const oRequest = funcArgs ?? {};
@@ -203,7 +201,8 @@
         while (oRequest.requestRetry > 0) {
             try {
                 prepare(oRequest);
-                return oRequest.submit ? submit(oRequest) : null;
+                oRequest.submit && submit(oRequest);
+                return;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
@@ -212,7 +211,6 @@
                 }
             }
         }
-        return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
     jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue);

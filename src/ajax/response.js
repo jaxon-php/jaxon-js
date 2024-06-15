@@ -79,14 +79,10 @@
         }
         const {
             debug: { message } = {},
-            jxn: { value, commands = [] } = {},
+            jxn: { commands = [] } = {},
         } = oRequest.responseContent;
 
         oRequest.status.onProcessing();
-
-        if (value) {
-            oRequest.returnValue = value;
-        }
 
         message && console.log(message);
 
@@ -97,7 +93,6 @@
             sequence: sequence++,
             commandQueue: oRequest.commandQueue,
             request: oRequest,
-            context: oRequest.context,
         }));
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
@@ -106,7 +101,6 @@
             sequence: sequence,
             commandQueue: oRequest.commandQueue,
             request: oRequest,
-            context: oRequest.context,
         });
     };
 
@@ -119,13 +113,12 @@
      */
     const processCommand = (command) => {
         try {
-            return handler.execute(command);
-            // queue.pushFront(commandQueue, command);
-            // return false;
+            handler.execute(command);
+            return true;
         } catch (e) {
             console.log(e);
         }
-        return true;
+        return false;
     };
 
     /**
@@ -138,18 +131,16 @@
      *
      * @param {object} commandQueue A queue containing the commands to execute.
      *
-     * @returns {true} The queue was fully processed and is now empty.
-     * @returns {false} The queue processing was halted before the queue was fully processed.
+     * @returns {void}
      */
     self.processCommands = (commandQueue) => {
         // Stop processing the commands if the queue is paused.
         let command = null;
         while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
             if (!processCommand(command)) {
-                return false;
+                return;
             }
         }
-        return true;
     };
 
     /**
@@ -157,7 +148,7 @@
      *
      * @param {object} oRequest The request context object.
      *
-     * @return {mixed}
+     * @return {true}
      */
     self.jsonProcessor = (oRequest) => {
         if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
@@ -165,20 +156,20 @@
             // Queue and process the commands in the response.
             queueCommands(oRequest)
             self.processCommands(oRequest.commandQueue);
-            return oRequest.returnValue;
+            return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
             window.location = oRequest.response.headers.get('location');
-            return oRequest.returnValue;
+            return true;
         }
         if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
-            return oRequest.returnValue;
+            return true;
         }
-        return oRequest.returnValue;
+        return true;
     };
 
     /**
