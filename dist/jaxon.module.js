@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-12',
+        patch: '0rc-13',
     },
 
     debug: {
@@ -166,12 +166,6 @@ var jaxon = {
     self.defaultRetry = 5;
 
     /**
-     * The value returned by <jaxon.request> when in asynchronous mode, or when a syncrhonous call
-     * does not specify the return value.
-     */
-    self.defaultReturnValue = false;
-
-    /**
      * The maximum depth of recursion allowed when serializing objects to be sent to the server in a request.
      */
     self.maxObjectDepth = 20;
@@ -226,7 +220,6 @@ var jaxon = {
             contentType: self.defaultContentType,
             convertResponseToJson: self.convertResponseToJson,
             retry: self.defaultRetry,
-            returnValue: self.defaultReturnValue,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
             context: window,
@@ -349,10 +342,6 @@ window.jaxon = jaxon;
             return elWorkspace;
         }
         // Workspace not found. Must be created.
-        if (!baseDocument.body) {
-            return null;
-        }
-
         const elNewWorkspace = baseDocument.createElement('div');
         elNewWorkspace.setAttribute('id', 'jaxon_temp_workspace');
         elNewWorkspace.style.display = 'none';
@@ -390,20 +379,6 @@ window.jaxon = jaxon;
     self.willChange = (element, attribute, newData) => {
         element = self.$(element);
         return !element ? false : (newData != element[attribute]);
-    };
-
-    /**
-     * Tests to see if the specified data is the same as the current value of the element's attribute.
-     *
-     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
-     *
-     * @returns {void}
-     */
-    self.removeElement = (element) => {
-        element = self.$(element);
-        if (element && element.parentNode && element.parentNode.removeChild) {
-            element.parentNode.removeChild(element);
-        }
     };
 
     /**
@@ -1024,36 +999,96 @@ window.jaxon = jaxon;
         aCommands.some(sVal => sVal === sCommand);
 
     /**
-     * @param {Element} xNode A DOM node.
+     * @param {Element} xContainer A DOM node.
      *
      * @returns {void}
      */
-    const setClickHandler = (xNode) => {
-        const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
-        // Set the event handler on the node.
-        event.setEventHandler({ target: xNode, event: 'click', func: oHandler });
+    const setClickHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-click]').forEach(xNode => {
+            const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
+            event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
+
+            xNode.removeAttribute('jxn-click');
+        });
     };
 
     /**
-     * @param {Element} xNode A DOM node.
+     * @param {Element} xTarget The event handler target.
+     * @param {Element} xNode The DOM node with the attributes.
+     * @param {string} sAttr The event attribute name
      *
      * @returns {void}
      */
-    const setEventHandlers = (xNode) => {
-        const sEvent = xNode.getAttribute('jxn-on');
+    const setEventHandler = (xTarget, xNode, sAttr) => {
+        if(!xNode.hasAttribute('jxn-func'))
+        {
+            return;
+        }
+
+        const sEvent = xNode.getAttribute(sAttr).trim();
         const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
         if(!xNode.hasAttribute('jxn-select'))
         {
             // Set the event handler on the node.
-            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
+            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xTarget });
             return;
         }
+
         // Set the event handler on the selected children nodes.
-        const sSelector = xNode.getAttribute('jxn-select');
-        const aChildren = xNode.querySelectorAll(`:scope ${sSelector}`);
-        aChildren.forEach(xChild => {
+        const sSelector = xNode.getAttribute('jxn-select').trim();
+        xTarget.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
             // Set the event handler on the child node.
-            event.setEventHandler({ target: xChild , event: sEvent, func: oHandler });
+            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xChild });
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const setEventHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-on]').forEach(xNode => {
+            setEventHandler(xNode, xNode, 'jxn-on');
+
+            xNode.removeAttribute('jxn-on');
+            xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-select');
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const setParentEventHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
+            xTarget.querySelectorAll(':scope [jxn-event]')
+                // Check event declarations only on direct child.
+                .filter(xNode => xNode.parentNode === xTarget)
+                .forEach(xNode => {
+                    setEventHandler(xTarget, xNode, 'jxn-event');
+
+                    xTarget.removeChild(xNode);
+                });
+
+            xNode.removeAttribute('jxn-target');
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const attachComponents = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-show]').forEach(xNode => {
+            const sComponentName = xNode.getAttribute('jxn-show');
+            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
+            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+
+            xNode.removeAttribute('jxn-show');
         });
     };
 
@@ -1066,43 +1101,23 @@ window.jaxon = jaxon;
      */
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
-        const aClicks = xContainer.querySelectorAll(':scope [jxn-click]');
-        aClicks.forEach(xNode => {
-            setClickHandler(xNode);
-            xNode.removeAttribute('jxn-click');
-        });
+        setParentEventHandlers(xContainer);
 
         // Set event handlers on nodes
-        const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
-        aEvents.forEach(xNode => {
-            if(xNode.hasAttribute('jxn-func'))
-            {
-                setEventHandlers(xNode);
-            }
-            xNode.removeAttribute('jxn-on');
-            xNode.removeAttribute('jxn-func');
-            xNode.removeAttribute('jxn-select');
-        });
+        setEventHandlers(xContainer);
 
-        // Associate DOM nodes to Jaxon components
-        const aComponents = xContainer.querySelectorAll(':scope [jxn-show]');
-        aComponents.forEach(xNode => {
-            // if(!xNode.hasAttribute('jxn-item'))
-            // {
-            //     return;
-            // }
-            const sComponentName = xNode.getAttribute('jxn-show');
-            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
-            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            xNode.removeAttribute('jxn-show');
-        });
+        // Set event handlers on nodes
+        setClickHandlers(xContainer);
+
+        // Attach DOM nodes to Jaxon components
+        attachComponents(xContainer)
     };
 
     /**
      * Get the DOM node of a given component.
      *
      * @param {string} sComponentName The component name.
-     * @param {string|} sComponentItem The component item.
+     * @param {string=} sComponentItem The component item.
      *
      * @returns {Element|null}
      */
@@ -1759,7 +1774,7 @@ window.jaxon = jaxon;
      */
     self.q = {
         send: queue.create(config.requestQueueSize),
-        recv: queue.create(config.requestQueueSize * 2)
+        recv: queue.create(config.requestQueueSize * 2),
     };
 
     /**
@@ -1819,17 +1834,16 @@ window.jaxon = jaxon;
      * the command references a DOM object by ID; if so, the object is located within
      * the DOM and added to the command data.  The command handler is then called.
      * 
-     * @param {object} command The response command to be executed.
+     * @param {object} context The response command to be executed.
      *
      * @returns {true} The command completed successfully.
-     * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
-        const { name, args = {}, component = {}, options = {} } = command;
+    self.execute = (context) => {
+        const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
         }
-        const context = { command, options };
+
         // If the command has an "id" attr, find the corresponding dom node.
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
@@ -1837,11 +1851,12 @@ window.jaxon = jaxon;
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
         }
+
         // Process the command
-        const bReturnValue = callHandler(name, args, context);
+        callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
         attr.changed(context.target, name, args.attr) && attr.process(context.target);
-        return bReturnValue;
+        return true;
     };
 
     /**
@@ -1865,8 +1880,8 @@ window.jaxon = jaxon;
      *
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
-     * @param {object} command The Response command object.
-     * @param {object} command.commandQueue The command queue.
+     * @param {object} context The Response command object.
+     * @param {object} context.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
@@ -1909,8 +1924,8 @@ window.jaxon = jaxon;
      * @param {string} args.question.lib The dialog library to use.
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
-     * @param {object} command The Response command object.
-     * @param {object} command.commandQueue The command queue.
+     * @param {object} context The Response command object.
+     * @param {object} context.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
@@ -2197,7 +2212,7 @@ window.jaxon = jaxon;
      *
      * @param {object} oRequest The request context object.
      *
-     * @returns {mixed}
+     * @returns {void}
      */
     const submit = (oRequest) => {
         oRequest.status.onRequest();
@@ -2215,8 +2230,6 @@ window.jaxon = jaxon;
             .then(oRequest.responseConverter)
             .then(oRequest.responseHandler)
             .catch(oRequest.errorHandler);
-
-        return oRequest.returnValue;
     };
 
     /**
@@ -2296,11 +2309,11 @@ window.jaxon = jaxon;
      *      This object will be used by jaxon to store all the request parameters as well as
      *      temporary variables needed during the processing of the request.
      *
-     * @returns {boolean}
+     * @returns {void}
      */
     self.execute = (func, funcArgs) => {
         if (func === undefined) {
-            return false;
+            return;
         }
 
         const oRequest = funcArgs ?? {};
@@ -2313,7 +2326,8 @@ window.jaxon = jaxon;
         while (oRequest.requestRetry > 0) {
             try {
                 prepare(oRequest);
-                return oRequest.submit ? submit(oRequest) : null;
+                oRequest.submit && submit(oRequest);
+                return;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
@@ -2322,7 +2336,6 @@ window.jaxon = jaxon;
                 }
             }
         }
-        return true;
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
     jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue);
@@ -2409,34 +2422,33 @@ window.jaxon = jaxon;
         }
         const {
             debug: { message } = {},
-            jxn: { value, commands = [] } = {},
+            jxn: { commands = [] } = {},
         } = oRequest.responseContent;
 
         oRequest.status.onProcessing();
-
-        if (value) {
-            oRequest.returnValue = value;
-        }
 
         message && console.log(message);
 
         let sequence = 0;
         commands.forEach(command => queue.push(oRequest.commandQueue, {
-            fullName: '*unknown*',
-            ...command,
+            ...oRequest.context,
+            command: {
+                name: '*unknown*',
+                ...command,
+            },
             sequence: sequence++,
-            commandQueue: oRequest.commandQueue,
             request: oRequest,
-            context: oRequest.context,
+            commandQueue: oRequest.commandQueue,
         }));
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
-            name: 'response.complete',
-            fullName: 'Response Complete',
+            command: {
+                name: 'response.complete',
+                fullName: 'Response Complete',
+            },
             sequence: sequence,
-            commandQueue: oRequest.commandQueue,
             request: oRequest,
-            context: oRequest.context,
+            commandQueue: oRequest.commandQueue,
         });
     };
 
@@ -2449,13 +2461,12 @@ window.jaxon = jaxon;
      */
     const processCommand = (command) => {
         try {
-            return handler.execute(command);
-            // queue.pushFront(commandQueue, command);
-            // return false;
+            handler.execute(command);
+            return true;
         } catch (e) {
             console.log(e);
         }
-        return true;
+        return false;
     };
 
     /**
@@ -2468,18 +2479,16 @@ window.jaxon = jaxon;
      *
      * @param {object} commandQueue A queue containing the commands to execute.
      *
-     * @returns {true} The queue was fully processed and is now empty.
-     * @returns {false} The queue processing was halted before the queue was fully processed.
+     * @returns {void}
      */
     self.processCommands = (commandQueue) => {
         // Stop processing the commands if the queue is paused.
         let command = null;
         while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
             if (!processCommand(command)) {
-                return false;
+                return;
             }
         }
-        return true;
     };
 
     /**
@@ -2487,7 +2496,7 @@ window.jaxon = jaxon;
      *
      * @param {object} oRequest The request context object.
      *
-     * @return {mixed}
+     * @return {true}
      */
     self.jsonProcessor = (oRequest) => {
         if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
@@ -2495,20 +2504,20 @@ window.jaxon = jaxon;
             // Queue and process the commands in the response.
             queueCommands(oRequest)
             self.processCommands(oRequest.commandQueue);
-            return oRequest.returnValue;
+            return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
             window.location = oRequest.response.headers.get('location');
-            return oRequest.returnValue;
+            return true;
         }
         if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
-            return oRequest.returnValue;
+            return true;
         }
-        return oRequest.returnValue;
+        return true;
     };
 
     /**
@@ -2661,7 +2670,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.remove = (args, { target }) => {
-        dom.removeElement(target);
+        target.remove();
         return true;
     };
 
@@ -2704,7 +2713,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = ({ tag: { id: sId, name: sTag } }, { target }) => {
+    self.insertBefore = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target);
         return true;
@@ -3001,7 +3010,7 @@ jaxon.isLoaded = true;
     register('dom.clear', cmd.body.clear, 'Dom::Clear');
     register('dom.remove', cmd.body.remove, 'Dom::Remove');
     register('dom.create', cmd.body.create, 'Dom::Create');
-    register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
+    register('dom.insert.before', cmd.body.insertBefore, 'Dom::InsertBefore');
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
