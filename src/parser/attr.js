@@ -47,36 +47,96 @@
         aCommands.some(sVal => sVal === sCommand);
 
     /**
-     * @param {Element} xNode A DOM node.
+     * @param {Element} xContainer A DOM node.
      *
      * @returns {void}
      */
-    const setClickHandler = (xNode) => {
-        const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
-        // Set the event handler on the node.
-        event.setEventHandler({ target: xNode, event: 'click', func: oHandler });
+    const setClickHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-click]').forEach(xNode => {
+            const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
+            event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
+
+            xNode.removeAttribute('jxn-click');
+        });
     };
 
     /**
-     * @param {Element} xNode A DOM node.
+     * @param {Element} xTarget The event handler target.
+     * @param {Element} xNode The DOM node with the attributes.
+     * @param {string} sAttr The event attribute name
      *
      * @returns {void}
      */
-    const setEventHandlers = (xNode) => {
-        const sEvent = xNode.getAttribute('jxn-on');
+    const setEventHandler = (xTarget, xNode, sAttr) => {
+        if(!xNode.hasAttribute('jxn-func'))
+        {
+            return;
+        }
+
+        const sEvent = xNode.getAttribute(sAttr).trim();
         const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
         if(!xNode.hasAttribute('jxn-select'))
         {
             // Set the event handler on the node.
-            event.setEventHandler({ target: xNode, event: sEvent, func: oHandler });
+            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xTarget });
             return;
         }
+
         // Set the event handler on the selected children nodes.
-        const sSelector = xNode.getAttribute('jxn-select');
-        const aChildren = xNode.querySelectorAll(`:scope ${sSelector}`);
-        aChildren.forEach(xChild => {
+        const sSelector = xNode.getAttribute('jxn-select').trim();
+        xTarget.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
             // Set the event handler on the child node.
-            event.setEventHandler({ target: xChild , event: sEvent, func: oHandler });
+            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xChild });
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const setEventHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-on]').forEach(xNode => {
+            setEventHandler(xNode, xNode, 'jxn-on');
+
+            xNode.removeAttribute('jxn-on');
+            xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-select');
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const setParentEventHandlers = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
+            xTarget.querySelectorAll(':scope [jxn-event]')
+                // Check event declarations only on direct child.
+                .filter(xNode => xNode.parentNode === xTarget)
+                .forEach(xNode => {
+                    setEventHandler(xTarget, xNode, 'jxn-event');
+
+                    xTarget.removeChild(xNode);
+                });
+
+            xNode.removeAttribute('jxn-target');
+        });
+    };
+
+    /**
+     * @param {Element} xContainer A DOM node.
+     *
+     * @returns {void}
+     */
+    const attachComponents = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-show]').forEach(xNode => {
+            const sComponentName = xNode.getAttribute('jxn-show');
+            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
+            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+
+            xNode.removeAttribute('jxn-show');
         });
     };
 
@@ -89,43 +149,23 @@
      */
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
-        const aClicks = xContainer.querySelectorAll(':scope [jxn-click]');
-        aClicks.forEach(xNode => {
-            setClickHandler(xNode);
-            xNode.removeAttribute('jxn-click');
-        });
+        setParentEventHandlers(xContainer);
 
         // Set event handlers on nodes
-        const aEvents = xContainer.querySelectorAll(':scope [jxn-on]');
-        aEvents.forEach(xNode => {
-            if(xNode.hasAttribute('jxn-func'))
-            {
-                setEventHandlers(xNode);
-            }
-            xNode.removeAttribute('jxn-on');
-            xNode.removeAttribute('jxn-func');
-            xNode.removeAttribute('jxn-select');
-        });
+        setEventHandlers(xContainer);
 
-        // Associate DOM nodes to Jaxon components
-        const aComponents = xContainer.querySelectorAll(':scope [jxn-show]');
-        aComponents.forEach(xNode => {
-            // if(!xNode.hasAttribute('jxn-item'))
-            // {
-            //     return;
-            // }
-            const sComponentName = xNode.getAttribute('jxn-show');
-            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
-            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            xNode.removeAttribute('jxn-show');
-        });
+        // Set event handlers on nodes
+        setClickHandlers(xContainer);
+
+        // Attach DOM nodes to Jaxon components
+        attachComponents(xContainer)
     };
 
     /**
      * Get the DOM node of a given component.
      *
      * @param {string} sComponentName The component name.
-     * @param {string|} sComponentItem The component item.
+     * @param {string=} sComponentItem The component item.
      *
      * @returns {Element|null}
      */
