@@ -25,10 +25,6 @@
             return elWorkspace;
         }
         // Workspace not found. Must be created.
-        if (!baseDocument.body) {
-            return null;
-        }
-
         const elNewWorkspace = baseDocument.createElement('div');
         elNewWorkspace.setAttribute('id', 'jaxon_temp_workspace');
         elNewWorkspace.style.display = 'none';
@@ -66,20 +62,6 @@
     self.willChange = (element, attribute, newData) => {
         element = self.$(element);
         return !element ? false : (newData != element[attribute]);
-    };
-
-    /**
-     * Tests to see if the specified data is the same as the current value of the element's attribute.
-     *
-     * @param {string|object} element The element or it's unique name (specified by the ID attribute)
-     *
-     * @returns {void}
-     */
-    self.removeElement = (element) => {
-        element = self.$(element);
-        if (element && element.parentNode && element.parentNode.removeChild) {
-            element.parentNode.removeChild(element);
-        }
     };
 
     /**

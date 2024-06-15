@@ -121,7 +121,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.remove = (args, { target }) => {
-        dom.removeElement(target);
+        target.remove();
         return true;
     };
 
@@ -164,7 +164,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.insert = ({ tag: { id: sId, name: sTag } }, { target }) => {
+    self.insertBefore = ({ tag: { id: sId, name: sTag } }, { target }) => {
         target && target.parentNode &&
             target.parentNode.insertBefore(createNewTag(sTag, sId), target);
         return true;

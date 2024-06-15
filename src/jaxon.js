@@ -85,7 +85,7 @@ jaxon.isLoaded = true;
     register('dom.clear', cmd.body.clear, 'Dom::Clear');
     register('dom.remove', cmd.body.remove, 'Dom::Remove');
     register('dom.create', cmd.body.create, 'Dom::Create');
-    register('dom.insert.before', cmd.body.insert, 'Dom::InsertBefore');
+    register('dom.insert.before', cmd.body.insertBefore, 'Dom::InsertBefore');
     register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
 
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
