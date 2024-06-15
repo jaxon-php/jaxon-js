@@ -22,11 +22,13 @@ test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     handler.execute({
-        name: 'dom.assign',
-        args: {
-            id: 'username',
-            attr: 'innerHTML',
-            value: 'Mister Johnson',
+        command: {
+            name: 'dom.assign',
+            args: {
+                id: 'username',
+                attr: 'innerHTML',
+                value: 'Mister Johnson',
+            },
         },
     });
 
@@ -50,11 +52,13 @@ test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     handler.execute({
-        name: 'dom.assign',
-        args: {
-            id: 'username',
-            attr: 'outerHTML',
-            value: 'Mister Johnson',
+        command: {
+            name: 'dom.assign',
+            args: {
+                id: 'username',
+                attr: 'outerHTML',
+                value: 'Mister Johnson',
+            },
         },
     });
 

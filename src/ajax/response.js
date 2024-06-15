@@ -88,19 +88,24 @@
 
         let sequence = 0;
         commands.forEach(command => queue.push(oRequest.commandQueue, {
-            fullName: '*unknown*',
-            ...command,
+            ...oRequest.context,
+            command: {
+                name: '*unknown*',
+                ...command,
+            },
             sequence: sequence++,
-            commandQueue: oRequest.commandQueue,
             request: oRequest,
+            commandQueue: oRequest.commandQueue,
         }));
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
-            name: 'response.complete',
-            fullName: 'Response Complete',
+            command: {
+                name: 'response.complete',
+                fullName: 'Response Complete',
+            },
             sequence: sequence,
-            commandQueue: oRequest.commandQueue,
             request: oRequest,
+            commandQueue: oRequest.commandQueue,
         });
     };
 

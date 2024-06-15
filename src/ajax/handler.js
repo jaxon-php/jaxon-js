@@ -78,17 +78,16 @@
      * the command references a DOM object by ID; if so, the object is located within
      * the DOM and added to the command data.  The command handler is then called.
      * 
-     * @param {object} command The response command to be executed.
+     * @param {object} context The response command to be executed.
      *
      * @returns {true} The command completed successfully.
-     * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
-        const { name, args = {}, component = {}, options = {} } = command;
+    self.execute = (context) => {
+        const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
         }
-        const context = { command, options };
+
         // If the command has an "id" attr, find the corresponding dom node.
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
@@ -96,6 +95,7 @@
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
         }
+
         // Process the command
         callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
@@ -124,8 +124,8 @@
      *
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
-     * @param {object} command The Response command object.
-     * @param {object} command.commandQueue The command queue.
+     * @param {object} context The Response command object.
+     * @param {object} context.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
@@ -168,8 +168,8 @@
      * @param {string} args.question.lib The dialog library to use.
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
-     * @param {object} command The Response command object.
-     * @param {object} command.commandQueue The command queue.
+     * @param {object} context The Response command object.
+     * @param {object} context.commandQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
