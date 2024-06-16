@@ -2,14 +2,14 @@
  * Class: jaxon.parser.query
  */
 
-(function(self, jq) {
+(function(self) {
     /**
-     * The jQuery object.
-     * Will be undefined if the library is not installed.
+     * The selector function.
+     * u() is the UmbrellaJs (https://umbrellajs.com) selector function.
      *
      * @var {object}
      */
-    self.jq = jq;
+    self.jq = u; // window.jQuery
 
     /**
      * Call the jQuery DOM selector
@@ -20,7 +20,6 @@
      * @returns {object}
      */
     self.select = (xSelector, xContext = null) => {
-        // Todo: Allow the use of an alternative library instead of jQuery.
         return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
     };
-})(jaxon.parser.query, window.jQuery);
+})(jaxon.parser.query);
