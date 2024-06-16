@@ -1,3 +1,11 @@
+const u = require('umbrellajs');
+const {
+    parser: { query },
+} = require('../dist/jaxon.module');
+
+// Init the selector library.
+query.init(u);
+
 const { utils: { string } } = require('../dist/jaxon.module');
 
 test('Replace single quotes with double quotes.', () => {
