@@ -2,14 +2,42 @@
  * Class: jaxon.parser.query
  */
 
-(function(self) {
+(function(self, jq) {
     /**
      * The selector function.
-     * u() is the UmbrellaJs (https://umbrellajs.com) selector function.
      *
-     * @var {object}
+     * @var {object|null}
      */
-    self.jq = u; // window.jQuery
+    self.jq = null;
+
+    /**
+     * Init the library
+     *
+     * @param {object=} selector The selector function
+     *
+     * @var {mixed}
+     */
+    self.init = (selector) => {
+        // Add the val() function to the UmbrellaJs selector.
+        if ((selector)) {
+            selector.prototype.val = function() {
+                const el = this.first();
+                if (!el) {
+                    return undefined;
+                }
+                if (!el.options || !el.multiple) {
+                    return el.value;
+                }
+                return el.options
+                    .filter((option) => option.selected)
+                    .map((option) => option.value);
+            };
+        }
+        self.jq = selector;
+    };
+
+    // Call the init function.
+    self.init(jq);
 
     /**
      * Call the jQuery DOM selector
@@ -22,4 +50,5 @@
     self.select = (xSelector, xContext = null) => {
         return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
     };
-})(jaxon.parser.query);
+})(jaxon.parser.query, window.u /* window.jQuery */);
+// window.u is the UmbrellaJs (https://umbrellajs.com) selector function.
