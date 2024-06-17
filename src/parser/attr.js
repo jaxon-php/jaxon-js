@@ -112,16 +112,16 @@
      */
     const setParentEventHandlers = (xContainer) => {
         xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
-            xTarget.querySelectorAll(':scope [jxn-event]')
+            xTarget.querySelectorAll(':scope [jxn-event]').forEach(xNode => {
                 // Check event declarations only on direct child.
-                .filter(xNode => xNode.parentNode === xTarget)
-                .forEach(xNode => {
+                if (xNode.parentNode === xTarget) {
                     setEventHandler(xTarget, xNode, 'jxn-event');
 
                     xTarget.removeChild(xNode);
-                });
+                }
+            });
 
-            xNode.removeAttribute('jxn-target');
+            xTarget.removeAttribute('jxn-target');
         });
     };
 
