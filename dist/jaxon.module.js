@@ -504,7 +504,7 @@ var jaxon = {
             return;
 
         const values = type !== 'select-multiple' ? value :
-            options.filter(({ selected }) => selected).map(({ value: v }) => v);
+            Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
