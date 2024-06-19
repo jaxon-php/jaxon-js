@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-13',
+        patch: '0rc-15',
     },
 
     debug: {
@@ -1274,7 +1274,8 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const execCall = (xCall, xOptions) => {
-        const xCommand = isValidCall(xCall) ? xCommands[xCall._type] : xErrors.command;
+        const xCommand = !isValidCall(xCall) ? xErrors.command :
+            (xCommands[xCall._type] ?? xErrors.command);
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };
@@ -2177,6 +2178,26 @@ window.jaxon = jaxon;
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue) {
     /**
+     * Copy the value of the csrf meta tag to the request headers.
+     *
+     * @param {string} sTagName The request context object.
+     *
+     * @return {void}
+     */
+    self.setCsrf = (sTagName) => {
+        const metaTags = cfg.baseDocument.getElementsByTagName('meta') || [];
+        for (const metaTag of metaTags) {
+            if (metaTag.getAttribute('name') === sTagName) {
+                const csrfToken = metaTag.getAttribute('content');
+                if ((csrfToken)) {
+                    cfg.postHeaders['X-CSRF-TOKEN'] = csrfToken;
+                }
+                return;
+            }
+        }
+    };
+
+    /**
      * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
@@ -2995,6 +3016,11 @@ jaxon.register = jaxon.ajax.handler.register;
  * Shortcut to <jaxon.utils.dom.$>.
  */
 jaxon.$ = jaxon.utils.dom.$;
+
+/**
+ * Shortcut to <jaxon.ajax.request.setCsrf>.
+ */
+jaxon.setCsrf = jaxon.ajax.request.setCsrf;
 
 /**
  * Shortcut to the JQuery selector function>.
