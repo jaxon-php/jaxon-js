@@ -4,6 +4,26 @@
 
 (function(self, cfg, params, rsp, cbk, handler, upload, queue) {
     /**
+     * Copy the value of the csrf meta tag to the request headers.
+     *
+     * @param {string} sTagName The request context object.
+     *
+     * @return {void}
+     */
+    self.setCsrf = (sTagName) => {
+        const metaTags = cfg.baseDocument.getElementsByTagName('meta') || [];
+        for (const metaTag of metaTags) {
+            if (metaTag.getAttribute('name') === sTagName) {
+                const csrfToken = metaTag.getAttribute('content');
+                if ((csrfToken)) {
+                    cfg.postHeaders['X-CSRF-TOKEN'] = csrfToken;
+                }
+                return;
+            }
+        }
+    };
+
+    /**
      * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,

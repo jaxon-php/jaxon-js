@@ -24,6 +24,11 @@ jaxon.register = jaxon.ajax.handler.register;
 jaxon.$ = jaxon.utils.dom.$;
 
 /**
+ * Shortcut to <jaxon.ajax.request.setCsrf>.
+ */
+jaxon.setCsrf = jaxon.ajax.request.setCsrf;
+
+/**
  * Shortcut to the JQuery selector function>.
  */
 jaxon.jq = jaxon.parser.query.jq;
