@@ -146,7 +146,8 @@
      * @returns {void}
      */
     const execCall = (xCall, xOptions) => {
-        const xCommand = isValidCall(xCall) ? xCommands[xCall._type] : xErrors.command;
+        const xCommand = !isValidCall(xCall) ? xErrors.command :
+            (xCommands[xCall._type] ?? xErrors.command);
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };
