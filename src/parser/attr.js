@@ -137,6 +137,7 @@
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
 
             xNode.removeAttribute('jxn-show');
+            xNode.removeAttribute('jxn-item');
         });
     };
 

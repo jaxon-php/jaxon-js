@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0rc-16',
+        patch: '0rc-17',
     },
 
     debug: {
@@ -458,7 +458,7 @@ window.jaxon = jaxon;
             return;
 
         const values = type !== 'select-multiple' ? value :
-            options.filter(({ selected }) => selected).map(({ value: v }) => v);
+            Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
         const keyBegin = name.indexOf('[');
 
         if (keyBegin < 0) {
@@ -1089,6 +1089,7 @@ window.jaxon = jaxon;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
 
             xNode.removeAttribute('jxn-show');
+            xNode.removeAttribute('jxn-item');
         });
     };
 
