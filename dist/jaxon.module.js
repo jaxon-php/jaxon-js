@@ -1150,6 +1150,31 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Get or set an attribute on a parent object.
+     *
+     * @param {object|null} xParent The parent object
+     * @param {string} sName The attribute name
+     * @param {mixed} xValue If defined, the value to set
+     * @param {object} xOptions The call options.
+     *
+     * @var {object}
+     */
+    const processAttr = (xParent, sName, xValue, xOptions) => {
+        if (!xParent) {
+            return undefined;
+        }
+        const xElt = dom.getInnerObject(sName, xParent);
+        if (!xElt) {
+            return undefined;
+        }
+        if (xValue !== undefined) {
+            // Assign an attribute.
+            xElt.node[xElt.attr] = getValue(xValue, xOptions);
+        }
+        return xElt.node[xElt.attr];
+    };
+
+    /**
      * The call commands
      *
      * @var {object}
@@ -1197,15 +1222,11 @@ window.jaxon = jaxon;
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, context: { target: xTarget } } = xOptions;
-            const xElt = dom.getInnerObject(sName, xCurrValue || xTarget);
-            if (!xElt) {
-                return undefined;
-            }
-            if (xValue !== undefined) {
-                // Assign an attribute.
-                xElt.node[xElt.attr] = getValue(xValue, xOptions);
-            }
-            return xElt.node[xElt.attr];
+            return processAttr(xCurrValue || xTarget, sName, xValue, xOptions);
+        },
+        // Global var. The parent is the "window" object.
+        gvar: ({ _name: sName, value: xValue }, xOptions) => {
+            return processAttr(window, sName, xValue, xOptions);
         },
     };
 
@@ -1807,7 +1828,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, call, attr, queue, dom, dialog) {
+(function(self, config, call, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1887,7 +1908,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The command completed successfully.
      */
-    self.execute = (context) => {
+    const execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
@@ -1896,9 +1917,15 @@ window.jaxon = jaxon;
         // If the command has an "id" attr, find the corresponding dom node.
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
+            if (!context.target) {
+                console.error('Unable to find component node: ' + JSON.stringify(component));
+            }
         }
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
+            if (!context.target) {
+                console.error('Unable to find node with id : ' + args.id);
+            }
         }
 
         // Process the command
@@ -1906,6 +1933,45 @@ window.jaxon = jaxon;
         // Process Jaxon custom attributes in the new node HTML content.
         attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return true;
+    };
+
+    /**
+     * Process a single command
+     * 
+     * @param {object} context The response command to process
+     *
+     * @returns {boolean}
+     */
+    const processCommand = (context) => {
+        try {
+            execute(context);
+            return true;
+        } catch (e) {
+            console.log(e);
+        }
+        return false;
+    };
+
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When oQueue.paused is set to true, the processing is halted.
+     *
+     * Note:
+     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     *
+     * @param {object} oQueue A queue containing the commands to execute.
+     *
+     * @returns {void}
+     */
+    self.processCommands = (oQueue) => {
+        // Stop processing the commands if the queue is paused.
+        let context = null;
+        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
+            if (!processCommand(context)) {
+                return;
+            }
+        }
     };
 
     /**
@@ -1932,14 +1998,14 @@ window.jaxon = jaxon;
      * @param {object} context The Response command object.
      * @param {object} context.oQueue The command queue.
      *
-     * @returns {true} The queue processing is temporarily paused.
+     * @returns {true}
      */
     self.sleep = ({ duration }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
         setTimeout(() => {
             oQueue.paused = false;
-            rsp.processCommands(oQueue);
+            self.processCommands(oQueue);
         }, duration * 100);
         return true;
     };
@@ -1959,7 +2025,7 @@ window.jaxon = jaxon;
             --skipCount;
         }
         oQueue.paused = false;
-        rsp.processCommands(oQueue);
+        self.processCommands(oQueue);
     };
 
     /**
@@ -1990,8 +2056,8 @@ window.jaxon = jaxon;
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,
-    jaxon.parser.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
 
 
 /**
@@ -2521,45 +2587,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Process a single command
-     * 
-     * @param {object} context The response command to process
-     *
-     * @returns {boolean}
-     */
-    const processCommand = (context) => {
-        try {
-            handler.execute(context);
-            return true;
-        } catch (e) {
-            console.log(e);
-        }
-        return false;
-    };
-
-    /**
-     * While entries exist in the queue, pull and entry out and process it's command.
-     * When oQueue.paused is set to true, the processing is halted.
-     *
-     * Note:
-     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
-     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-     *
-     * @param {object} oQueue A queue containing the commands to execute.
-     *
-     * @returns {void}
-     */
-    self.processCommands = (oQueue) => {
-        // Stop processing the commands if the queue is paused.
-        let context = null;
-        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
-            if (!processCommand(context)) {
-                return;
-            }
-        }
-    };
-
-    /**
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
@@ -2571,7 +2598,7 @@ window.jaxon = jaxon;
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            self.processCommands(oRequest.oQueue);
+            handler.processCommands(oRequest.oQueue);
             return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {

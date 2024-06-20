@@ -3,7 +3,7 @@ const u = require('umbrellajs');
 const {
     cmd: { body },
     ajax: { handler },
-    utils: { dom },
+    utils: { dom, queue },
     parser: { query },
 } = require('../dist/jaxon.module');
 
@@ -26,7 +26,8 @@ test('Assign element inner html', () => {
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    handler.execute({
+    const oQueue = queue.create(5);
+    queue.push(oQueue, {
         command: {
             name: 'dom.assign',
             args: {
@@ -36,6 +37,8 @@ test('Assign element inner html', () => {
             },
         },
     });
+
+    handler.processCommands(oQueue);
 
     expect($('#username').text()).toBe('Mister Johnson');
 });
@@ -56,7 +59,8 @@ test('Assign element outer html', () => {
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    handler.execute({
+    const oQueue = queue.create(5);
+    queue.push(oQueue, {
         command: {
             name: 'dom.assign',
             args: {
@@ -66,6 +70,8 @@ test('Assign element outer html', () => {
             },
         },
     });
+
+    handler.processCommands(oQueue);
 
     expect($('#wrapper').text()).toBe('Mister Johnson');
 });

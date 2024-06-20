@@ -109,45 +109,6 @@
     };
 
     /**
-     * Process a single command
-     * 
-     * @param {object} context The response command to process
-     *
-     * @returns {boolean}
-     */
-    const processCommand = (context) => {
-        try {
-            handler.execute(context);
-            return true;
-        } catch (e) {
-            console.log(e);
-        }
-        return false;
-    };
-
-    /**
-     * While entries exist in the queue, pull and entry out and process it's command.
-     * When oQueue.paused is set to true, the processing is halted.
-     *
-     * Note:
-     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
-     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-     *
-     * @param {object} oQueue A queue containing the commands to execute.
-     *
-     * @returns {void}
-     */
-    self.processCommands = (oQueue) => {
-        // Stop processing the commands if the queue is paused.
-        let context = null;
-        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
-            if (!processCommand(context)) {
-                return;
-            }
-        }
-    };
-
-    /**
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
@@ -159,7 +120,7 @@
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            self.processCommands(oRequest.oQueue);
+            handler.processCommands(oRequest.oQueue);
             return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {

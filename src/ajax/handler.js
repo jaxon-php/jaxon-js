@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, rsp, call, attr, queue, dom, dialog) {
+(function(self, config, call, attr, queue, dom, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -82,7 +82,7 @@
      *
      * @returns {true} The command completed successfully.
      */
-    self.execute = (context) => {
+    const execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
@@ -110,6 +110,45 @@
     };
 
     /**
+     * Process a single command
+     * 
+     * @param {object} context The response command to process
+     *
+     * @returns {boolean}
+     */
+    const processCommand = (context) => {
+        try {
+            execute(context);
+            return true;
+        } catch (e) {
+            console.log(e);
+        }
+        return false;
+    };
+
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When oQueue.paused is set to true, the processing is halted.
+     *
+     * Note:
+     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     *
+     * @param {object} oQueue A queue containing the commands to execute.
+     *
+     * @returns {void}
+     */
+    self.processCommands = (oQueue) => {
+        // Stop processing the commands if the queue is paused.
+        let context = null;
+        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
+            if (!processCommand(context)) {
+                return;
+            }
+        }
+    };
+
+    /**
      * Attempt to pop the next asynchronous request.
      *
      * @param {object} oQueue The queue object you would like to modify.
@@ -133,14 +172,14 @@
      * @param {object} context The Response command object.
      * @param {object} context.oQueue The command queue.
      *
-     * @returns {true} The queue processing is temporarily paused.
+     * @returns {true}
      */
     self.sleep = ({ duration }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
         setTimeout(() => {
             oQueue.paused = false;
-            rsp.processCommands(oQueue);
+            self.processCommands(oQueue);
         }, duration * 100);
         return true;
     };
@@ -160,7 +199,7 @@
             --skipCount;
         }
         oQueue.paused = false;
-        rsp.processCommands(oQueue);
+        self.processCommands(oQueue);
     };
 
     /**
@@ -191,5 +230,5 @@
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,
-    jaxon.parser.attr, jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
