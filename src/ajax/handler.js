@@ -125,16 +125,16 @@
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
      * @param {object} context The Response command object.
-     * @param {object} context.commandQueue The command queue.
+     * @param {object} context.oQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.sleep = ({ duration }, { commandQueue }) => {
+    self.sleep = ({ duration }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
-        commandQueue.paused = true;
+        oQueue.paused = true;
         setTimeout(() => {
-            commandQueue.paused = false;
-            rsp.processCommands(commandQueue);
+            oQueue.paused = false;
+            rsp.processCommands(oQueue);
         }, duration * 100);
         return true;
     };
@@ -142,19 +142,19 @@
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} commandQueue The command queue.
+     * @param {object} oQueue The command queue.
      * @param {integer=0} skipCount The number of commands to skip.
      *
      * @returns {void}
      */
-    const restartProcessing = (commandQueue, skipCount = 0) => {
+    const restartProcessing = (oQueue, skipCount = 0) => {
         // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (skipCount > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
+        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
             --skipCount;
         }
-        commandQueue.paused = false;
-        rsp.processCommands(commandQueue);
+        oQueue.paused = false;
+        rsp.processCommands(oQueue);
     };
 
     /**
@@ -169,20 +169,20 @@
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} context The Response command object.
-     * @param {object} context.commandQueue The command queue.
+     * @param {object} context.oQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
         count: skipCount,
         question: { lib: sLibName, title: sTitle, phrase },
-    }, { commandQueue }) => {
+    }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
-        commandQueue.paused = true;
+        oQueue.paused = true;
         xLib.confirm(call.makePhrase(phrase), sTitle,
-            () => restartProcessing(commandQueue),
-            () => restartProcessing(commandQueue, skipCount));
+            () => restartProcessing(oQueue),
+            () => restartProcessing(oQueue, skipCount));
         return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,

@@ -87,7 +87,7 @@
         message && console.log(message);
 
         let sequence = 0;
-        commands.forEach(command => queue.push(oRequest.commandQueue, {
+        commands.forEach(command => queue.push(oRequest.oQueue, {
             ...oRequest.context,
             command: {
                 name: '*unknown*',
@@ -95,30 +95,30 @@
             },
             sequence: sequence++,
             request: oRequest,
-            commandQueue: oRequest.commandQueue,
+            oQueue: oRequest.oQueue,
         }));
         // Queue a last command to clear the queue
-        queue.push(oRequest.commandQueue, {
+        queue.push(oRequest.oQueue, {
             command: {
                 name: 'response.complete',
                 fullName: 'Response Complete',
             },
             sequence: sequence,
             request: oRequest,
-            commandQueue: oRequest.commandQueue,
+            oQueue: oRequest.oQueue,
         });
     };
 
     /**
      * Process a single command
      * 
-     * @param {object} command The command to process
+     * @param {object} context The response command to process
      *
      * @returns {boolean}
      */
-    const processCommand = (command) => {
+    const processCommand = (context) => {
         try {
-            handler.execute(command);
+            handler.execute(context);
             return true;
         } catch (e) {
             console.log(e);
@@ -128,21 +128,21 @@
 
     /**
      * While entries exist in the queue, pull and entry out and process it's command.
-     * When commandQueue.paused is set to true, the processing is halted.
+     * When oQueue.paused is set to true, the processing is halted.
      *
      * Note:
-     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
+     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
-     * @param {object} commandQueue A queue containing the commands to execute.
+     * @param {object} oQueue A queue containing the commands to execute.
      *
      * @returns {void}
      */
-    self.processCommands = (commandQueue) => {
+    self.processCommands = (oQueue) => {
         // Stop processing the commands if the queue is paused.
-        let command = null;
-        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(command)) {
+        let context = null;
+        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
+            if (!processCommand(context)) {
                 return;
             }
         }
@@ -160,7 +160,7 @@
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            self.processCommands(oRequest.commandQueue);
+            self.processCommands(oRequest.oQueue);
             return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
@@ -191,7 +191,7 @@
         }
 
         // Create a queue for the commands in the response.
-        oRequest.commandQueue = queue.create(config.commandQueueSize);
+        oRequest.oQueue = queue.create(config.commandQueueSize);
 
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
