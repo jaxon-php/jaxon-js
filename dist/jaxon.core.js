@@ -234,6 +234,7 @@ var jaxon = {
         if (oRequest.method !== 'GET') {
             oRequest.method = 'POST'; // W3C: Method is case sensitive
         }
+        oRequest.requestRetry = oRequest.retry;
     };
 
     /**
