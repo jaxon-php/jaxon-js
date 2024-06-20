@@ -222,7 +222,6 @@ var jaxon = {
             retry: self.defaultRetry,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
-            context: window,
             upload: false,
             aborted: false,
         };
@@ -1931,16 +1930,16 @@ window.jaxon = jaxon;
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
      * @param {object} context The Response command object.
-     * @param {object} context.commandQueue The command queue.
+     * @param {object} context.oQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.sleep = ({ duration }, { commandQueue }) => {
+    self.sleep = ({ duration }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
-        commandQueue.paused = true;
+        oQueue.paused = true;
         setTimeout(() => {
-            commandQueue.paused = false;
-            rsp.processCommands(commandQueue);
+            oQueue.paused = false;
+            rsp.processCommands(oQueue);
         }, duration * 100);
         return true;
     };
@@ -1948,19 +1947,19 @@ window.jaxon = jaxon;
     /**
      * The function to run after the confirm question, for the comfirmCommands.
      *
-     * @param {object} commandQueue The command queue.
+     * @param {object} oQueue The command queue.
      * @param {integer=0} skipCount The number of commands to skip.
      *
      * @returns {void}
      */
-    const restartProcessing = (commandQueue, skipCount = 0) => {
+    const restartProcessing = (oQueue, skipCount = 0) => {
         // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (skipCount > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
+        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
             --skipCount;
         }
-        commandQueue.paused = false;
-        rsp.processCommands(commandQueue);
+        oQueue.paused = false;
+        rsp.processCommands(oQueue);
     };
 
     /**
@@ -1975,20 +1974,20 @@ window.jaxon = jaxon;
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} context The Response command object.
-     * @param {object} context.commandQueue The command queue.
+     * @param {object} context.oQueue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
         count: skipCount,
         question: { lib: sLibName, title: sTitle, phrase },
-    }, { commandQueue }) => {
+    }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
-        commandQueue.paused = true;
+        oQueue.paused = true;
         xLib.confirm(call.makePhrase(phrase), sTitle,
-            () => restartProcessing(commandQueue),
-            () => restartProcessing(commandQueue, skipCount));
+            () => restartProcessing(oQueue),
+            () => restartProcessing(oQueue, skipCount));
         return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax.response, jaxon.parser.call,
@@ -2500,38 +2499,37 @@ window.jaxon = jaxon;
         message && console.log(message);
 
         let sequence = 0;
-        commands.forEach(command => queue.push(oRequest.commandQueue, {
-            ...oRequest.context,
+        commands.forEach(command => queue.push(oRequest.oQueue, {
             command: {
                 name: '*unknown*',
                 ...command,
             },
             sequence: sequence++,
             request: oRequest,
-            commandQueue: oRequest.commandQueue,
+            oQueue: oRequest.oQueue,
         }));
         // Queue a last command to clear the queue
-        queue.push(oRequest.commandQueue, {
+        queue.push(oRequest.oQueue, {
             command: {
                 name: 'response.complete',
                 fullName: 'Response Complete',
             },
             sequence: sequence,
             request: oRequest,
-            commandQueue: oRequest.commandQueue,
+            oQueue: oRequest.oQueue,
         });
     };
 
     /**
      * Process a single command
      * 
-     * @param {object} command The command to process
+     * @param {object} context The response command to process
      *
      * @returns {boolean}
      */
-    const processCommand = (command) => {
+    const processCommand = (context) => {
         try {
-            handler.execute(command);
+            handler.execute(context);
             return true;
         } catch (e) {
             console.log(e);
@@ -2541,21 +2539,21 @@ window.jaxon = jaxon;
 
     /**
      * While entries exist in the queue, pull and entry out and process it's command.
-     * When commandQueue.paused is set to true, the processing is halted.
+     * When oQueue.paused is set to true, the processing is halted.
      *
      * Note:
-     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
+     * - Set oQueue.paused to false and call this function to cause the queue processing to continue.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
-     * @param {object} commandQueue A queue containing the commands to execute.
+     * @param {object} oQueue A queue containing the commands to execute.
      *
      * @returns {void}
      */
-    self.processCommands = (commandQueue) => {
+    self.processCommands = (oQueue) => {
         // Stop processing the commands if the queue is paused.
-        let command = null;
-        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(command)) {
+        let context = null;
+        while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
+            if (!processCommand(context)) {
                 return;
             }
         }
@@ -2573,7 +2571,7 @@ window.jaxon = jaxon;
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            self.processCommands(oRequest.commandQueue);
+            self.processCommands(oRequest.oQueue);
             return true;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
@@ -2604,7 +2602,7 @@ window.jaxon = jaxon;
         }
 
         // Create a queue for the commands in the response.
-        oRequest.commandQueue = queue.create(config.commandQueueSize);
+        oRequest.oQueue = queue.create(config.commandQueueSize);
 
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');

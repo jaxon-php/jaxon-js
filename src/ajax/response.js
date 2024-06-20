@@ -88,7 +88,6 @@
 
         let sequence = 0;
         commands.forEach(command => queue.push(oRequest.oQueue, {
-            ...oRequest.context,
             command: {
                 name: '*unknown*',
                 ...command,

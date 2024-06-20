@@ -222,7 +222,6 @@ var jaxon = {
             retry: self.defaultRetry,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
-            context: window,
             upload: false,
             aborted: false,
         };
