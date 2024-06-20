@@ -67,13 +67,6 @@
     const redirectCodes = [301, 302, 307];
 
     /**
-     * An object that will hold temp vars
-     *
-     * @type {object}
-     */
-    const _temp = {};
-
-    /**
      * Parse the JSON response into a series of commands.
      *
      * @param {object} oRequest The request context object.
@@ -94,11 +87,11 @@
 
         responseContent.debugmsg && console.log(responseContent.debugmsg);
 
-        _temp.sequence = 0;
+        let sequence = 0;
         responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
             ...command,
             fullName: '*unknown*',
-            sequence: _temp.sequence++,
+            sequence: sequence++,
             response: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
@@ -106,61 +99,11 @@
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
             fullName: 'Response Complete',
-            sequence: _temp.sequence,
+            sequence: sequence,
             request: oRequest,
             context: oRequest.context,
             cmd: 'rcmplt',
         });
-    };
-
-    /**
-     * Process a single command
-     * 
-     * @param {object} commandQueue A queue containing the commands to execute.
-     * @param {object} command The command to process
-     *
-     * @returns {boolean}
-     */
-    const processCommand = (commandQueue, command) => {
-        try {
-            if (handler.execute(command) === true || !command.requeue) {
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
-        } catch (e) {
-            console.log(e);
-        }
-        return true;
-    };
-
-    /**
-     * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
-     *
-     * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
-     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-     *
-     * @param {object} oRequest The request context object.
-     * @param {object} oRequest.commandQueue A queue containing the commands to execute.
-     *
-     * @returns {true} The queue was fully processed and is now empty.
-     * @returns {false} The queue processing was halted before the queue was fully processed.
-     */
-    const processCommands = ({ commandQueue }) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
-        while ((_temp.command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(commandQueue, _temp.command)) {
-                return false;
-            }
-        }
-        return true;
     };
 
     /**
@@ -175,7 +118,7 @@
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            processCommands(oRequest);
+            handler.processCommands(oRequest.commandQueue);
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {

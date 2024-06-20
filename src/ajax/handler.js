@@ -70,7 +70,7 @@
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
+    const execute = (command) => {
         if (!self.isRegistered(command)) {
             return true;
         }
@@ -80,6 +80,56 @@
         }
         // Process the command
         return self.call(command);
+    };
+
+    /**
+     * Process a single command
+     * 
+     * @param {object} commandQueue A queue containing the commands to execute.
+     * @param {object} command The command to process
+     *
+     * @returns {boolean}
+     */
+    const processCommand = (commandQueue, command) => {
+        try {
+            if (execute(command) === true || !command.requeue) {
+                return true;
+            }
+            queue.pushFront(commandQueue, command);
+            return false;
+        } catch (e) {
+            console.log(e);
+        }
+        return true;
+    };
+
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When a command returns false, the processing is halted.
+     *
+     * Note:
+     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
+     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     *
+     * @param {object} commandQueue A queue containing the commands to execute.
+     *
+     * @returns {true} The queue was fully processed and is now empty.
+     * @returns {false} The queue processing was halted before the queue was fully processed.
+     */
+    self.processCommands = (commandQueue) => {
+        if (commandQueue.timeout !== null) {
+            clearTimeout(commandQueue.timeout);
+            commandQueue.timeout = null;
+        }
+
+        let command = null;
+        while ((command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(commandQueue, command)) {
+                return false;
+            }
+        }
+        return true;
     };
 
     /**
@@ -149,7 +199,7 @@
             clearTimeout(commandQueue.timeout);
             commandQueue.timeout = null;
         }
-        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
+        commandQueue.timout = setTimeout(() => self.processCommands(commandQueue), when);
     };
 
     /**
@@ -183,7 +233,7 @@
             return;
         }
         // After => the processing is executed.
-        rsp.process(commandQueue);
+        self.processCommands(commandQueue);
     };
 
     /**
