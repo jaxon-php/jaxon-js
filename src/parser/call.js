@@ -22,6 +22,31 @@
     };
 
     /**
+     * Get or set an attribute on a parent object.
+     *
+     * @param {object|null} xParent The parent object
+     * @param {string} sName The attribute name
+     * @param {mixed} xValue If defined, the value to set
+     * @param {object} xOptions The call options.
+     *
+     * @var {object}
+     */
+    const processAttr = (xParent, sName, xValue, xOptions) => {
+        if (!xParent) {
+            return undefined;
+        }
+        const xElt = dom.getInnerObject(sName, xParent);
+        if (!xElt) {
+            return undefined;
+        }
+        if (xValue !== undefined) {
+            // Assign an attribute.
+            xElt.node[xElt.attr] = getValue(xValue, xOptions);
+        }
+        return xElt.node[xElt.attr];
+    };
+
+    /**
      * The call commands
      *
      * @var {object}
@@ -69,15 +94,11 @@
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, context: { target: xTarget } } = xOptions;
-            const xElt = dom.getInnerObject(sName, xCurrValue || xTarget);
-            if (!xElt) {
-                return undefined;
-            }
-            if (xValue !== undefined) {
-                // Assign an attribute.
-                xElt.node[xElt.attr] = getValue(xValue, xOptions);
-            }
-            return xElt.node[xElt.attr];
+            return processAttr(xCurrValue || xTarget, sName, xValue, xOptions);
+        },
+        // Global var. The parent is the "window" object.
+        gvar: ({ _name: sName, value: xValue }, xOptions) => {
+            return processAttr(window, sName, xValue, xOptions);
         },
     };
 

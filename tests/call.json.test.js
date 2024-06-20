@@ -203,7 +203,7 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue1 = window.defValue
     const undefValue1 = call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'defValue',
         }],
     });
@@ -213,7 +213,7 @@ test('Access to undefined vars', () => {
     // Javascript code: window.defValue = '1024'
     call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'defValue',
             value: '1024',
         }],
@@ -224,7 +224,7 @@ test('Access to undefined vars', () => {
     // Javascript code: const defValue = window.defValue
     const defValue = call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'defValue',
         }],
     });
@@ -234,7 +234,7 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue2 = window.defValue.intValue
     const undefValue2 = call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'defValue',
         },{
             _type: 'attr',
@@ -247,7 +247,7 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue3 = window.intValue.defValue
     const undefValue3 = call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'intValue',
         },{
             _type: 'attr',
@@ -264,7 +264,7 @@ test('Access to "global" vars', () => {
     // Javascript code: window.strValue = '1024'
     call.execExpr({
         calls: [{
-            _type: 'attr',
+            _type: 'gvar',
             _name: 'strValue',
             value: '1024',
         }],
