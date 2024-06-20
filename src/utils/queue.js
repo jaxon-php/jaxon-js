@@ -16,7 +16,7 @@
         size: size,
         end: 0,
         elements: [],
-        timeout: null
+        paused: false,
     });
 
     /**

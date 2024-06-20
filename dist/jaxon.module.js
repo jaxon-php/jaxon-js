@@ -234,7 +234,6 @@ var jaxon = {
         if (oRequest.method !== 'GET') {
             oRequest.method = 'POST'; // W3C: Method is case sensitive
         }
-        oRequest.requestRetry = oRequest.retry;
     };
 
     /**
@@ -606,7 +605,7 @@ var jaxon = {
         size: size,
         end: 0,
         elements: [],
-        timeout: null
+        paused: false,
     });
 
     /**
@@ -1159,7 +1158,7 @@ var jaxon = {
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    self.execute = (command) => {
+    const execute = (command) => {
         if (!self.isRegistered(command)) {
             return true;
         }
@@ -1169,6 +1168,47 @@ var jaxon = {
         }
         // Process the command
         return self.call(command);
+    };
+
+    /**
+     * Process a single command
+     * 
+     * @param {object} command The command to process
+     *
+     * @returns {boolean}
+     */
+    const processCommand = (command) => {
+        try {
+            execute(command);
+            return true;
+        } catch (e) {
+            console.log(e);
+        }
+        return false;
+    };
+
+    /**
+     * While entries exist in the queue, pull and entry out and process it's command.
+     * When commandQueue.paused is set to true, the processing is halted.
+     *
+     * Note:
+     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
+     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
+     *
+     * @param {object} commandQueue A queue containing the commands to execute.
+     *
+     * @returns {true} The queue was fully processed and is now empty.
+     * @returns {false} The queue processing was halted before the queue was fully processed.
+     */
+    self.processCommands = (commandQueue) => {
+        // Stop processing the commands if the queue is paused.
+        let command = null;
+        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(command)) {
+                return true;
+            }
+        }
+        return true;
     };
 
     /**
@@ -1201,44 +1241,24 @@ var jaxon = {
     }
 
     /**
-     * Maintains a retry counter for the given object.
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 10ths of a second to sleep.
+     * @param {object} command.response The command queue.
      *
-     * @returns {true} The object has not exhausted all the retries.
-     * @returns {false} The object has exhausted the retry count specified.
+     * @returns {true}
      */
-    self.retry = (command, count) => {
-        if(command.retries > 0) {
-            if(--command.retries < 1) {
-                return false;
-            }
-        } else {
-            command.retries = count;
-        }
-        // This command must be processed again.
-        command.requeue = true;
+    self.sleep = ({ prop: duration, response: commandQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        commandQueue.paused = true;
+        setTimeout(() => {
+            commandQueue.paused = false;
+            self.processCommands(commandQueue);
+        }, duration * 100);
         return true;
-    };
-
-    /**
-     * Set or reset a timeout that is used to restart processing of the queue.
-     *
-     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
-     * to process pending events, like loading files)
-     *
-     * @param {object} commandQueue The queue to process.
-     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
-     *
-     * @returns {void}
-     */
-    self.setWakeup = (commandQueue, when) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-        commandQueue.timout = setTimeout(() => rsp.process(commandQueue), when);
     };
 
     /**
@@ -1254,32 +1274,24 @@ var jaxon = {
      * The function to run after the confirm question, for the comfirmCommands.
      *
      * @param {object} commandQueue The queue to process.
-     * @param {boolean} requeue True if the last command must be processed again.
      * @param {integer} count The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (commandQueue, requeue, count) => {
+    const confirmCallback = (commandQueue, count) => {
         // The last entry in the queue is not a user command, thus it cannot be skipped.
         while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
             --count;
         }
-        // Run a different command depending on whether this callback executes
-        // before of after the confirm function returns;
-        if(requeue === true) {
-            // Before => the processing is delayed.
-            self.setWakeup(commandQueue, 30);
-            return;
-        }
         // After => the processing is executed.
-        rsp.process(commandQueue);
+        commandQueue.paused = false;
+        self.processCommands(commandQueue);
     };
 
     /**
      * Ask a confirm question and skip the specified number of commands if the answer is ok.
      *
      * The processing of the queue after the question is delayed so it occurs after this function returns.
-     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
      * before (when using the blocking confirm() function) or after this function returns.
      * @see confirmCallback
      *
@@ -1287,18 +1299,16 @@ var jaxon = {
      * @param {integer} count The number of commands to skip.
      * @param {string} question The question to ask to the user.
      *
-     * @returns {void}
+     * @returns {true}
      */
     self.confirm = (command, count, question) => {
-        // This will be checked in the callback.
-        command.requeue = true;
-        const { response: commandQueue, requeue } = command;
+        const { response: commandQueue } = command;
+        // The command queue is paused, and will be restarted after the confirm question is answered.
+        commandQueue.paused = true;
         ajax.message.confirm(question, '',
-            () => confirmCallback(commandQueue, requeue, 0),
-            () => confirmCallback(commandQueue, requeue, count));
-
-        // This command must not be processed again.
-        command.requeue = false;
+            () => confirmCallback(commandQueue, 0),
+            () => confirmCallback(commandQueue, count));
+        return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);
@@ -1749,13 +1759,6 @@ var jaxon = {
     const redirectCodes = [301, 302, 307];
 
     /**
-     * An object that will hold temp vars
-     *
-     * @type {object}
-     */
-    const _temp = {};
-
-    /**
      * Parse the JSON response into a series of commands.
      *
      * @param {object} oRequest The request context object.
@@ -1776,11 +1779,11 @@ var jaxon = {
 
         responseContent.debugmsg && console.log(responseContent.debugmsg);
 
-        _temp.sequence = 0;
+        let sequence = 0;
         responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
             ...command,
             fullName: '*unknown*',
-            sequence: _temp.sequence++,
+            sequence: sequence++,
             response: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
@@ -1788,61 +1791,11 @@ var jaxon = {
         // Queue a last command to clear the queue
         queue.push(oRequest.commandQueue, {
             fullName: 'Response Complete',
-            sequence: _temp.sequence,
+            sequence: sequence,
             request: oRequest,
             context: oRequest.context,
             cmd: 'rcmplt',
         });
-    };
-
-    /**
-     * Process a single command
-     * 
-     * @param {object} commandQueue A queue containing the commands to execute.
-     * @param {object} command The command to process
-     *
-     * @returns {boolean}
-     */
-    const processCommand = (commandQueue, command) => {
-        try {
-            if (handler.execute(command) === true || !command.requeue) {
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
-        } catch (e) {
-            console.log(e);
-        }
-        return true;
-    };
-
-    /**
-     * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
-     *
-     * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
-     * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
-     *
-     * @param {object} oRequest The request context object.
-     * @param {object} oRequest.commandQueue A queue containing the commands to execute.
-     *
-     * @returns {true} The queue was fully processed and is now empty.
-     * @returns {false} The queue processing was halted before the queue was fully processed.
-     */
-    const processCommands = ({ commandQueue }) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
-        while ((_temp.command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(commandQueue, _temp.command)) {
-                return false;
-            }
-        }
-        return true;
     };
 
     /**
@@ -1857,7 +1810,7 @@ var jaxon = {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
-            processCommands(oRequest);
+            handler.processCommands(oRequest.commandQueue);
             return oRequest.returnValue;
         }
         if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
@@ -2417,29 +2370,6 @@ var jaxon = {
 
 (function(self, handler, dom, str) {
     /**
-     * Causes the processing of items in the queue to be delayed for the specified amount of time.
-     * This is an asynchronous operation, therefore, other operations will be given an opportunity
-     * to execute during this delay.
-     *
-     * @param {object} command The Response command object.
-     * @param {integer} command.prop The number of 10ths of a second to sleep.
-     * @param {object} command.response The Response object.
-     *
-     * @returns {true} The sleep operation completed.
-     * @returns {false} The sleep time has not yet expired, continue sleeping.
-     */
-    self.sleep = (command) => {
-        // Inject a delay in the queue processing and handle retry counter
-        const { prop: duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 100);
-            return false;
-        }
-        // Wake up, continue processing queue
-        return true;
-    };
-
-    /**
      * Show the specified message.
      *
      * @param {object} command The Response command object.
@@ -2715,7 +2645,7 @@ jaxon.isLoaded = true;
     register('c:ap', cmd.body.contextAppend, 'context append');
     register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
-    register('s', cmd.script.sleep, 'sleep');
+    register('s', ajax.handler.sleep, 'sleep');
     register('wf', cmd.script.waitFor, 'waitFor');
     register('js', cmd.script.execute, 'execute Javascript');
     register('jc', cmd.script.call, 'call js function');

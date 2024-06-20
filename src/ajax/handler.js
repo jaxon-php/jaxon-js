@@ -85,31 +85,26 @@
     /**
      * Process a single command
      * 
-     * @param {object} commandQueue A queue containing the commands to execute.
      * @param {object} command The command to process
      *
      * @returns {boolean}
      */
-    const processCommand = (commandQueue, command) => {
+    const processCommand = (command) => {
         try {
-            if (execute(command) === true || !command.requeue) {
-                return true;
-            }
-            queue.pushFront(commandQueue, command);
-            return false;
+            execute(command);
+            return true;
         } catch (e) {
             console.log(e);
         }
-        return true;
+        return false;
     };
 
     /**
      * While entries exist in the queue, pull and entry out and process it's command.
-     * When a command returns false, the processing is halted.
+     * When commandQueue.paused is set to true, the processing is halted.
      *
      * Note:
-     * - Use <jaxon.ajax.handler.setWakeup> or call this function to cause the queue processing to continue.
-     * - This will clear the associated timeout, this function is not designed to be reentrant.
+     * - Set commandQueue.paused to false and call this function to cause the queue processing to continue.
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
      * @param {object} commandQueue A queue containing the commands to execute.
@@ -118,15 +113,11 @@
      * @returns {false} The queue processing was halted before the queue was fully processed.
      */
     self.processCommands = (commandQueue) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-
+        // Stop processing the commands if the queue is paused.
         let command = null;
-        while ((command = queue.pop(commandQueue)) !== null) {
-            if (!processCommand(commandQueue, command)) {
-                return false;
+        while (!commandQueue.paused && (command = queue.pop(commandQueue)) !== null) {
+            if (!processCommand(command)) {
+                return true;
             }
         }
         return true;
@@ -162,44 +153,24 @@
     }
 
     /**
-     * Maintains a retry counter for the given object.
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
      *
-     * @param {object} command The object to track the retry count for.
-     * @param {integer} count The number of times the operation should be attempted before a failure is indicated.
+     * @param {object} command The Response command object.
+     * @param {integer} command.prop The number of 10ths of a second to sleep.
+     * @param {object} command.response The command queue.
      *
-     * @returns {true} The object has not exhausted all the retries.
-     * @returns {false} The object has exhausted the retry count specified.
+     * @returns {true}
      */
-    self.retry = (command, count) => {
-        if(command.retries > 0) {
-            if(--command.retries < 1) {
-                return false;
-            }
-        } else {
-            command.retries = count;
-        }
-        // This command must be processed again.
-        command.requeue = true;
+    self.sleep = ({ prop: duration, response: commandQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        commandQueue.paused = true;
+        setTimeout(() => {
+            commandQueue.paused = false;
+            self.processCommands(commandQueue);
+        }, duration * 100);
         return true;
-    };
-
-    /**
-     * Set or reset a timeout that is used to restart processing of the queue.
-     *
-     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
-     * to process pending events, like loading files)
-     *
-     * @param {object} commandQueue The queue to process.
-     * @param {integer} when The number of milliseconds to wait before starting/restarting the processing of the queue.
-     *
-     * @returns {void}
-     */
-    self.setWakeup = (commandQueue, when) => {
-        if (commandQueue.timeout !== null) {
-            clearTimeout(commandQueue.timeout);
-            commandQueue.timeout = null;
-        }
-        commandQueue.timout = setTimeout(() => self.processCommands(commandQueue), when);
     };
 
     /**
@@ -215,24 +186,17 @@
      * The function to run after the confirm question, for the comfirmCommands.
      *
      * @param {object} commandQueue The queue to process.
-     * @param {boolean} requeue True if the last command must be processed again.
      * @param {integer} count The number of commands to skip.
      *
      * @returns {void}
      */
-    const confirmCallback = (commandQueue, requeue, count) => {
+    const confirmCallback = (commandQueue, count) => {
         // The last entry in the queue is not a user command, thus it cannot be skipped.
         while (count > 0 && commandQueue.count > 1 && queue.pop(commandQueue) !== null) {
             --count;
         }
-        // Run a different command depending on whether this callback executes
-        // before of after the confirm function returns;
-        if(requeue === true) {
-            // Before => the processing is delayed.
-            self.setWakeup(commandQueue, 30);
-            return;
-        }
         // After => the processing is executed.
+        commandQueue.paused = false;
         self.processCommands(commandQueue);
     };
 
@@ -240,7 +204,6 @@
      * Ask a confirm question and skip the specified number of commands if the answer is ok.
      *
      * The processing of the queue after the question is delayed so it occurs after this function returns.
-     * The 'command.requeue' attribute is used to determine if the confirmCallback is called
      * before (when using the blocking confirm() function) or after this function returns.
      * @see confirmCallback
      *
@@ -248,18 +211,16 @@
      * @param {integer} count The number of commands to skip.
      * @param {string} question The question to ask to the user.
      *
-     * @returns {void}
+     * @returns {true}
      */
     self.confirm = (command, count, question) => {
-        // This will be checked in the callback.
-        command.requeue = true;
-        const { response: commandQueue, requeue } = command;
+        const { response: commandQueue } = command;
+        // The command queue is paused, and will be restarted after the confirm question is answered.
+        commandQueue.paused = true;
         ajax.message.confirm(question, '',
-            () => confirmCallback(commandQueue, requeue, 0),
-            () => confirmCallback(commandQueue, requeue, count));
-
-        // This command must not be processed again.
-        command.requeue = false;
+            () => confirmCallback(commandQueue, 0),
+            () => confirmCallback(commandQueue, count));
+        return true;
     };
 })(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
     jaxon.utils.queue, jaxon.utils.dom);

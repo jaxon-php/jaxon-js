@@ -4,29 +4,6 @@
 
 (function(self, handler, dom, str) {
     /**
-     * Causes the processing of items in the queue to be delayed for the specified amount of time.
-     * This is an asynchronous operation, therefore, other operations will be given an opportunity
-     * to execute during this delay.
-     *
-     * @param {object} command The Response command object.
-     * @param {integer} command.prop The number of 10ths of a second to sleep.
-     * @param {object} command.response The Response object.
-     *
-     * @returns {true} The sleep operation completed.
-     * @returns {false} The sleep time has not yet expired, continue sleeping.
-     */
-    self.sleep = (command) => {
-        // Inject a delay in the queue processing and handle retry counter
-        const { prop: duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 100);
-            return false;
-        }
-        // Wake up, continue processing queue
-        return true;
-    };
-
-    /**
      * Show the specified message.
      *
      * @param {object} command The Response command object.

@@ -71,7 +71,7 @@ jaxon.isLoaded = true;
     register('c:ap', cmd.body.contextAppend, 'context append');
     register('c:pp', cmd.body.contextPrepend, 'context prepend');
 
-    register('s', cmd.script.sleep, 'sleep');
+    register('s', ajax.handler.sleep, 'sleep');
     register('wf', cmd.script.waitFor, 'waitFor');
     register('js', cmd.script.execute, 'execute Javascript');
     register('jc', cmd.script.call, 'call js function');
