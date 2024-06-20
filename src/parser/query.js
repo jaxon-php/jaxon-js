@@ -18,7 +18,7 @@
      * @var {mixed}
      */
     self.init = (selector) => {
-        // Add the val() function to the UmbrellaJs selector.
+        // Add som missing functions to the UmbrellaJs selector.
         if ((selector)) {
             selector.prototype.val = function() {
                 const el = this.first();
@@ -31,6 +31,22 @@
                 return el.options
                     .filter((option) => option.selected)
                     .map((option) => option.value);
+            };
+            selector.prototype.show = function() {
+                this.each(node => {
+                    if (node.style) {
+                        node.style.visibility = 'visible';
+                    }
+                });
+                return this;
+            };
+            selector.prototype.hide = function() {
+                this.each(node => {
+                    if (node.style) {
+                        node.style.visibility = 'hidden';
+                    }
+                });
+                return this;
             };
         }
         self.jq = selector;
