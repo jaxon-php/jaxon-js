@@ -91,9 +91,15 @@
         // If the command has an "id" attr, find the corresponding dom node.
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
+            if (!context.target) {
+                console.error('Unable to find component node: ' + JSON.stringify(component));
+            }
         }
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
+            if (!context.target) {
+                console.error('Unable to find node with id : ' + args.id);
+            }
         }
 
         // Process the command
