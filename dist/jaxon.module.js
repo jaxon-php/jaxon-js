@@ -1449,14 +1449,15 @@ window.jaxon = jaxon;
                 if (!el.options || !el.multiple) {
                     return el.value;
                 }
-                return el.options
+                // Convert from NodeList to array, so we can call the filter method.
+                return [...el.options]
                     .filter((option) => option.selected)
                     .map((option) => option.value);
             };
-            selector.prototype.show = function() {
+            selector.prototype.show = function(display) {
                 this.each(node => {
                     if (node.style) {
-                        node.style.visibility = 'visible';
+                        node.style.display = display ?? 'block';
                     }
                 });
                 return this;
@@ -1464,7 +1465,7 @@ window.jaxon = jaxon;
             selector.prototype.hide = function() {
                 this.each(node => {
                     if (node.style) {
-                        node.style.visibility = 'hidden';
+                        node.style.display = 'none';
                     }
                 });
                 return this;
