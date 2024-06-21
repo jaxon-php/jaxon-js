@@ -2,7 +2,17 @@
  * Class: jaxon.ajax.request
  */
 
-(function(self, cfg, params, rsp, cbk, handler, upload, queue) {
+(function(self, config, params, rsp, cbk, upload, queue) {
+    /**
+     * The queues that hold synchronous requests as they are sent and processed.
+     *
+     * @var {object}
+     */
+    self.q = {
+        send: queue.create(config.requestQueueSize),
+        recv: queue.create(config.requestQueueSize * 2),
+    };
+
     /**
      * Copy the value of the csrf meta tag to the request headers.
      *
@@ -11,12 +21,12 @@
      * @return {void}
      */
     self.setCsrf = (sTagName) => {
-        const metaTags = cfg.baseDocument.getElementsByTagName('meta') || [];
+        const metaTags = config.baseDocument.getElementsByTagName('meta') || [];
         for (const metaTag of metaTags) {
             if (metaTag.getAttribute('name') === sTagName) {
                 const csrfToken = metaTag.getAttribute('content');
                 if ((csrfToken)) {
-                    cfg.postHeaders['X-CSRF-TOKEN'] = csrfToken;
+                    config.postHeaders['X-CSRF-TOKEN'] = csrfToken;
                 }
                 return;
             }
@@ -30,28 +40,29 @@
      *      in addition, be used to store all request related values.
      *      This includes temporary values used internally by jaxon.
      *
-     * @returns {boolean}
+     * @returns {void}
      */
     const initialize = (oRequest) => {
-        cfg.setRequestOptions(oRequest);
+        config.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
 
-        oRequest.status = (oRequest.statusMessages) ? cfg.status.update : cfg.status.dontUpdate;
-        oRequest.cursor = (oRequest.waitCursor) ? cfg.cursor.update : cfg.cursor.dontUpdate;
+        oRequest.status = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
+        oRequest.cursor = (oRequest.waitCursor) ? config.cursor.update : config.cursor.dontUpdate;
 
         // Look for upload parameter
         upload.initialize(oRequest);
 
-        // No request is submitted while there are pending requests in the outgoing queue.
-        oRequest.submit = queue.empty(handler.q.send);
-        if (oRequest.mode === 'synchronous') {
-            // Synchronous requests are always queued, in both send and recv queues.
-            queue.push(handler.q.send, oRequest);
-            queue.push(handler.q.recv, oRequest);
-        }
+        // The request is submitted only if there is no pending requests in the outgoing queue.
+        oRequest.submit = queue.empty(self.q.send);
+
+        // Synchronous requests are always queued.
         // Asynchronous requests are queued in send queue only if they are not submitted.
-        oRequest.submit || queue.push(handler.q.send, oRequest);
+        oRequest.queued = false;
+        if (!oRequest.submit || oRequest.mode === 'synchronous') {
+            queue.push(self.q.send, oRequest);
+            oRequest.queued = true;
+        }
     };
 
     /**
@@ -62,11 +73,10 @@
      * @return {void}
      */
     const prepare = (oRequest) => {
-        --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
-            ...cfg.httpRequestOptions,
+            ...config.httpRequestOptions,
             method: oRequest.method,
             headers: {
                 ...oRequest.commonHeaders,
@@ -75,29 +85,7 @@
             body: oRequest.requestData,
         };
 
-        oRequest.responseConverter = (response) => {
-            // Save the reponse object
-            oRequest.response = response;
-            // Get the response content
-            return oRequest.convertResponseToJson ? response.json() : response.text();
-        };
-        oRequest.responseHandler = (responseContent) => {
-            oRequest.responseContent = responseContent;
-            // Synchronous request are processed immediately.
-            // Asynchronous request are processed only if the queue is empty.
-            if (queue.empty(handler.q.send) || oRequest.mode === 'synchronous') {
-                rsp.received(oRequest);
-            } else {
-                queue.push(handler.q.recv, oRequest);
-            }
-        };
-        oRequest.errorHandler = (error) => {
-            cbk.execute(oRequest, 'onFailure');
-            throw error;
-        };
-        if (!oRequest.responseProcessor) {
-            oRequest.responseProcessor = rsp.jsonProcessor;
-        }
+        rsp.prepare(oRequest);
     };
 
     /**
@@ -110,6 +98,7 @@
      * @returns {void}
      */
     const submit = (oRequest) => {
+        prepare(oRequest);
         oRequest.status.onRequest();
 
         // The onResponseDelay and onExpiration aren't called immediately, but a timer
@@ -128,57 +117,23 @@
     };
 
     /**
-     * Clean up the request object.
+     * Create a request object and submit the request using the specified request type.
      *
      * @param {object} oRequest The request context object.
      *
      * @returns {void}
      */
-    const cleanUp = (oRequest) => {
-        // clean up -- these items are restored when the request is initiated
-        delete oRequest.func;
-        delete oRequest.URI;
-        delete oRequest.requestURI;
-        delete oRequest.requestData;
-        delete oRequest.requestRetry;
-        delete oRequest.httpRequestOptions;
-        delete oRequest.responseHandler;
-        delete oRequest.responseConverter;
-        delete oRequest.responseContent;
-        delete oRequest.response;
-        delete oRequest.errorHandler;
-    };
-
-    /**
-     * Called by the response command queue processor when all commands have been processed.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @return {void}
-     */
-    self.complete = (oRequest) => {
-        cbk.execute(oRequest, 'onComplete');
-        oRequest.cursor.onComplete();
-        oRequest.status.onComplete();
-
-        cleanUp(oRequest);
-
-        // All the requests and responses queued while waiting must now be processed.
-        if(oRequest.mode === 'synchronous') {
-            // Remove the current request from the send and recv queues.
-            queue.pop(handler.q.send);
-            queue.pop(handler.q.recv);
-            // Process the asynchronous responses received while waiting.
-            while((recvRequest = handler.popAsyncRequest(handler.q.recv)) !== null) {
-                rsp.received(recvRequest);
+    self.submit = (oRequest) => {
+        while (oRequest.requestRetry-- > 0) {
+            try {
+                submit(oRequest);
+                return;
             }
-            // Submit the asynchronous requests sent while waiting.
-            while((nextRequest = handler.popAsyncRequest(handler.q.send)) !== null) {
-                submit(nextRequest);
-            }
-            // Submit the next synchronous request, if there's any.
-            if((nextRequest = queue.peek(handler.q.send)) !== null) {
-                submit(nextRequest);
+            catch (e) {
+                cbk.execute(oRequest, 'onFailure');
+                if (oRequest.requestRetry <= 0) {
+                    throw e;
+                }
             }
         }
     };
@@ -192,7 +147,7 @@
      */
     self.abort = (oRequest) => {
         oRequest.aborted = true;
-        self.complete(oRequest);
+        rsp.complete(oRequest);
     };
 
     /**
@@ -218,19 +173,7 @@
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
-        while (oRequest.requestRetry > 0) {
-            try {
-                prepare(oRequest);
-                oRequest.submit && submit(oRequest);
-                return;
-            }
-            catch (e) {
-                cbk.execute(oRequest, 'onFailure');
-                if (oRequest.requestRetry <= 0) {
-                    throw e;
-                }
-            }
-        }
+        oRequest.submit && self.submit(oRequest);
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.ajax.handler, jaxon.utils.upload, jaxon.utils.queue);
+    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue);

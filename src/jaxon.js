@@ -79,7 +79,7 @@ jaxon.isLoaded = true;
 (function(register, cmd, ajax, dialog) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
-        ajax.request.complete(request);
+        ajax.response.complete(request);
         return true;
     }, 'Response complete');
 

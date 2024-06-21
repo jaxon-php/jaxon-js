@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, call, attr, queue, dom, dialog) {
+(function(self, call, attr, queue, dom, types, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -10,16 +10,6 @@
      * @var {object}
      */
     const handlers = {};
-
-    /**
-     * The queues that hold synchronous requests as they are sent and processed.
-     *
-     * @var {object}
-     */
-    self.q = {
-        send: queue.create(config.requestQueueSize),
-        recv: queue.create(config.requestQueueSize * 2),
-    };
 
     /**
      * Registers a new command handler.
@@ -138,9 +128,10 @@
      *
      * @returns {void}
      */
-    self.processCommands = (oQueue) => {
+    const processCommands = (oQueue) => {
         // Stop processing the commands if the queue is paused.
         let context = null;
+        oQueue.paused = false;
         while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
             if (!processCommand(context)) {
                 return;
@@ -149,18 +140,58 @@
     };
 
     /**
-     * Attempt to pop the next asynchronous request.
+     * Parse the JSON response into a series of commands.
      *
-     * @param {object} oQueue The queue object you would like to modify.
+     * @param {object} oRequest The request context object.
      *
-     * @returns {object|null}
+     * @return {void}
      */
-    self.popAsyncRequest = oQueue => {
-        if (queue.empty(oQueue) || queue.peek(oQueue).mode === 'synchronous') {
-            return null;
+    const queueCommands = (oRequest) => {
+        if (!types.isObject(oRequest.responseContent)) {
+            return;
         }
-        return queue.pop(oQueue);
-    }
+        const {
+            debug: { message } = {},
+            jxn: { commands = [] } = {},
+        } = oRequest.responseContent;
+
+        oRequest.status.onProcessing();
+
+        message && console.log(message);
+
+        let sequence = 0;
+        commands.forEach(command => queue.push(oRequest.oQueue, {
+            command: {
+                name: '*unknown*',
+                ...command,
+            },
+            sequence: sequence++,
+            request: oRequest,
+            oQueue: oRequest.oQueue,
+        }));
+        // Queue a last command to clear the queue
+        queue.push(oRequest.oQueue, {
+            command: {
+                name: 'response.complete',
+                fullName: 'Response Complete',
+            },
+            sequence: sequence,
+            request: oRequest,
+            oQueue: oRequest.oQueue,
+        });
+    };
+
+    /**
+     * Queue and process the commands in the response.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @return {true}
+     */
+    self.processCommands = (oRequest) => {
+        queueCommands(oRequest);
+        processCommands(oRequest.oQueue);
+    };
 
     /**
      * Causes the processing of items in the queue to be delayed for the specified amount of time.
@@ -177,10 +208,7 @@
     self.sleep = ({ duration }, { oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
-        setTimeout(() => {
-            oQueue.paused = false;
-            self.processCommands(oQueue);
-        }, duration * 100);
+        setTimeout(() => processCommands(oQueue), duration * 100);
         return true;
     };
 
@@ -198,8 +226,7 @@
         while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
             --skipCount;
         }
-        oQueue.paused = false;
-        self.processCommands(oQueue);
+        processCommands(oQueue);
     };
 
     /**
@@ -230,5 +257,5 @@
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.parser.call, jaxon.parser.attr, jaxon.utils.queue,
+    jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);

@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const u = require('umbrellajs');
 const {
+    config,
     cmd: { body },
     ajax: { handler },
     utils: { dom, queue },
@@ -9,6 +10,17 @@ const {
 
 // Init the selector library.
 query.init(u);
+
+const makeRequest = commands => ({
+    oQueue: queue.create(5),
+    status: config.status.dontUpdate,
+    cursor: config.cursor.dontUpdate,
+    responseContent: {
+        jxn: {
+            commands,
+        },
+    },
+});
 
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
@@ -26,19 +38,16 @@ test('Assign element inner html', () => {
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    const oQueue = queue.create(5);
-    queue.push(oQueue, {
-        command: {
-            name: 'dom.assign',
-            args: {
-                id: 'username',
-                attr: 'innerHTML',
-                value: 'Mister Johnson',
-            },
+    const command = {
+        name: 'dom.assign',
+        args: {
+            id: 'username',
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
         },
-    });
+    };
 
-    handler.processCommands(oQueue);
+    handler.processCommands(makeRequest([command]));
 
     expect($('#username').text()).toBe('Mister Johnson');
 });
@@ -59,19 +68,16 @@ test('Assign element outer html', () => {
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    const oQueue = queue.create(5);
-    queue.push(oQueue, {
-        command: {
-            name: 'dom.assign',
-            args: {
-                id: 'username',
-                attr: 'outerHTML',
-                value: 'Mister Johnson',
-            },
+    const command = {
+        name: 'dom.assign',
+        args: {
+            id: 'username',
+            attr: 'outerHTML',
+            value: 'Mister Johnson',
         },
-    });
+    };
 
-    handler.processCommands(oQueue);
+    handler.processCommands(makeRequest([command]));
 
     expect($('#wrapper').text()).toBe('Mister Johnson');
 });
