@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue) {
+(function(self, handler, req, cbk, queue) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -70,23 +70,27 @@
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
+     * @param {object} oResponse The response context object.
+     * @param {object} oResponse.http The response object.
+     * @param {integer} oResponse.http.status The response status.
+     * @param {object} oResponse.http.headers The response headers.
      *
      * @return {true}
      */
-    const jsonProcessor = (oRequest) => {
-        if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
+    const jsonProcessor = (oRequest, { http: { status, headers } }) => {
+        if (successCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             handler.processCommands(oRequest);
             return true;
         }
-        if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
+        if (redirectCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
-            window.location = oRequest.response.headers.get('location');
+            window.location = headers.get('location');
             return true;
         }
-        if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
+        if (errorsForAlert.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
             return true;
@@ -102,20 +106,18 @@
      * @return {mixed}
      */
     const received = (oRequest) => {
+        const { aborted, response: oResponse } = oRequest;
         // Sometimes the response.received gets called when the request is aborted
-        if (oRequest.aborted) {
+        if (aborted) {
             return null;
         }
-
-        // Create a queue for the commands in the response.
-        oRequest.oQueue = queue.create(config.commandQueueSize);
 
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
         cbk.clearTimer(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'beforeResponseProcessing');
 
-        return oRequest.responseProcessor(oRequest);
+        return oResponse.processor(oRequest, oResponse);
     };
 
     /**
@@ -125,15 +127,17 @@
      *
      * @return {void}
      */
-    self.prepare = (oRequest) => {
-        oRequest.responseConverter = (response) => {
+    self.create = (oRequest) => ({
+        processor: jsonProcessor,
+        ...oRequest.response,
+        converter: (http) => {
             // Save the reponse object
-            oRequest.response = response;
+            oRequest.response.http = http;
             // Get the response content
-            return oRequest.convertResponseToJson ? response.json() : response.text();
-        };
-        oRequest.responseHandler = (responseContent) => {
-            oRequest.responseContent = responseContent;
+            return oRequest.response.convertToJson ? http.json() : http.text();
+        },
+        handler: (content) => {
+            oRequest.response.content = content;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
             if (queue.empty(req.q.send) || oRequest.mode === 'synchronous') {
@@ -141,15 +145,12 @@
                 return;
             }
             queue.push(req.q.recv, oRequest);
-        };
-        oRequest.errorHandler = (error) => {
+        },
+        errorHandler: (error) => {
             cbk.execute(oRequest, 'onFailure');
             throw error;
-        };
-        if (!oRequest.responseProcessor) {
-            oRequest.responseProcessor = jsonProcessor;
-        }
-    };
+        },
+    });
 
     /**
      * Clean up the request object.
@@ -164,13 +165,8 @@
         delete oRequest.URI;
         delete oRequest.requestURI;
         delete oRequest.requestData;
-        delete oRequest.requestRetry;
         delete oRequest.httpRequestOptions;
-        delete oRequest.responseHandler;
-        delete oRequest.responseConverter;
-        delete oRequest.responseContent;
         delete oRequest.response;
-        delete oRequest.errorHandler;
     };
 
     /**
@@ -219,5 +215,5 @@
             }
         }
     };
-})(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue);
+})(jaxon.ajax.response, jaxon.ajax.handler, jaxon.ajax.request, jaxon.ajax.callback,
+    jaxon.utils.queue);

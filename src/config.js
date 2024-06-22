@@ -218,12 +218,14 @@ var jaxon = {
             URI: self.requestURI,
             httpVersion: self.defaultHttpVersion,
             contentType: self.defaultContentType,
-            convertResponseToJson: self.convertResponseToJson,
             retry: self.defaultRetry,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
             upload: false,
             aborted: false,
+            response: {
+                convertToJson: self.convertResponseToJson,
+            },
         };
         Object.keys(oDefaultOptions).forEach(sOption =>
             oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);

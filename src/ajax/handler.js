@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, call, attr, queue, dom, types, dialog) {
+(function(self, config, call, attr, queue, dom, types, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -140,48 +140,6 @@
     };
 
     /**
-     * Parse the JSON response into a series of commands.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @return {void}
-     */
-    const queueCommands = (oRequest) => {
-        if (!types.isObject(oRequest.responseContent)) {
-            return;
-        }
-        const {
-            debug: { message } = {},
-            jxn: { commands = [] } = {},
-        } = oRequest.responseContent;
-
-        oRequest.status.onProcessing();
-
-        message && console.log(message);
-
-        let sequence = 0;
-        commands.forEach(command => queue.push(oRequest.oQueue, {
-            command: {
-                name: '*unknown*',
-                ...command,
-            },
-            sequence: sequence++,
-            request: oRequest,
-            oQueue: oRequest.oQueue,
-        }));
-        // Queue a last command to clear the queue
-        queue.push(oRequest.oQueue, {
-            command: {
-                name: 'response.complete',
-                fullName: 'Response Complete',
-            },
-            sequence: sequence,
-            request: oRequest,
-            oQueue: oRequest.oQueue,
-        });
-    };
-
-    /**
      * Queue and process the commands in the response.
      *
      * @param {object} oRequest The request context object.
@@ -189,8 +147,38 @@
      * @return {true}
      */
     self.processCommands = (oRequest) => {
-        queueCommands(oRequest);
-        processCommands(oRequest.oQueue);
+        const { response: { content } = {}, status } = oRequest;
+        if (!types.isObject(content)) {
+            return;
+        }
+
+        const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
+
+        status.onProcessing();
+
+        message && console.log(message);
+
+        // Create a queue for the commands in the response.
+        const oQueue = queue.create(config.commandQueueSize);
+        commands.forEach(command => queue.push(oQueue, {
+            command: {
+                name: '*unknown*',
+                ...command,
+            },
+            request: oRequest,
+            queue: oQueue,
+        }));
+        // Add a last command to clear the queue
+        queue.push(oQueue, {
+            command: {
+                name: 'response.complete',
+                fullName: 'Response Complete',
+            },
+            request: oRequest,
+            queue: oQueue,
+        });
+
+        processCommands(oQueue);
     };
 
     /**
@@ -201,11 +189,11 @@
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
      * @param {object} context The Response command object.
-     * @param {object} context.oQueue The command queue.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true}
      */
-    self.sleep = ({ duration }, { oQueue }) => {
+    self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
         setTimeout(() => processCommands(oQueue), duration * 100);
@@ -241,14 +229,14 @@
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} context The Response command object.
-     * @param {object} context.oQueue The command queue.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
         count: skipCount,
         question: { lib: sLibName, title: sTitle, phrase },
-    }, { oQueue }) => {
+    }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
@@ -257,5 +245,5 @@
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.parser.call, jaxon.parser.attr, jaxon.utils.queue,
-    jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);

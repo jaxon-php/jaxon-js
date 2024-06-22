@@ -218,12 +218,14 @@ var jaxon = {
             URI: self.requestURI,
             httpVersion: self.defaultHttpVersion,
             contentType: self.defaultContentType,
-            convertResponseToJson: self.convertResponseToJson,
             retry: self.defaultRetry,
             maxObjectDepth: self.maxObjectDepth,
             maxObjectSize: self.maxObjectSize,
             upload: false,
             aborted: false,
+            response: {
+                convertToJson: self.convertResponseToJson,
+            },
         };
         Object.keys(oDefaultOptions).forEach(sOption =>
             oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
@@ -1845,7 +1847,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.handler
  */
 
-(function(self, call, attr, queue, dom, types, dialog) {
+(function(self, config, call, attr, queue, dom, types, dialog) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1983,48 +1985,6 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Parse the JSON response into a series of commands.
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @return {void}
-     */
-    const queueCommands = (oRequest) => {
-        if (!types.isObject(oRequest.responseContent)) {
-            return;
-        }
-        const {
-            debug: { message } = {},
-            jxn: { commands = [] } = {},
-        } = oRequest.responseContent;
-
-        oRequest.status.onProcessing();
-
-        message && console.log(message);
-
-        let sequence = 0;
-        commands.forEach(command => queue.push(oRequest.oQueue, {
-            command: {
-                name: '*unknown*',
-                ...command,
-            },
-            sequence: sequence++,
-            request: oRequest,
-            oQueue: oRequest.oQueue,
-        }));
-        // Queue a last command to clear the queue
-        queue.push(oRequest.oQueue, {
-            command: {
-                name: 'response.complete',
-                fullName: 'Response Complete',
-            },
-            sequence: sequence,
-            request: oRequest,
-            oQueue: oRequest.oQueue,
-        });
-    };
-
-    /**
      * Queue and process the commands in the response.
      *
      * @param {object} oRequest The request context object.
@@ -2032,8 +1992,38 @@ window.jaxon = jaxon;
      * @return {true}
      */
     self.processCommands = (oRequest) => {
-        queueCommands(oRequest);
-        processCommands(oRequest.oQueue);
+        const { response: { content } = {}, status } = oRequest;
+        if (!types.isObject(content)) {
+            return;
+        }
+
+        const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
+
+        status.onProcessing();
+
+        message && console.log(message);
+
+        // Create a queue for the commands in the response.
+        const oQueue = queue.create(config.commandQueueSize);
+        commands.forEach(command => queue.push(oQueue, {
+            command: {
+                name: '*unknown*',
+                ...command,
+            },
+            request: oRequest,
+            queue: oQueue,
+        }));
+        // Add a last command to clear the queue
+        queue.push(oQueue, {
+            command: {
+                name: 'response.complete',
+                fullName: 'Response Complete',
+            },
+            request: oRequest,
+            queue: oQueue,
+        });
+
+        processCommands(oQueue);
     };
 
     /**
@@ -2044,11 +2034,11 @@ window.jaxon = jaxon;
      * @param {object} args The command arguments.
      * @param {integer} args.duration The number of 10ths of a second to sleep.
      * @param {object} context The Response command object.
-     * @param {object} context.oQueue The command queue.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true}
      */
-    self.sleep = ({ duration }, { oQueue }) => {
+    self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
         setTimeout(() => processCommands(oQueue), duration * 100);
@@ -2084,14 +2074,14 @@ window.jaxon = jaxon;
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
      * @param {object} context The Response command object.
-     * @param {object} context.oQueue The command queue.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
         count: skipCount,
         question: { lib: sLibName, title: sTitle, phrase },
-    }, { oQueue }) => {
+    }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
@@ -2100,8 +2090,8 @@ window.jaxon = jaxon;
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.parser.call, jaxon.parser.attr, jaxon.utils.queue,
-    jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
+})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
 
 
 /**
@@ -2369,7 +2359,7 @@ window.jaxon = jaxon;
             body: oRequest.requestData,
         };
 
-        rsp.prepare(oRequest);
+        oRequest.response = rsp.create(oRequest);
     };
 
     /**
@@ -2395,9 +2385,9 @@ window.jaxon = jaxon;
         oRequest.status.onWaiting();
 
         fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
+            .then(oRequest.response.converter)
+            .then(oRequest.response.handler)
+            .catch(oRequest.response.errorHandler);
     };
 
     /**
@@ -2467,7 +2457,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.response
  */
 
-(function(self, config, handler, req, cbk, queue) {
+(function(self, handler, req, cbk, queue) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -2535,23 +2525,27 @@ window.jaxon = jaxon;
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
+     * @param {object} oResponse The response context object.
+     * @param {object} oResponse.http The response object.
+     * @param {integer} oResponse.http.status The response status.
+     * @param {object} oResponse.http.headers The response headers.
      *
      * @return {true}
      */
-    const jsonProcessor = (oRequest) => {
-        if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
+    const jsonProcessor = (oRequest, { http: { status, headers } }) => {
+        if (successCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             handler.processCommands(oRequest);
             return true;
         }
-        if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
+        if (redirectCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
-            window.location = oRequest.response.headers.get('location');
+            window.location = headers.get('location');
             return true;
         }
-        if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
+        if (errorsForAlert.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
             return true;
@@ -2567,20 +2561,18 @@ window.jaxon = jaxon;
      * @return {mixed}
      */
     const received = (oRequest) => {
+        const { aborted, response: oResponse } = oRequest;
         // Sometimes the response.received gets called when the request is aborted
-        if (oRequest.aborted) {
+        if (aborted) {
             return null;
         }
-
-        // Create a queue for the commands in the response.
-        oRequest.oQueue = queue.create(config.commandQueueSize);
 
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
         cbk.clearTimer(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'beforeResponseProcessing');
 
-        return oRequest.responseProcessor(oRequest);
+        return oResponse.processor(oRequest, oResponse);
     };
 
     /**
@@ -2590,15 +2582,17 @@ window.jaxon = jaxon;
      *
      * @return {void}
      */
-    self.prepare = (oRequest) => {
-        oRequest.responseConverter = (response) => {
+    self.create = (oRequest) => ({
+        processor: jsonProcessor,
+        ...oRequest.response,
+        converter: (http) => {
             // Save the reponse object
-            oRequest.response = response;
+            oRequest.response.http = http;
             // Get the response content
-            return oRequest.convertResponseToJson ? response.json() : response.text();
-        };
-        oRequest.responseHandler = (responseContent) => {
-            oRequest.responseContent = responseContent;
+            return oRequest.response.convertToJson ? http.json() : http.text();
+        },
+        handler: (content) => {
+            oRequest.response.content = content;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
             if (queue.empty(req.q.send) || oRequest.mode === 'synchronous') {
@@ -2606,15 +2600,12 @@ window.jaxon = jaxon;
                 return;
             }
             queue.push(req.q.recv, oRequest);
-        };
-        oRequest.errorHandler = (error) => {
+        },
+        errorHandler: (error) => {
             cbk.execute(oRequest, 'onFailure');
             throw error;
-        };
-        if (!oRequest.responseProcessor) {
-            oRequest.responseProcessor = jsonProcessor;
-        }
-    };
+        },
+    });
 
     /**
      * Clean up the request object.
@@ -2629,13 +2620,8 @@ window.jaxon = jaxon;
         delete oRequest.URI;
         delete oRequest.requestURI;
         delete oRequest.requestData;
-        delete oRequest.requestRetry;
         delete oRequest.httpRequestOptions;
-        delete oRequest.responseHandler;
-        delete oRequest.responseConverter;
-        delete oRequest.responseContent;
         delete oRequest.response;
-        delete oRequest.errorHandler;
     };
 
     /**
@@ -2684,8 +2670,8 @@ window.jaxon = jaxon;
             }
         }
     };
-})(jaxon.ajax.response, jaxon.config, jaxon.ajax.handler, jaxon.ajax.request,
-    jaxon.ajax.callback, jaxon.utils.queue);
+})(jaxon.ajax.response, jaxon.ajax.handler, jaxon.ajax.request, jaxon.ajax.callback,
+    jaxon.utils.queue);
 
 
 /**

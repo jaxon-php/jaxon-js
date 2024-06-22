@@ -85,7 +85,7 @@
             body: oRequest.requestData,
         };
 
-        rsp.prepare(oRequest);
+        oRequest.response = rsp.create(oRequest);
     };
 
     /**
@@ -111,9 +111,9 @@
         oRequest.status.onWaiting();
 
         fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
+            .then(oRequest.response.converter)
+            .then(oRequest.response.handler)
+            .catch(oRequest.response.errorHandler);
     };
 
     /**
