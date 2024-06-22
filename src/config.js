@@ -31,7 +31,7 @@ var jaxon = {
 
     ajax: {
         callback: {},
-        handler: {},
+        command: {},
         parameters: {},
         request: {},
         response: {},

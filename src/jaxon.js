@@ -14,9 +14,9 @@ jaxon.request = jaxon.ajax.request.execute;
 
 /**
  * Registers a new command handler.
- * Shortcut to <jaxon.ajax.handler.register>
+ * Shortcut to <jaxon.ajax.command.register>
  */
-jaxon.register = jaxon.ajax.handler.register;
+jaxon.register = jaxon.ajax.command.register;
 
 /**
  * Shortcut to <jaxon.utils.dom.$>.
@@ -97,8 +97,8 @@ jaxon.isLoaded = true;
     register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
-    register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');
-    register('script.confirm', ajax.handler.confirm, 'Handler::Confirm');
+    register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
+    register('script.confirm', ajax.command.confirm, 'Handler::Confirm');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');

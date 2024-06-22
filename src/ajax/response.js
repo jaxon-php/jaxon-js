@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.response
  */
 
-(function(self, handler, req, cbk, queue) {
+(function(self, command, req, cbk, queue) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -81,7 +81,7 @@
         if (successCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
-            handler.processCommands(oRequest);
+            command.processCommands(oRequest);
             return true;
         }
         if (redirectCodes.indexOf(status) >= 0) {
@@ -215,5 +215,5 @@
             }
         }
     };
-})(jaxon.ajax.response, jaxon.ajax.handler, jaxon.ajax.request, jaxon.ajax.callback,
+})(jaxon.ajax.response, jaxon.ajax.command, jaxon.ajax.request, jaxon.ajax.callback,
     jaxon.utils.queue);

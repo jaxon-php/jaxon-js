@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.ajax.handler
+ * Class: jaxon.ajax.command
  */
 
 (function(self, config, call, attr, queue, dom, types, dialog) {
@@ -245,5 +245,5 @@
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
     jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
