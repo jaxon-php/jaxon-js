@@ -31,7 +31,7 @@ var jaxon = {
 
     ajax: {
         callback: {},
-        handler: {},
+        command: {},
         parameters: {},
         request: {},
         response: {},
@@ -1844,7 +1844,7 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.ajax.handler
+ * Class: jaxon.ajax.command
  */
 
 (function(self, config, call, attr, queue, dom, types, dialog) {
@@ -2090,7 +2090,7 @@ window.jaxon = jaxon;
             () => restartProcessing(oQueue, skipCount));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
     jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
 
 
@@ -2457,7 +2457,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.response
  */
 
-(function(self, handler, req, cbk, queue) {
+(function(self, command, req, cbk, queue) {
     /**
      * This array contains a list of codes which will be returned from the server upon
      * successful completion of the server portion of the request.
@@ -2536,7 +2536,7 @@ window.jaxon = jaxon;
         if (successCodes.indexOf(status) >= 0) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
-            handler.processCommands(oRequest);
+            command.processCommands(oRequest);
             return true;
         }
         if (redirectCodes.indexOf(status) >= 0) {
@@ -2670,7 +2670,7 @@ window.jaxon = jaxon;
             }
         }
     };
-})(jaxon.ajax.response, jaxon.ajax.handler, jaxon.ajax.request, jaxon.ajax.callback,
+})(jaxon.ajax.response, jaxon.ajax.command, jaxon.ajax.request, jaxon.ajax.callback,
     jaxon.utils.queue);
 
 
@@ -3066,9 +3066,9 @@ jaxon.request = jaxon.ajax.request.execute;
 
 /**
  * Registers a new command handler.
- * Shortcut to <jaxon.ajax.handler.register>
+ * Shortcut to <jaxon.ajax.command.register>
  */
-jaxon.register = jaxon.ajax.handler.register;
+jaxon.register = jaxon.ajax.command.register;
 
 /**
  * Shortcut to <jaxon.utils.dom.$>.
@@ -3149,8 +3149,8 @@ jaxon.isLoaded = true;
     register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
-    register('script.sleep', ajax.handler.sleep, 'Handler::Sleep');
-    register('script.confirm', ajax.handler.confirm, 'Handler::Confirm');
+    register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
+    register('script.confirm', ajax.command.confirm, 'Handler::Confirm');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
