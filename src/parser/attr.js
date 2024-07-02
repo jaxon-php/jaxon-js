@@ -68,13 +68,13 @@
      * @returns {void}
      */
     const setEventHandler = (xTarget, xNode, sAttr) => {
-        if(!xNode.hasAttribute('jxn-func'))
+        if(!xNode.hasAttribute('jxn-call'))
         {
             return;
         }
 
         const sEvent = xNode.getAttribute(sAttr).trim();
-        const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-call'));
         if(!xNode.hasAttribute('jxn-select'))
         {
             // Set the event handler on the node.
@@ -100,7 +100,7 @@
             setEventHandler(xNode, xNode, 'jxn-on');
 
             xNode.removeAttribute('jxn-on');
-            xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-call');
             xNode.removeAttribute('jxn-select');
         });
     };

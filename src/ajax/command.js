@@ -128,7 +128,7 @@
      *
      * @returns {void}
      */
-    const processCommands = (oQueue) => {
+    const processCommandQueue = (oQueue) => {
         // Stop processing the commands if the queue is paused.
         let context = null;
         oQueue.paused = false;
@@ -178,7 +178,7 @@
             queue: oQueue,
         });
 
-        processCommands(oQueue);
+        processCommandQueue(oQueue);
     };
 
     /**
@@ -196,7 +196,7 @@
     self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
-        setTimeout(() => processCommands(oQueue), duration * 100);
+        setTimeout(() => processCommandQueue(oQueue), duration * 100);
         return true;
     };
 
@@ -208,13 +208,13 @@
      *
      * @returns {void}
      */
-    const restartProcessing = (oQueue, skipCount = 0) => {
+    const resumeQueueProcessing = (oQueue, skipCount = 0) => {
         // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
         while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
             --skipCount;
         }
-        processCommands(oQueue);
+        processCommandQueue(oQueue);
     };
 
     /**
@@ -241,8 +241,8 @@
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
         xLib.confirm(call.makePhrase(phrase), sTitle,
-            () => restartProcessing(oQueue),
-            () => restartProcessing(oQueue, skipCount));
+            () => resumeQueueProcessing(oQueue),
+            () => resumeQueueProcessing(oQueue, skipCount));
         return true;
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,

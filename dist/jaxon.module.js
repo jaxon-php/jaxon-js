@@ -1021,13 +1021,13 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const setEventHandler = (xTarget, xNode, sAttr) => {
-        if(!xNode.hasAttribute('jxn-func'))
+        if(!xNode.hasAttribute('jxn-call'))
         {
             return;
         }
 
         const sEvent = xNode.getAttribute(sAttr).trim();
-        const oHandler = JSON.parse(xNode.getAttribute('jxn-func'));
+        const oHandler = JSON.parse(xNode.getAttribute('jxn-call'));
         if(!xNode.hasAttribute('jxn-select'))
         {
             // Set the event handler on the node.
@@ -1053,7 +1053,7 @@ window.jaxon = jaxon;
             setEventHandler(xNode, xNode, 'jxn-on');
 
             xNode.removeAttribute('jxn-on');
-            xNode.removeAttribute('jxn-func');
+            xNode.removeAttribute('jxn-call');
             xNode.removeAttribute('jxn-select');
         });
     };
@@ -1973,7 +1973,7 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const processCommands = (oQueue) => {
+    const processCommandQueue = (oQueue) => {
         // Stop processing the commands if the queue is paused.
         let context = null;
         oQueue.paused = false;
@@ -2023,7 +2023,7 @@ window.jaxon = jaxon;
             queue: oQueue,
         });
 
-        processCommands(oQueue);
+        processCommandQueue(oQueue);
     };
 
     /**
@@ -2041,7 +2041,7 @@ window.jaxon = jaxon;
     self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
         oQueue.paused = true;
-        setTimeout(() => processCommands(oQueue), duration * 100);
+        setTimeout(() => processCommandQueue(oQueue), duration * 100);
         return true;
     };
 
@@ -2053,13 +2053,13 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const restartProcessing = (oQueue, skipCount = 0) => {
+    const resumeQueueProcessing = (oQueue, skipCount = 0) => {
         // Skip commands.
         // The last entry in the queue is not a user command, thus it cannot be skipped.
         while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
             --skipCount;
         }
-        processCommands(oQueue);
+        processCommandQueue(oQueue);
     };
 
     /**
@@ -2086,8 +2086,8 @@ window.jaxon = jaxon;
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
         xLib.confirm(call.makePhrase(phrase), sTitle,
-            () => restartProcessing(oQueue),
-            () => restartProcessing(oQueue, skipCount));
+            () => resumeQueueProcessing(oQueue),
+            () => resumeQueueProcessing(oQueue, skipCount));
         return true;
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
