@@ -3,8 +3,8 @@ const u = require('umbrellajs');
 const {
     config,
     cmd: { body },
-    ajax: { handler },
-    utils: { dom, queue },
+    ajax: { command: handler },
+    utils: { dom },
     parser: { query },
 } = require('../dist/jaxon.module');
 
@@ -12,12 +12,13 @@ const {
 query.init(u);
 
 const makeRequest = commands => ({
-    oQueue: queue.create(5),
     status: config.status.dontUpdate,
     cursor: config.cursor.dontUpdate,
-    responseContent: {
-        jxn: {
-            commands,
+    response: {
+        content: {
+            jxn: {
+                commands,
+            },
         },
     },
 });
