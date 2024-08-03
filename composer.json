@@ -1,0 +1,19 @@
+{
+    "name": "jaxon-php/jaxon-js",
+    "type": "library",
+    "description": "Javascript code for the Jaxon PHP library.",
+    "authors": [
+        {"name": "Jared White"},
+        {"name": "J. Max Wilson"},
+        {"name": "Joseph Woolley"},
+        {"name": "Steffen Konerow"},
+        {"name": "Thierry Feuzeu"}
+    ],
+    "homepage": "http://jaxon-project.org",
+    "license": "BSD-3-Clause",
+    "keywords": ["Jaxon", "Xajax", "Ajax", "PHP", "Asynchronous"],
+    "support": {
+        "issues": "https://github.com/jaxon-php/jaxon-js/issues",
+        "source": "https://github.com/jaxon-php/jaxon-js"
+    }
+}

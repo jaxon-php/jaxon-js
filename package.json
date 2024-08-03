@@ -1,0 +1,41 @@
+{
+  "name": "jaxon-js",
+  "version": "3.0.0",
+  "description": "Javascript code for the Jaxon PHP library.",
+  "main": "jaxon.core.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaxon-php/jaxon-js.git"
+  },
+  "keywords": [
+    "Ajax",
+    "Xajax",
+    "JSON"
+  ],
+  "author": "Thierry K. Feuzeu",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/jaxon-php/jaxon-js/issues"
+  },
+  "homepage": "https://github.com/jaxon-php/jaxon-js#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-jest": "^29.7.0",
+    "gulp": "^4.0.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-deporder": "^1.2.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-strip-debug": "^4.0.0",
+    "gulp-terser": "^2.1.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jquery": "^3.7.1",
+    "umbrellajs": "^3.3.3"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
+}
