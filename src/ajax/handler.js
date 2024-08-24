@@ -70,7 +70,7 @@
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    const execute = (command) => {
+    self.execute = (command) => {
         if (!self.isRegistered(command)) {
             return true;
         }
@@ -91,7 +91,7 @@
      */
     const processCommand = (command) => {
         try {
-            execute(command);
+            self.execute(command);
             return true;
         } catch (e) {
             console.log(e);

@@ -13,7 +13,7 @@
      *
      * @returns {boolean}
      */
-    const initialize = (oRequest) => {
+    self.initialize = (oRequest) => {
         cfg.setRequestOptions(oRequest);
 
         cbk.initCallbacks(oRequest);
@@ -36,7 +36,7 @@
      *
      * @return {void}
      */
-    const prepare = (oRequest) => {
+    self.prepare = (oRequest) => {
         --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
@@ -144,6 +144,20 @@
     };
 
     /**
+     * Send a request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    self._send = (oRequest) => {
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.responseConverter)
+            .then(oRequest.responseHandler)
+            .catch(oRequest.errorHandler);
+    };
+
+    /**
      * Create a request object and submit the request using the specified request type;
      * all request parameters should be finalized by this point.
      * Upon failure of a POST, this function will fall back to a GET request.
@@ -152,7 +166,7 @@
      *
      * @returns {mixed}
      */
-    const submit = (oRequest) => {
+    self.submit = (oRequest) => {
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -162,10 +176,7 @@
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
+        self._send(oRequest);
 
         return oRequest.returnValue;
     };
@@ -201,14 +212,14 @@
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        initialize(oRequest);
+        self.initialize(oRequest);
 
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
             try {
-                return prepare(oRequest) ? submit(oRequest) : null;
+                return self.prepare(oRequest) ? self.submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');

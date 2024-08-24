@@ -145,7 +145,7 @@ jaxon.debug.getExceptionText = function(e) {
     prefix - (string):  The prefix to use; this is prepended onto the 
         message; it should indicate the type of message (warning, error)
         
-    cls - (stirng):  The className that will be applied to the message;
+    cls - (string):  The className that will be applied to the message;
         invoking a style from the CSS provided in 
         <jaxon.debug.windowTemplate>.  Should be one of the following:
         - warningText
@@ -229,6 +229,25 @@ jaxon.debug.prepareDebugText = function(text) {
 }
 
 /*
+    Function: jaxon.ajax.handler.unregister
+    
+    Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
+    
+    This is a wrapper around the standard <jaxon.ajax.handler.unregister> function.
+    
+    Parameters:
+        child - (object): Childnode
+        obj - (object): Object
+        
+*/
+jaxon.debug.commandHandler = jaxon.ajax.handler.unregister('dbg');
+jaxon.ajax.handler.register('dbg', function(args) {
+    args.cmdFullName = 'debug message';
+    jaxon.debug.writeMessage(args.data, jaxon.debug.messages.warning, 'warningText');
+    return jaxon.debug.commandHandler(args);
+});
+
+/*
     Function: jaxon.debug.executeCommand
     
     Catch any exceptions that are thrown by a response command handler
@@ -266,40 +285,21 @@ jaxon.ajax.handler.execute = function(args) {
 }
 
 /*
-    Function: jaxon.ajax.handler.unregister
-    
-    Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
-    
-    This is a wrapper around the standard <jaxon.ajax.handler.unregister> function.
-    
-    Parameters:
-        child - (object): Childnode
-        obj - (object): Object
-        
-*/
-jaxon.debug.commandHandler = jaxon.ajax.handler.unregister('dbg');
-jaxon.ajax.handler.register('dbg', function(args) {
-    args.cmdFullName = 'debug message';
-    jaxon.debug.writeMessage(args.data, jaxon.debug.messages.warning, 'warningText');
-    return jaxon.debug.commandHandler(args);
-});
-
-
-/*
-    Function: jaxon.tools.dom.$
+    Function: jaxon.utils.dom.$
     
     Catch any exceptions thrown while attempting to locate an HTML element by it's unique name.
     
-    This is a wrapper around the standard <jaxon.tools.dom.$> function.
+    This is a wrapper around the standard <jaxon.utils.dom.$> function.
     
     Parameters:
     sId - (string): Element ID or name
     
 */
-jaxon.debug.$ = jaxon.tools.dom.$;
-jaxon.tools.dom.$ = function(sId) {
+jaxon.debug.$ = jaxon.utils.dom.$;
+jaxon.utils.dom.$ = function(sId) {
+    var returnValue = undefined;
     try {
-        var returnValue = jaxon.debug.$(sId);
+        returnValue = jaxon.debug.$(sId);
         if ('object' != typeof returnValue)
             throw { code: 10008 };
     } catch (e) {
@@ -481,17 +481,11 @@ jaxon.ajax.handler.call = function() {
             throw { code: 10009 };
 
         var command = arguments[0];
-        var oOptions = {}
-        if (1 < numArgs)
-            oOptions = arguments[1];
-
-        oOptions.debugging = true;
-
-        var rv = jaxon.debug.call(command, oOptions);
+        var rv = jaxon.debug.call(command);
 
         jaxon.debug.writeMessage(jaxon.debug.messages.processing.calling.supplant({
             cmd: command.fullName || command.cmd,
-            options: JSON.stringify(oOptions)
+            options: JSON.stringify({ prop: command.prop, data: command.data }),
         }));
 
         return rv;
@@ -533,43 +527,6 @@ jaxon.ajax.request.execute = function() {
         return jaxon.debug.request(oFunction, oOptions);
     } catch (e) {
         var msg = 'jaxon.ajax.request.execute: ';
-        msg += jaxon.debug.getExceptionText(e);
-        msg += '\n';
-        jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
-        throw e;
-    }
-}
-
-/*
-    Function: jaxon.ajax.response.processor
-    
-    Generate an error message when no reponse processor is available
-    to process the type of response returned from the server.
-    
-    This is a wrapper around the standard <jaxon.ajax.response.processor>
-    function.
-*/
-jaxon.debug.getResponseProcessor = jaxon.ajax.response.processor;
-jaxon.ajax.response.processor = function(oRequest) {
-    try {
-        var fProc = jaxon.debug.getResponseProcessor(oRequest);
-
-        if ('undefined' == typeof fProc) {
-            var msg = jaxon.debug.messages.response.no_processor;
-            try {
-                var contentType = oRequest.request.getResponseHeader('content-type');
-                msg += "Content-Type: ";
-                msg += contentType;
-                if ('text/html' == contentType) {
-                    msg += jaxon.debug.messages.response.check_errors;
-                }
-            } catch (e) {}
-            jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
-        }
-
-        return fProc;
-    } catch (e) {
-        var msg = 'jaxon.ajax.response.processor: ';
         msg += jaxon.debug.getExceptionText(e);
         msg += '\n';
         jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
@@ -640,16 +597,16 @@ jaxon.ajax.response.received = function(oRequest) {
 }
 
 /*
-    Function: jaxon.ajax.response.complete
+    Function: jaxon.ajax.request.complete
     
     Generate a message indicating that the request has completed
     and provide some statistics regarding the request and response.
     
-    This is a wrapper around the standard <jaxon.ajax.response.complete>
+    This is a wrapper around the standard <jaxon.ajax.request.complete>
     function.
 */
-jaxon.debug.completeResponse = jaxon.ajax.response.complete;
-jaxon.ajax.response.complete = function(oRequest) {
+jaxon.debug.completeResponse = jaxon.ajax.request.complete;
+jaxon.ajax.request.complete = function(oRequest) {
     try {
         var returnValue = jaxon.debug.completeResponse(oRequest);
         oRequest.endDate = new Date();
@@ -658,7 +615,7 @@ jaxon.ajax.response.complete = function(oRequest) {
         jaxon.debug.writeMessage(msg);
         return returnValue;
     } catch (e) {
-        var msg = 'jaxon.ajax.response.complete: ';
+        var msg = 'jaxon.ajax.request.complete: ';
         msg += jaxon.debug.getExceptionText(e);
         msg += '\n';
         jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
@@ -667,47 +624,21 @@ jaxon.ajax.response.complete = function(oRequest) {
 }
 
 /*
-    Function: jaxon.tools.ajax.createRequest
-    
-    Generate a message indicating that the request object is 
-    being initialized.
-    
-    Catch any exceptions that are thrown during the process or
-    initializing a new request object.
-    
-    This is a wrapper around the standard <jaxon.tools.ajax.createRequest>
-    function.
-*/
-jaxon.debug.getRequestObject = jaxon.tools.ajax.createRequest;
-jaxon.tools.ajax.createRequest = function() {
-    try {
-        jaxon.debug.writeMessage(jaxon.debug.messages.request.creating);
-        return jaxon.debug.getRequestObject();
-    } catch (e) {
-        var msg = 'jaxon.tools.ajax.createRequest: ';
-        msg += jaxon.debug.getExceptionText(e);
-        msg += '\n';
-        jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
-        throw e;
-    }
-}
-
-/*
-    Function: jaxon.dom.assign
+    Function: jaxon.cmd.body.assign
     
     Catch any exceptions thrown during the assignment and 
     display an error message.
     
-    This is a wrapper around the standard <jaxon.dom.assign>
+    This is a wrapper around the standard <jaxon.cmd.body.assign>
     function.
 */
-if (jaxon.dom.assign) {
-    jaxon.debug.assign = jaxon.dom.assign;
-    jaxon.dom.assign = function(element, property, data) {
+if (jaxon.cmd.body.assign) {
+    jaxon.debug.assign = jaxon.cmd.body.assign;
+    jaxon.cmd.body.assign = function({ target: element, prop: property, data }) {
         try {
             return jaxon.debug.assign(element, property, data);
         } catch (e) {
-            var msg = 'jaxon.dom.assign: ';
+            var msg = 'jaxon.cmd.body.assign: ';
             msg += jaxon.debug.getExceptionText(e);
             msg += '\n';
             msg += 'Eval: element.';
@@ -716,30 +647,6 @@ if (jaxon.dom.assign) {
             jaxon.debug.writeMessage(msg, jaxon.debug.messages.error, 'errorText');
         }
         return true;
-    }
-}
-
-/*
-    Function: jaxon.tools.queue.retry
-*/
-if (jaxon.tools) {
-    if (jaxon.tools.queue) {
-        if (jaxon.tools.queue.retry) {
-            if ('undefined' == typeof jaxon.debug.tools)
-                jaxon.debug.tools = {};
-            if ('undefined' == typeof jaxon.debug.tools.queue)
-                jaxon.debug.tools.queue = {};
-            jaxon.debug.tools.queue.retry = jaxon.tools.queue.retry;
-            jaxon.tools.queue.retry = function(obj, count) {
-                if (jaxon.debug.tools.queue.retry(obj, count))
-                    return true;
-                // no 'exceeded' message for sleep command
-                if (obj.cmd && 's' == obj.cmd)
-                    return false;
-                jaxon.debug.writeMessage('Retry count exceeded.');
-                return false;
-            }
-        }
     }
 }
 
@@ -764,12 +671,10 @@ jaxon.debug.isLoaded = true;
 */
 jxn = {}
 
-jxn.$ = jaxon.tools.dom.$;
-jxn.getFormValues = jaxon.tools.form.getValues;
+jxn.$ = jaxon.utils.dom.$;
+jxn.getFormValues = jaxon.utils.form.getValues;
 jxn.call = jaxon.ajax.handler.call;
 jxn.request = jaxon.ajax.request.execute;
-
-jaxon.$ = jaxon.tools.dom.$;
 
 /*
     The jaxon verbose debugging module.
@@ -892,24 +797,22 @@ jaxon.dom.ready(function() {
         */
         jaxon.debug.verbose.hook = function(x, base) {
             for (var m in x) {
-                if ('function' == typeof(x[m])) {
+                if ('function' === typeof(x[m])) {
                     x[m] = jaxon.debug.verbose.makeFunction(x[m], base + m);
                 }
             }
         }
 
         jaxon.debug.verbose.hook(jaxon, 'jaxon.');
-        jaxon.debug.verbose.hook(jaxon.dom.node, 'jaxon.dom.node.');
-        jaxon.debug.verbose.hook(jaxon.dom.tree, 'jaxon.dom.tree.');
-        jaxon.debug.verbose.hook(jaxon.dom.events, 'jaxon.dom.events.');
-        jaxon.debug.verbose.hook(jaxon.html.js, 'jaxon.html.js.');
-        jaxon.debug.verbose.hook(jaxon.html.css, 'jaxon.html.css.');
-        jaxon.debug.verbose.hook(jaxon.html.forms, 'jaxon.html.forms.');
-        jaxon.debug.verbose.hook(jaxon.tools.dom, 'jaxon.tools.dom.');
-        jaxon.debug.verbose.hook(jaxon.tools.array, 'jaxon.tools.array.');
-        jaxon.debug.verbose.hook(jaxon.tools.string, 'jaxon.tools.string.');
-        jaxon.debug.verbose.hook(jaxon.tools.ajax, 'jaxon.tools.ajax.');
-        jaxon.debug.verbose.hook(jaxon.tools.queue, 'jaxon.tools.queue.');
+        jaxon.debug.verbose.hook(jaxon.cmd.body, 'jaxon.cmd.body.');
+        jaxon.debug.verbose.hook(jaxon.cmd.event, 'jaxon.cmd.event.');
+        jaxon.debug.verbose.hook(jaxon.cmd.form, 'jaxon.cmd.form.');
+        jaxon.debug.verbose.hook(jaxon.cmd.head, 'jaxon.cmd.head.');
+        jaxon.debug.verbose.hook(jaxon.cmd.script, 'jaxon.cmd.script.');
+        jaxon.debug.verbose.hook(jaxon.utils.dom, 'jaxon.utils.dom.');
+        jaxon.debug.verbose.hook(jaxon.utils.string, 'jaxon.utils.string.');
+        jaxon.debug.verbose.hook(jaxon.utils.queue, 'jaxon.utils.queue.');
+        jaxon.debug.verbose.hook(jaxon.utils.upload, 'jaxon.utils.upload.');
         jaxon.debug.verbose.hook(jaxon.ajax.callback, 'jaxon.ajax.callback.');
         jaxon.debug.verbose.hook(jaxon.ajax.handler, 'jaxon.ajax.handler.');
     }
