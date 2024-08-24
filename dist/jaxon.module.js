@@ -399,6 +399,27 @@ var jaxon = {
     };
 
     /**
+     * Get the value of an attribute of an object.
+     * Can also get the value of a var in an array.
+     *
+     * @param {object} xElement The object with the attribute.
+     * @param {string} sAttrName The attribute name.
+     *
+     * @returns {mixed}
+     */
+    self.getAttrValue = (xElement, sAttrName) => {
+        if((aMatches = sAttrName.match(/^(.+)\[(\d+)\]$/)) === null)
+        {
+            return xElement[sAttrName];
+        }
+
+        // The attribute is an array in the form "var[indice]".
+        sAttrName = aMatches[1];
+        const nAttrIndice = parseInt(aMatches[2]);
+        return xElement[sAttrName][nAttrIndice];
+    }
+
+    /**
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName The name of the function to find.
@@ -410,7 +431,7 @@ var jaxon = {
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {
-            context = context[aNames[i]];
+            context = self.getAttrValue(context, aNames[i]);
         }
         return context ?? null;
     };
@@ -432,7 +453,8 @@ var jaxon = {
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
-            xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
+            const sRealAttrName = aNames[i] === 'css' ? 'style' : aNames[i];
+            xElement = self.getAttrValue(xElement, sRealAttrName);
         }
         return !xElement ? null : { node: xElement, attr: sAttrName };
     };
@@ -689,7 +711,7 @@ var jaxon = {
             return null;
         }
 
-        let obj = oQueue.elements[oQueue.start];
+        const obj = oQueue.elements[oQueue.start];
         delete oQueue.elements[oQueue.start];
         if(++oQueue.start >= oQueue.size) {
             oQueue.start = 0;
@@ -1091,7 +1113,7 @@ var jaxon = {
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, ajax, rsp, queue, dom) {
+(function(self, config, ajax, queue, dom) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -1159,7 +1181,7 @@ var jaxon = {
      * @returns {true} The command completed successfully.
      * @returns {false} The command signalled that it needs to pause processing.
      */
-    const execute = (command) => {
+    self.execute = (command) => {
         if (!self.isRegistered(command)) {
             return true;
         }
@@ -1180,7 +1202,7 @@ var jaxon = {
      */
     const processCommand = (command) => {
         try {
-            execute(command);
+            self.execute(command);
             return true;
         } catch (e) {
             console.log(e);
@@ -1263,6 +1285,30 @@ var jaxon = {
     };
 
     /**
+     * Set or reset a timeout that is used to restart processing of the queue.
+     *
+     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
+     * to process pending events, like loading files)
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} interval The number of milliseconds to wait before starting/restarting the processing of the queue.
+     *
+     * @returns {void}
+     */
+    self.setWakeup = (command, interval) => {
+        const { prop: duration, response: commandQueue } = command;
+        if (command.retries === undefined) {
+            command.retries = duration;
+        }
+        commandQueue.paused = false;
+        if (command.retries-- > 0) {
+            // Requeue the command and sleep for the given interval.
+            queue.pushFront(commandQueue, command);
+            self.sleep({ prop: interval, response: commandQueue });
+        }
+    };
+
+    /**
      * Show the specified message.
      *
      * @param {string} message The message to display.
@@ -1311,8 +1357,7 @@ var jaxon = {
             () => confirmCallback(commandQueue, count));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
-    jaxon.utils.queue, jaxon.utils.dom);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.utils.queue, jaxon.utils.dom);
 
 
 /**
@@ -1481,7 +1526,7 @@ var jaxon = {
      *
      * @returns {boolean}
      */
-    const initialize = (oRequest) => {
+    self.initialize = (oRequest) => {
         cfg.setRequestOptions(oRequest);
 
         cbk.initCallbacks(oRequest);
@@ -1504,7 +1549,7 @@ var jaxon = {
      *
      * @return {void}
      */
-    const prepare = (oRequest) => {
+    self.prepare = (oRequest) => {
         --oRequest.requestRetry;
         cbk.execute(oRequest, 'onPrepare');
 
@@ -1612,6 +1657,20 @@ var jaxon = {
     };
 
     /**
+     * Send a request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    self._send = (oRequest) => {
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.responseConverter)
+            .then(oRequest.responseHandler)
+            .catch(oRequest.errorHandler);
+    };
+
+    /**
      * Create a request object and submit the request using the specified request type;
      * all request parameters should be finalized by this point.
      * Upon failure of a POST, this function will fall back to a GET request.
@@ -1620,7 +1679,7 @@ var jaxon = {
      *
      * @returns {mixed}
      */
-    const submit = (oRequest) => {
+    self.submit = (oRequest) => {
         oRequest.status.onRequest();
 
         cbk.execute(oRequest, 'onResponseDelay');
@@ -1630,10 +1689,7 @@ var jaxon = {
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.responseConverter)
-            .then(oRequest.responseHandler)
-            .catch(oRequest.errorHandler);
+        self._send(oRequest);
 
         return oRequest.returnValue;
     };
@@ -1669,14 +1725,14 @@ var jaxon = {
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
 
-        initialize(oRequest);
+        self.initialize(oRequest);
 
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 
         while (oRequest.requestRetry > 0) {
             try {
-                return prepare(oRequest) ? submit(oRequest) : null;
+                return self.prepare(oRequest) ? self.submit(oRequest) : null;
             }
             catch (e) {
                 cbk.execute(oRequest, 'onFailure');
@@ -2235,7 +2291,8 @@ var jaxon = {
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        const loadedScript = Array.from(loadedScripts)
+            .find(script => script.src && script.src.indexOf(src) >= 0);
         return (loadedScript) ? true : self.includeScript({ data: src, type, elm_id });
     };
 
@@ -2274,7 +2331,8 @@ var jaxon = {
     self.removeScript = ({ data: src, unld: unload }) => {
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        const loadedScript = Array.from(loadedScripts)
+            .find(script => script.src && script.src.indexOf(src) >= 0);
         if (!loadedScript) {
             return true;
         }
@@ -2298,7 +2356,7 @@ var jaxon = {
     self.includeCSS = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
-        const found = oHead.getElementsByTagName('link')
+        const found = Array.from(oHead.getElementsByTagName('link'))
             .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
         if (found) {
             return true;
@@ -2344,22 +2402,16 @@ var jaxon = {
      */
     self.waitForCSS = (command) => {
         const oDocSS = baseDocument.styleSheets;
-        const ssLoaded = oDocSS.every(styleSheet => {
+        const ssLoaded = Array.from(oDocSS).every(styleSheet => {
             const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
             return enabled !== 0;
         });
         if (ssLoaded) {
-            return false;
+            return true;
         }
 
-        // inject a delay in the queue processing
-        // handle retry counter
-        const { prop: duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 10);
-            return false;
-        }
-        // Give up, continue processing queue
+        // Inject a delay in the queue processing and handle retry counter
+        handler.setWakeup(command, 10);
         return true;
     };
 })(jaxon.cmd.head, jaxon.ajax.handler, jaxon.config.baseDocument);
@@ -2369,7 +2421,7 @@ var jaxon = {
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom, str) {
+(function(self, handler, dom, str, queue) {
     /**
      * Show the specified message.
      *
@@ -2449,20 +2501,18 @@ var jaxon = {
      * @returns {false} The condition evaluates to false and the sleep time has not expired.
      */
     self.waitFor = (command) => {
-        const { data: funcBody, prop: duration, response, context = {} } = command;
+        const { data: funcBody, context = {} } = command;
         self.context = context;
         const jsCode = `() => {
     return (${funcBody});
 }`;
 
-        if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
-            // Inject a delay in the queue processing and handle retry counter
-            if (handler.retry(command, duration)) {
-                handler.setWakeup(response, 100);
-                return false;
-            }
-            // Give up, continue processing queue
+        if (dom.createFunction(jsCode) && self.context.delegateCall()) {
+            return true;
         }
+
+        // Inject a delay in the queue processing and handle retry counter
+        handler.setWakeup(command, 100);
         return true;
     };
 
@@ -2570,7 +2620,7 @@ var jaxon = {
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.queue);
 
 
 /*
