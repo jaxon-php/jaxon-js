@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, handler, dom, str) {
+(function(self, handler, dom, str, queue) {
     /**
      * Show the specified message.
      *
@@ -82,20 +82,18 @@
      * @returns {false} The condition evaluates to false and the sleep time has not expired.
      */
     self.waitFor = (command) => {
-        const { data: funcBody, prop: duration, response, context = {} } = command;
+        const { data: funcBody, context = {} } = command;
         self.context = context;
         const jsCode = `() => {
     return (${funcBody});
 }`;
 
-        if (dom.createFunction(jsCode) && !self.context.delegateCall()) {
-            // Inject a delay in the queue processing and handle retry counter
-            if (handler.retry(command, duration)) {
-                handler.setWakeup(response, 100);
-                return false;
-            }
-            // Give up, continue processing queue
+        if (dom.createFunction(jsCode) && self.context.delegateCall()) {
+            return true;
         }
+
+        // Inject a delay in the queue processing and handle retry counter
+        handler.setWakeup(command, 100);
         return true;
     };
 
@@ -203,4 +201,4 @@
         window.setTimeout(() => window.location = sUrl, nDelay * 1000);
         return true;
     };
-})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string);
+})(jaxon.cmd.script, jaxon.ajax.handler, jaxon.utils.dom, jaxon.utils.string, jaxon.utils.queue);

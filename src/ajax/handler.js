@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.handler
  */
 
-(function(self, config, ajax, rsp, queue, dom) {
+(function(self, config, ajax, queue, dom) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -174,6 +174,30 @@
     };
 
     /**
+     * Set or reset a timeout that is used to restart processing of the queue.
+     *
+     * This allows the queue to asynchronously wait for an event to occur (giving the browser time
+     * to process pending events, like loading files)
+     *
+     * @param {object} command The Response command object.
+     * @param {integer} interval The number of milliseconds to wait before starting/restarting the processing of the queue.
+     *
+     * @returns {void}
+     */
+    self.setWakeup = (command, interval) => {
+        const { prop: duration, response: commandQueue } = command;
+        if (command.retries === undefined) {
+            command.retries = duration;
+        }
+        commandQueue.paused = false;
+        if (command.retries-- > 0) {
+            // Requeue the command and sleep for the given interval.
+            queue.pushFront(commandQueue, command);
+            self.sleep({ prop: interval, response: commandQueue });
+        }
+    };
+
+    /**
      * Show the specified message.
      *
      * @param {string} message The message to display.
@@ -222,5 +246,4 @@
             () => confirmCallback(commandQueue, count));
         return true;
     };
-})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.ajax.response,
-    jaxon.utils.queue, jaxon.utils.dom);
+})(jaxon.ajax.handler, jaxon.config, jaxon.ajax, jaxon.utils.queue, jaxon.utils.dom);

@@ -126,22 +126,16 @@
      */
     self.waitForCSS = (command) => {
         const oDocSS = baseDocument.styleSheets;
-        const ssLoaded = oDocSS.every(styleSheet => {
+        const ssLoaded = Array.from(oDocSS).every(styleSheet => {
             const enabled = styleSheet.cssRules.length ?? styleSheet.rules.length ?? 0;
             return enabled !== 0;
         });
         if (ssLoaded) {
-            return false;
+            return true;
         }
 
-        // inject a delay in the queue processing
-        // handle retry counter
-        const { prop: duration, response } = command;
-        if (handler.retry(command, duration)) {
-            handler.setWakeup(response, 10);
-            return false;
-        }
-        // Give up, continue processing queue
+        // Inject a delay in the queue processing and handle retry counter
+        handler.setWakeup(command, 10);
         return true;
     };
 })(jaxon.cmd.head, jaxon.ajax.handler, jaxon.config.baseDocument);
