@@ -15,7 +15,8 @@
         // Check for existing script tag for this file.
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        const loadedScript = Array.from(loadedScripts)
+            .find(script => script.src && script.src.indexOf(src) >= 0);
         return (loadedScript) ? true : self.includeScript({ data: src, type, elm_id });
     };
 
@@ -54,7 +55,8 @@
     self.removeScript = ({ data: src, unld: unload }) => {
         const loadedScripts = baseDocument.getElementsByTagName('script');
         // Find an existing script with the same file name
-        const loadedScript = loadedScripts.find(script => script.src && script.src.indexOf(src) >= 0);
+        const loadedScript = Array.from(loadedScripts)
+            .find(script => script.src && script.src.indexOf(src) >= 0);
         if (!loadedScript) {
             return true;
         }
@@ -78,7 +80,7 @@
     self.includeCSS = ({ data: fileName, media = 'screen' }) => {
         const oHeads = baseDocument.getElementsByTagName('head');
         const oHead = oHeads[0];
-        const found = oHead.getElementsByTagName('link')
+        const found = Array.from(oHead.getElementsByTagName('link'))
             .find(link => link.href.indexOf(fileName) >= 0 && link.media == media);
         if (found) {
             return true;
