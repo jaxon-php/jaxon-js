@@ -99,7 +99,7 @@
             return null;
         }
 
-        let obj = oQueue.elements[oQueue.start];
+        const obj = oQueue.elements[oQueue.start];
         delete oQueue.elements[oQueue.start];
         if(++oQueue.start >= oQueue.size) {
             oQueue.start = 0;
