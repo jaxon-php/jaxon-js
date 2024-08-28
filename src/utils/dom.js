@@ -65,6 +65,27 @@
     };
 
     /**
+     * Get the value of an attribute of an object.
+     * Can also get the value of a var in an array.
+     *
+     * @param {object} xElement The object with the attribute.
+     * @param {string} sAttrName The attribute name.
+     *
+     * @returns {mixed}
+     */
+    self.getAttrValue = (xElement, sAttrName) => {
+        if((aMatches = sAttrName.match(/^(.+)\[(\d+)\]$/)) === null)
+        {
+            return xElement[sAttrName];
+        }
+
+        // The attribute is an array in the form "var[indice]".
+        sAttrName = aMatches[1];
+        const nAttrIndice = parseInt(aMatches[2]);
+        return xElement[sAttrName][nAttrIndice];
+    }
+
+    /**
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName The name of the function to find.
@@ -80,7 +101,7 @@
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {
-            context = context[aNames[i]];
+            context = self.getAttrValue(context, aNames[i]);
         }
         return context ?? null;
     };
@@ -102,7 +123,8 @@
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
-            xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
+            const sRealAttrName = aNames[i] === 'css' ? 'style' : aNames[i];
+            xElement = self.getAttrValue(xElement, sRealAttrName);
         }
         return !xElement ? null : { node: xElement, attr: sAttrName };
     };
