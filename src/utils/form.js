@@ -19,7 +19,7 @@
     const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
         if (!name || 'PARAM' === tagName)
             return;
-        if (!xOptions.disabled && disabled)
+        if (!xOptions.submitDisabled && disabled)
             return;
         const { prefix } = xOptions;
         if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
@@ -90,15 +90,15 @@
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} submitDisabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled = false, prefix = '') => {
+    self.getValues = (formId, submitDisabled = false, prefix = '') => {
         const xOptions = {
             // Submit disabled fields
-            disabled: (disabled === true),
+            submitDisabled: (submitDisabled === true || submitDisabled === 1),
             // Only submit fields with a prefix
             prefix: prefix ?? '',
             // Form values
