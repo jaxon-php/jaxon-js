@@ -45,7 +45,7 @@
      *
      * @var {array}
      */
-    const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
+    const errorCodes = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
     // 10.3.2 301 Moved Permanently
@@ -65,6 +65,33 @@
      * @var {array}
      */
     const redirectCodes = [301, 302, 307];
+
+    /**
+     * Check if a status code indicates a success.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isSuccessCode = nStatusCode => successCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates a redirect.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isRedirectCode = nStatusCode => redirectCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates an error.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isErrorCode = nStatusCode => errorCodes.indexOf(nStatusCode) >= 0;
 
     /**
      * Parse the JSON response into a series of commands.
@@ -114,24 +141,23 @@
      * @return {mixed}
      */
     self.jsonProcessor = (oRequest) => {
-        if (successCodes.indexOf(oRequest.response.status) >= 0/*oRequest.response.ok*/) {
+        const status = oRequest.response.status;
+        if (self.isSuccessCode(status)) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             queueCommands(oRequest)
             handler.processCommands(oRequest.commandQueue);
-            return oRequest.returnValue;
         }
-        if (redirectCodes.indexOf(oRequest.response.status) >= 0) {
+        else if (self.isRedirectCode(status)) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
             window.location = oRequest.response.headers.get('location');
-            return oRequest.returnValue;
         }
-        if (errorsForAlert.indexOf(oRequest.response.status) >= 0) {
+        else if (self.isErrorCode(status)) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
-            return oRequest.returnValue;
         }
+
         return oRequest.returnValue;
     };
 
