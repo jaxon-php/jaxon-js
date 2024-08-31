@@ -42,5 +42,10 @@ const jxn = {
     /**
      * Shortcut to <jaxon.request>.
      */
-    request: jaxon.request
+    request: jaxon.request,
+
+    /**
+     * Shortcut to <jaxon.ajax.handler.call>.
+     */
+    call: jaxon.ajax.handler.call,
 };

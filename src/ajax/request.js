@@ -24,9 +24,6 @@
 
         // Look for upload parameter
         upload.initialize(oRequest);
-
-        // Process the request parameters
-        params.process(oRequest);
     };
 
     /**
@@ -214,6 +211,7 @@
 
         self.initialize(oRequest);
 
+        // Process the request parameters
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
 

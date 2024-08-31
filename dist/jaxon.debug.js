@@ -65,13 +65,7 @@ try {
         
         The parameters that will be used to create the debugging window.
     */
-    if ('undefined' == typeof self.windowStyle)
-        self.windowStyle =
-            'width=800,' +
-            'height=600,' +
-            'scrollbars=yes,' +
-            'resizable=yes,' +
-            'status=yes';
+    self.windowStyle = 'width=800,height=600,scrollbars=yes,resizable=yes,status=yes';
 
     /*
         String: windowTemplate
@@ -79,8 +73,7 @@ try {
         The HTML template and CSS style information used to populate the
         debugging window upon creation.
     */
-    if ('undefined' == typeof self.windowTemplate)
-        self.windowTemplate =
+    self.windowTemplate =
         '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' +
         '<html><head>' +
         '<title>jaxon debug output</title>' +
@@ -200,7 +193,7 @@ try {
     */
     const writeDebugMessage = function(text, prefix, cls) {
         try {
-            if ('undefined' == typeof self.window || true == self.window.closed) {
+            if (!self.window || self.window.closed) {
                 self.window = window.open(self.windowSource, self.windowID, self.windowStyle);
                 if ("about:blank" == self.windowSource)
                     self.window.document.write(self.windowTemplate);
@@ -232,8 +225,8 @@ try {
                 debugText.className = cls;
             } catch (e) {}
         } catch (e) {
-            if (text.length > 1000) {
-                text = text.substr(0, 1000) + self.messages.heading;
+            if (text.length > 1500) {
+                text = text.substr(0, 1500) + ' ...\n(Truncated)';
             }
             alert(self.messages.heading + text);
         }
@@ -474,7 +467,11 @@ try {
 
             writeDebugMessage(self.messages.processing.calling.supplant({
                 cmd: command.fullName || command.cmd,
-                options: JSON.stringify({ prop: command.prop, data: command.data }),
+                options: JSON.stringify({
+                    ...(command.id ? { id: command.id } : {}),
+                    prop: command.prop,
+                    data: command.data,
+                }, null, 2),
             }));
 
             return rv;
@@ -537,14 +534,14 @@ try {
                 oRequest.midDate = new Date();
                 const msg = self.messages.response.success.supplant({
                     status: status,
-                    length: oRequest.response.text().length,
+                    length: JSON.stringify(oRequest.responseContent).length,
                     duration: oRequest.midDate - oRequest.beginDate
-                }) + '\n' + JSON.stringify(oRequest.response.json(), null, 2);
+                }) + '\n' + JSON.stringify(oRequest.responseContent, null, 2);
                 writeDebugMessage(msg);
             } else if (response.isErrorCode(status)) {
                 const msg = self.messages.response.content.supplant({
                     status: status,
-                    text: oRequest.response.text()
+                    text: JSON.stringify(oRequest.responseContent, null, 2)
                 });
                 writeDebugMessage(msg, self.messages.error, 'errorText');
             } else if (response.isRedirectCode(status)) {
@@ -611,29 +608,9 @@ try {
     jaxon.ajax.handler, jaxon.utils);
 
 /*
-    Section: Redefine shortcuts.
-    
-    Must redefine these shortcuts so they point to the new debug (wrapper) versions:
-    - <jxn.$>
-    - <jxn.getFormValues>
-    - <jxn.call>
-
-    Must redefine these shortcuts as well:
-    - <jaxon.$>
-    - <jaxon.getFormValues>
-*/
-jxn = {}
-
-jxn.$ = jaxon.utils.dom.$;
-jxn.getFormValues = jaxon.utils.form.getValues;
-jxn.call = jaxon.ajax.handler.call;
-jxn.request = jaxon.ajax.request.execute;
-
-/*
     The jaxon verbose debugging module.
     This is an optional module, include in your project with care. :)
 */
-
 jaxon.dom.ready(function() {
     // Generate wrapper functions for verbose debug.
     (function(self) {
