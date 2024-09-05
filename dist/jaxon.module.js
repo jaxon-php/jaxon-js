@@ -1845,12 +1845,12 @@ var jaxon = {
      *
      * @param {object} oRequest The request context object.
      *
-     * @return {void}
+     * @return {int}
      */
     const queueCommands = (oRequest) => {
         const responseContent = oRequest.responseContent;
         if (!responseContent || !responseContent.jxnobj) {
-            return;
+            return 0;
         }
 
         oRequest.status.onProcessing();
@@ -1861,24 +1861,34 @@ var jaxon = {
 
         responseContent.debugmsg && console.log(responseContent.debugmsg);
 
-        let sequence = 0;
+        let nSequence = 0;
         responseContent.jxnobj.forEach(command => queue.push(oRequest.commandQueue, {
-            ...command,
             fullName: '*unknown*',
-            sequence: sequence++,
+            ...command,
+            sequence: nSequence++,
             response: oRequest.commandQueue,
             request: oRequest,
             context: oRequest.context,
         }));
-        // Queue a last command to clear the queue
-        queue.push(oRequest.commandQueue, {
-            fullName: 'Response Complete',
-            sequence: sequence,
-            request: oRequest,
-            context: oRequest.context,
-            cmd: 'rcmplt',
-        });
+
+        return nSequence;
     };
+
+    /**
+     * Queue the last command that is will end the response processing.
+     *
+     * @param {object} oRequest The request context object.
+     * @param {int} nSequence The last command sequence
+     *
+     * @return {int}
+     */
+    const queueEndCommand = (oRequest, nSequence) => queue.push(oRequest.commandQueue, {
+        fullName: 'Response Complete',
+        sequence: nSequence,
+        request: oRequest,
+        context: oRequest.context,
+        cmd: 'rcmplt',
+    });
 
     /**
      * This is the JSON response processor.
@@ -1892,7 +1902,8 @@ var jaxon = {
         if (self.isSuccessCode(status)) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
-            queueCommands(oRequest)
+            const nSequence = queueCommands(oRequest)
+            queueEndCommand(oRequest, nSequence);
             handler.processCommands(oRequest.commandQueue);
         }
         else if (self.isRedirectCode(status)) {
