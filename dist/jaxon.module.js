@@ -383,6 +383,27 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Get the value of an attribute of an object.
+     * Can also get the value of a var in an array.
+     *
+     * @param {object} xElement The object with the attribute.
+     * @param {string} sAttrName The attribute name.
+     *
+     * @returns {mixed}
+     */
+    self.getAttrValue = (xElement, sAttrName) => {
+        if((aMatches = sAttrName.match(/^(.+)\[(\d+)\]$/)) === null)
+        {
+            return xElement[sAttrName];
+        }
+
+        // The attribute is an array in the form "var[indice]".
+        sAttrName = aMatches[1];
+        const nAttrIndice = parseInt(aMatches[2]);
+        return xElement[sAttrName][nAttrIndice];
+    }
+
+    /**
      * Find a function using its name as a string.
      *
      * @param {string} sFuncName The name of the function to find.
@@ -398,7 +419,7 @@ window.jaxon = jaxon;
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {
-            context = context[aNames[i]];
+            context = self.getAttrValue(context, aNames[i]);
         }
         return context ?? null;
     };
@@ -420,7 +441,8 @@ window.jaxon = jaxon;
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (xElement); i++) {
             // The real name for the "css" object is "style".
-            xElement = xElement[aNames[i] === 'css' ? 'style' : aNames[i]];
+            const sRealAttrName = aNames[i] === 'css' ? 'style' : aNames[i];
+            xElement = self.getAttrValue(xElement, sRealAttrName);
         }
         return !xElement ? null : { node: xElement, attr: sAttrName };
     };
@@ -1183,10 +1205,10 @@ window.jaxon = jaxon;
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, event: xEvent } } = xOptions;
+            const { context: { target: xTarget, event: xEvent } = {} } = xOptions;
             switch(sName) {
                 case 'this': // The current event target.
-                    return mode === 'js' ? xTarget : query.select(xTarget);
+                    return mode === 'jq' ? query.select(xTarget) : (mode === 'js' ? xTarget : null);
                 case 'event': // The current event.
                     return xEvent;
                 case 'window':
@@ -1239,9 +1261,15 @@ window.jaxon = jaxon;
      */
     const xErrors = {
         comparator: () => false, // The default comparison operator.
-        command: (xCall) => {
-            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
-            return undefined;
+        command: {
+            invalid: (xCall) => {
+                console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+                return undefined;
+            },
+            unknown: (xCall) => {
+                console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+                return undefined;
+            },
         },
     };
 
@@ -1297,8 +1325,8 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const execCall = (xCall, xOptions) => {
-        const xCommand = !isValidCall(xCall) ? xErrors.command :
-            (xCommands[xCall._type] ?? xErrors.command);
+        const xCommand = !isValidCall(xCall) ? xErrors.command.invalid :
+            (xCommands[xCall._type] ?? xErrors.command.unknown);
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };
@@ -1429,55 +1457,9 @@ window.jaxon = jaxon;
     /**
      * The selector function.
      *
-     * @var {object|null}
+     * @var {object}
      */
-    self.jq = null;
-
-    /**
-     * Init the library
-     *
-     * @param {object=} selector The selector function
-     *
-     * @var {mixed}
-     */
-    self.init = (selector) => {
-        // Add som missing functions to the UmbrellaJs selector.
-        if ((selector)) {
-            selector.prototype.val = function() {
-                const el = this.first();
-                if (!el) {
-                    return undefined;
-                }
-                if (!el.options || !el.multiple) {
-                    return el.value;
-                }
-                // Convert from NodeList to array, so we can call the filter method.
-                return [...el.options]
-                    .filter((option) => option.selected)
-                    .map((option) => option.value);
-            };
-            selector.prototype.show = function(display) {
-                this.each(node => {
-                    if (node.style) {
-                        node.style.display = display ?? 'block';
-                    }
-                });
-                return this;
-            };
-            selector.prototype.hide = function() {
-                this.each(node => {
-                    if (node.style) {
-                        node.style.display = 'none';
-                    }
-                });
-                return this;
-            };
-        }
-        self.jq = selector;
-    };
-
-    // Call the init function.
-    self.init(jq);
+    self.jq = jq;
 
     /**
      * Call the jQuery DOM selector
@@ -1487,11 +1469,10 @@ window.jaxon = jaxon;
      *
      * @returns {object}
      */
-    self.select = (xSelector, xContext = null) => {
-        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
-    };
-})(jaxon.parser.query, window.u /* window.jQuery */);
-// window.u is the UmbrellaJs (https://umbrellajs.com) selector function.
+    self.select = (xSelector, xContext = null) => !xContext ?
+        self.jq(xSelector) : self.jq(xSelector, xContext);
+})(jaxon.parser.query, window.jQuery ?? window.chibi);
+// window.chibi is the ChibiJs (https://umbrellajs.com) selector function.
 
 
 /**
@@ -1901,7 +1882,7 @@ window.jaxon = jaxon;
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, context) => {
+    self.callHandler = (name, args, context) => {
         const { func, desc } = handlers[name];
         context.command.desc = desc;
         return func(args, context);
@@ -1917,7 +1898,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The command completed successfully.
      */
-    const execute = (context) => {
+    self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
@@ -1938,7 +1919,7 @@ window.jaxon = jaxon;
         }
 
         // Process the command
-        callHandler(name, args, context);
+        self.callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
         attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return true;
@@ -1953,7 +1934,7 @@ window.jaxon = jaxon;
      */
     const processCommand = (context) => {
         try {
-            execute(context);
+            self.execute(context);
             return true;
         } catch (e) {
             console.log(e);
@@ -2004,8 +1985,10 @@ window.jaxon = jaxon;
         message && console.log(message);
 
         // Create a queue for the commands in the response.
+        let nSequence = 0;
         const oQueue = queue.create(config.commandQueueSize);
         commands.forEach(command => queue.push(oQueue, {
+            sequence: nSequence++,
             command: {
                 name: '*unknown*',
                 ...command,
@@ -2015,6 +1998,7 @@ window.jaxon = jaxon;
         }));
         // Add a last command to clear the queue
         queue.push(oQueue, {
+            sequence: nSequence,
             command: {
                 name: 'response.complete',
                 fullName: 'Response Complete',
@@ -2316,7 +2300,7 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const initialize = (oRequest) => {
+    self.initialize = (oRequest) => {
         config.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
@@ -2346,7 +2330,7 @@ window.jaxon = jaxon;
      *
      * @return {void}
      */
-    const prepare = (oRequest) => {
+    self.prepare = (oRequest) => {
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -2363,6 +2347,20 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Send a request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    self._send = (oRequest) => {
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.response.converter)
+            .then(oRequest.response.handler)
+            .catch(oRequest.response.errorHandler);
+    };
+
+    /**
      * Create a request object and submit the request using the specified request type;
      * all request parameters should be finalized by this point.
      * Upon failure of a POST, this function will fall back to a GET request.
@@ -2372,22 +2370,18 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const submit = (oRequest) => {
-        prepare(oRequest);
+        self.prepare(oRequest);
         oRequest.status.onRequest();
 
         // The onResponseDelay and onExpiration aren't called immediately, but a timer
         // is set to call them later, using delays that are set in the config.
         cbk.execute(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'onExpiration');
-
         cbk.execute(oRequest, 'onRequest');
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.response.converter)
-            .then(oRequest.response.handler)
-            .catch(oRequest.response.errorHandler);
+        self._send(oRequest);
     };
 
     /**
@@ -2442,7 +2436,7 @@ window.jaxon = jaxon;
 
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
-        initialize(oRequest);
+        self.initialize(oRequest);
 
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);
@@ -2500,7 +2494,7 @@ window.jaxon = jaxon;
      *
      * @var {array}
      */
-    const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
+    const errorCodes = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
     // 10.3.2 301 Moved Permanently
@@ -2522,6 +2516,33 @@ window.jaxon = jaxon;
     const redirectCodes = [301, 302, 307];
 
     /**
+     * Check if a status code indicates a success.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isSuccessCode = nStatusCode => successCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates a redirect.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isRedirectCode = nStatusCode => redirectCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates an error.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isErrorCode = nStatusCode => errorCodes.indexOf(nStatusCode) >= 0;
+
+    /**
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
@@ -2533,19 +2554,19 @@ window.jaxon = jaxon;
      * @return {true}
      */
     const jsonProcessor = (oRequest, { http: { status, headers } }) => {
-        if (successCodes.indexOf(status) >= 0) {
+        if (self.isSuccessCode(status)) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             command.processCommands(oRequest);
             return true;
         }
-        if (redirectCodes.indexOf(status) >= 0) {
+        if (self.isRedirectCode(status)) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
             window.location = headers.get('location');
             return true;
         }
-        if (errorsForAlert.indexOf(status) >= 0) {
+        if (self.isErrorCode(status)) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
             return true;
@@ -2560,7 +2581,7 @@ window.jaxon = jaxon;
      *
      * @return {mixed}
      */
-    const received = (oRequest) => {
+    self.received = (oRequest) => {
         const { aborted, response: oResponse } = oRequest;
         // Sometimes the response.received gets called when the request is aborted
         if (aborted) {
@@ -2596,7 +2617,7 @@ window.jaxon = jaxon;
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
             if (queue.empty(req.q.send) || oRequest.mode === 'synchronous') {
-                received(oRequest);
+                self.received(oRequest);
                 return;
             }
             queue.push(req.q.recv, oRequest);
@@ -2658,7 +2679,7 @@ window.jaxon = jaxon;
             queue.pop(req.q.send);
             // Process the asynchronous responses received while waiting.
             while((recvRequest = popAsyncRequest(req.q.recv)) !== null) {
-                received(recvRequest);
+                self.received(recvRequest);
             }
             // Submit the asynchronous requests sent while waiting.
             while((sendRequest = popAsyncRequest(req.q.send)) !== null) {
@@ -2961,11 +2982,11 @@ window.jaxon = jaxon;
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
-     * @param {object} context The command context.
+     * @param {object} args.context The initial context to execute the command.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args }, context) => {
+    self.call = ({ func, args, context }) => {
         call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
@@ -2975,11 +2996,11 @@ window.jaxon = jaxon;
      *
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
-     * @param {object} context The command context.
+     * @param {object} args.context The initial context to execute the command.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr }, context) => {
+    self.exec = ({ expr, context }) => {
         call.execExpr(expr, context);
         return true;
     };

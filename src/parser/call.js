@@ -53,10 +53,10 @@
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, event: xEvent } } = xOptions;
+            const { context: { target: xTarget, event: xEvent } = {} } = xOptions;
             switch(sName) {
                 case 'this': // The current event target.
-                    return mode === 'js' ? xTarget : query.select(xTarget);
+                    return mode === 'jq' ? query.select(xTarget) : (mode === 'js' ? xTarget : null);
                 case 'event': // The current event.
                     return xEvent;
                 case 'window':
@@ -109,9 +109,15 @@
      */
     const xErrors = {
         comparator: () => false, // The default comparison operator.
-        command: (xCall) => {
-            console.error('Unexpected command: ' + JSON.stringify({ call: xCall }));
-            return undefined;
+        command: {
+            invalid: (xCall) => {
+                console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+                return undefined;
+            },
+            unknown: (xCall) => {
+                console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+                return undefined;
+            },
         },
     };
 
@@ -167,8 +173,8 @@
      * @returns {void}
      */
     const execCall = (xCall, xOptions) => {
-        const xCommand = !isValidCall(xCall) ? xErrors.command :
-            (xCommands[xCall._type] ?? xErrors.command);
+        const xCommand = !isValidCall(xCall) ? xErrors.command.invalid :
+            (xCommands[xCall._type] ?? xErrors.command.unknown);
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };

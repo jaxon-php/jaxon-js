@@ -56,7 +56,7 @@
      *
      * @returns {boolean}
      */
-    const callHandler = (name, args, context) => {
+    self.callHandler = (name, args, context) => {
         const { func, desc } = handlers[name];
         context.command.desc = desc;
         return func(args, context);
@@ -72,7 +72,7 @@
      *
      * @returns {true} The command completed successfully.
      */
-    const execute = (context) => {
+    self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
             return true;
@@ -93,7 +93,7 @@
         }
 
         // Process the command
-        callHandler(name, args, context);
+        self.callHandler(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
         attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return true;
@@ -108,7 +108,7 @@
      */
     const processCommand = (context) => {
         try {
-            execute(context);
+            self.execute(context);
             return true;
         } catch (e) {
             console.log(e);
@@ -159,8 +159,10 @@
         message && console.log(message);
 
         // Create a queue for the commands in the response.
+        let nSequence = 0;
         const oQueue = queue.create(config.commandQueueSize);
         commands.forEach(command => queue.push(oQueue, {
+            sequence: nSequence++,
             command: {
                 name: '*unknown*',
                 ...command,
@@ -170,6 +172,7 @@
         }));
         // Add a last command to clear the queue
         queue.push(oQueue, {
+            sequence: nSequence,
             command: {
                 name: 'response.complete',
                 fullName: 'Response Complete',

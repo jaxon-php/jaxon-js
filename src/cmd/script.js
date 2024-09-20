@@ -9,11 +9,11 @@
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
-     * @param {object} context The command context.
+     * @param {object} args.context The initial context to execute the command.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args }, context) => {
+    self.call = ({ func, args, context }) => {
         call.execCall({ _type: 'func', _name: func, args }, context);
         return true;
     };
@@ -23,11 +23,11 @@
      *
      * @param {object} args The command arguments.
      * @param {string} args.func The name of the function to call.
-     * @param {object} context The command context.
+     * @param {object} args.context The initial context to execute the command.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr }, context) => {
+    self.exec = ({ expr, context }) => {
         call.execExpr(expr, context);
         return true;
     };

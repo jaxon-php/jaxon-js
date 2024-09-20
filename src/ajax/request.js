@@ -42,7 +42,7 @@
      *
      * @returns {void}
      */
-    const initialize = (oRequest) => {
+    self.initialize = (oRequest) => {
         config.setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
@@ -72,7 +72,7 @@
      *
      * @return {void}
      */
-    const prepare = (oRequest) => {
+    self.prepare = (oRequest) => {
         cbk.execute(oRequest, 'onPrepare');
 
         oRequest.httpRequestOptions = {
@@ -89,6 +89,20 @@
     };
 
     /**
+     * Send a request.
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    self._send = (oRequest) => {
+        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
+            .then(oRequest.response.converter)
+            .then(oRequest.response.handler)
+            .catch(oRequest.response.errorHandler);
+    };
+
+    /**
      * Create a request object and submit the request using the specified request type;
      * all request parameters should be finalized by this point.
      * Upon failure of a POST, this function will fall back to a GET request.
@@ -98,22 +112,18 @@
      * @returns {void}
      */
     const submit = (oRequest) => {
-        prepare(oRequest);
+        self.prepare(oRequest);
         oRequest.status.onRequest();
 
         // The onResponseDelay and onExpiration aren't called immediately, but a timer
         // is set to call them later, using delays that are set in the config.
         cbk.execute(oRequest, 'onResponseDelay');
         cbk.execute(oRequest, 'onExpiration');
-
         cbk.execute(oRequest, 'onRequest');
         oRequest.cursor.onWaiting();
         oRequest.status.onWaiting();
 
-        fetch(oRequest.requestURI, oRequest.httpRequestOptions)
-            .then(oRequest.response.converter)
-            .then(oRequest.response.handler)
-            .catch(oRequest.response.errorHandler);
+        self._send(oRequest);
     };
 
     /**
@@ -168,7 +178,7 @@
 
         const oRequest = funcArgs ?? {};
         oRequest.func = func;
-        initialize(oRequest);
+        self.initialize(oRequest);
 
         cbk.execute(oRequest, 'onProcessParams');
         params.process(oRequest);

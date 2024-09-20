@@ -45,7 +45,7 @@
      *
      * @var {array}
      */
-    const errorsForAlert = [400, 401, 402, 403, 404, 500, 501, 502, 503];
+    const errorCodes = [400, 401, 402, 403, 404, 500, 501, 502, 503];
 
     // 10.3.1 300 Multiple Choices
     // 10.3.2 301 Moved Permanently
@@ -67,6 +67,33 @@
     const redirectCodes = [301, 302, 307];
 
     /**
+     * Check if a status code indicates a success.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isSuccessCode = nStatusCode => successCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates a redirect.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isRedirectCode = nStatusCode => redirectCodes.indexOf(nStatusCode) >= 0;
+
+    /**
+     * Check if a status code indicates an error.
+     *
+     * @param {int} nStatusCode A status code.
+     *
+     * @return {bool}
+     */
+    self.isErrorCode = nStatusCode => errorCodes.indexOf(nStatusCode) >= 0;
+
+    /**
      * This is the JSON response processor.
      *
      * @param {object} oRequest The request context object.
@@ -78,19 +105,19 @@
      * @return {true}
      */
     const jsonProcessor = (oRequest, { http: { status, headers } }) => {
-        if (successCodes.indexOf(status) >= 0) {
+        if (self.isSuccessCode(status)) {
             cbk.execute(oRequest, 'onSuccess');
             // Queue and process the commands in the response.
             command.processCommands(oRequest);
             return true;
         }
-        if (redirectCodes.indexOf(status) >= 0) {
+        if (self.isRedirectCode(status)) {
             cbk.execute(oRequest, 'onRedirect');
             req.complete(oRequest);
             window.location = headers.get('location');
             return true;
         }
-        if (errorsForAlert.indexOf(status) >= 0) {
+        if (self.isErrorCode(status)) {
             cbk.execute(oRequest, 'onFailure');
             req.complete(oRequest);
             return true;
@@ -105,7 +132,7 @@
      *
      * @return {mixed}
      */
-    const received = (oRequest) => {
+    self.received = (oRequest) => {
         const { aborted, response: oResponse } = oRequest;
         // Sometimes the response.received gets called when the request is aborted
         if (aborted) {
@@ -141,7 +168,7 @@
             // Synchronous request are processed immediately.
             // Asynchronous request are processed only if the queue is empty.
             if (queue.empty(req.q.send) || oRequest.mode === 'synchronous') {
-                received(oRequest);
+                self.received(oRequest);
                 return;
             }
             queue.push(req.q.recv, oRequest);
@@ -203,7 +230,7 @@
             queue.pop(req.q.send);
             // Process the asynchronous responses received while waiting.
             while((recvRequest = popAsyncRequest(req.q.recv)) !== null) {
-                received(recvRequest);
+                self.received(recvRequest);
             }
             // Submit the asynchronous requests sent while waiting.
             while((sendRequest = popAsyncRequest(req.q.send)) !== null) {
