@@ -31,6 +31,7 @@ const files = {
         core: 'jaxon.core.js',
         debug: 'jaxon.debug.js',
         module: 'jaxon.module.js',
+        chibi: 'libs/chibi/chibi.js',
         lang: [
             folders.dist + 'lang/jaxon.bg.js',
             folders.dist + 'lang/jaxon.de.js',
@@ -43,7 +44,8 @@ const files = {
     },
     min: {
         core: 'jaxon.core.min.js',
-        debug: 'jaxon.debug.min.js'
+        debug: 'jaxon.debug.min.js',
+        chibi: 'libs/chibi/chibi.min.js',
     },
 };
 
@@ -79,6 +81,13 @@ const js_debug_min = () => src(folders.dist + files.dist.debug)
     .pipe(rename(files.min.debug))
     .pipe(dest(folders.dist));
 
+// Minify the chibi.js file
+const js_chibi_min = () => src(folders.dist + files.dist.chibi)
+    // .pipe(stripdebug())
+    .pipe(terser())
+    .pipe(rename(files.min.chibi))
+    .pipe(dest(folders.dist));
+
 // Minify the jaxon language files
 const js_lang_min = () => src(files.dist.lang)
     // .pipe(stripdebug())
@@ -91,7 +100,7 @@ const js_lang_min = () => src(files.dist.lang)
     .pipe(dest(folders.lang));
 
 // Minify all the files
-const js_all = series(js_core, js_module, js_core_min, js_debug_min, js_lang_min);
+const js_all = series(js_core, js_module, js_core_min, js_debug_min, js_chibi_min, js_lang_min);
 
 exports.default = js_all;
 exports.js_core = js_core;
