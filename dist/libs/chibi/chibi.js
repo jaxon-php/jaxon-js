@@ -302,6 +302,10 @@
             }
             return cb;
         };
+        // Find parent
+        cb.parent = function () {
+            return nodes.length > 0 ? chibi(nodes[0].parentNode) : null;
+        };
         // Find first
         cb.first = function () {
             return chibi(nodes.shift());
