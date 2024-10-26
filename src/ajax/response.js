@@ -113,13 +113,13 @@
         }
         if (self.isRedirectCode(status)) {
             cbk.execute(oRequest, 'onRedirect');
-            req.complete(oRequest);
+            self.complete(oRequest);
             window.location = headers.get('location');
             return true;
         }
         if (self.isErrorCode(status)) {
             cbk.execute(oRequest, 'onFailure');
-            req.complete(oRequest);
+            self.complete(oRequest);
             return true;
         }
         return true;

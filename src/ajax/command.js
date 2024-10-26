@@ -56,7 +56,7 @@
      *
      * @returns {boolean}
      */
-    self.callHandler = (name, args, context) => {
+    self.call = (name, args, context) => {
         const { func, desc } = handlers[name];
         context.command.desc = desc;
         return func(args, context);
@@ -93,7 +93,7 @@
         }
 
         // Process the command
-        self.callHandler(name, args, context);
+        self.call(name, args, context);
         // Process Jaxon custom attributes in the new node HTML content.
         attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return true;
