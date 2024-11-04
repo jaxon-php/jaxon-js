@@ -1,12 +1,6 @@
-const u = require('umbrellajs');
 const {
-    parser: { query },
+    utils: { string },
 } = require('../dist/jaxon.module');
-
-// Init the selector library.
-query.init(u);
-
-const { utils: { string } } = require('../dist/jaxon.module');
 
 test('Replace single quotes with double quotes.', () => {
     expect(string.doubleQuotes("'Quoted'")).toBe('"Quoted"');

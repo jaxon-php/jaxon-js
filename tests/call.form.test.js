@@ -1,12 +1,12 @@
-const $ = require('jquery');
-const u = require('umbrellajs');
+const jq = require('jquery');
 const {
-    utils: { form, types },
+    cmd: { node },
+    utils: { dom, form, types },
     parser: { query },
 } = require('../dist/jaxon.module');
 
 // Init the selector library.
-query.init(u);
+query.jq = jq;
 
 test('Test form with multiple select', () => {
     // Fix: https://github.com/jaxon-php/jaxon-core/issues/128
@@ -45,31 +45,33 @@ test('Test assign command on multiple select', () => {
 
     const formValues0 = form.getValues('test_form');
 
-    expect(string.typeOf(formValues0)).toBe('object');
-    expect(string.typeOf(formValues0.multiselect)).toBe('array');
+    expect(types.of(formValues0)).toBe('object');
+    expect(types.of(formValues0.multiselect)).toBe('array');
     expect(formValues0.multiselect.length).toBe(0);
 
-    body.assign({
+    node.assign({
+        attr: 'options[0].selected',
+        value: 'true',
+    }, {
         target: dom.$('multiselect'),
-        prop: 'options[0].selected',
-        data: 'true',
     });
     const formValues1 = form.getValues('test_form');
 
-    expect(string.typeOf(formValues1)).toBe('object');
-    expect(string.typeOf(formValues1.multiselect)).toBe('array');
+    expect(types.of(formValues1)).toBe('object');
+    expect(types.of(formValues1.multiselect)).toBe('array');
     expect(formValues1.multiselect.length).toBe(1);
     expect(formValues1.multiselect[0]).toBe('1');
 
-    body.assign({
+    node.assign({
+        attr: 'options[1].selected',
+        value: 'true',
+    }, {
         target: dom.$('multiselect'),
-        prop: 'options[1].selected',
-        data: 'true',
     });
     const formValues2 = form.getValues('test_form');
 
-    expect(string.typeOf(formValues2)).toBe('object');
-    expect(string.typeOf(formValues2.multiselect)).toBe('array');
+    expect(types.of(formValues2)).toBe('object');
+    expect(types.of(formValues2.multiselect)).toBe('array');
     expect(formValues2.multiselect.length).toBe(2);
     expect(formValues2.multiselect[0]).toBe('1');
     expect(formValues2.multiselect[1]).toBe('2');

@@ -1,11 +1,10 @@
-const $ = require('jquery');
-const u = require('umbrellajs');
+const jq = require('jquery');
 const {
     parser: { call, query },
 } = require('../dist/jaxon.module');
 
 // Init the selector library.
-query.init(u);
+query.jq = jq;
 
 test('Read str value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
@@ -46,7 +45,7 @@ test('Read str value from the DOM', () => {
 test('Read int value from the DOM', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // Javascript code: const intValue = parseInt($('#integer')->text())
+    // Javascript code: const intValue = parseInt(query.jq('#integer')->text())
     const intValue = call.execExpr({
         calls: [{
             _type: 'func',
@@ -71,7 +70,7 @@ test('Read int value from the DOM', () => {
 test('Read int value from the DOM, with the toInt() "method"', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="integer">1024</span></div>`;
 
-    // Javascript code: const intValue = parseInt($('#integer')->text())
+    // Javascript code: const intValue = parseInt(query.jq('#integer')->text())
     const intValue = call.execExpr({
         calls: [{
             _type: 'select',
@@ -105,7 +104,7 @@ test('Assign element inner html', () => {
         }],
     });
 
-    expect($('#username').text()).toBe('Mister Johnson');
+    expect(query.jq('#username').text()).toBe('Mister Johnson');
 });
 
 // test('Assign element outer html', () => {
@@ -124,7 +123,7 @@ test('Assign element inner html', () => {
 //         }],
 //     });
 
-//     expect($('#wrapper').html()).toBe('Mister Johnson');
+//     expect(query.jq('#wrapper').html()).toBe('Mister Johnson');
 // });
 
 test('Set an event handler', () => {
@@ -145,6 +144,7 @@ test('Set an event handler', () => {
                 calls: [{
                     _type: 'select',
                     _name: '#username',
+                    mode: 'jq',
                 }, {
                     _type: 'method',
                     _name: 'html',
@@ -154,12 +154,12 @@ test('Set an event handler', () => {
         }],
     });
 
-    expect($('#username').text()).toBe('');
+    expect(query.jq('#username').text()).toBe('');
 
     // Trigger the event handler
-    $('#username').trigger('click');
+    query.jq('#username').trigger('click');
 
-    expect($('#username').text()).toBe('Mister Johnson');
+    expect(query.jq('#username').text()).toBe('Mister Johnson');
 });
 
 test('Use "this" in an event handler', () => {
@@ -179,7 +179,8 @@ test('Use "this" in an event handler', () => {
                 _type: 'expr',
                 calls: [{
                     _type: 'select',
-                    _name: 'this'
+                    _name: 'this',
+                    mode: 'jq',
                 }, {
                     _type: 'method',
                     _name: 'html',
@@ -189,12 +190,12 @@ test('Use "this" in an event handler', () => {
         }],
     });
 
-    expect($('.username').text()).toBe('');
+    expect(query.jq('.username').text()).toBe('');
 
     // Trigger the event
-    $('.username').trigger('click');
+    query.jq('.username').trigger('click');
 
-    expect($('.username').text()).toBe('Mister Johnson');
+    expect(query.jq('.username').text()).toBe('Mister Johnson');
 });
 
 test('Access to undefined vars', () => {

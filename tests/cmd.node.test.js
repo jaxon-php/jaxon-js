@@ -1,15 +1,14 @@
-const $ = require('jquery');
-const u = require('umbrellajs');
+const jq = require('jquery');
 const {
     config,
-    cmd: { body },
+    cmd: { node },
     ajax: { command: handler },
     utils: { dom },
     parser: { query },
 } = require('../dist/jaxon.module');
 
 // Init the selector library.
-query.init(u);
+query.jq = jq;
 
 const makeRequest = commands => ({
     status: config.status.dontUpdate,
@@ -26,21 +25,21 @@ const makeRequest = commands => ({
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    body.assign({
+    node.assign({
         attr: 'innerHTML',
         value: 'Mister Johnson',
     }, {
         target: dom.$('username'),
     });
 
-    expect($('#username').text()).toBe('Mister Johnson');
+    expect(query.jq('#username').text()).toBe('Mister Johnson');
 });
 
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     const command = {
-        name: 'dom.assign',
+        name: 'node.assign',
         args: {
             id: 'username',
             attr: 'innerHTML',
@@ -50,27 +49,27 @@ test('Assign element inner html', () => {
 
     handler.processCommands(makeRequest([command]));
 
-    expect($('#username').text()).toBe('Mister Johnson');
+    expect(query.jq('#username').text()).toBe('Mister Johnson');
 });
 
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
-    body.assign({
+    node.assign({
         attr: 'outerHTML',
         value: 'Mister Johnson',
     }, {
         target: dom.$('username'),
     });
 
-    expect($('#wrapper').text()).toBe('Mister Johnson');
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
 });
 
 test('Assign element outer html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
     const command = {
-        name: 'dom.assign',
+        name: 'node.assign',
         args: {
             id: 'username',
             attr: 'outerHTML',
@@ -80,5 +79,5 @@ test('Assign element outer html', () => {
 
     handler.processCommands(makeRequest([command]));
 
-    expect($('#wrapper').text()).toBe('Mister Johnson');
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
 });

@@ -21,4 +21,4 @@
     self.select = (xSelector, xContext = null) => !xContext ?
         self.jq(xSelector) : self.jq(xSelector, xContext);
 })(jaxon.parser.query, window.jQuery ?? window.chibi);
-// window.chibi is the ChibiJs (https://umbrellajs.com) selector function.
+// window.chibi is the ChibiJs (https://github.com/kylebarrow/chibi) selector function.
