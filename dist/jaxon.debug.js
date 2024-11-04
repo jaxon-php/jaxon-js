@@ -565,19 +565,19 @@ try {
     }
 
     /*
-        Function: jaxon.cmd.body.assign
+        Function: jaxon.cmd.node.assign
         
         Catch any exceptions thrown during the assignment and display an error message.
         
-        This is a wrapper around the standard <jaxon.cmd.body.assign> function.
+        This is a wrapper around the standard <jaxon.cmd.node.assign> function.
     */
-    if (jaxon.cmd.body.assign) {
-        const assign = jaxon.cmd.body.assign;
-        jaxon.cmd.body.assign = function({ target: element, prop: property, data }) {
+    if (jaxon.cmd.node.assign) {
+        const assign = jaxon.cmd.node.assign;
+        jaxon.cmd.node.assign = function({ target: element, prop: property, data }) {
             try {
                 return assign(element, property, data);
             } catch (e) {
-                const msg = 'jaxon.cmd.body.assign: ' + getExceptionText(e) + '\n' +
+                const msg = 'jaxon.cmd.node.assign: ' + getExceptionText(e) + '\n' +
                     'Eval: element.' + property + ' = data;\n';
                 writeDebugMessage(msg, self.messages.error, 'errorText');
             }
@@ -709,7 +709,7 @@ jaxon.dom.ready(function() {
         }
 
         self.hook(jaxon, 'jaxon.');
-        self.hook(jaxon.cmd.body, 'jaxon.cmd.body.');
+        self.hook(jaxon.cmd.node, 'jaxon.cmd.node.');
         self.hook(jaxon.cmd.event, 'jaxon.cmd.event.');
         self.hook(jaxon.cmd.script, 'jaxon.cmd.script.');
         self.hook(jaxon.utils.dom, 'jaxon.utils.dom.');

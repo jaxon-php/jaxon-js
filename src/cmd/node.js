@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.cmd.body
+ * Class: jaxon.cmd.
  */
 
 (function(self, dom, types, baseDocument) {
@@ -186,4 +186,4 @@
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
-})(jaxon.cmd.body, jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);
+})(jaxon.cmd.node, jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);

@@ -83,15 +83,15 @@ jaxon.isLoaded = true;
         return true;
     }, 'Response complete');
 
-    register('dom.assign', cmd.body.assign, 'Dom::Assign');
-    register('dom.append', cmd.body.append, 'Dom::Append');
-    register('dom.prepend', cmd.body.prepend, 'Dom::Prepend');
-    register('dom.replace', cmd.body.replace, 'Dom::Replace');
-    register('dom.clear', cmd.body.clear, 'Dom::Clear');
-    register('dom.remove', cmd.body.remove, 'Dom::Remove');
-    register('dom.create', cmd.body.create, 'Dom::Create');
-    register('dom.insert.before', cmd.body.insertBefore, 'Dom::InsertBefore');
-    register('dom.insert.after', cmd.body.insertAfter, 'Dom::InsertAfter');
+    register('node.assign', cmd.node.assign, 'Node::Assign');
+    register('node.append', cmd.node.append, 'Node::Append');
+    register('node.prepend', cmd.node.prepend, 'Node::Prepend');
+    register('node.replace', cmd.node.replace, 'Node::Replace');
+    register('node.clear', cmd.node.clear, 'Node::Clear');
+    register('node.remove', cmd.node.remove, 'Node::Remove');
+    register('node.create', cmd.node.create, 'Node::Create');
+    register('node.insert.before', cmd.node.insertBefore, 'Node::InsertBefore');
+    register('node.insert.after', cmd.node.insertAfter, 'Node::InsertAfter');
 
     register('script.call', cmd.script.call, 'Script::CallJsFunction');
     register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
@@ -113,10 +113,10 @@ jaxon.isLoaded = true;
     // Pagination
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
-    register('databag.set', cmd.script.setDatabag, 'Databag:SetValues');
-    register('databag.clear', cmd.script.clearDatabag, 'Databag:ClearValue');
+    register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
+    register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.message', dialog.cmd.showMessage, 'Dialog:ShowMessage');
-    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog:ShowModal');
-    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog:HideModal');
+    register('dialog.message', dialog.cmd.showMessage, 'Dialog::ShowMessage');
+    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
+    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
 })(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);

@@ -24,7 +24,7 @@
      *
      * @var {array}
      */
-    const aCommands = ['dom.assign', 'dom.append', 'dom.prepend', 'dom.replace'];
+    const aCommands = ['node.assign', 'node.append', 'node.prepend', 'node.replace'];
 
     /**
      * The attributes to check for changes
