@@ -82,7 +82,7 @@
             return;
         }
 
-        // Set the event handler on the selected children nodes.
+        // Set the event handler on the selected child nodes.
         const sSelector = xNode.getAttribute('jxn-select').trim();
         xTarget.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
             // Set the event handler on the child node.
@@ -110,7 +110,7 @@
      *
      * @returns {void}
      */
-    const setParentEventHandlers = (xContainer) => {
+    const setTargetEventHandlers = (xContainer) => {
         xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
             xTarget.querySelectorAll(':scope [jxn-event]').forEach(xNode => {
                 // Check event declarations only on direct child.
@@ -150,7 +150,7 @@
      */
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
-        setParentEventHandlers(xContainer);
+        setTargetEventHandlers(xContainer);
 
         // Set event handlers on nodes
         setEventHandlers(xContainer);
