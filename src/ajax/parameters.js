@@ -95,7 +95,8 @@
 
         // Files to upload
         const input = oRequest.upload.input;
-        input.files && input.files.forEach(file => rd.append(input.name, file));
+        // The "input.files" var is an array-like object, that we need to convert to a real array.
+        input.files && [...input.files].forEach(file => rd.append(input.name, file));
         return rd;
     };
 
@@ -127,7 +128,7 @@
      *
      * @return {boolean}
      */
-    const hasUpload = ({ upload }) => upload && upload.ajax && upload.input;
+    const hasUpload = ({ upload }) => upload && upload.form && upload.input;
 
     /**
      * Processes request specific parameters and generates the temporary
