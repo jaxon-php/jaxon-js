@@ -32,6 +32,7 @@ try {
     if ('undefined' == typeof jaxon.debug)
         jaxon.debug = {}
 
+    jaxon.debug.active = true;
 } catch (e) {
     alert(e.name + ': ' + e.message);
 }
