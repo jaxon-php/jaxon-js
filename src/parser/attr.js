@@ -13,7 +13,7 @@
     const xComponentNodes = {};
 
     /**
-     * The DOM nodes associated to Jaxon components
+     * The default component item name
      *
      * @var {string}
      */
@@ -43,8 +43,7 @@
      * @returns {void}
      */
     self.changed = (xTarget, sCommand, sAttribute) => (xTarget) &&
-        aAttributes.some(sVal => sVal === sAttribute) &&
-        aCommands.some(sVal => sVal === sCommand);
+        aAttributes.some(sVal => sVal === sAttribute) && aCommands.some(sVal => sVal === sCommand);
 
     /**
      * @param {Element} xContainer A DOM node.
@@ -130,13 +129,13 @@
      *
      * @returns {void}
      */
-    const attachComponents = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-show]').forEach(xNode => {
-            const sComponentName = xNode.getAttribute('jxn-show');
+    const bindNodesToComponents = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-bind]').forEach(xNode => {
+            const sComponentName = xNode.getAttribute('jxn-bind');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
 
-            xNode.removeAttribute('jxn-show');
+            xNode.removeAttribute('jxn-bind');
             xNode.removeAttribute('jxn-item');
         });
     };
@@ -159,7 +158,7 @@
         setClickHandlers(xContainer);
 
         // Attach DOM nodes to Jaxon components
-        attachComponents(xContainer)
+        bindNodesToComponents(xContainer);
     };
 
     /**
