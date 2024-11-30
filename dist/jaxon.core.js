@@ -979,7 +979,7 @@ window.jaxon = jaxon;
  * Process Jaxon custom HTML attributes
  */
 
-(function(self, event) {
+(function(self, event, debug) {
     /**
      * The DOM nodes associated to Jaxon components
      *
@@ -988,7 +988,7 @@ window.jaxon = jaxon;
     const xComponentNodes = {};
 
     /**
-     * The DOM nodes associated to Jaxon components
+     * The default component item name
      *
      * @var {string}
      */
@@ -1009,6 +1009,27 @@ window.jaxon = jaxon;
     const aAttributes = ['innerHTML', 'outerHTML'];
 
     /**
+     * Remove attributes from a DOM node.
+     *
+     * @param {Element} xNode A DOM node.
+     * @param {array} aAttrs An array of attribute names.
+     *
+     * @returns {void}
+     */
+    const removeAttributes = (xNode, aAttrs) => !debug.active &&
+        aAttrs.forEach(sAttr => xNode.removeAttribute(sAttr));
+
+    /**
+     * Remove a child node from a DOM node.
+     *
+     * @param {Element} xNode A DOM node.
+     * @param {Element} xChild A Child node.
+     *
+     * @returns {void}
+     */
+    const removeChildNode = (xNode, xChild) => !debug.active && xNode.removeChild(xChild);
+
+    /**
      * Check if a the attributes on a targeted node must be processed after a command is executed.
      *
      * @param {Element} xTarget A DOM node.
@@ -1018,8 +1039,7 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     self.changed = (xTarget, sCommand, sAttribute) => (xTarget) &&
-        aAttributes.some(sVal => sVal === sAttribute) &&
-        aCommands.some(sVal => sVal === sCommand);
+        aAttributes.some(sVal => sVal === sAttribute) && aCommands.some(sVal => sVal === sCommand);
 
     /**
      * @param {Element} xContainer A DOM node.
@@ -1031,7 +1051,7 @@ window.jaxon = jaxon;
             const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
             event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
 
-            xNode.removeAttribute('jxn-click');
+            removeAttributes(xNode, ['jxn-click']);
         });
     };
 
@@ -1057,7 +1077,7 @@ window.jaxon = jaxon;
             return;
         }
 
-        // Set the event handler on the selected children nodes.
+        // Set the event handler on the selected child nodes.
         const sSelector = xNode.getAttribute('jxn-select').trim();
         xTarget.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
             // Set the event handler on the child node.
@@ -1074,9 +1094,7 @@ window.jaxon = jaxon;
         xContainer.querySelectorAll(':scope [jxn-on]').forEach(xNode => {
             setEventHandler(xNode, xNode, 'jxn-on');
 
-            xNode.removeAttribute('jxn-on');
-            xNode.removeAttribute('jxn-call');
-            xNode.removeAttribute('jxn-select');
+            removeAttributes(xNode, ['jxn-on', 'jxn-call', 'jxn-select']);
         });
     };
 
@@ -1085,18 +1103,18 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const setParentEventHandlers = (xContainer) => {
+    const setTargetEventHandlers = (xContainer) => {
         xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
             xTarget.querySelectorAll(':scope [jxn-event]').forEach(xNode => {
                 // Check event declarations only on direct child.
                 if (xNode.parentNode === xTarget) {
                     setEventHandler(xTarget, xNode, 'jxn-event');
 
-                    xTarget.removeChild(xNode);
+                    removeChildNode(xTarget, xNode);
                 }
             });
 
-            xTarget.removeAttribute('jxn-target');
+            removeAttributes(xTarget, ['jxn-target']);
         });
     };
 
@@ -1105,14 +1123,13 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const attachComponents = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-show]').forEach(xNode => {
-            const sComponentName = xNode.getAttribute('jxn-show');
+    const bindNodesToComponents = (xContainer) => {
+        xContainer.querySelectorAll(':scope [jxn-bind]').forEach(xNode => {
+            const sComponentName = xNode.getAttribute('jxn-bind');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
 
-            xNode.removeAttribute('jxn-show');
-            xNode.removeAttribute('jxn-item');
+            removeAttributes(xNode, ['jxn-bind', 'jxn-item']);
         });
     };
 
@@ -1125,7 +1142,7 @@ window.jaxon = jaxon;
      */
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
-        setParentEventHandlers(xContainer);
+        setTargetEventHandlers(xContainer);
 
         // Set event handlers on nodes
         setEventHandlers(xContainer);
@@ -1134,7 +1151,7 @@ window.jaxon = jaxon;
         setClickHandlers(xContainer);
 
         // Attach DOM nodes to Jaxon components
-        attachComponents(xContainer)
+        bindNodesToComponents(xContainer);
     };
 
     /**
@@ -1147,7 +1164,7 @@ window.jaxon = jaxon;
      */
     self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
         xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
-})(jaxon.parser.attr, jaxon.cmd.event);
+})(jaxon.parser.attr, jaxon.cmd.event, jaxon.debug);
 
 
 /**
@@ -2202,8 +2219,9 @@ window.jaxon = jaxon;
         setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
 
         // Files to upload
-        const input = oRequest.upload.input;
-        input.files && input.files.forEach(file => rd.append(input.name, file));
+        const { name: field, files } = oRequest.upload.input;
+        // The "files" var is an array-like object, that we need to convert to a real array.
+        files && [...files].forEach(file => rd.append(field, file));
         return rd;
     };
 
@@ -2234,7 +2252,7 @@ window.jaxon = jaxon;
      *
      * @return {boolean}
      */
-    const hasUpload = ({ upload }) => upload && upload.ajax && upload.input;
+    const hasUpload = ({ upload: { form, input } = {} }) => form && input;
 
     /**
      * Processes request specific parameters and generates the temporary
