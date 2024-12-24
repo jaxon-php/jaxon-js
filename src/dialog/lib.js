@@ -2,7 +2,7 @@
  * Class: jaxon.dialog.lib
  */
 
-(function(self, types, dom, js, jq) {
+(function(self, types, dom, js, query) {
     /**
      * Labels for confirm question.
      *
@@ -79,7 +79,7 @@
         // Create an object for the library
         libs[sName] = {};
         // Define the library functions
-        xCallback(libs[sName], { types, dom, js, jq, labels });
+        xCallback(libs[sName], { types, dom, js, jq: query.jq, labels });
     };
 
     /**
@@ -112,4 +112,4 @@
                 yesCallback() : (noCallback && noCallback());
         };
     });
-})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, window.jQuery);
+})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, jaxon.parser.query);

@@ -11,7 +11,7 @@
     self.jq = jq;
 
     /**
-     * Call the jQuery DOM selector
+     * Call the DOM selector
      *
      * @param {string|object} xSelector
      * @param {object} xContext
