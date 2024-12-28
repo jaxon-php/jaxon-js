@@ -1175,6 +1175,13 @@ window.jaxon = jaxon;
 
 (function(self, query, dialog, dom, form, types) {
     /**
+     * The global context for a call.
+     *
+     * @var {object}
+     */
+    const xGlobal = {};
+
+    /**
      * The comparison operators.
      *
      * @var {object}
@@ -1231,7 +1238,7 @@ window.jaxon = jaxon;
                 case 'window':
                     return window;
                 default: // Call the selector.
-                    return query.select(sName, xSelectContext);
+                    return query.select(sName, query.context(xSelectContext, xGlobal.target));
             }
         },
         event: ({ _name: sName, func: xExpression }, xOptions) => {
@@ -1356,7 +1363,13 @@ window.jaxon = jaxon;
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext) => execCall(xCall, { context: { target: window, ...xContext } });
+    self.execCall = (xCall, xContext) => {
+        if(types.isObject(xCall)) {
+            const xOptions = { context: { target: window, ...xContext } };
+            xGlobal.target = xOptions.context.target;
+            execCall(xCall, xOptions);
+        }
+    };
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -1387,11 +1400,10 @@ window.jaxon = jaxon;
      * Replace placeholders in a given string with values
      * 
      * @param {object} phrase
-     * @param {object=} xContext The context to execute calls in.
      *
      * @returns {string}
      */
-    self.makePhrase = (phrase, xContext) => makePhrase(phrase, { context: { target: window, ...xContext } });
+    self.makePhrase = (phrase) => makePhrase(phrase, { context: { target: window } });
 
     /**
      * Show an alert message
@@ -1460,8 +1472,13 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    self.execExpr = (xExpression, xContext) => types.isObject(xExpression) &&
-        execExpression(xExpression, { value: null, context: { target: window, ...xContext } });
+    self.execExpr = (xExpression, xContext) => {
+        if(types.isObject(xExpression)) {
+            const xOptions = { value: null, context: { target: window, ...xContext } };
+            xGlobal.target = xOptions.context.target;
+            execExpression(xExpression, xOptions);
+        }
+    };
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
 
@@ -1477,6 +1494,24 @@ window.jaxon = jaxon;
      * @var {object}
      */
     self.jq = jq;
+
+    /**
+     * Make the context for a DOM selector
+     *
+     * @param {mixed} xSelectContext
+     * @param {object} xTarget
+     *
+     * @returns {object}
+     */
+    self.context = (xSelectContext, xTarget) => {
+        if (!xSelectContext) {
+            return xTarget;
+        }
+        if (!xTarget) {
+            return xSelectContext;
+        }
+        return self.select(xSelectContext, xTarget).first();
+    };
 
     /**
      * Call the DOM selector
@@ -1918,6 +1953,7 @@ window.jaxon = jaxon;
     self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
+            console.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
             return true;
         }
 
@@ -2080,15 +2116,15 @@ window.jaxon = jaxon;
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
-        count: skipCount,
-        question: { lib: sLibName, title: sTitle, phrase },
+        count: nSkipCount,
+        question: { lib: sLibName, title: sTitle, phrase: oPhrase },
     }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
-        xLib.confirm(call.makePhrase(phrase), sTitle,
+        xLib.confirm(call.makePhrase(oPhrase), sTitle,
             () => resumeQueueProcessing(oQueue),
-            () => resumeQueueProcessing(oQueue, skipCount));
+            () => resumeQueueProcessing(oQueue, nSkipCount));
         return true;
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
@@ -3010,16 +3046,18 @@ window.jaxon = jaxon;
     };
 
     /**
-     * Call a javascript function with a series of parameters using the current script context.
+     * Execute a javascript expression using the current script context.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.func The name of the function to call.
+     * @param {string} args.expr The json formatted expression to execute.
      * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr, context }) => {
-        call.execExpr(expr, context);
+    self.exec = ({ expr, context }, { target }) => {
+        call.execExpr(expr, { target, ...context });
         return true;
     };
 

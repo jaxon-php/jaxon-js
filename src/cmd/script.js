@@ -19,16 +19,18 @@
     };
 
     /**
-     * Call a javascript function with a series of parameters using the current script context.
+     * Execute a javascript expression using the current script context.
      *
      * @param {object} args The command arguments.
-     * @param {string} args.func The name of the function to call.
+     * @param {string} args.expr The json formatted expression to execute.
      * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr, context }) => {
-        call.execExpr(expr, context);
+    self.exec = ({ expr, context }, { target }) => {
+        call.execExpr(expr, { target, ...context });
         return true;
     };
 

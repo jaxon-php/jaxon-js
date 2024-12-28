@@ -6,6 +6,13 @@
 
 (function(self, query, dialog, dom, form, types) {
     /**
+     * The global context for a call.
+     *
+     * @var {object}
+     */
+    const xGlobal = {};
+
+    /**
      * The comparison operators.
      *
      * @var {object}
@@ -62,7 +69,7 @@
                 case 'window':
                     return window;
                 default: // Call the selector.
-                    return query.select(sName, xSelectContext);
+                    return query.select(sName, query.context(xSelectContext, xGlobal.target));
             }
         },
         event: ({ _name: sName, func: xExpression }, xOptions) => {
@@ -187,7 +194,13 @@
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext) => execCall(xCall, { context: { target: window, ...xContext } });
+    self.execCall = (xCall, xContext) => {
+        if(types.isObject(xCall)) {
+            const xOptions = { context: { target: window, ...xContext } };
+            xGlobal.target = xOptions.context.target;
+            execCall(xCall, xOptions);
+        }
+    };
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -218,11 +231,10 @@
      * Replace placeholders in a given string with values
      * 
      * @param {object} phrase
-     * @param {object=} xContext The context to execute calls in.
      *
      * @returns {string}
      */
-    self.makePhrase = (phrase, xContext) => makePhrase(phrase, { context: { target: window, ...xContext } });
+    self.makePhrase = (phrase) => makePhrase(phrase, { context: { target: window } });
 
     /**
      * Show an alert message
@@ -291,7 +303,12 @@
      *
      * @returns {void}
      */
-    self.execExpr = (xExpression, xContext) => types.isObject(xExpression) &&
-        execExpression(xExpression, { value: null, context: { target: window, ...xContext } });
+    self.execExpr = (xExpression, xContext) => {
+        if(types.isObject(xExpression)) {
+            const xOptions = { value: null, context: { target: window, ...xContext } };
+            xGlobal.target = xOptions.context.target;
+            execExpression(xExpression, xOptions);
+        }
+    };
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);

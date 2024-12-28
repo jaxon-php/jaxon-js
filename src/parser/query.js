@@ -11,6 +11,24 @@
     self.jq = jq;
 
     /**
+     * Make the context for a DOM selector
+     *
+     * @param {mixed} xSelectContext
+     * @param {object} xTarget
+     *
+     * @returns {object}
+     */
+    self.context = (xSelectContext, xTarget) => {
+        if (!xSelectContext) {
+            return xTarget;
+        }
+        if (!xTarget) {
+            return xSelectContext;
+        }
+        return self.select(xSelectContext, xTarget).first();
+    };
+
+    /**
      * Call the DOM selector
      *
      * @param {string|object} xSelector

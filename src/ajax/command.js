@@ -75,6 +75,7 @@
     self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
+            console.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
             return true;
         }
 
@@ -237,15 +238,15 @@
      * @returns {true} The queue processing is temporarily paused.
      */
     self.confirm = ({
-        count: skipCount,
-        question: { lib: sLibName, title: sTitle, phrase },
+        count: nSkipCount,
+        question: { lib: sLibName, title: sTitle, phrase: oPhrase },
     }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the confirm question is answered.
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
-        xLib.confirm(call.makePhrase(phrase), sTitle,
+        xLib.confirm(call.makePhrase(oPhrase), sTitle,
             () => resumeQueueProcessing(oQueue),
-            () => resumeQueueProcessing(oQueue, skipCount));
+            () => resumeQueueProcessing(oQueue, nSkipCount));
         return true;
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
