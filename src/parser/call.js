@@ -194,9 +194,9 @@
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext) => {
+    self.execCall = (xCall, xContext = {}) => {
         if(types.isObject(xCall)) {
-            const xOptions = { context: { target: window, ...xContext } };
+            const xOptions = { context: xContext };
             xGlobal.target = xOptions.context.target;
             execCall(xCall, xOptions);
         }
@@ -234,7 +234,7 @@
      *
      * @returns {string}
      */
-    self.makePhrase = (phrase) => makePhrase(phrase, { context: { target: window } });
+    self.makePhrase = (phrase) => makePhrase(phrase, { context: { } });
 
     /**
      * Show an alert message
@@ -303,9 +303,9 @@
      *
      * @returns {void}
      */
-    self.execExpr = (xExpression, xContext) => {
+    self.execExpr = (xExpression, xContext = {}) => {
         if(types.isObject(xExpression)) {
-            const xOptions = { value: null, context: { target: window, ...xContext } };
+            const xOptions = { value: null, context: xContext };
             xGlobal.target = xOptions.context.target;
             execExpression(xExpression, xOptions);
         }
