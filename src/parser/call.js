@@ -305,8 +305,13 @@
      */
     self.execExpr = (xExpression, xContext = {}) => {
         if(types.isObject(xExpression)) {
-            const xOptions = { value: null, context: xContext };
-            xGlobal.target = xOptions.context.target;
+            // Some commands are meant to executed in the context of the component.
+            if (xContext.component === true && (xContext.target)) {
+                xGlobal.target = xContext.target;
+            }
+            // Remove the component field from the xContext object.
+            const { component: _, ...xNewContext } = xContext;
+            const xOptions = { value: null, context: xNewContext };
             execExpression(xExpression, xOptions);
         }
     };
