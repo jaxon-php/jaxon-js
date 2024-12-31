@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.11',
+        patch: '0-beta.12',
     },
 
     debug: {
@@ -1143,13 +1143,10 @@ window.jaxon = jaxon;
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
         setTargetEventHandlers(xContainer);
-
         // Set event handlers on nodes
         setEventHandlers(xContainer);
-
         // Set event handlers on nodes
         setClickHandlers(xContainer);
-
         // Attach DOM nodes to Jaxon components
         bindNodesToComponents(xContainer);
     };
@@ -1174,13 +1171,6 @@ window.jaxon = jaxon;
  */
 
 (function(self, query, dialog, dom, form, types) {
-    /**
-     * The global context for a call.
-     *
-     * @var {object}
-     */
-    const xGlobal = {};
-
     /**
      * The comparison operators.
      *
@@ -1229,7 +1219,7 @@ window.jaxon = jaxon;
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, event: xEvent } = {} } = xOptions;
+            const { context: { target: xTarget, event: xEvent, global: xGlobal } = {} } = xOptions;
             switch(sName) {
                 case 'this': // The current event target.
                     return mode === 'jq' ? query.select(xTarget) : (mode === 'js' ? xTarget : null);
@@ -1341,6 +1331,24 @@ window.jaxon = jaxon;
     const getArgs = (aArgs, xOptions) => aArgs.map(xArg => getValue(xArg, xOptions));
 
     /**
+     * Get the options for a json call.
+     *
+     * @param {object} xContext The context to execute calls in.
+     *
+     * @returns {object}
+     */
+    const getOptions = (xContext, xDefault = {}) => {
+        xContext.global = {};
+        // Some functions are meant to executed in the context of the component.
+        if (xContext.component === true && (xContext.target)) {
+            xContext.global.target = xContext.target;
+        }
+        // Remove the component field from the xContext object.
+        const { component: _, ...xNewContext } = xContext;
+        return { context: { target: window, ...xNewContext }, ...xDefault };
+    }
+
+    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -1363,13 +1371,8 @@ window.jaxon = jaxon;
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext = {}) => {
-        if(types.isObject(xCall)) {
-            const xOptions = { context: xContext };
-            xGlobal.target = xOptions.context.target;
-            execCall(xCall, xOptions);
-        }
-    };
+    self.execCall = (xCall, xContext = {}) => types.isObject(xCall) &&
+        execCall(xCall, getOptions(xContext));
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -1413,7 +1416,7 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const showMessage = (message, xOptions) => !!message &&
+    const showAlert = (message, xOptions) => !!message &&
         dialog.alert({ ...message, text: makePhrase(message.phrase, xOptions) });
 
     /**
@@ -1426,7 +1429,7 @@ window.jaxon = jaxon;
      */
     const execWithConfirmation = (question, message, aCalls, xOptions) =>
         dialog.confirm({ ...question, text: makePhrase(question.phrase, xOptions) },
-            () => execCalls(aCalls, xOptions), () => showMessage(message, xOptions));
+            () => execCalls(aCalls, xOptions), () => showAlert(message, xOptions));
 
     /**
      * @param {array} aCondition The condition to chek
@@ -1440,7 +1443,7 @@ window.jaxon = jaxon;
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg, xOptions), getValue(xRightArg, xOptions)) ?
-            execCalls(aCalls, xOptions) : showMessage(oMessage, xOptions);
+            execCalls(aCalls, xOptions) : showAlert(oMessage, xOptions);
     };
 
     /**
@@ -1472,18 +1475,8 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    self.execExpr = (xExpression, xContext = {}) => {
-        if(types.isObject(xExpression)) {
-            // Some commands are meant to executed in the context of the component.
-            if (xContext.component === true && (xContext.target)) {
-                xGlobal.target = xContext.target;
-            }
-            // Remove the component field from the xContext object.
-            const { component: _, ...xNewContext } = xContext;
-            const xOptions = { value: null, context: xNewContext };
-            execExpression(xExpression, xOptions);
-        }
-    };
+    self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
+        execExpression(xExpression, getOptions(xContext, { value: null }));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
 
@@ -1567,7 +1560,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.showMessage = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
+    self.showAlert = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
         const xLib = getLib(sLibName, 'alert');
         xLib.alert && xLib.alert(sType, parser.makePhrase(phrase), sTitle);
         return true;
@@ -3042,11 +3035,13 @@ window.jaxon = jaxon;
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
      * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args, context }) => {
-        call.execCall({ _type: 'func', _name: func, args }, context);
+    self.execCall = ({ func, args, context }, { target }) => {
+        call.execCall({ _type: 'func', _name: func, args }, { target, ...context });
         return true;
     };
 
@@ -3061,7 +3056,7 @@ window.jaxon = jaxon;
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr, context }, { target }) => {
+    self.execExpr = ({ expr, context }, { target }) => {
         call.execExpr(expr, { target, ...context });
         return true;
     };
@@ -3076,11 +3071,8 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.redirect = ({ url: sUrl, delay: nDelay }) => {
-        if (nDelay <= 0) {
-            window.location = sUrl;
-            return true;
-        }
-        window.setTimeout(() => window.location = sUrl, nDelay * 1000);
+        // In no delay is provided, then use a 5ms delay.
+        window.setTimeout(() => window.location = sUrl, nDelay <= 0 ? 5 : nDelay * 1000);
         return true;
     };
 
@@ -3200,7 +3192,7 @@ jaxon.setBag = jaxon.ajax.parameters.setBag;
 /**
  * Shortcut to <jaxon.parser.attr.process>.
  */
-jaxon.processCustomAttrs = () => jaxon.parser.attr.process();
+jaxon.processCustomAttrs = jaxon.parser.attr.process;
 
 /**
  * Indicates if jaxon module is loaded.
@@ -3227,8 +3219,8 @@ jaxon.isLoaded = true;
     register('node.insert.before', cmd.node.insertBefore, 'Node::InsertBefore');
     register('node.insert.after', cmd.node.insertAfter, 'Node::InsertAfter');
 
-    register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
+    register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
+    register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
     register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
@@ -3250,7 +3242,7 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.message', dialog.cmd.showMessage, 'Dialog::ShowMessage');
+    register('dialog.alert.show', dialog.cmd.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
 })(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);

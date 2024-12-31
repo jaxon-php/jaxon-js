@@ -33,7 +33,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.showMessage = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
+    self.showAlert = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
         const xLib = getLib(sLibName, 'alert');
         xLib.alert && xLib.alert(sType, parser.makePhrase(phrase), sTitle);
         return true;

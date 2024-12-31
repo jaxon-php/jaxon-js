@@ -168,13 +168,10 @@
     self.process = (xContainer = document) => {
         // Set event handlers on nodes
         setTargetEventHandlers(xContainer);
-
         // Set event handlers on nodes
         setEventHandlers(xContainer);
-
         // Set event handlers on nodes
         setClickHandlers(xContainer);
-
         // Attach DOM nodes to Jaxon components
         bindNodesToComponents(xContainer);
     };

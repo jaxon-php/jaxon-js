@@ -10,11 +10,13 @@
      * @param {string} args.func The name of the function to call.
      * @param {array} args.args  The parameters to pass to the function.
      * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.call = ({ func, args, context }) => {
-        call.execCall({ _type: 'func', _name: func, args }, context);
+    self.execCall = ({ func, args, context }, { target }) => {
+        call.execCall({ _type: 'func', _name: func, args }, { target, ...context });
         return true;
     };
 
@@ -29,7 +31,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.exec = ({ expr, context }, { target }) => {
+    self.execExpr = ({ expr, context }, { target }) => {
         call.execExpr(expr, { target, ...context });
         return true;
     };
@@ -44,11 +46,8 @@
      * @returns {true} The operation completed successfully.
      */
     self.redirect = ({ url: sUrl, delay: nDelay }) => {
-        if (nDelay <= 0) {
-            window.location = sUrl;
-            return true;
-        }
-        window.setTimeout(() => window.location = sUrl, nDelay * 1000);
+        // In no delay is provided, then use a 5ms delay.
+        window.setTimeout(() => window.location = sUrl, nDelay <= 0 ? 5 : nDelay * 1000);
         return true;
     };
 

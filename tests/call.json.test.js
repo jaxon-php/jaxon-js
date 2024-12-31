@@ -274,14 +274,22 @@ test('Access to "global" vars', () => {
     expect(window.strValue).toBe('1024');
 
     // Javascript code: const strValue = window.strValue
-    const strValue = call.execExpr({
+    const strCallValue = call.execCall({
+        _type: 'attr',
+        _name: 'strValue',
+    });
+
+    expect(strCallValue).toBe('1024');
+
+    // Javascript code: const strValue = window.strValue
+    const strExprValue = call.execExpr({
         calls: [{
             _type: 'attr',
             _name: 'strValue',
         }],
     });
 
-    expect(strValue).toBe('1024');
+    expect(strExprValue).toBe('1024');
 
     // Javascript code: const intValue = parseInt(window.strValue)
     const intValue = call.execExpr({

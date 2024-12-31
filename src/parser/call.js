@@ -6,13 +6,6 @@
 
 (function(self, query, dialog, dom, form, types) {
     /**
-     * The global context for a call.
-     *
-     * @var {object}
-     */
-    const xGlobal = {};
-
-    /**
      * The comparison operators.
      *
      * @var {object}
@@ -60,7 +53,7 @@
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, event: xEvent } = {} } = xOptions;
+            const { context: { target: xTarget, event: xEvent, global: xGlobal } = {} } = xOptions;
             switch(sName) {
                 case 'this': // The current event target.
                     return mode === 'jq' ? query.select(xTarget) : (mode === 'js' ? xTarget : null);
@@ -172,6 +165,24 @@
     const getArgs = (aArgs, xOptions) => aArgs.map(xArg => getValue(xArg, xOptions));
 
     /**
+     * Get the options for a json call.
+     *
+     * @param {object} xContext The context to execute calls in.
+     *
+     * @returns {object}
+     */
+    const getOptions = (xContext, xDefault = {}) => {
+        xContext.global = {};
+        // Some functions are meant to executed in the context of the component.
+        if (xContext.component === true && (xContext.target)) {
+            xContext.global.target = xContext.target;
+        }
+        // Remove the component field from the xContext object.
+        const { component: _, ...xNewContext } = xContext;
+        return { context: { target: window, ...xNewContext }, ...xDefault };
+    }
+
+    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -194,13 +205,8 @@
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext = {}) => {
-        if(types.isObject(xCall)) {
-            const xOptions = { context: xContext };
-            xGlobal.target = xOptions.context.target;
-            execCall(xCall, xOptions);
-        }
-    };
+    self.execCall = (xCall, xContext = {}) => types.isObject(xCall) &&
+        execCall(xCall, getOptions(xContext));
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -244,7 +250,7 @@
      *
      * @returns {void}
      */
-    const showMessage = (message, xOptions) => !!message &&
+    const showAlert = (message, xOptions) => !!message &&
         dialog.alert({ ...message, text: makePhrase(message.phrase, xOptions) });
 
     /**
@@ -257,7 +263,7 @@
      */
     const execWithConfirmation = (question, message, aCalls, xOptions) =>
         dialog.confirm({ ...question, text: makePhrase(question.phrase, xOptions) },
-            () => execCalls(aCalls, xOptions), () => showMessage(message, xOptions));
+            () => execCalls(aCalls, xOptions), () => showAlert(message, xOptions));
 
     /**
      * @param {array} aCondition The condition to chek
@@ -271,7 +277,7 @@
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg, xOptions), getValue(xRightArg, xOptions)) ?
-            execCalls(aCalls, xOptions) : showMessage(oMessage, xOptions);
+            execCalls(aCalls, xOptions) : showAlert(oMessage, xOptions);
     };
 
     /**
@@ -303,17 +309,7 @@
      *
      * @returns {void}
      */
-    self.execExpr = (xExpression, xContext = {}) => {
-        if(types.isObject(xExpression)) {
-            // Some commands are meant to executed in the context of the component.
-            if (xContext.component === true && (xContext.target)) {
-                xGlobal.target = xContext.target;
-            }
-            // Remove the component field from the xContext object.
-            const { component: _, ...xNewContext } = xContext;
-            const xOptions = { value: null, context: xNewContext };
-            execExpression(xExpression, xOptions);
-        }
-    };
+    self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
+        execExpression(xExpression, getOptions(xContext, { value: null }));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);

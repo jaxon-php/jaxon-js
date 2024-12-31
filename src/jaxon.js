@@ -66,7 +66,7 @@ jaxon.setBag = jaxon.ajax.parameters.setBag;
 /**
  * Shortcut to <jaxon.parser.attr.process>.
  */
-jaxon.processCustomAttrs = () => jaxon.parser.attr.process();
+jaxon.processCustomAttrs = jaxon.parser.attr.process;
 
 /**
  * Indicates if jaxon module is loaded.
@@ -93,8 +93,8 @@ jaxon.isLoaded = true;
     register('node.insert.before', cmd.node.insertBefore, 'Node::InsertBefore');
     register('node.insert.after', cmd.node.insertAfter, 'Node::InsertAfter');
 
-    register('script.call', cmd.script.call, 'Script::CallJsFunction');
-    register('script.exec', cmd.script.exec, 'Script::ExecJsonExpression');
+    register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
+    register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
 
     register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
@@ -116,7 +116,7 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.message', dialog.cmd.showMessage, 'Dialog::ShowMessage');
+    register('dialog.alert.show', dialog.cmd.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
 })(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);
