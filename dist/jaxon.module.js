@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.12',
+        patch: '0-beta.13',
     },
 
     debug: {
@@ -1338,11 +1338,10 @@ window.jaxon = jaxon;
      * @returns {object}
      */
     const getOptions = (xContext, xDefault = {}) => {
-        xContext.global = {};
-        // Some functions are meant to executed in the context of the component.
-        if (xContext.component === true && (xContext.target)) {
-            xContext.global.target = xContext.target;
-        }
+        xContext.global = {
+            // Some functions are meant to be executed in the context of the component.
+            component: !xContext.component || !xContext.target ? null : xContext.target,
+        };
         // Remove the component field from the xContext object.
         const { component: _, ...xNewContext } = xContext;
         return { context: { target: window, ...xNewContext }, ...xDefault };
