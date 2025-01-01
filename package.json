@@ -34,6 +34,8 @@
     "test": "jest"
   },
   "jest": {
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "collectCoverage": true,
+    "coverageReporters": ["text", "cobertura"]
   }
 }
