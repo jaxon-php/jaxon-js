@@ -2141,40 +2141,6 @@ window.jaxon = jaxon;
     const databags = {};
 
     /**
-     * Stringify a parameter of an ajax call.
-     *
-     * @param {mixed} oVal - The value to be stringified
-     *
-     * @returns {string}
-     */
-    const stringify = (oVal) => {
-        if (oVal === undefined ||  oVal === null) {
-            return '*';
-        }
-        const sType = types.of(oVal);
-        if (sType === 'object' || sType === 'array') {
-            try {
-                return encodeURIComponent(JSON.stringify(oVal));
-            } catch (e) {
-                oVal = '';
-                // do nothing, if the debug module is installed
-                // it will catch the exception and handle it
-            }
-        }
-        oVal = encodeURIComponent(oVal);
-        if (sType === 'string') {
-            return 'S' + oVal;
-        }
-        if (sType === 'boolean') {
-            return 'B' + oVal;
-        }
-        if (sType === 'number') {
-            return 'N' + oVal;
-        }
-        return oVal;
-    };
-
-    /**
      * Save data in the data bag.
      *
      * @param {string} sBag   The data bag name.
@@ -2211,8 +2177,17 @@ window.jaxon = jaxon;
      */
     const getBagsValues = (aBags) => JSON.stringify(aBags.reduce((oValues, sBag) => ({
         ...oValues,
-        [sBag]: databags[sBag] ?? '*' }
+        [sBag]: databags[sBag] ?? undefined }
     ), {}));
+
+    /**
+     * Get the value of a parameter of an ajax call.
+     *
+     * @param {mixed} oVal - The value to be stringified
+     *
+     * @returns {mixed}
+     */
+    const getParamValue = (oVal) => oVal === undefined || types.of(oVal) === 'function' ? null : oVal;
 
     /**
      * Sets the request parameters in a container.
@@ -2229,14 +2204,14 @@ window.jaxon = jaxon;
         const dNow = new Date();
         fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
-
-        Object.keys(func).forEach(sParam => fSetter(sParam, encodeURIComponent(func[sParam])));
-
         // The parameters value was assigned from the js "arguments" var in a function. So it
         // is an array-like object, that we need to convert to a real array => [...parameters].
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
-        [...parameters].forEach(xParam => fSetter('jxnargs[]', stringify(xParam)));
-
+        fSetter('jxncall', encodeURIComponent(JSON.stringify({
+            ...func,
+            args: [...parameters].map(xParam => getParamValue(xParam)),
+        })));
+        // Add the databag values, if required.
         bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsValues(bags)));
     };
 
