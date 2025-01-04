@@ -21,6 +21,23 @@
     const libs = {};
 
     /**
+     * Set the confirm dialog labels
+     *
+     * @param {object} oLabels
+     * @param {object=} oLabels.confirm
+     * @param {string=} oLabels.confirm.yes
+     * @param {string=} oLabels.confirm.no
+     */
+    self.labels = ({ confirm: { yes, no } = {} }) => {
+        if (yes) {
+            labels.yes = yes;
+        }
+        if (no) {
+            labels.no = no;
+        }
+    };
+
+    /**
      * Check if a dialog library is defined.
      *
      * @param {string} sName The library name
