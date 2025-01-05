@@ -1528,7 +1528,7 @@ window.jaxon = jaxon;
  * Class: jaxon.dialog.cmd
  */
 
-(function(self, lib, parser) {
+(function(self, lib, parser, attr) {
     /**
      * Find a library to execute a given function.
      *
@@ -1580,7 +1580,8 @@ window.jaxon = jaxon;
      */
     self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
         const xLib = getLib(sLibName, 'show');
-        xLib.show && xLib.show(title, content, buttons, options);
+        xLib.show && xLib.show(title, content, buttons, options,
+            (xDialogDom) => xDialogDom && attr.process(xDialogDom));
         return true;
     };
 
@@ -1597,7 +1598,7 @@ window.jaxon = jaxon;
         xLib.hide && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call);
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr);
 
 
 /**
@@ -2124,7 +2125,7 @@ window.jaxon = jaxon;
      * @param {string} args.question.lib The dialog library to use.
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
-     * @param {object} context The Response command object.
+     * @param {object} context The command context.
      * @param {object} context.queue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.

@@ -2,7 +2,7 @@
  * Class: jaxon.dialog.cmd
  */
 
-(function(self, lib, parser) {
+(function(self, lib, parser, attr) {
     /**
      * Find a library to execute a given function.
      *
@@ -54,7 +54,8 @@
      */
     self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
         const xLib = getLib(sLibName, 'show');
-        xLib.show && xLib.show(title, content, buttons, options);
+        xLib.show && xLib.show(title, content, buttons, options,
+            (xDialogDom) => xDialogDom && attr.process(xDialogDom));
         return true;
     };
 
@@ -71,4 +72,4 @@
         xLib.hide && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call);
+})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr);

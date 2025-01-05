@@ -232,7 +232,7 @@
      * @param {string} args.question.lib The dialog library to use.
      * @param {object} args.question.title The question title.
      * @param {object} args.question.phrase The question content.
-     * @param {object} context The Response command object.
+     * @param {object} context The command context.
      * @param {object} context.queue The command queue.
      *
      * @returns {true} The queue processing is temporarily paused.
