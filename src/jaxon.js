@@ -101,8 +101,8 @@ jaxon.isLoaded = true;
     register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
     register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
+    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
 
-    register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
     register('script.confirm', ajax.command.confirm, 'Handler::Confirm');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');

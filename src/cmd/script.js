@@ -2,7 +2,7 @@
  * Class: jaxon.cmd.script
  */
 
-(function(self, call, parameters, types) {
+(function(self, call, parameters, command, types) {
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
@@ -33,6 +33,25 @@
      */
     self.execExpr = ({ expr, context }, { target }) => {
         call.execExpr(expr, { target, ...context });
+        return true;
+    };
+
+    /**
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
+     *
+     * @param {object} args The command arguments.
+     * @param {integer} args.duration The number of 10ths of a second to sleep.
+     * @param {object} context The Response command object.
+     * @param {object} context.queue The command queue.
+     *
+     * @returns {true}
+     */
+    self.sleep = ({ duration }, { queue: oQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        oQueue.paused = true;
+        setTimeout(() => command.processQueue(oQueue), duration * 100);
         return true;
     };
 
@@ -96,4 +115,5 @@
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters,
+    jaxon.ajax.command, jaxon.utils.types);

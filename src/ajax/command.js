@@ -126,13 +126,20 @@
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
      * @param {object} oQueue A queue containing the commands to execute.
+     * @param {integer=0} skipCount The number of commands to skip before starting.
      *
      * @returns {void}
      */
-    const processCommandQueue = (oQueue) => {
-        // Stop processing the commands if the queue is paused.
+    self.processQueue = (oQueue, skipCount = 0) => {
+        // Skip commands.
+        // The last entry in the queue is not a user command, thus it cannot be skipped.
+        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
+            --skipCount;
+        }
+
         let context = null;
         oQueue.paused = false;
+        // Stop processing the commands if the queue is paused.
         while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
             if (!processCommand(context)) {
                 return;
@@ -182,43 +189,7 @@
             queue: oQueue,
         });
 
-        processCommandQueue(oQueue);
-    };
-
-    /**
-     * Causes the processing of items in the queue to be delayed for the specified amount of time.
-     * This is an asynchronous operation, therefore, other operations will be given an opportunity
-     * to execute during this delay.
-     *
-     * @param {object} args The command arguments.
-     * @param {integer} args.duration The number of 10ths of a second to sleep.
-     * @param {object} context The Response command object.
-     * @param {object} context.queue The command queue.
-     *
-     * @returns {true}
-     */
-    self.sleep = ({ duration }, { queue: oQueue }) => {
-        // The command queue is paused, and will be restarted after the specified delay.
-        oQueue.paused = true;
-        setTimeout(() => processCommandQueue(oQueue), duration * 100);
-        return true;
-    };
-
-    /**
-     * The function to run after the confirm question, for the comfirmCommands.
-     *
-     * @param {object} oQueue The command queue.
-     * @param {integer=0} skipCount The number of commands to skip.
-     *
-     * @returns {void}
-     */
-    const resumeQueueProcessing = (oQueue, skipCount = 0) => {
-        // Skip commands.
-        // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
-            --skipCount;
-        }
-        processCommandQueue(oQueue);
+        self.processQueue(oQueue);
     };
 
     /**
@@ -245,8 +216,8 @@
         const xLib = dialog.get(sLibName);
         oQueue.paused = true;
         xLib.confirm(call.makePhrase(oPhrase), sTitle,
-            () => resumeQueueProcessing(oQueue),
-            () => resumeQueueProcessing(oQueue, nSkipCount));
+            () => self.processQueue(oQueue),
+            () => self.processQueue(oQueue, nSkipCount));
         return true;
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
