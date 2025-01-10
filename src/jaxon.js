@@ -81,7 +81,7 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax, dialog) {
+(function(register, cmd, ajax) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
         ajax.response.complete(request);
@@ -119,8 +119,8 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.confirm', dialog.cmd.confirm, 'Dialog::Confirm');
-    register('dialog.alert.show', dialog.cmd.showAlert, 'Dialog::ShowAlert');
-    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
-    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
-})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);
+    register('dialog.confirm', cmd.dialog.confirm, 'Dialog::Confirm');
+    register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
+    register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
+    register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');
+})(jaxon.register, jaxon.cmd, jaxon.ajax);

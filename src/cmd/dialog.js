@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.dialog.cmd
+ * Class: jaxon.cmd.dialog
  */
 
 (function(self, lib, parser, attr, command) {
@@ -101,4 +101,4 @@
         xLib.hide && xLib.hide();
         return true;
     };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr, jaxon.ajax.command);
+})(jaxon.cmd.dialog, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr, jaxon.ajax.command);

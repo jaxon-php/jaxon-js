@@ -41,6 +41,7 @@ var jaxon = {
         node: {},
         script: {},
         event: {},
+        dialog: {},
     },
 
     parser: {
@@ -61,7 +62,6 @@ var jaxon = {
     dom: {},
 
     dialog: {
-        cmd: {},
         lib: {},
     },
 
