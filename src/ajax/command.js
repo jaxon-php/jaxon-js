@@ -2,7 +2,7 @@
  * Class: jaxon.ajax.command
  */
 
-(function(self, config, call, attr, queue, dom, types, dialog) {
+(function(self, config, attr, queue, dom, types) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -161,10 +161,9 @@
         }
 
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
+        message && console.log(message);
 
         status.onProcessing();
-
-        message && console.log(message);
 
         // Create a queue for the commands in the response.
         let nSequence = 0;
@@ -191,34 +190,5 @@
 
         self.processQueue(oQueue);
     };
-
-    /**
-     * Prompt the user with the specified question, if the user responds by clicking cancel,
-     * then skip the specified number of commands in the response command queue.
-     * If the user clicks Ok, the command processing resumes normal operation.
-     *
-     * @param {object} args The command arguments.
-     * @param {integer} args.count The number of commands to skip.
-     * @param {object} args.question The question to ask.
-     * @param {string} args.question.lib The dialog library to use.
-     * @param {object} args.question.title The question title.
-     * @param {object} args.question.phrase The question content.
-     * @param {object} context The command context.
-     * @param {object} context.queue The command queue.
-     *
-     * @returns {true} The queue processing is temporarily paused.
-     */
-    self.confirm = ({
-        count: nSkipCount,
-        question: { lib: sLibName, title: sTitle, phrase: oPhrase },
-    }, { queue: oQueue }) => {
-        // The command queue is paused, and will be restarted after the confirm question is answered.
-        const xLib = dialog.get(sLibName);
-        oQueue.paused = true;
-        xLib.confirm(call.makePhrase(oPhrase), sTitle,
-            () => self.processQueue(oQueue),
-            () => self.processQueue(oQueue, nSkipCount));
-        return true;
-    };
-})(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.utils.queue,
+    jaxon.utils.dom, jaxon.utils.types);

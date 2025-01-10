@@ -103,8 +103,6 @@ jaxon.isLoaded = true;
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
     register('script.sleep', cmd.script.sleep, 'Script::Sleep');
 
-    register('script.confirm', ajax.command.confirm, 'Handler::Confirm');
-
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
     register('handler.add', cmd.event.addHandler, 'Script::AddHandler');
@@ -121,6 +119,7 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
+    register('dialog.confirm', dialog.cmd.confirm, 'Dialog::Confirm');
     register('dialog.alert.show', dialog.cmd.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
