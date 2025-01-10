@@ -310,5 +310,5 @@
      */
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext, { value: null }));
-})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
+})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);

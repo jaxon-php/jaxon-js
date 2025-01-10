@@ -39,24 +39,19 @@ jaxon.jq = jaxon.parser.query.jq;
 jaxon.exec = jaxon.parser.call.execExpr;
 
 /**
- * Shortcut to <jaxon.dialog.lib.confirm>.
+ * Shortcut to <jaxon.dialog.confirm>.
  */
-jaxon.confirm = jaxon.dialog.lib.confirm;
+jaxon.confirm = jaxon.dialog.confirm;
 
 /**
- * Shortcut to <jaxon.dialog.lib.alert>.
+ * Shortcut to <jaxon.dialog.alert>.
  */
-jaxon.alert = jaxon.dialog.lib.alert;
+jaxon.alert = jaxon.dialog.alert;
 
 /**
- * Shortcut to <jaxon.dialog.lib.labels>.
+ * Shortcut to <jaxon.dialog.labels>.
  */
-jaxon.labels = jaxon.dialog.lib.labels;
-
-/**
- * Shortcut to <jaxon.utils.dom.ready>.
- */
-jaxon.dom.ready = jaxon.utils.dom.ready;
+jaxon.labels = jaxon.dialog.labels;
 
 /**
  * Shortcut to <jaxon.utils.form.getValues>.

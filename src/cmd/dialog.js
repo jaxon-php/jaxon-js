@@ -101,4 +101,4 @@
         xLib.hide && xLib.hide();
         return true;
     };
-})(jaxon.cmd.dialog, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr, jaxon.ajax.command);
+})(jaxon.cmd.dialog, jaxon.dialog, jaxon.parser.call, jaxon.parser.attr, jaxon.ajax.command);

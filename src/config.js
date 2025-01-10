@@ -61,9 +61,7 @@ var jaxon = {
 
     dom: {},
 
-    dialog: {
-        lib: {},
-    },
+    dialog: {},
 
     config: {},
 };

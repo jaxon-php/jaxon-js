@@ -1,8 +1,8 @@
 /**
- * Class: jaxon.dialog.lib
+ * Class: jaxon.dialog
  */
 
-(function(self, types, dom, js, query) {
+(function(self, dom, call, query, types) {
     /**
      * Config data.
      *
@@ -80,8 +80,8 @@
      *
      * @returns {void}
      */
-    self.alert = ({ lib: sLibName, type: sType, title: sTitle = '', text: sMessage }) =>
-        self.get(sLibName).alert(sType, sMessage, sTitle);
+    self.alert = ({ lib: sLibName, type, title = '', text: message }) =>
+        self.get(sLibName).alert({ type, message, title });
 
     /**
      * Call a function after user confirmation.
@@ -90,13 +90,13 @@
      * @param {string} oQuestion.lib The dialog library to use for the question
      * @param {string} oQuestion.text The question text
      * @param {string=} oQuestion.title The question title
-     * @param {function} fYesCb The function to call if the question is confirmed
-     * @param {function} fNoCb The function to call if the question is not confirmed
+     * @param {function} yesCallback The function to call if the question is confirmed
+     * @param {function} noCallback The function to call if the question is not confirmed
      *
      * @returns {void}
      */
-    self.confirm = ({ lib: sLibName, title: sTitle = '', text: sQuestion }, fYesCb, fNoCb) =>
-        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb, fNoCb);
+    self.confirm = ({ lib: sLibName, title = '', text: question }, yesCallback, noCallback) =>
+        self.get(sLibName).confirm({ question, title, yesCallback, noCallback });
 
     /**
      * Register a dialog library.
@@ -111,9 +111,11 @@
         libs[sName] = {};
         // Define the library functions
         const { labels, options: oOptions } = config;
-        // Check that the provided library option is an object.
-        const options = types.isObject(oOptions[sName]) ? oOptions[sName] : {};
-        xCallback(libs[sName], { types, dom, js, jq: query.jq, labels, options });
+        // Check that the provided library option is an object,
+        // and add the labels to the provided options.
+        const options = types.isObject(oOptions[sName]) ?
+            { ...oOptions[sName], labels } : { labels };
+        xCallback(libs[sName], { types, dom, js: call, jq: query.jq, options });
     };
 
     /**
@@ -123,13 +125,13 @@
         /**
          * Show an alert message
          *
-         * @param {string} type The message type
-         * @param {string} text The message text
-         * @param {string} title The message title
+         * @param {string} type The alert type
+         * @param {string} message The alert message
+         * @param {string} title The alert title
          *
          * @returns {void}
          */
-        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
+        lib.alert = ({ type, message, title }) => alert(!title ? text : `<b>${title}</b><br/>${message}`);
 
         /**
          * Ask a confirm question to the user.
@@ -137,13 +139,13 @@
          * @param {string} question The question to ask
          * @param {string} title The question title
          * @param {callback} yesCallback The function to call if the answer is yes
-         * @param {callback} noCallback The function to call if the answer is no
+         * @param {callback=} noCallback The function to call if the answer is no
          *
          * @returns {void}
          */
-        lib.confirm = (question, title, yesCallback, noCallback) => {
+        lib.confirm = ({ question, title, yesCallback, noCallback }) => {
             confirm(!title ? question : `<b>${title}</b><br/>${question}`) ?
                 yesCallback() : (noCallback && noCallback());
         };
     });
-})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, jaxon.parser.query);
+})(jaxon.dialog, jaxon.dom, jaxon.parser.call, jaxon.parser.query, jaxon.utils.types);

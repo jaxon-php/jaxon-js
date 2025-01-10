@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.utils.dom
+ * Class: jaxon.dom
  */
 
 /**
@@ -24,7 +24,7 @@
         // this must be set to true before we start calling callbacks
         readyFired = true;
         // if a callback here happens to add new ready handlers,
-        // the jaxon.utils.dom.ready() function will see that it already fired
+        // the jaxon.dom.ready() function will see that it already fired
         // and will schedule the callback to run right after
         // this event loop finishes so all handlers will still execute
         // in order and no new ones will be added to the readyList
@@ -39,7 +39,7 @@
 
     /**
      * This is the one public interface
-     * jaxon.utils.dom.ready(fn, context);
+     * jaxon.dom.ready(fn, context);
      * The context argument is optional - if present, it will be passed as an argument to the callback
      */
     self.ready = function(callback, context) {
@@ -66,4 +66,4 @@
             readyEventHandlersInstalled = true;
         }
     }
-})(jaxon.utils.dom);
+})(jaxon.dom);
