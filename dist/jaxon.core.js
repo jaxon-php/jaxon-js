@@ -1607,13 +1607,16 @@ window.jaxon = jaxon;
 
 (function(self, types, dom, js, query) {
     /**
-     * Labels for confirm question.
+     * Config data.
      *
      * @var {object}
      */
-    const labels = {
-        yes: 'Yes',
-        no: 'No',
+    const config = {
+        labels: {
+            yes: 'Yes',
+            no: 'No',
+        },
+        options: {},
     };
 
     /**
@@ -1633,10 +1636,21 @@ window.jaxon = jaxon;
      */
     self.labels = ({ confirm: { yes, no } = {} }) => {
         if (yes) {
-            labels.yes = yes;
+            config.labels.yes = yes;
         }
         if (no) {
-            labels.no = no;
+            config.labels.no = no;
+        }
+    };
+
+    /**
+     * Set the dialog libraries options
+     *
+     * @param {object} oOptions
+     */
+    self.options = (oOptions) => {
+        if (types.isObject(oOptions)) {
+            config.options = oOptions;
         }
     };
 
@@ -1699,7 +1713,10 @@ window.jaxon = jaxon;
         // Create an object for the library
         libs[sName] = {};
         // Define the library functions
-        xCallback(libs[sName], { types, dom, js, jq: query.jq, labels });
+        const { labels, options: oOptions } = config;
+        // Check that the provided library option is an object.
+        const options = types.isObject(oOptions[sName]) ? oOptions[sName] : {};
+        xCallback(libs[sName], { types, dom, js, jq: query.jq, labels, options });
     };
 
     /**
