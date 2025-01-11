@@ -64,7 +64,6 @@
     const getLib = (sLibName, sFunc) => {
         if (!libs[sLibName]) {
             console.warn(`Unable to find a dialog library with name "${sLibName}".`);
-            console.warn(JSON.stringify(config.defaults));
         }
         if (libs[sLibName]) {
             if (libs[sLibName][sFunc]) {
@@ -78,8 +77,9 @@
         if (config.defaults[sLibType]) {
             return libs[config.defaults[sLibType]];
         }
-        !libs.default[sFunc] &&
+        if (!libs.default[sFunc]) {
             console.error(`Unable to find a dialog library with the "${sFunc}" function.`);
+        }
         return libs.default;
     };
 
