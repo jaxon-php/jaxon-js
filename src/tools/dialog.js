@@ -24,30 +24,25 @@
     const libs = {};
 
     /**
-     * Set the confirm dialog labels
-     *
-     * @param {object} labels
-     * @param {object=} labels.confirm
-     * @param {string=} labels.confirm.yes
-     * @param {string=} labels.confirm.no
-     */
-    self.labels = ({ confirm: { yes, no } = {} }) => {
-        if (yes) {
-            config.labels.yes = yes;
-        }
-        if (no) {
-            config.labels.no = no;
-        }
-    };
-
-    /**
      * Set the dialog libraries options
      *
-     * @param {object} oOptions
+     * @param {object} options
+     * @param {object} options.lang The confirm labels
+     * @param {object} options.libs The libraries options
      */
-    self.options = (oOptions) => {
-        if (types.isObject(oOptions)) {
-            config.options = oOptions;
+    self.options = ({ lang, libs }) => {
+        // Set the confirm labels
+        const { confirm = {} } = lang;
+        if (confirm.yes) {
+            config.labels.yes = confirm.yes;
+        }
+        if (confirm.no) {
+            config.labels.no = confirm.no;
+        }
+
+        // Set the libraries options.
+        if (types.isObject(libs)) {
+            config.options = libs;
         }
     };
 

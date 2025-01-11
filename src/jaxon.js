@@ -49,11 +49,6 @@ jaxon.confirm = jaxon.dialog.confirm;
 jaxon.alert = jaxon.dialog.alert;
 
 /**
- * Shortcut to <jaxon.dialog.labels>.
- */
-jaxon.labels = jaxon.dialog.labels;
-
-/**
  * Shortcut to <jaxon.utils.form.getValues>.
  */
 jaxon.getFormValues = jaxon.utils.form.getValues;
