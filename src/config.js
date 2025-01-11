@@ -35,6 +35,7 @@ var jaxon = {
         parameters: {},
         request: {},
         response: {},
+        upload: {},
     },
 
     cmd: {
@@ -56,7 +57,6 @@ var jaxon = {
         queue: {},
         types: {},
         string: {},
-        upload: {},
     },
 
     dom: {},

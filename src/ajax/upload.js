@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.utils.upload
+ * Class: jaxon.ajax.upload
  */
 
 (function(self, dom, console) {
@@ -56,4 +56,4 @@
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-})(jaxon.utils.upload, jaxon.utils.dom, console);
+})(jaxon.ajax.upload, jaxon.utils.dom, console);

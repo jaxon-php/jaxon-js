@@ -50,7 +50,7 @@
         oRequest.status = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? config.cursor.update : config.cursor.dontUpdate;
 
-        // Look for upload parameter
+        // Set upload data in the request.
         upload.initialize(oRequest);
 
         // The request is submitted only if there is no pending requests in the outgoing queue.
@@ -186,4 +186,4 @@
         oRequest.submit && self.submit(oRequest);
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue);
+    jaxon.ajax.callback, jaxon.ajax.upload, jaxon.utils.queue);
