@@ -10,10 +10,13 @@
      */
     const config = {
         labels: {
-            yes: 'Yes',
-            no: 'No',
+            confirm: {
+                yes: 'Yes',
+                no: 'No',
+            },
         },
         options: {},
+        defaults: {},
     };
 
     /**
@@ -24,26 +27,30 @@
     const libs = {};
 
     /**
-     * Set the dialog libraries options
+     * Set the dialog config
      *
-     * @param {object} options
-     * @param {object} options.lang The confirm labels
-     * @param {object} options.libs The libraries options
+     * @param {object} config
+     * @param {object} config.labels The translated labels
+     * @param {object} config.options The libraries options
+     * @param {object} config.defaults The libraries options
      */
-    self.options = ({ lang, libs }) => {
-        // Set the confirm labels
-        const { confirm = {} } = lang;
-        if (confirm.yes) {
-            config.labels.yes = confirm.yes;
-        }
-        if (confirm.no) {
-            config.labels.no = confirm.no;
+    self.config = ({ labels, options = {}, defaults = {} }) => {
+        // Set the libraries options.
+        if (types.isObject(options)) {
+            config.options = options;
         }
 
-        // Set the libraries options.
-        if (types.isObject(libs)) {
-            config.options = libs;
-        }
+        // Set the confirm labels
+        config.labels.confirm = {
+            ...config.labels.confirm,
+            ...labels.confirm,
+        };
+
+        // Set the default libraries
+        config.defaults = {
+            ...config.defaults,
+            ...defaults,
+        };
     };
 
     /**
@@ -55,13 +62,21 @@
      * @returns {object}
      */
     const getLib = (sLibName, sFunc) => {
-        !libs[sLibName] &&
+        if (!libs[sLibName]) {
             console.warn(`Unable to find a dialog library with name "${sLibName}".`);
+            console.warn(JSON.stringify(config.defaults));
+        }
         if (libs[sLibName]) {
             if (libs[sLibName][sFunc]) {
                 return libs[sLibName];
             }
             console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function..`);
+        }
+
+        // Check if there is a default library in the config for the required feature.
+        const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
+        if (config.defaults[sLibType]) {
+            return libs[config.defaults[sLibType]];
         }
         !libs.default[sFunc] &&
             console.error(`Unable to find a dialog library with the "${sFunc}" function.`);
@@ -135,11 +150,13 @@
         // Create an object for the library
         libs[sLibName] = {};
         // Define the library functions
-        const { labels, options: oOptions } = config;
+        const { labels: { confirm: labels }, options: oOptions } = config;
         // Check that the provided library option is an object,
         // and add the labels to the provided options.
-        const options = types.isObject(oOptions[sLibName]) ?
-            { ...oOptions[sLibName], labels } : { labels };
+        const options = {
+            labels,
+            ...(types.isObject(oOptions[sLibName]) ? oOptions[sLibName] : {}),
+        };
         // Provide some utility functions to the dialog library.
         const utils = { ...types, ready: dom.ready, js: call.execExpr, jq: query.jq };
         xCallback(libs[sLibName], options, utils);
