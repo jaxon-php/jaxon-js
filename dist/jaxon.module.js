@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.17',
+        patch: '0-beta.18',
     },
 
     debug: {
@@ -35,12 +35,14 @@ var jaxon = {
         parameters: {},
         request: {},
         response: {},
+        upload: {},
     },
 
     cmd: {
         node: {},
         script: {},
         event: {},
+        dialog: {},
     },
 
     parser: {
@@ -55,15 +57,11 @@ var jaxon = {
         queue: {},
         types: {},
         string: {},
-        upload: {},
     },
 
     dom: {},
 
-    dialog: {
-        cmd: {},
-        lib: {},
-    },
+    dialog: {},
 
     config: {},
 };
@@ -692,77 +690,6 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.utils.dom
- */
-
-/**
- * Plain javascript replacement for jQuery's .ready() function.
- * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
- */
-(function(self) {
-    "use strict";
-
-    let readyList = [];
-    let readyFired = false;
-    let readyEventHandlersInstalled = false;
-
-    /**
-     * Call this when the document is ready.
-     * This function protects itself against being called more than once
-     */
-    const ready = () => {
-        if (readyFired) {
-            return;
-        }
-        // this must be set to true before we start calling callbacks
-        readyFired = true;
-        // if a callback here happens to add new ready handlers,
-        // the jaxon.utils.dom.ready() function will see that it already fired
-        // and will schedule the callback to run right after
-        // this event loop finishes so all handlers will still execute
-        // in order and no new ones will be added to the readyList
-        // while we are processing the list
-        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
-        // allow any closures held by these functions to free
-        readyList = [];
-    }
-
-    // Was used with the document.attachEvent() function.
-    // const readyStateChange = () => document.readyState === "complete" && ready();
-
-    /**
-     * This is the one public interface
-     * jaxon.utils.dom.ready(fn, context);
-     * The context argument is optional - if present, it will be passed as an argument to the callback
-     */
-    self.ready = function(callback, context) {
-        // if ready has already fired, then just schedule the callback
-        // to fire asynchronously, but right away
-        if (readyFired) {
-            setTimeout(function() { callback(context); }, 1);
-            return;
-        }
-        // add the function and context to the list
-        readyList.push({ fn: callback, ctx: context });
-        // if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete" ||
-            (!document.attachEvent && document.readyState === "interactive")) {
-            setTimeout(ready, 1);
-            return;
-        }
-        if (!readyEventHandlersInstalled) {
-            // first choice is DOMContentLoaded event
-            document.addEventListener("DOMContentLoaded", ready, false);
-            // backup is window load event
-            window.addEventListener("load", ready, false);
-
-            readyEventHandlersInstalled = true;
-        }
-    }
-})(jaxon.utils.dom);
-
-
-/**
  * Class: jaxon.utils.string
  */
 
@@ -913,64 +840,275 @@ window.jaxon = jaxon;
 
 
 /**
- * Class: jaxon.utils.upload
+ * Class: jaxon.dialog
  */
 
-(function(self, dom, console) {
+(function(self, dom, attr, call, query, types) {
     /**
-     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
-     * @param {string=} oRequest.upload The HTML file upload field id
+     * Config data.
      *
-     * @returns {boolean}
+     * @var {object}
      */
-    const initRequest = (oRequest) => {
-        if (!oRequest.upload) {
-            return false;
+    const config = {
+        labels: {
+            confirm: {
+                yes: 'Yes',
+                no: 'No',
+            },
+        },
+        options: {},
+        defaults: {},
+    };
+
+    /**
+     * Dialog libraries.
+     *
+     * @var {object}
+     */
+    const libs = {};
+
+    /**
+     * Set the dialog config
+     *
+     * @param {object} config
+     * @param {object} config.labels The translated labels
+     * @param {object} config.options The libraries options
+     * @param {object} config.defaults The libraries options
+     */
+    self.config = ({ labels, options = {}, defaults = {} }) => {
+        // Set the libraries options.
+        if (types.isObject(options)) {
+            config.options = options;
         }
 
-        oRequest.upload = {
-            id: oRequest.upload,
-            input: null,
-            form: null,
+        // Set the confirm labels
+        config.labels.confirm = {
+            ...config.labels.confirm,
+            ...labels.confirm,
         };
-        const input = dom.$(oRequest.upload.id);
 
-        if (!input) {
-            console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
-            return false;
+        // Set the default libraries
+        config.defaults = {
+            ...config.defaults,
+            ...defaults,
+        };
+    };
+
+    /**
+     * Find a library to execute a given function.
+     *
+     * @param {string} sLibName The dialog library name
+     * @param {string} sFunc The dialog library function
+     *
+     * @returns {object}
+     */
+    const getLib = (sLibName, sFunc) => {
+        if (!libs[sLibName]) {
+            console.warn(`Unable to find a dialog library with name "${sLibName}".`);
         }
-        if (input.type !== 'file') {
-            console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
-            return false;
+        if (libs[sLibName]) {
+            if (libs[sLibName][sFunc]) {
+                return libs[sLibName];
+            }
+            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function..`);
         }
-        if (input.files.length === 0) {
-            console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
-            return false;
+
+        // Check if there is a default library in the config for the required feature.
+        const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
+        if (config.defaults[sLibType]) {
+            return libs[config.defaults[sLibType]];
         }
-        if (input.name === undefined) {
-            console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
-            return false;
+        if (!libs.default[sFunc]) {
+            console.error(`Unable to find a dialog library with the "${sFunc}" function.`);
         }
-        oRequest.upload.input = input;
-        oRequest.upload.form = input.form;
+        return libs.default;
+    };
+
+    /**
+     * Show an alert message using a dialog library.
+     *
+     * @param {string} sLibName The dialog library to use
+     * @param {object} message The message in the command
+     * @param {string} message.type The message type
+     * @param {string} message.text The message text
+     * @param {string=} message.title The message title
+     *
+     * @returns {void}
+     */
+    self.alert = (sLibName, { type, title = '', text: message }) =>
+        getLib(sLibName, 'alert').alert({ type, message, title });
+
+    /**
+     * Call a function after user confirmation.
+     *
+     * @param {string} sLibName The dialog library to use
+     * @param {object} question The question in the command
+     * @param {string} question.text The question text
+     * @param {string=} question.title The question title
+     * @param {object} callback The callbacks to call after the question is answered
+     *
+     * @returns {void}
+     */
+    self.confirm = (sLibName, { title = '', text: question }, callback) =>
+        getLib(sLibName, 'confirm').confirm({ question, title }, callback);
+
+    /**
+     * Show a dialog window.
+     *
+     * @param {string} sLibName The dialog library to use
+     * @param {object} dialog The dialog content
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.show = (sLibName, dialog) => {
+        const xLib = getLib(sLibName, 'show');
+        xLib.show && xLib.show(dialog, (xDialogDom) => xDialogDom && attr.process(xDialogDom));
         return true;
     };
 
     /**
-     * Check upload data and initialize the request.
+     * Hide a dialog window.
      *
-     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {string} sLibName The dialog library to use
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.hide = ({ lib: sLibName }) => {
+        const xLib = getLib(sLibName, 'hide');
+        xLib.hide && xLib.hide();
+        return true;
+    };
+
+    /**
+     * Register a dialog library.
+     *
+     * @param {string} sLibName The library name
+     * @param {callback} xCallback The library definition callback
      *
      * @returns {void}
      */
-    self.initialize = (oRequest) => {
-        // The content type shall not be set when uploading a file with FormData.
-        // It will be set by the browser.
-        if (!initRequest(oRequest)) {
-            oRequest.postHeaders['content-type'] = oRequest.contentType;
+    self.register = (sLibName, xCallback) => {
+        // Create an object for the library
+        libs[sLibName] = {};
+        // Define the library functions
+        const { labels: { confirm: labels }, options: oOptions } = config;
+        // Check that the provided library option is an object,
+        // and add the labels to the provided options.
+        const options = {
+            labels,
+            ...(types.isObject(oOptions[sLibName]) ? oOptions[sLibName] : {}),
+        };
+        // Provide some utility functions to the dialog library.
+        const utils = { ...types, ready: dom.ready, js: call.execExpr, jq: query.jq };
+        xCallback(libs[sLibName], options, utils);
+    };
+
+    /**
+     * Default dialog plugin, based on js alert and confirm functions
+     */
+    self.register('default', (lib) => {
+        /**
+         * Show an alert message
+         *
+         * @param {object} alert The alert parameters
+         * @param {string} alert.message The alert message
+         * @param {string} alert.title The alert title
+         *
+         * @returns {void}
+         */
+        lib.alert = ({ message, title }) =>
+            alert(!title ? message : `<b>${title}</b><br/>${message}`);
+
+        /**
+         * Ask a confirm question to the user.
+         *
+         * @param {object} confirm The confirm parameters
+         * @param {string} confirm.question The question to ask
+         * @param {string} confirm.title The question title
+         * @param {object} callback The confirm callbacks
+         * @param {callback} callback.yes The function to call if the answer is yes
+         * @param {callback=} callback.no The function to call if the answer is no
+         *
+         * @returns {void}
+         */
+        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) => {
+            confirm(!title ? question :
+                `<b>${title}</b><br/>${question}`) ? yesCb() : (noCb && noCb());
+        };
+    });
+})(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
+    jaxon.parser.query, jaxon.utils.types);
+
+
+/**
+ * Class: jaxon.dom
+ */
+
+/**
+ * Plain javascript replacement for jQuery's .ready() function.
+ * See https://github.com/jfriend00/docReady for a detailed description, copyright and license information.
+ */
+(function(self) {
+    "use strict";
+
+    let readyList = [];
+    let readyFired = false;
+    let readyEventHandlersInstalled = false;
+
+    /**
+     * Call this when the document is ready.
+     * This function protects itself against being called more than once
+     */
+    const ready = () => {
+        if (readyFired) {
+            return;
+        }
+        // this must be set to true before we start calling callbacks
+        readyFired = true;
+        // if a callback here happens to add new ready handlers,
+        // the jaxon.dom.ready() function will see that it already fired
+        // and will schedule the callback to run right after
+        // this event loop finishes so all handlers will still execute
+        // in order and no new ones will be added to the readyList
+        // while we are processing the list
+        readyList.forEach(cb => cb.fn.call(window, cb.ctx));
+        // allow any closures held by these functions to free
+        readyList = [];
+    }
+
+    // Was used with the document.attachEvent() function.
+    // const readyStateChange = () => document.readyState === "complete" && ready();
+
+    /**
+     * This is the one public interface
+     * jaxon.dom.ready(fn, context);
+     * The context argument is optional - if present, it will be passed as an argument to the callback
+     */
+    self.ready = function(callback, context) {
+        // if ready has already fired, then just schedule the callback
+        // to fire asynchronously, but right away
+        if (readyFired) {
+            setTimeout(function() { callback(context); }, 1);
+            return;
+        }
+        // add the function and context to the list
+        readyList.push({ fn: callback, ctx: context });
+        // if document already ready to go, schedule the ready function to run
+        if (document.readyState === "complete" ||
+            (!document.attachEvent && document.readyState === "interactive")) {
+            setTimeout(ready, 1);
+            return;
+        }
+        if (!readyEventHandlersInstalled) {
+            // first choice is DOMContentLoaded event
+            document.addEventListener("DOMContentLoaded", ready, false);
+            // backup is window load event
+            window.addEventListener("load", ready, false);
+
+            readyEventHandlersInstalled = true;
         }
     }
-})(jaxon.utils.upload, jaxon.utils.dom, console);
+})(jaxon.dom);
 
 
 /**
@@ -1370,8 +1508,8 @@ window.jaxon = jaxon;
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext = {}) => types.isObject(xCall) &&
-        execCall(xCall, getOptions(xContext));
+    self.execCall = (xCall, xContext = {}) =>
+        types.isObject(xCall) && execCall(xCall, getOptions(xContext));
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -1395,8 +1533,9 @@ window.jaxon = jaxon;
      *
      * @returns {string}
      */
-    const makePhrase = ({ str, args }, xOptions) => str.supplant(args.reduce((oArgs, xArg, nIndex) =>
-        ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
+    const makePhrase = ({ str, args }, xOptions) =>
+        str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+            ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
 
     /**
      * Replace placeholders in a given string with values
@@ -1410,39 +1549,51 @@ window.jaxon = jaxon;
     /**
      * Show an alert message
      *
-     * @param {object} message The message content
+     * @param {object} alert The alert content
+     * @param {string} alert.lib The dialog library to use
+     * @param {array} alert.message The message to show
      * @param {object} xOptions The call options.
      *
      * @returns {void}
      */
-    const showAlert = (message, xOptions) => !!message &&
-        dialog.alert({ ...message, text: makePhrase(message.phrase, xOptions) });
+    const showAlert = ({ lib, message } = {}, xOptions) => !!message &&
+        dialog.alert(lib, {
+            ...message,
+            text: makePhrase(message.phrase, xOptions),
+        });
 
     /**
-     * @param {object} question The confirmation question
-     * @param {object} message The message to show if the user anwsers no to the question
+     * @param {object} confirm The confirmation question
+     * @param {string} confirm.lib The dialog library to use
+     * @param {array} confirm.question The question to ask
+     * @param {object=} xAlert The alert to show if the user anwsers no to the question
      * @param {array} aCalls The calls to execute
      * @param {object} xOptions The call options.
      *
      * @returns {boolean}
      */
-    const execWithConfirmation = (question, message, aCalls, xOptions) =>
-        dialog.confirm({ ...question, text: makePhrase(question.phrase, xOptions) },
-            () => execCalls(aCalls, xOptions), () => showAlert(message, xOptions));
+    const execWithConfirmation = ({ lib, question }, xAlert, aCalls, xOptions) =>
+        dialog.confirm(lib, {
+            ...question,
+            text: makePhrase(question.phrase, xOptions),
+        }, {
+            yes: () => execCalls(aCalls, xOptions),
+            no: () => showAlert(xAlert, xOptions),
+        });
 
     /**
      * @param {array} aCondition The condition to chek
-     * @param {object} oMessage The message to show if the condition is not met
+     * @param {object=} xAlert The alert to show if the condition is not met
      * @param {array} aCalls The calls to execute
      * @param {object} xOptions The call options.
      *
      * @returns {boolean}
      */
-    const execWithCondition = (aCondition, oMessage, aCalls, xOptions) => {
+    const execWithCondition = (aCondition, xAlert, aCalls, xOptions) => {
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg, xOptions), getValue(xRightArg, xOptions)) ?
-            execCalls(aCalls, xOptions) : showAlert(oMessage, xOptions);
+            execCalls(aCalls, xOptions) : showAlert(xAlert, xOptions);
     };
 
     /**
@@ -1454,13 +1605,13 @@ window.jaxon = jaxon;
      * @returns {mixed}
      */
     const execExpression = (xExpression, xOptions) => {
-        const { calls, question, condition, message } = xExpression;
-        if((question)) {
-            execWithConfirmation(question, message, calls, xOptions);
+        const { calls, confirm, condition, alert } = xExpression;
+        if((confirm)) {
+            execWithConfirmation(confirm, alert, calls, xOptions);
             return;
         }
         if((condition)) {
-            execWithCondition(condition, message, calls, xOptions);
+            execWithCondition(condition, alert, calls, xOptions);
             return;
         }
         return execCalls(calls, xOptions);
@@ -1476,7 +1627,7 @@ window.jaxon = jaxon;
      */
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext, { value: null }));
-})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog.lib, jaxon.utils.dom,
+})(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);
 
 
@@ -1522,234 +1673,6 @@ window.jaxon = jaxon;
         self.jq(xSelector) : self.jq(xSelector, xContext);
 })(jaxon.parser.query, window.jQuery ?? window.chibi);
 // window.chibi is the ChibiJs (https://github.com/kylebarrow/chibi) selector function.
-
-
-/**
- * Class: jaxon.dialog.cmd
- */
-
-(function(self, lib, parser, attr) {
-    /**
-     * Find a library to execute a given function.
-     *
-     * @param {string} sLibName The dialog library name
-     * @param {string} sFunc The dialog library function
-     *
-     * @returns {object}
-     */
-    const getLib = (sLibName, sFunc) => {
-        !lib.has(sLibName) &&
-            console.warn(`Unable to find a Jaxon dialog library with name "${sLibName}".`);
-
-        const xLib = lib.get(sLibName);
-        !xLib[sFunc] &&
-            console.error(`The chosen Jaxon dialog library doesn't implement the "${sFunc}" function.`);
-
-        return xLib;
-    };
-
-    /**
-     * Add an event handler to the specified target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The message library name
-     * @param {object} command.type The message type
-     * @param {string} command.title The message title
-     * @param {object} command.phrase The message content
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.showAlert = ({ lib: sLibName, type: sType, title: sTitle, phrase }) => {
-        const xLib = getLib(sLibName, 'alert');
-        xLib.alert && xLib.alert(sType, parser.makePhrase(phrase), sTitle);
-        return true;
-    };
-
-    /**
-     * Remove an event handler from an target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The dialog library name
-     * @param {object} command.dialog The dialog content
-     * @param {string} command.dialog.title The dialog title
-     * @param {string} command.dialog.content The dialog HTML content
-     * @param {array} command.dialog.buttons The dialog buttons
-     * @param {array} command.dialog.options The dialog options
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.showModal = ({ lib: sLibName, dialog: { title, content, buttons, options } }) => {
-        const xLib = getLib(sLibName, 'show');
-        xLib.show && xLib.show(title, content, buttons, options,
-            (xDialogDom) => xDialogDom && attr.process(xDialogDom));
-        return true;
-    };
-
-    /**
-     * Set an event handler with arguments to the specified target.
-     *
-     * @param {object} command The Response command object.
-     * @param {string} command.lib The dialog library name
-     *
-     * @returns {true} The operation completed successfully.
-     */
-    self.hideModal = ({ lib: sLibName }) => {
-        const xLib = getLib(sLibName, 'hide');
-        xLib.hide && xLib.hide();
-        return true;
-    };
-})(jaxon.dialog.cmd, jaxon.dialog.lib, jaxon.parser.call, jaxon.parser.attr);
-
-
-/**
- * Class: jaxon.dialog.lib
- */
-
-(function(self, types, dom, js, query) {
-    /**
-     * Config data.
-     *
-     * @var {object}
-     */
-    const config = {
-        labels: {
-            yes: 'Yes',
-            no: 'No',
-        },
-        options: {},
-    };
-
-    /**
-     * Dialog libraries.
-     *
-     * @var {object}
-     */
-    const libs = {};
-
-    /**
-     * Set the confirm dialog labels
-     *
-     * @param {object} oLabels
-     * @param {object=} oLabels.confirm
-     * @param {string=} oLabels.confirm.yes
-     * @param {string=} oLabels.confirm.no
-     */
-    self.labels = ({ confirm: { yes, no } = {} }) => {
-        if (yes) {
-            config.labels.yes = yes;
-        }
-        if (no) {
-            config.labels.no = no;
-        }
-    };
-
-    /**
-     * Set the dialog libraries options
-     *
-     * @param {object} oOptions
-     */
-    self.options = (oOptions) => {
-        if (types.isObject(oOptions)) {
-            config.options = oOptions;
-        }
-    };
-
-    /**
-     * Check if a dialog library is defined.
-     *
-     * @param {string} sName The library name
-     *
-     * @returns {bool}
-     */
-    self.has = (sName) => !!libs[sName];
-
-    /**
-     * Get a dialog library.
-     *
-     * @param {string=default} sName The library name
-     *
-     * @returns {object|null}
-     */
-    self.get = (sName) => libs[sName] ?? libs.default;
-
-    /**
-     * Show a message using a dialog library.
-     *
-     * @param {object} oMessage The message in the command
-     * @param {string} oMessage.lib The dialog library to use for the message
-     * @param {string} oMessage.type The message type
-     * @param {string} oMessage.text The message text
-     * @param {string=} oMessage.title The message title
-     *
-     * @returns {void}
-     */
-    self.alert = ({ lib: sLibName, type: sType, title: sTitle = '', text: sMessage }) =>
-        self.get(sLibName).alert(sType, sMessage, sTitle);
-
-    /**
-     * Call a function after user confirmation.
-     *
-     * @param {object} oQuestion The question in the command
-     * @param {string} oQuestion.lib The dialog library to use for the question
-     * @param {string} oQuestion.text The question text
-     * @param {string=} oQuestion.title The question title
-     * @param {function} fYesCb The function to call if the question is confirmed
-     * @param {function} fNoCb The function to call if the question is not confirmed
-     *
-     * @returns {void}
-     */
-    self.confirm = ({ lib: sLibName, title: sTitle = '', text: sQuestion }, fYesCb, fNoCb) =>
-        self.get(sLibName).confirm(sQuestion, sTitle, fYesCb, fNoCb);
-
-    /**
-     * Register a dialog library.
-     *
-     * @param {string} sName The library name
-     * @param {callback} xCallback The library definition callback
-     *
-     * @returns {void}
-     */
-    self.register = (sName, xCallback) => {
-        // Create an object for the library
-        libs[sName] = {};
-        // Define the library functions
-        const { labels, options: oOptions } = config;
-        // Check that the provided library option is an object.
-        const options = types.isObject(oOptions[sName]) ? oOptions[sName] : {};
-        xCallback(libs[sName], { types, dom, js, jq: query.jq, labels, options });
-    };
-
-    /**
-     * Default dialog plugin, based on js alert and confirm functions
-     */
-    self.register('default', (lib) => {
-        /**
-         * Show an alert message
-         *
-         * @param {string} type The message type
-         * @param {string} text The message text
-         * @param {string} title The message title
-         *
-         * @returns {void}
-         */
-        lib.alert = (type, text, title) => alert(!title ? text : `<b>${title}</b><br/>${text}`);
-
-        /**
-         * Ask a confirm question to the user.
-         *
-         * @param {string} question The question to ask
-         * @param {string} title The question title
-         * @param {callback} yesCallback The function to call if the answer is yes
-         * @param {callback} noCallback The function to call if the answer is no
-         *
-         * @returns {void}
-         */
-        lib.confirm = (question, title, yesCallback, noCallback) => {
-            confirm(!title ? question : `<b>${title}</b><br/>${question}`) ?
-                yesCallback() : (noCallback && noCallback());
-        };
-    });
-})(jaxon.dialog.lib, jaxon.utils.types, jaxon.dom, jaxon.parser.call, jaxon.parser.query);
 
 
 /**
@@ -1912,7 +1835,7 @@ window.jaxon = jaxon;
  * Class: jaxon.ajax.command
  */
 
-(function(self, config, call, attr, queue, dom, types, dialog) {
+(function(self, config, attr, queue, dom, types) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -2036,13 +1959,20 @@ window.jaxon = jaxon;
      * - When an exception is caught, do nothing; if the debug module is installed, it will catch the exception and handle it.
      *
      * @param {object} oQueue A queue containing the commands to execute.
+     * @param {integer=0} skipCount The number of commands to skip before starting.
      *
      * @returns {void}
      */
-    const processCommandQueue = (oQueue) => {
-        // Stop processing the commands if the queue is paused.
+    self.processQueue = (oQueue, skipCount = 0) => {
+        // Skip commands.
+        // The last entry in the queue is not a user command, thus it cannot be skipped.
+        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
+            --skipCount;
+        }
+
         let context = null;
         oQueue.paused = false;
+        // Stop processing the commands if the queue is paused.
         while (!oQueue.paused && (context = queue.pop(oQueue)) !== null) {
             if (!processCommand(context)) {
                 return;
@@ -2064,10 +1994,9 @@ window.jaxon = jaxon;
         }
 
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
+        message && console.log(message);
 
         status.onProcessing();
-
-        message && console.log(message);
 
         // Create a queue for the commands in the response.
         let nSequence = 0;
@@ -2092,75 +2021,10 @@ window.jaxon = jaxon;
             queue: oQueue,
         });
 
-        processCommandQueue(oQueue);
+        self.processQueue(oQueue);
     };
-
-    /**
-     * Causes the processing of items in the queue to be delayed for the specified amount of time.
-     * This is an asynchronous operation, therefore, other operations will be given an opportunity
-     * to execute during this delay.
-     *
-     * @param {object} args The command arguments.
-     * @param {integer} args.duration The number of 10ths of a second to sleep.
-     * @param {object} context The Response command object.
-     * @param {object} context.queue The command queue.
-     *
-     * @returns {true}
-     */
-    self.sleep = ({ duration }, { queue: oQueue }) => {
-        // The command queue is paused, and will be restarted after the specified delay.
-        oQueue.paused = true;
-        setTimeout(() => processCommandQueue(oQueue), duration * 100);
-        return true;
-    };
-
-    /**
-     * The function to run after the confirm question, for the comfirmCommands.
-     *
-     * @param {object} oQueue The command queue.
-     * @param {integer=0} skipCount The number of commands to skip.
-     *
-     * @returns {void}
-     */
-    const resumeQueueProcessing = (oQueue, skipCount = 0) => {
-        // Skip commands.
-        // The last entry in the queue is not a user command, thus it cannot be skipped.
-        while (skipCount > 0 && oQueue.count > 1 && queue.pop(oQueue) !== null) {
-            --skipCount;
-        }
-        processCommandQueue(oQueue);
-    };
-
-    /**
-     * Prompt the user with the specified question, if the user responds by clicking cancel,
-     * then skip the specified number of commands in the response command queue.
-     * If the user clicks Ok, the command processing resumes normal operation.
-     *
-     * @param {object} args The command arguments.
-     * @param {integer} args.count The number of commands to skip.
-     * @param {object} args.question The question to ask.
-     * @param {string} args.question.lib The dialog library to use.
-     * @param {object} args.question.title The question title.
-     * @param {object} args.question.phrase The question content.
-     * @param {object} context The command context.
-     * @param {object} context.queue The command queue.
-     *
-     * @returns {true} The queue processing is temporarily paused.
-     */
-    self.confirm = ({
-        count: nSkipCount,
-        question: { lib: sLibName, title: sTitle, phrase: oPhrase },
-    }, { queue: oQueue }) => {
-        // The command queue is paused, and will be restarted after the confirm question is answered.
-        const xLib = dialog.get(sLibName);
-        oQueue.paused = true;
-        xLib.confirm(call.makePhrase(oPhrase), sTitle,
-            () => resumeQueueProcessing(oQueue),
-            () => resumeQueueProcessing(oQueue, nSkipCount));
-        return true;
-    };
-})(jaxon.ajax.command, jaxon.config, jaxon.parser.call, jaxon.parser.attr,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.dialog.lib);
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.utils.queue,
+    jaxon.utils.dom, jaxon.utils.types);
 
 
 /**
@@ -2369,7 +2233,7 @@ window.jaxon = jaxon;
         oRequest.status = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
         oRequest.cursor = (oRequest.waitCursor) ? config.cursor.update : config.cursor.dontUpdate;
 
-        // Look for upload parameter
+        // Set upload data in the request.
         upload.initialize(oRequest);
 
         // The request is submitted only if there is no pending requests in the outgoing queue.
@@ -2505,7 +2369,7 @@ window.jaxon = jaxon;
         oRequest.submit && self.submit(oRequest);
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
-    jaxon.ajax.callback, jaxon.utils.upload, jaxon.utils.queue);
+    jaxon.ajax.callback, jaxon.ajax.upload, jaxon.utils.queue);
 
 
 /**
@@ -2754,6 +2618,146 @@ window.jaxon = jaxon;
     };
 })(jaxon.ajax.response, jaxon.ajax.command, jaxon.ajax.request, jaxon.ajax.callback,
     jaxon.utils.queue);
+
+
+/**
+ * Class: jaxon.ajax.upload
+ */
+
+(function(self, dom, console) {
+    /**
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     * @param {string=} oRequest.upload The HTML file upload field id
+     *
+     * @returns {boolean}
+     */
+    const initRequest = (oRequest) => {
+        if (!oRequest.upload) {
+            return false;
+        }
+
+        oRequest.upload = {
+            id: oRequest.upload,
+            input: null,
+            form: null,
+        };
+        const input = dom.$(oRequest.upload.id);
+
+        if (!input) {
+            console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
+            return false;
+        }
+        if (input.type !== 'file') {
+            console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+            return false;
+        }
+        if (input.files.length === 0) {
+            console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
+            return false;
+        }
+        if (input.name === undefined) {
+            console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
+            return false;
+        }
+        oRequest.upload.input = input;
+        oRequest.upload.form = input.form;
+        return true;
+    };
+
+    /**
+     * Check upload data and initialize the request.
+     *
+     * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
+     *
+     * @returns {void}
+     */
+    self.initialize = (oRequest) => {
+        // The content type shall not be set when uploading a file with FormData.
+        // It will be set by the browser.
+        if (!initRequest(oRequest)) {
+            oRequest.postHeaders['content-type'] = oRequest.contentType;
+        }
+    }
+})(jaxon.ajax.upload, jaxon.utils.dom, console);
+
+
+/**
+ * Class: jaxon.cmd.dialog
+ */
+
+(function(self, dialog, parser, command) {
+    /**
+     * Prompt the user with the specified question, if the user responds by clicking cancel,
+     * then skip the specified number of commands in the response command queue.
+     * If the user clicks Ok, the command processing resumes normal operation.
+     *
+     * @param {object} args The command arguments.
+     * @param {integer} args.count The number of commands to skip.
+     * @param {string} args.lib The dialog library to use.
+     * @param {object} args.question The question to ask.
+     * @param {object} context The command context.
+     * @param {object} context.queue The command queue.
+     *
+     * @returns {true} The queue processing is temporarily paused.
+     */
+    self.execConfirm = ({ count: skip, lib: sLibName, question }, { queue: oQueue }) => {
+        // The command queue processing is paused, and will be restarted
+        // after the confirm question is answered.
+        oQueue.paused = true;
+        dialog.confirm(sLibName, {
+            ...question,
+            text: parser.makePhrase(question.phrase),
+        }, {
+            yes: () => command.processQueue(oQueue),
+            no: () => command.processQueue(oQueue, skip),
+        });
+        return true;
+    };
+
+    /**
+     * Add an event handler to the specified target.
+     *
+     * @param {object} args The command arguments.
+     * @param {string} args.lib The dialog library to use.
+     * @param {object} args.message The message content
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showAlert = ({ lib: sLibName, message }) => {
+        dialog.alert(sLibName, {
+            ...message,
+            text: parser.makePhrase(message.phrase),
+        });
+        return true;
+    };
+
+    /**
+     * Remove an event handler from an target.
+     *
+     * @param {object} args The command arguments.
+     * @param {string} args.lib The dialog library to use.
+     * @param {object} args.dialog The dialog content
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.showModal = ({ lib: sLibName, dialog: oDialog }) => {
+        dialog.show(sLibName, oDialog);
+        return true;
+    };
+
+    /**
+     * Set an event handler with arguments to the specified target.
+     *
+     * @param {object} args The command arguments.
+     * @param {string} args.lib The dialog library to use.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.hideModal = ({ lib: sLibName }) => {
+        dialog.hide(sLibName);
+        return true;
+    };
+})(jaxon.cmd.dialog, jaxon.dialog, jaxon.parser.call, jaxon.ajax.command);
 
 
 /**
@@ -3036,7 +3040,7 @@ window.jaxon = jaxon;
  * Class: jaxon.cmd.script
  */
 
-(function(self, call, parameters, types) {
+(function(self, call, parameters, command, types) {
     /**
      * Call a javascript function with a series of parameters using the current script context.
      *
@@ -3067,6 +3071,25 @@ window.jaxon = jaxon;
      */
     self.execExpr = ({ expr, context }, { target }) => {
         call.execExpr(expr, { target, ...context });
+        return true;
+    };
+
+    /**
+     * Causes the processing of items in the queue to be delayed for the specified amount of time.
+     * This is an asynchronous operation, therefore, other operations will be given an opportunity
+     * to execute during this delay.
+     *
+     * @param {object} args The command arguments.
+     * @param {integer} args.duration The number of 10ths of a second to sleep.
+     * @param {object} context The Response command object.
+     * @param {object} context.queue The command queue.
+     *
+     * @returns {true}
+     */
+    self.sleep = ({ duration }, { queue: oQueue }) => {
+        // The command queue is paused, and will be restarted after the specified delay.
+        oQueue.paused = true;
+        setTimeout(() => command.processQueue(oQueue), duration * 100);
         return true;
     };
 
@@ -3130,7 +3153,8 @@ window.jaxon = jaxon;
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters,
+    jaxon.ajax.command, jaxon.utils.types);
 
 
 /*
@@ -3174,24 +3198,14 @@ jaxon.jq = jaxon.parser.query.jq;
 jaxon.exec = jaxon.parser.call.execExpr;
 
 /**
- * Shortcut to <jaxon.dialog.lib.confirm>.
+ * Shortcut to <jaxon.dialog.confirm>.
  */
-jaxon.confirm = jaxon.dialog.lib.confirm;
+jaxon.confirm = jaxon.dialog.confirm;
 
 /**
- * Shortcut to <jaxon.dialog.lib.alert>.
+ * Shortcut to <jaxon.dialog.alert>.
  */
-jaxon.alert = jaxon.dialog.lib.alert;
-
-/**
- * Shortcut to <jaxon.dialog.lib.labels>.
- */
-jaxon.labels = jaxon.dialog.lib.labels;
-
-/**
- * Shortcut to <jaxon.utils.dom.ready>.
- */
-jaxon.dom.ready = jaxon.utils.dom.ready;
+jaxon.alert = jaxon.dialog.alert;
 
 /**
  * Shortcut to <jaxon.utils.form.getValues>.
@@ -3216,7 +3230,7 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax, dialog) {
+(function(register, cmd, ajax) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
         ajax.response.complete(request);
@@ -3236,9 +3250,7 @@ jaxon.isLoaded = true;
     register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
     register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');
     register('script.redirect', cmd.script.redirect, 'Script::Redirect');
-
-    register('script.sleep', ajax.command.sleep, 'Handler::Sleep');
-    register('script.confirm', ajax.command.confirm, 'Handler::Confirm');
+    register('script.sleep', cmd.script.sleep, 'Script::Sleep');
 
     register('handler.event.set', cmd.event.setEventHandler, 'Script::SetEventHandler');
     register('handler.event.add', cmd.event.addEventHandler, 'Script::AddEventHandler');
@@ -3256,10 +3268,11 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.alert.show', dialog.cmd.showAlert, 'Dialog::ShowAlert');
-    register('dialog.modal.show', dialog.cmd.showModal, 'Dialog::ShowModal');
-    register('dialog.modal.hide', dialog.cmd.hideModal, 'Dialog::HideModal');
-})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.dialog);
+    register('dialog.confirm', cmd.dialog.execConfirm, 'Dialog::Confirm');
+    register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
+    register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
+    register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');
+})(jaxon.register, jaxon.cmd, jaxon.ajax);
 
 
 module.exports = jaxon;
