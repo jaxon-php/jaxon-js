@@ -114,7 +114,7 @@ jaxon.isLoaded = true;
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
     register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
-    register('dialog.confirm', cmd.dialog.confirm, 'Dialog::Confirm');
+    register('dialog.confirm', cmd.dialog.execConfirm, 'Dialog::Confirm');
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');

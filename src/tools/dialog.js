@@ -2,7 +2,7 @@
  * Class: jaxon.dialog
  */
 
-(function(self, dom, call, query, types) {
+(function(self, dom, attr, call, query, types) {
     /**
      * Config data.
      *
@@ -26,10 +26,10 @@
     /**
      * Set the confirm dialog labels
      *
-     * @param {object} oLabels
-     * @param {object=} oLabels.confirm
-     * @param {string=} oLabels.confirm.yes
-     * @param {string=} oLabels.confirm.no
+     * @param {object} labels
+     * @param {object=} labels.confirm
+     * @param {string=} labels.confirm.yes
+     * @param {string=} labels.confirm.no
      */
     self.labels = ({ confirm: { yes, no } = {} }) => {
         if (yes) {
@@ -52,70 +52,102 @@
     };
 
     /**
-     * Check if a dialog library is defined.
+     * Find a library to execute a given function.
      *
-     * @param {string} sName The library name
+     * @param {string} sLibName The dialog library name
+     * @param {string} sFunc The dialog library function
      *
-     * @returns {bool}
+     * @returns {object}
      */
-    self.has = (sName) => !!libs[sName];
+    const getLib = (sLibName, sFunc) => {
+        !libs[sLibName] &&
+            console.warn(`Unable to find a dialog library with name "${sLibName}".`);
+        if (libs[sLibName]) {
+            if (libs[sLibName][sFunc]) {
+                return libs[sLibName];
+            }
+            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function..`);
+        }
+        !libs.default[sFunc] &&
+            console.error(`Unable to find a dialog library with the "${sFunc}" function.`);
+        return libs.default;
+    };
 
     /**
-     * Get a dialog library.
+     * Show an alert message using a dialog library.
      *
-     * @param {string=default} sName The library name
-     *
-     * @returns {object|null}
-     */
-    self.get = (sName) => libs[sName] ?? libs.default;
-
-    /**
-     * Show a message using a dialog library.
-     *
-     * @param {object} oMessage The message in the command
-     * @param {string} oMessage.lib The dialog library to use for the message
-     * @param {string} oMessage.type The message type
-     * @param {string} oMessage.text The message text
-     * @param {string=} oMessage.title The message title
+     * @param {string} sLibName The dialog library to use
+     * @param {object} message The message in the command
+     * @param {string} message.type The message type
+     * @param {string} message.text The message text
+     * @param {string=} message.title The message title
      *
      * @returns {void}
      */
-    self.alert = ({ lib: sLibName, type, title = '', text: message }) =>
-        self.get(sLibName).alert({ type, message, title });
+    self.alert = (sLibName, { type, title = '', text: message }) =>
+        getLib(sLibName, 'alert').alert({ type, message, title });
 
     /**
      * Call a function after user confirmation.
      *
-     * @param {object} oQuestion The question in the command
-     * @param {string} oQuestion.lib The dialog library to use for the question
-     * @param {string} oQuestion.text The question text
-     * @param {string=} oQuestion.title The question title
-     * @param {function} yesCallback The function to call if the question is confirmed
-     * @param {function} noCallback The function to call if the question is not confirmed
+     * @param {string} sLibName The dialog library to use
+     * @param {object} question The question in the command
+     * @param {string} question.text The question text
+     * @param {string=} question.title The question title
+     * @param {object} callback The callbacks to call after the question is answered
      *
      * @returns {void}
      */
-    self.confirm = ({ lib: sLibName, title = '', text: question }, yesCallback, noCallback) =>
-        self.get(sLibName).confirm({ question, title, yesCallback, noCallback });
+    self.confirm = (sLibName, { title = '', text: question }, callback) =>
+        getLib(sLibName, 'confirm').confirm({ question, title }, callback);
+
+    /**
+     * Show a dialog window.
+     *
+     * @param {string} sLibName The dialog library to use
+     * @param {object} dialog The dialog content
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.show = (sLibName, dialog) => {
+        const xLib = getLib(sLibName, 'show');
+        xLib.show && xLib.show(dialog, (xDialogDom) => xDialogDom && attr.process(xDialogDom));
+        return true;
+    };
+
+    /**
+     * Hide a dialog window.
+     *
+     * @param {string} sLibName The dialog library to use
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.hide = ({ lib: sLibName }) => {
+        const xLib = getLib(sLibName, 'hide');
+        xLib.hide && xLib.hide();
+        return true;
+    };
 
     /**
      * Register a dialog library.
      *
-     * @param {string} sName The library name
+     * @param {string} sLibName The library name
      * @param {callback} xCallback The library definition callback
      *
      * @returns {void}
      */
-    self.register = (sName, xCallback) => {
+    self.register = (sLibName, xCallback) => {
         // Create an object for the library
-        libs[sName] = {};
+        libs[sLibName] = {};
         // Define the library functions
         const { labels, options: oOptions } = config;
         // Check that the provided library option is an object,
         // and add the labels to the provided options.
-        const options = types.isObject(oOptions[sName]) ?
-            { ...oOptions[sName], labels } : { labels };
-        xCallback(libs[sName], { types, dom, js: call, jq: query.jq, options });
+        const options = types.isObject(oOptions[sLibName]) ?
+            { ...oOptions[sLibName], labels } : { labels };
+        // Provide some utility functions to the dialog library.
+        const utils = { ...types, ready: dom.ready, js: call.execExpr, jq: query.jq };
+        xCallback(libs[sLibName], options, utils);
     };
 
     /**
@@ -125,27 +157,31 @@
         /**
          * Show an alert message
          *
-         * @param {string} type The alert type
-         * @param {string} message The alert message
-         * @param {string} title The alert title
+         * @param {object} alert The alert parameters
+         * @param {string} alert.message The alert message
+         * @param {string} alert.title The alert title
          *
          * @returns {void}
          */
-        lib.alert = ({ type, message, title }) => alert(!title ? text : `<b>${title}</b><br/>${message}`);
+        lib.alert = ({ message, title }) =>
+            alert(!title ? message : `<b>${title}</b><br/>${message}`);
 
         /**
          * Ask a confirm question to the user.
          *
-         * @param {string} question The question to ask
-         * @param {string} title The question title
-         * @param {callback} yesCallback The function to call if the answer is yes
-         * @param {callback=} noCallback The function to call if the answer is no
+         * @param {object} confirm The confirm parameters
+         * @param {string} confirm.question The question to ask
+         * @param {string} confirm.title The question title
+         * @param {object} callback The confirm callbacks
+         * @param {callback} callback.yes The function to call if the answer is yes
+         * @param {callback=} callback.no The function to call if the answer is no
          *
          * @returns {void}
          */
-        lib.confirm = ({ question, title, yesCallback, noCallback }) => {
-            confirm(!title ? question : `<b>${title}</b><br/>${question}`) ?
-                yesCallback() : (noCallback && noCallback());
+        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) => {
+            confirm(!title ? question :
+                `<b>${title}</b><br/>${question}`) ? yesCb() : (noCb && noCb());
         };
     });
-})(jaxon.dialog, jaxon.dom, jaxon.parser.call, jaxon.parser.query, jaxon.utils.types);
+})(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
+    jaxon.parser.query, jaxon.utils.types);

@@ -204,8 +204,8 @@
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext = {}) => types.isObject(xCall) &&
-        execCall(xCall, getOptions(xContext));
+    self.execCall = (xCall, xContext = {}) =>
+        types.isObject(xCall) && execCall(xCall, getOptions(xContext));
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -229,8 +229,9 @@
      *
      * @returns {string}
      */
-    const makePhrase = ({ str, args }, xOptions) => str.supplant(args.reduce((oArgs, xArg, nIndex) =>
-        ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
+    const makePhrase = ({ str, args }, xOptions) =>
+        str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+            ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
 
     /**
      * Replace placeholders in a given string with values
@@ -244,39 +245,51 @@
     /**
      * Show an alert message
      *
-     * @param {object} message The message content
+     * @param {object} alert The alert content
+     * @param {string} alert.lib The dialog library to use
+     * @param {array} alert.message The message to show
      * @param {object} xOptions The call options.
      *
      * @returns {void}
      */
-    const showAlert = (message, xOptions) => !!message &&
-        dialog.alert({ ...message, text: makePhrase(message.phrase, xOptions) });
+    const showAlert = ({ lib, message } = {}, xOptions) => !!message &&
+        dialog.alert(lib, {
+            ...message,
+            text: makePhrase(message.phrase, xOptions),
+        });
 
     /**
-     * @param {object} question The confirmation question
-     * @param {object} message The message to show if the user anwsers no to the question
+     * @param {object} confirm The confirmation question
+     * @param {string} confirm.lib The dialog library to use
+     * @param {array} confirm.question The question to ask
+     * @param {object=} xAlert The alert to show if the user anwsers no to the question
      * @param {array} aCalls The calls to execute
      * @param {object} xOptions The call options.
      *
      * @returns {boolean}
      */
-    const execWithConfirmation = (question, message, aCalls, xOptions) =>
-        dialog.confirm({ ...question, text: makePhrase(question.phrase, xOptions) },
-            () => execCalls(aCalls, xOptions), () => showAlert(message, xOptions));
+    const execWithConfirmation = ({ lib, question }, xAlert, aCalls, xOptions) =>
+        dialog.confirm(lib, {
+            ...question,
+            text: makePhrase(question.phrase, xOptions),
+        }, {
+            yes: () => execCalls(aCalls, xOptions),
+            no: () => showAlert(xAlert, xOptions),
+        });
 
     /**
      * @param {array} aCondition The condition to chek
-     * @param {object} oMessage The message to show if the condition is not met
+     * @param {object=} xAlert The alert to show if the condition is not met
      * @param {array} aCalls The calls to execute
      * @param {object} xOptions The call options.
      *
      * @returns {boolean}
      */
-    const execWithCondition = (aCondition, oMessage, aCalls, xOptions) => {
+    const execWithCondition = (aCondition, xAlert, aCalls, xOptions) => {
         const [sOperator, xLeftArg, xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
         xComparator(getValue(xLeftArg, xOptions), getValue(xRightArg, xOptions)) ?
-            execCalls(aCalls, xOptions) : showAlert(oMessage, xOptions);
+            execCalls(aCalls, xOptions) : showAlert(xAlert, xOptions);
     };
 
     /**
@@ -288,13 +301,13 @@
      * @returns {mixed}
      */
     const execExpression = (xExpression, xOptions) => {
-        const { calls, question, condition, message } = xExpression;
-        if((question)) {
-            execWithConfirmation(question, message, calls, xOptions);
+        const { calls, confirm, condition, alert } = xExpression;
+        if((confirm)) {
+            execWithConfirmation(confirm, alert, calls, xOptions);
             return;
         }
         if((condition)) {
-            execWithCondition(condition, message, calls, xOptions);
+            execWithCondition(condition, alert, calls, xOptions);
             return;
         }
         return execCalls(calls, xOptions);
