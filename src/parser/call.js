@@ -174,7 +174,7 @@
     const getOptions = (xContext, xDefault = {}) => {
         xContext.global = {
             // Some functions are meant to be executed in the context of the component.
-            component: !xContext.component || !xContext.target ? null : xContext.target,
+            target: !xContext.component || !xContext.target ? null : xContext.target,
         };
         // Remove the component field from the xContext object.
         const { component: _, ...xNewContext } = xContext;
