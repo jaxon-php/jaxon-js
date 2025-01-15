@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.ajax.callback
+ *
+ * global: jaxon
  */
 
 (function(self, types, config) {

@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.dialog
+ *
+ * global: jaxon
  */
 
 (function(self, dom, attr, call, query, types) {

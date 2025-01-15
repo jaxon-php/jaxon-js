@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.parser.query
+ *
+ * global: jaxon
  */
 
 (function(self, jq) {

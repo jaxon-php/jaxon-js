@@ -2,6 +2,8 @@
  * Class: jaxon.parser.attr
  *
  * Process Jaxon custom HTML attributes
+ *
+ * global: jaxon
  */
 
 (function(self, event, debug) {

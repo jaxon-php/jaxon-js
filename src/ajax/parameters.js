@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.ajax.parameters
+ *
+ * global: jaxon
  */
 
 (function(self, types, version) {

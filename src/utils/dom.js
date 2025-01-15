@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.utils.dom
+ *
+ * global: jaxon
  */
 
 (function(self, types, baseDocument) {

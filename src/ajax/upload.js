@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.ajax.upload
+ *
+ * global: jaxon
  */
 
 (function(self, dom, console) {

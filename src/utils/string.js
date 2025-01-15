@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.utils.string
+ *
+ * global: jaxon
  */
 
 (function(self) {

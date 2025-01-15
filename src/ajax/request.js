@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.ajax.request
+ *
+ * global: jaxon
  */
 
 (function(self, config, params, rsp, cbk, upload, queue) {

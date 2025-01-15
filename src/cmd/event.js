@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.cmd.event
+ *
+ * global: jaxon
  */
 
 (function(self, call, dom, str) {

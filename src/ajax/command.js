@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.ajax.command
+ *
+ * global: jaxon
  */
 
 (function(self, config, attr, queue, dom, types) {

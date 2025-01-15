@@ -7,6 +7,8 @@
     Include this in the HEAD of each page for which you wish to use jaxon.
 */
 
+/** global: jaxon */
+
 /**
  * Initiates a request to the server.
  */

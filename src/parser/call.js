@@ -2,6 +2,8 @@
  * Class: jaxon.parser.call
  *
  * Execute calls from json expressions.
+ *
+ * global: jaxon
  */
 
 (function(self, query, dialog, dom, form, types) {

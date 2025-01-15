@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.cmd.
+ *
+ * global: jaxon
  */
 
 (function(self, dom, types, baseDocument) {

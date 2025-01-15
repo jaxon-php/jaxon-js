@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.cmd.dialog
+ *
+ * global: jaxon
  */
 
 (function(self, dialog, parser, command) {

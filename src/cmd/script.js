@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.cmd.script
+ *
+ * global: jaxon
  */
 
 (function(self, call, parameters, command, types) {

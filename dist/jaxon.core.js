@@ -316,6 +316,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.utils.dom
+ *
+ * global: jaxon
  */
 
 (function(self, types, baseDocument) {
@@ -449,6 +451,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.utils.form
+ *
+ * global: jaxon
  */
 
 (function(self, dom) {
@@ -565,6 +569,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.utils.queue
+ *
+ * global: jaxon
  */
 
 (function(self) {
@@ -691,6 +697,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.utils.string
+ *
+ * global: jaxon
  */
 
 (function(self) {
@@ -768,6 +776,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.utils.types
+ *
+ * global: jaxon
  */
 
 (function(self) {
@@ -841,6 +851,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.dialog
+ *
+ * global: jaxon
  */
 
 (function(self, dom, attr, call, query, types) {
@@ -1042,6 +1054,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.dom
+ *
+ * global: jaxon
  */
 
 /**
@@ -1115,6 +1129,8 @@ window.jaxon = jaxon;
  * Class: jaxon.parser.attr
  *
  * Process Jaxon custom HTML attributes
+ *
+ * global: jaxon
  */
 
 (function(self, event, debug) {
@@ -1306,6 +1322,8 @@ window.jaxon = jaxon;
  * Class: jaxon.parser.call
  *
  * Execute calls from json expressions.
+ *
+ * global: jaxon
  */
 
 (function(self, query, dialog, dom, form, types) {
@@ -1633,6 +1651,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.parser.query
+ *
+ * global: jaxon
  */
 
 (function(self, jq) {
@@ -1677,6 +1697,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.callback
+ *
+ * global: jaxon
  */
 
 (function(self, types, config) {
@@ -1833,6 +1855,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.command
+ *
+ * global: jaxon
  */
 
 (function(self, config, attr, queue, dom, types) {
@@ -2029,6 +2053,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.parameters
+ *
+ * global: jaxon
  */
 
 (function(self, types, version) {
@@ -2183,6 +2209,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.request
+ *
+ * global: jaxon
  */
 
 (function(self, config, params, rsp, cbk, upload, queue) {
@@ -2374,6 +2402,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.response
+ *
+ * global: jaxon
  */
 
 (function(self, command, req, cbk, queue) {
@@ -2622,6 +2652,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.ajax.upload
+ *
+ * global: jaxon
  */
 
 (function(self, dom, console) {
@@ -2683,6 +2715,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.cmd.dialog
+ *
+ * global: jaxon
  */
 
 (function(self, dialog, parser, command) {
@@ -2762,6 +2796,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.cmd.event
+ *
+ * global: jaxon
  */
 
 (function(self, call, dom, str) {
@@ -2847,6 +2883,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.cmd.
+ *
+ * global: jaxon
  */
 
 (function(self, dom, types, baseDocument) {
@@ -3038,6 +3076,8 @@ window.jaxon = jaxon;
 
 /**
  * Class: jaxon.cmd.script
+ *
+ * global: jaxon
  */
 
 (function(self, call, parameters, command, types) {
@@ -3165,6 +3205,8 @@ window.jaxon = jaxon;
     This is the client side code which runs on the web browser or similar web enabled application.
     Include this in the HEAD of each page for which you wish to use jaxon.
 */
+
+/** global: jaxon */
 
 /**
  * Initiates a request to the server.

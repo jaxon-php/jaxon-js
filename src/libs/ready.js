@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.dom
+ *
+ * global: jaxon
  */
 
 /**

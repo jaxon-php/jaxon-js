@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.utils.form
+ *
+ * global: jaxon
  */
 
 (function(self, dom) {

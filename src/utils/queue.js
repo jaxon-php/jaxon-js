@@ -1,5 +1,7 @@
 /**
  * Class: jaxon.utils.queue
+ *
+ * global: jaxon
  */
 
 (function(self) {
