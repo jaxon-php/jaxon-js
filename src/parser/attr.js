@@ -36,27 +36,6 @@
     const aAttributes = ['innerHTML', 'outerHTML'];
 
     /**
-     * Remove attributes from a DOM node.
-     *
-     * @param {Element} xNode A DOM node.
-     * @param {array} aAttrs An array of attribute names.
-     *
-     * @returns {void}
-     */
-    const removeAttributes = (xNode, aAttrs) => !debug.active &&
-        aAttrs.forEach(sAttr => xNode.removeAttribute(sAttr));
-
-    /**
-     * Remove a child node from a DOM node.
-     *
-     * @param {Element} xNode A DOM node.
-     * @param {Element} xChild A Child node.
-     *
-     * @returns {void}
-     */
-    const removeChildNode = (xNode, xChild) => !debug.active && xNode.removeChild(xChild);
-
-    /**
      * Check if a the attributes on a targeted node must be processed after a command is executed.
      *
      * @param {Element} xTarget A DOM node.
@@ -77,8 +56,6 @@
         xContainer.querySelectorAll(':scope [jxn-click]').forEach(xNode => {
             const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
             event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
-
-            removeAttributes(xNode, ['jxn-click']);
         });
     };
 
@@ -120,8 +97,6 @@
     const setEventHandlers = (xContainer) => {
         xContainer.querySelectorAll(':scope [jxn-on]').forEach(xNode => {
             setEventHandler(xNode, xNode, 'jxn-on');
-
-            removeAttributes(xNode, ['jxn-on', 'jxn-call', 'jxn-select']);
         });
     };
 
@@ -136,12 +111,8 @@
                 // Check event declarations only on direct child.
                 if (xNode.parentNode === xTarget) {
                     setEventHandler(xTarget, xNode, 'jxn-event');
-
-                    removeChildNode(xTarget, xNode);
                 }
             });
-
-            removeAttributes(xTarget, ['jxn-target']);
         });
     };
 
@@ -155,8 +126,6 @@
             const sComponentName = xNode.getAttribute('jxn-bind');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-
-            removeAttributes(xNode, ['jxn-bind', 'jxn-item']);
         });
     };
 
