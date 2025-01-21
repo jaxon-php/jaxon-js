@@ -147,6 +147,8 @@
      *
      * @returns {Element|null}
      */
-    self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
-        xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
+    self.node = (sComponentName, sComponentItem = sDefaultComponentItem) => {
+        const xComponent = xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
+        return !xComponent || !xComponent.isConnected ? null : xComponent;
+    };
 })(jaxon.parser.attr, jaxon.cmd.event);
