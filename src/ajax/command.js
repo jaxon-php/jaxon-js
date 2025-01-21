@@ -97,8 +97,6 @@
 
         // Process the command
         self.call(name, args, context);
-        // Process Jaxon custom attributes in the new node HTML content.
-        attr.changed(context.target, name, args.attr) && attr.process(context.target);
         return true;
     };
 

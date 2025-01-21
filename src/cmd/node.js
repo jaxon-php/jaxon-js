@@ -4,7 +4,37 @@
  * global: jaxon
  */
 
-(function(self, dom, types, baseDocument) {
+(function(self, attr, dom, types, baseDocument) {
+    /**
+     * Assign an element's attribute to the specified value.
+     *
+     * @param {Element} xTarget The target DOM element.
+     * @param {object} xElt The attribute.
+     * @param {string} xElt.node The node of the attribute.
+     * @param {object} xElt.attr The name of the attribute.
+     * @param {mixed} xValue The new value of the attribute.
+     *
+     * @returns {void}
+     */
+    const setNodeAttr = (xTarget, { node: xNode, attr: sAttr }, xValue) => {
+        if (sAttr !== 'outerHTML' || !xTarget.parentNode) {
+            xNode[sAttr] = xValue;
+            // Process Jaxon custom attributes in the new node HTML content.
+            sAttr === 'innerHTML' && attr.process(xTarget, false);
+            return;
+        }
+        // When setting the outerHTML value, we need to have a parent node, and to
+        // get the newly inserted node, where we'll process our custom attributes.
+        // The initial target node is actually removed from the DOM, thus cannot be used.
+        (new MutationObserver((aMutations, xObserver) => {
+            xObserver.disconnect();
+            // Process Jaxon custom attributes in the new node HTML content.
+            xTarget = aMutations[0]?.addedNodes[0];
+            xTarget && attr.process(xTarget, true);
+        })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
+        xNode[sAttr] = xValue;
+    };
+
     /**
      * Assign an element's attribute to the specified value.
      *
@@ -19,7 +49,7 @@
     self.assign = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            xElt.node[xElt.attr] = value;
+            setNodeAttr(target, xElt, value);
         }
         return true;
     };
@@ -38,7 +68,7 @@
     self.append = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            xElt.node[xElt.attr] = xElt.node[xElt.attr] + value;
+            setNodeAttr(target, xElt, xElt.node[xElt.attr] + value);
         }
         return true;
     };
@@ -57,7 +87,7 @@
     self.prepend = ({ attr, value }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            xElt.node[xElt.attr] = value + xElt.node[xElt.attr];
+            setNodeAttr(target, xElt, value + xElt.node[xElt.attr]);
         }
         return true;
     };
@@ -65,18 +95,19 @@
     /**
      * Replace a text in the value of a given attribute in an element
      *
+     * @param {Element} xTarget The target DOM element.
      * @param {object} xElt The value returned by the dom.getInnerObject() function
      * @param {string} sSearch The text to search
      * @param {string} sReplace The text to use as replacement
      *
      * @returns {void}
      */
-    const replaceText = (xElt, sSearch, sReplace) => {
+    const replaceText = (xTarget, xElt, sSearch, sReplace) => {
         const bFunction = types.isFunction(xElt.node[xElt.attr]);
         const sCurText = bFunction ? xElt.node[xElt.attr].join('') : xElt.node[xElt.attr];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
         if (bFunction || dom.willChange(xElt.node, xElt.attr, sNewText)) {
-            xElt.node[xElt.attr] = sNewText;
+            setNodeAttr(xTarget, xElt, sNewText);
         }
     };
 
@@ -95,7 +126,8 @@
     self.replace = ({ attr, search, replace }, { target }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            replaceText(xElt, attr === 'innerHTML' ? dom.getBrowserHTML(search) : search, replace);
+            replaceText(target, xElt, attr === 'innerHTML' ?
+                dom.getBrowserHTML(search) : search, replace);
         }
         return true;
     };
@@ -188,4 +220,5 @@
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
-})(jaxon.cmd.node, jaxon.utils.dom, jaxon.utils.types, jaxon.config.baseDocument);
+})(jaxon.cmd.node, jaxon.parser.attr, jaxon.utils.dom, jaxon.utils.types,
+    jaxon.config.baseDocument);

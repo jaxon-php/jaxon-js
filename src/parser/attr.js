@@ -6,7 +6,7 @@
  * global: jaxon
  */
 
-(function(self, event, debug) {
+(function(self, event) {
     /**
      * The DOM nodes associated to Jaxon components
      *
@@ -22,42 +22,34 @@
     const sDefaultComponentItem = 'main';
 
     /**
-     * The commands to check for changes
+     * Find the DOM nodes with a given attribute
      *
-     * @var {array}
+     * @param {Element} xContainer A DOM node
+     * @param {string} sAttr The attribute to check for
+     * @param {bool} bScopeIsOuter Also check the outer element
+     *
+     * @returns {array}
      */
-    const aCommands = ['node.assign', 'node.append', 'node.prepend', 'node.replace'];
-
-    /**
-     * The attributes to check for changes
-     *
-     * @var {array}
-     */
-    const aAttributes = ['innerHTML', 'outerHTML'];
-
-    /**
-     * Check if a the attributes on a targeted node must be processed after a command is executed.
-     *
-     * @param {Element} xTarget A DOM node.
-     * @param {string} sCommand The command name.
-     * @param {string} sAttribute The attribute name.
-     *
-     * @returns {void}
-     */
-    self.changed = (xTarget, sCommand, sAttribute) => (xTarget) &&
-        aAttributes.some(sVal => sVal === sAttribute) && aCommands.some(sVal => sVal === sCommand);
+    const findNodesWithAttr = (xContainer, sAttr, bScopeIsOuter) => {
+        if (!xContainer.querySelectorAll) {
+            return [];
+        }
+        const aNodes = Array.from(xContainer.querySelectorAll(`:scope [${sAttr}]`));
+        return bScopeIsOuter && xContainer.hasAttribute(sAttr) ?
+            [xContainer, ...aNodes] : aNodes;
+    };
 
     /**
      * @param {Element} xContainer A DOM node.
+     * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    const setClickHandlers = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-click]').forEach(xNode => {
+    const setClickHandlers = (xContainer, bScopeIsOuter) =>
+        findNodesWithAttr(xContainer, 'jxn-click', bScopeIsOuter).forEach(xNode => {
             const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
             event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
         });
-    };
 
     /**
      * @param {Element} xTarget The event handler target.
@@ -91,60 +83,60 @@
 
     /**
      * @param {Element} xContainer A DOM node.
+     * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    const setEventHandlers = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-on]').forEach(xNode => {
-            setEventHandler(xNode, xNode, 'jxn-on');
-        });
-    };
+    const setEventHandlers = (xContainer, bScopeIsOuter) =>
+        findNodesWithAttr(xContainer, 'jxn-on', bScopeIsOuter)
+            .forEach(xNode => setEventHandler(xNode, xNode, 'jxn-on'));
 
     /**
      * @param {Element} xContainer A DOM node.
+     * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    const setTargetEventHandlers = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-target]').forEach(xTarget => {
-            xTarget.querySelectorAll(':scope [jxn-event]').forEach(xNode => {
+    const setTargetEventHandlers = (xContainer, bScopeIsOuter) =>
+        findNodesWithAttr(xContainer, 'jxn-target', bScopeIsOuter).forEach(xTarget => {
+            xTarget.querySelectorAll(':scope > [jxn-event]').forEach(xNode => {
                 // Check event declarations only on direct child.
                 if (xNode.parentNode === xTarget) {
                     setEventHandler(xTarget, xNode, 'jxn-event');
                 }
             });
         });
-    };
 
     /**
      * @param {Element} xContainer A DOM node.
+     * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    const bindNodesToComponents = (xContainer) => {
-        xContainer.querySelectorAll(':scope [jxn-bind]').forEach(xNode => {
+    const bindNodesToComponents = (xContainer, bScopeIsOuter) =>
+        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter).forEach(xNode => {
             const sComponentName = xNode.getAttribute('jxn-bind');
             const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
             xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
         });
-    };
 
     /**
      * Process the custom attributes in a given DOM node.
      *
      * @param {Element} xContainer A DOM node.
+     * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    self.process = (xContainer = document) => {
+    self.process = (xContainer = document, bScopeIsOuter = false) => {
         // Set event handlers on nodes
-        setTargetEventHandlers(xContainer);
+        setTargetEventHandlers(xContainer, bScopeIsOuter);
         // Set event handlers on nodes
-        setEventHandlers(xContainer);
+        setEventHandlers(xContainer, bScopeIsOuter);
         // Set event handlers on nodes
-        setClickHandlers(xContainer);
+        setClickHandlers(xContainer, bScopeIsOuter);
         // Attach DOM nodes to Jaxon components
-        bindNodesToComponents(xContainer);
+        bindNodesToComponents(xContainer, bScopeIsOuter);
     };
 
     /**
@@ -157,4 +149,4 @@
      */
     self.node = (sComponentName, sComponentItem = sDefaultComponentItem) =>
         xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
-})(jaxon.parser.attr, jaxon.cmd.event, jaxon.debug);
+})(jaxon.parser.attr, jaxon.cmd.event);
