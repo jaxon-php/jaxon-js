@@ -31,12 +31,14 @@
      * @returns {array}
      */
     const findNodesWithAttr = (xContainer, sAttr, bScopeIsOuter) => {
+        // Some js functions return nodes without the querySelectorAll() function.
         if (!xContainer.querySelectorAll) {
             return [];
         }
+
+        // When using the outerHTML attribute, the container node may also be returned.
         const aNodes = Array.from(xContainer.querySelectorAll(`:scope [${sAttr}]`));
-        return bScopeIsOuter && xContainer.hasAttribute(sAttr) ?
-            [xContainer, ...aNodes] : aNodes;
+        return bScopeIsOuter && xContainer.hasAttribute(sAttr) ? [xContainer, ...aNodes] : aNodes;
     };
 
     /**
@@ -46,10 +48,11 @@
      * @returns {void}
      */
     const setClickHandlers = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-click', bScopeIsOuter).forEach(xNode => {
-            const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
-            event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
-        });
+        findNodesWithAttr(xContainer, 'jxn-click', bScopeIsOuter)
+            .forEach(xNode => {
+                const oHandler = JSON.parse(xNode.getAttribute('jxn-click'));
+                event.setEventHandler({ event: 'click', func: oHandler }, { target: xNode });
+            });
 
     /**
      * @param {Element} xTarget The event handler target.
@@ -98,14 +101,15 @@
      * @returns {void}
      */
     const setTargetEventHandlers = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-target', bScopeIsOuter).forEach(xTarget => {
-            xTarget.querySelectorAll(':scope > [jxn-event]').forEach(xNode => {
-                // Check event declarations only on direct child.
-                if (xNode.parentNode === xTarget) {
-                    setEventHandler(xTarget, xNode, 'jxn-event');
-                }
+        findNodesWithAttr(xContainer, 'jxn-target', bScopeIsOuter)
+            .forEach(xTarget => {
+                xTarget.querySelectorAll(':scope > [jxn-event]').forEach(xNode => {
+                    // Check event declarations only on direct child.
+                    if (xNode.parentNode === xTarget) {
+                        setEventHandler(xTarget, xNode, 'jxn-event');
+                    }
+                });
             });
-        });
 
     /**
      * @param {Element} xContainer A DOM node.
@@ -114,11 +118,12 @@
      * @returns {void}
      */
     const bindNodesToComponents = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter).forEach(xNode => {
-            const sComponentName = xNode.getAttribute('jxn-bind');
-            const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
-            xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-        });
+        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter)
+            .forEach(xNode => {
+                const sComponentName = xNode.getAttribute('jxn-bind');
+                const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
+                xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+            });
 
     /**
      * Process the custom attributes in a given DOM node.
