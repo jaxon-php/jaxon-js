@@ -4,10 +4,11 @@
  * global: jaxon
  */
 
-(function(self, attr, dom, types, baseDocument) {
+(function(self, attr, command, dom, types, baseDocument) {
     /**
      * Assign an element's attribute to the specified value.
      *
+     * @param {object} oQueue The command queue.
      * @param {Element} xTarget The target DOM element.
      * @param {object} xElt The attribute.
      * @param {string} xElt.node The node of the attribute.
@@ -16,22 +17,31 @@
      *
      * @returns {void}
      */
-    const setNodeAttr = (xTarget, { node: xNode, attr: sAttr }, xValue) => {
+    const setNodeAttr = (oQueue, xTarget, { node: xNode, attr: sAttr }, xValue) => {
         if (sAttr !== 'outerHTML' || !xTarget.parentNode) {
             xNode[sAttr] = xValue;
             // Process Jaxon custom attributes in the new node HTML content.
             sAttr === 'innerHTML' && attr.process(xTarget, false);
             return;
         }
+
         // When setting the outerHTML value, we need to have a parent node, and to
         // get the newly inserted node, where we'll process our custom attributes.
         // The initial target node is actually removed from the DOM, thus cannot be used.
         (new MutationObserver((aMutations, xObserver) => {
             xObserver.disconnect();
             // Process Jaxon custom attributes in the new node HTML content.
-            xTarget = aMutations[0]?.addedNodes[0];
+            xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
+                aMutations[0].addedNodes[0] : null;
             xTarget && attr.process(xTarget, true);
+
+            // Restart the command queue processing.
+            command.processQueue(oQueue);
         })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
+
+        // The command queue processing is paused, and will be restarted
+        // after the mutation observer is called.
+        oQueue.paused = true;
         xNode[sAttr] = xValue;
     };
 
@@ -43,13 +53,14 @@
      * @param {string} args.value The new value to be applied.
      * @param {object} context The command context.
      * @param {Element} context.target The target DOM element.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.assign = ({ attr, value }, { target }) => {
+    self.assign = ({ attr, value }, { target, queue: oQueue }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            setNodeAttr(target, xElt, value);
+            setNodeAttr(oQueue, target, xElt, value);
         }
         return true;
     };
@@ -62,13 +73,14 @@
      * @param {string} args.value The new value to be appended.
      * @param {object} context The command context.
      * @param {Element} context.target The target DOM element.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.append = ({ attr, value }, { target }) => {
+    self.append = ({ attr, value }, { target, queue: oQueue }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            setNodeAttr(target, xElt, xElt.node[xElt.attr] + value);
+            setNodeAttr(oQueue, target, xElt, xElt.node[xElt.attr] + value);
         }
         return true;
     };
@@ -81,13 +93,14 @@
      * @param {string} args.value The new value to be prepended.
      * @param {object} context The command context.
      * @param {Element} context.target The target DOM element.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.prepend = ({ attr, value }, { target }) => {
+    self.prepend = ({ attr, value }, { target, queue: oQueue }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            setNodeAttr(target, xElt, value + xElt.node[xElt.attr]);
+            setNodeAttr(oQueue, target, xElt, value + xElt.node[xElt.attr]);
         }
         return true;
     };
@@ -95,6 +108,7 @@
     /**
      * Replace a text in the value of a given attribute in an element
      *
+     * @param {object} oQueue The command queue.
      * @param {Element} xTarget The target DOM element.
      * @param {object} xElt The value returned by the dom.getInnerObject() function
      * @param {string} sSearch The text to search
@@ -102,12 +116,12 @@
      *
      * @returns {void}
      */
-    const replaceText = (xTarget, xElt, sSearch, sReplace) => {
+    const replaceText = (oQueue, xTarget, xElt, sSearch, sReplace) => {
         const bFunction = types.isFunction(xElt.node[xElt.attr]);
         const sCurText = bFunction ? xElt.node[xElt.attr].join('') : xElt.node[xElt.attr];
         const sNewText = sCurText.replaceAll(sSearch, sReplace);
         if (bFunction || dom.willChange(xElt.node, xElt.attr, sNewText)) {
-            setNodeAttr(xTarget, xElt, sNewText);
+            setNodeAttr(oQueue, xTarget, xElt, sNewText);
         }
     };
 
@@ -120,13 +134,14 @@
      * @param {string} args.replace The search text and replacement text.
      * @param {object} context The command context.
      * @param {Element} context.target The target DOM element.
+     * @param {object} context.queue The command queue.
      *
      * @returns {true} The operation completed successfully.
      */
-    self.replace = ({ attr, search, replace }, { target }) => {
+    self.replace = ({ attr, search, replace }, { target, queue: oQueue }) => {
         const xElt = dom.getInnerObject(attr, target);
         if (xElt !== null) {
-            replaceText(target, xElt, attr === 'innerHTML' ?
+            replaceText(oQueue, target, xElt, attr === 'innerHTML' ?
                 dom.getBrowserHTML(search) : search, replace);
         }
         return true;
@@ -220,5 +235,5 @@
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
-})(jaxon.cmd.node, jaxon.parser.attr, jaxon.utils.dom, jaxon.utils.types,
+})(jaxon.cmd.node, jaxon.parser.attr, jaxon.ajax.command, jaxon.utils.dom, jaxon.utils.types,
     jaxon.config.baseDocument);
