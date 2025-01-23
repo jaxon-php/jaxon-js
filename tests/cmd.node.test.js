@@ -3,7 +3,7 @@ const {
     config,
     cmd: { node },
     ajax: { command: handler },
-    utils: { dom },
+    utils: { dom, queue },
     parser: { query },
 } = require('../dist/jaxon.module');
 
@@ -60,6 +60,7 @@ test('Assign element outer html', () => {
         value: 'Mister Johnson',
     }, {
         target: dom.$('username'),
+        queue: queue.create(5),
     });
 
     expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
