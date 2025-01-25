@@ -12,7 +12,8 @@ const terser = require('gulp-terser');
 const folders = {
     src: './src/',
     dist: './dist/',
-    lang: './dist/lang/'
+    lang: './dist/lang/',
+    libs: './dist/libs/',
 };
 const files = {
     src: {
@@ -31,7 +32,7 @@ const files = {
         core: 'jaxon.core.js',
         debug: 'jaxon.debug.js',
         module: 'jaxon.module.js',
-        chibi: 'libs/chibi/chibi.js',
+        chibi: 'chibi.js',
         lang: [
             folders.dist + 'lang/jaxon.bg.js',
             folders.dist + 'lang/jaxon.de.js',
@@ -42,65 +43,47 @@ const files = {
             folders.dist + 'lang/jaxon.tr.js'
         ],
     },
-    min: {
-        core: 'jaxon.core.min.js',
-        debug: 'jaxon.debug.min.js',
-        chibi: 'libs/chibi/chibi.min.js',
-    },
 };
 
-// Concat core library files
-const js_core = () => {
-    const jsbuild = src(files.src.core)
-        // .pipe(deporder())
-        .pipe(concat(files.dist.core, {newLine: "\n\n"}));
+// Concat the core library files
+const js_core = () => src(files.src.core)
+    // .pipe(deporder())
+    .pipe(concat(files.dist.core, {newLine: "\n\n"}))
+    .pipe(dest(folders.dist));
 
-    return jsbuild.pipe(dest(folders.dist));
-};
+// Concat the core library files into a module
+const js_module = () => src([...files.src.core, files.src.module])
+    // .pipe(deporder())
+    .pipe(concat(files.dist.module, {newLine: "\n\n"}))
+    .pipe(dest(folders.dist));
 
-// Concat core library files into a module
-const js_module = () => {
-    const jsbuild = src([...files.src.core, files.src.module])
-        // .pipe(deporder())
-        .pipe(concat(files.dist.module, {newLine: "\n\n"}));
-
-    return jsbuild.pipe(dest(folders.dist));
-};
-
-// Concat and minify core library files
+// Minify the core library files
 const js_core_min = () => src(folders.dist + files.dist.core)
     // .pipe(stripdebug())
     .pipe(terser())
-    .pipe(rename(files.min.core))
+    .pipe(rename({ extname: '.min.js' }))
     .pipe(dest(folders.dist));
 
 // Minify the jaxon.debug.js file
 const js_debug_min = () => src(folders.dist + files.dist.debug)
     // .pipe(stripdebug())
     .pipe(terser())
-    .pipe(rename(files.min.debug))
+    .pipe(rename({ extname: '.min.js' }))
     .pipe(dest(folders.dist));
 
 // Minify the chibi.js file
-const js_chibi_min = () => src(folders.dist + files.dist.chibi)
+const js_chibi_min = () => src(folders.libs + 'chibi/' + files.dist.chibi)
     // .pipe(stripdebug())
     .pipe(terser())
-    .pipe(rename(files.min.chibi))
-    .pipe(dest(folders.dist));
+    .pipe(rename({ extname: '.min.js' }))
+    .pipe(dest(folders.libs + 'chibi/'));
 
 // Minify the jaxon language files
 const js_lang_min = () => src(files.dist.lang)
     // .pipe(stripdebug())
     .pipe(terser())
-    .pipe(rename(path => {
-        // path.dirname = "";
-        path.basename += ".min";
-        // path.extname = ""
-    }))
+    .pipe(rename({ extname: '.min.js' }))
     .pipe(dest(folders.lang));
 
-// Minify all the files
-const js_all = series(js_core, js_module, js_core_min, js_debug_min, js_chibi_min, js_lang_min);
-
-exports.default = js_all;
+exports.default = series(js_core, js_module, js_core_min, js_debug_min, js_chibi_min, js_lang_min);
 exports.js_core = js_core;
