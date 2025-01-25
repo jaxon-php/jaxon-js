@@ -148,6 +148,21 @@
     };
 
     /**
+     * Pause the the commands processing, and restart after running a provided callback.
+     *
+     * The provided callback will be passed another callback to call to restart the processing.
+     *
+     * @param {object} oQueue A queue containing the commands to execute.
+     * @param {function} fCallback The callback to call.
+     *
+     * @return {true}
+     */
+    self.pause = (oQueue, fCallback) => {
+        oQueue.paused = true;
+        fCallback((skipCount = 0) => self.processQueue(oQueue, skipCount));
+    };
+
+    /**
      * Queue and process the commands in the response.
      *
      * @param {object} oRequest The request context object.

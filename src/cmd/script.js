@@ -52,8 +52,7 @@
      */
     self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
-        oQueue.paused = true;
-        setTimeout(() => command.processQueue(oQueue), duration * 100);
+        command.pause(oQueue, (restart) => setTimeout(() => restart(), duration * 100));
         return true;
     };
 
@@ -117,5 +116,4 @@
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters,
-    jaxon.ajax.command, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.ajax.command, jaxon.utils.types);

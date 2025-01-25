@@ -25,24 +25,24 @@
             return;
         }
 
-        // When setting the outerHTML value, we need to have a parent node, and to
-        // get the newly inserted node, where we'll process our custom attributes.
-        // The initial target node is actually removed from the DOM, thus cannot be used.
-        (new MutationObserver((aMutations, xObserver) => {
-            xObserver.disconnect();
-            // Process Jaxon custom attributes in the new node HTML content.
-            xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
-                aMutations[0].addedNodes[0] : null;
-            xTarget && attr.process(xTarget, true);
-
-            // Restart the command queue processing.
-            command.processQueue(oQueue);
-        })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
-
         // The command queue processing is paused, and will be restarted
         // after the mutation observer is called.
-        oQueue.paused = true;
-        xNode[sAttr] = xValue;
+        command.pause(oQueue, (restart) => {
+            // When setting the outerHTML value, we need to have a parent node, and to
+            // get the newly inserted node, where we'll process our custom attributes.
+            // The initial target node is actually removed from the DOM, thus cannot be used.
+            (new MutationObserver((aMutations, xObserver) => {
+                xObserver.disconnect();
+                // Process Jaxon custom attributes in the new node HTML content.
+                xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
+                    aMutations[0].addedNodes[0] : null;
+                xTarget && attr.process(xTarget, true);
+                // Restart the command queue processing.
+                restart();
+            })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
+            // Now change the DOM node outerHTML value, which will call the mutation observer.
+            xNode.outerHTML = xValue;
+        });
     };
 
     /**

@@ -19,16 +19,17 @@
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.execConfirm = ({ count: skip, lib: sLibName, question }, { queue: oQueue }) => {
+    self.execConfirm = ({ count: skipCount, lib: sLibName, question }, { queue: oQueue }) => {
         // The command queue processing is paused, and will be restarted
         // after the confirm question is answered.
-        oQueue.paused = true;
-        dialog.confirm(sLibName, {
-            ...question,
-            text: parser.makePhrase(question.phrase),
-        }, {
-            yes: () => command.processQueue(oQueue),
-            no: () => command.processQueue(oQueue, skip),
+        command.pause(oQueue, (restart) => {
+            dialog.confirm(sLibName, {
+                ...question,
+                text: parser.makePhrase(question.phrase),
+            }, {
+                yes: () => restart(),
+                no: () => restart(skipCount),
+            });
         });
         return true;
     };
