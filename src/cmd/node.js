@@ -235,5 +235,23 @@
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
+
+    /**
+     * Bind a DOM node to a component.
+     *
+     * @param {object} args The command arguments.
+     * @param {object} args.component The component.
+     * @param {string} args.component.name The component name.
+     * @param {string=} args.component.item The component item.
+     * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.bind = ({ component: { name: sName, item: sItem } }, { target: xTarget }) => {
+        attr.bind(xTarget, sName, sItem);
+        return true;
+    };
 })(jaxon.cmd.node, jaxon.parser.attr, jaxon.ajax.command, jaxon.utils.dom, jaxon.utils.types,
     jaxon.config.baseDocument);

@@ -112,18 +112,28 @@
             });
 
     /**
+     * @param {Element} xNode A DOM node.
+     * @param {string} sComponentName The component name
+     * @param {string=} sComponentItem The component item
+     *
+     * @returns {void}
+     */
+    self.bind = (xNode, sComponentName, sComponentItem) => {
+        if (!sComponentItem) {
+            sComponentItem = sDefaultComponentItem;
+        }
+        xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+    };
+
+    /**
      * @param {Element} xContainer A DOM node.
      * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
     const bindNodesToComponents = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter)
-            .forEach(xNode => {
-                const sComponentName = xNode.getAttribute('jxn-bind');
-                const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
-                xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            });
+        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter).forEach(xNode =>
+            self.bind(xNode, xNode.getAttribute('jxn-bind'), xNode.getAttribute('jxn-item')));
 
     /**
      * Process the custom attributes in a given DOM node.

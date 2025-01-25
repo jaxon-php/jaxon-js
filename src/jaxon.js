@@ -89,6 +89,7 @@ jaxon.isLoaded = true;
     register('node.create', cmd.node.create, 'Node::Create');
     register('node.insert.before', cmd.node.insertBefore, 'Node::InsertBefore');
     register('node.insert.after', cmd.node.insertAfter, 'Node::InsertAfter');
+    register('node.bind', cmd.node.bind, 'Node::Bind');
 
     register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
     register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');

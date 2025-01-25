@@ -82,3 +82,90 @@ test('Assign element outer html', () => {
 
     expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
 });
+
+test('Bind a node to a component', () => {
+    document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
+
+    const bindCommand = {
+        name: 'node.bind',
+        args: {
+            id: 'username',
+            component: {
+                name: 'Component',
+            },
+        },
+    };
+    const assignCommand = {
+        name: 'node.assign',
+        args: {
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
+        },
+        component: {
+            name: 'Component',
+        },
+    };
+
+    handler.processCommands(makeRequest([bindCommand, assignCommand]));
+
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
+});
+
+test('Bind a node to a component with empty item', () => {
+    document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
+
+    const bindCommand = {
+        name: 'node.bind',
+        args: {
+            id: 'username',
+            component: {
+                name: 'Component',
+                item: '',
+            },
+        },
+    };
+    const assignCommand = {
+        name: 'node.assign',
+        args: {
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
+        },
+        component: {
+            name: 'Component',
+        },
+    };
+
+    handler.processCommands(makeRequest([bindCommand, assignCommand]));
+
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
+});
+
+test('Bind a node to a component with item', () => {
+    document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
+
+    const bindCommand = {
+        name: 'node.bind',
+        args: {
+            id: 'username',
+            component: {
+                name: 'Component',
+                item: 'item',
+            },
+        },
+    };
+    const assignCommand = {
+        name: 'node.assign',
+        args: {
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
+        },
+        component: {
+            name: 'Component',
+            item: 'item',
+        },
+    };
+
+    handler.processCommands(makeRequest([bindCommand, assignCommand]));
+
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
+});
