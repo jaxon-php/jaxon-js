@@ -169,6 +169,17 @@
      */
     self.register('default', (lib) => {
         /**
+         * Get the content of a dialog.
+         *
+         * @param {string} sTitle The message title
+         * @param {string} sContent The message content
+         *
+         * @returns {void}
+         */
+        const dialogContent = (sTitle, sContent) =>
+            !sTitle ? sContent : sTitle.toUpperCase() + "\n" + sContent;
+
+        /**
          * Show an alert message
          *
          * @param {object} alert The alert parameters
@@ -177,8 +188,7 @@
          *
          * @returns {void}
          */
-        lib.alert = ({ message, title }) =>
-            alert(!title ? message : `<b>${title}</b><br/>${message}`);
+        lib.alert = ({ message, title }) => alert(dialogContent(title, message));
 
         /**
          * Ask a confirm question to the user.
@@ -192,10 +202,8 @@
          *
          * @returns {void}
          */
-        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) => {
-            confirm(!title ? question :
-                `<b>${title}</b><br/>${question}`) ? yesCb() : (noCb && noCb());
-        };
+        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) =>
+            confirm(dialogContent(title, question)) ? yesCb() : (noCb && noCb());
     });
 })(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
     jaxon.parser.query, jaxon.utils.types);
