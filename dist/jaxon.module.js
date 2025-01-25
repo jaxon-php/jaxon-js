@@ -1020,6 +1020,17 @@ window.jaxon = jaxon;
      */
     self.register('default', (lib) => {
         /**
+         * Get the content of a dialog.
+         *
+         * @param {string} sTitle The message title
+         * @param {string} sContent The message content
+         *
+         * @returns {void}
+         */
+        const dialogContent = (sTitle, sContent) =>
+            !sTitle ? sContent : sTitle.toUpperCase() + "\n" + sContent;
+
+        /**
          * Show an alert message
          *
          * @param {object} alert The alert parameters
@@ -1028,8 +1039,7 @@ window.jaxon = jaxon;
          *
          * @returns {void}
          */
-        lib.alert = ({ message, title }) =>
-            alert(!title ? message : `<b>${title}</b><br/>${message}`);
+        lib.alert = ({ message, title }) => alert(dialogContent(title, message));
 
         /**
          * Ask a confirm question to the user.
@@ -1043,10 +1053,8 @@ window.jaxon = jaxon;
          *
          * @returns {void}
          */
-        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) => {
-            confirm(!title ? question :
-                `<b>${title}</b><br/>${question}`) ? yesCb() : (noCb && noCb());
-        };
+        lib.confirm = ({ question, title}, { yes: yesCb, no: noCb }) =>
+            confirm(dialogContent(title, question)) ? yesCb() : (noCb && noCb());
     });
 })(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
     jaxon.parser.query, jaxon.utils.types);
@@ -1239,18 +1247,28 @@ window.jaxon = jaxon;
             });
 
     /**
+     * @param {Element} xNode A DOM node.
+     * @param {string} sComponentName The component name
+     * @param {string=} sComponentItem The component item
+     *
+     * @returns {void}
+     */
+    self.bind = (xNode, sComponentName, sComponentItem) => {
+        if (!sComponentItem) {
+            sComponentItem = sDefaultComponentItem;
+        }
+        xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+    };
+
+    /**
      * @param {Element} xContainer A DOM node.
      * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
     const bindNodesToComponents = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter)
-            .forEach(xNode => {
-                const sComponentName = xNode.getAttribute('jxn-bind');
-                const sComponentItem = xNode.getAttribute('jxn-item') ?? sDefaultComponentItem;
-                xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
-            });
+        findNodesWithAttr(xContainer, 'jxn-bind', bScopeIsOuter).forEach(xNode =>
+            self.bind(xNode, xNode.getAttribute('jxn-bind'), xNode.getAttribute('jxn-item')));
 
     /**
      * Process the custom attributes in a given DOM node.
@@ -1968,6 +1986,21 @@ window.jaxon = jaxon;
                 return;
             }
         }
+    };
+
+    /**
+     * Pause the the commands processing, and restart after running a provided callback.
+     *
+     * The provided callback will be passed another callback to call to restart the processing.
+     *
+     * @param {object} oQueue A queue containing the commands to execute.
+     * @param {function} fCallback The callback to call.
+     *
+     * @return {true}
+     */
+    self.pause = (oQueue, fCallback) => {
+        oQueue.paused = true;
+        fCallback((skipCount = 0) => self.processQueue(oQueue, skipCount));
     };
 
     /**
@@ -2700,16 +2733,17 @@ window.jaxon = jaxon;
      *
      * @returns {true} The queue processing is temporarily paused.
      */
-    self.execConfirm = ({ count: skip, lib: sLibName, question }, { queue: oQueue }) => {
+    self.execConfirm = ({ count: skipCount, lib: sLibName, question }, { queue: oQueue }) => {
         // The command queue processing is paused, and will be restarted
         // after the confirm question is answered.
-        oQueue.paused = true;
-        dialog.confirm(sLibName, {
-            ...question,
-            text: parser.makePhrase(question.phrase),
-        }, {
-            yes: () => command.processQueue(oQueue),
-            no: () => command.processQueue(oQueue, skip),
+        command.pause(oQueue, (restart) => {
+            dialog.confirm(sLibName, {
+                ...question,
+                text: parser.makePhrase(question.phrase),
+            }, {
+                yes: () => restart(),
+                no: () => restart(skipCount),
+            });
         });
         return true;
     };
@@ -2874,24 +2908,24 @@ window.jaxon = jaxon;
             return;
         }
 
-        // When setting the outerHTML value, we need to have a parent node, and to
-        // get the newly inserted node, where we'll process our custom attributes.
-        // The initial target node is actually removed from the DOM, thus cannot be used.
-        (new MutationObserver((aMutations, xObserver) => {
-            xObserver.disconnect();
-            // Process Jaxon custom attributes in the new node HTML content.
-            xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
-                aMutations[0].addedNodes[0] : null;
-            xTarget && attr.process(xTarget, true);
-
-            // Restart the command queue processing.
-            command.processQueue(oQueue);
-        })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
-
         // The command queue processing is paused, and will be restarted
         // after the mutation observer is called.
-        oQueue.paused = true;
-        xNode[sAttr] = xValue;
+        command.pause(oQueue, (restart) => {
+            // When setting the outerHTML value, we need to have a parent node, and to
+            // get the newly inserted node, where we'll process our custom attributes.
+            // The initial target node is actually removed from the DOM, thus cannot be used.
+            (new MutationObserver((aMutations, xObserver) => {
+                xObserver.disconnect();
+                // Process Jaxon custom attributes in the new node HTML content.
+                xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
+                    aMutations[0].addedNodes[0] : null;
+                xTarget && attr.process(xTarget, true);
+                // Restart the command queue processing.
+                restart();
+            })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
+            // Now change the DOM node outerHTML value, which will call the mutation observer.
+            xNode.outerHTML = xValue;
+        });
     };
 
     /**
@@ -3084,6 +3118,24 @@ window.jaxon = jaxon;
             target.parentNode.insertBefore(createNewTag(sTag, sId), target.nextSibling);
         return true;
     };
+
+    /**
+     * Bind a DOM node to a component.
+     *
+     * @param {object} args The command arguments.
+     * @param {object} args.component The component.
+     * @param {string} args.component.name The component name.
+     * @param {string=} args.component.item The component item.
+     * @param {object} args.context The initial context to execute the command.
+     * @param {object} context The command context.
+     * @param {Element} context.target The target DOM element.
+     *
+     * @returns {true} The operation completed successfully.
+     */
+    self.bind = ({ component: { name: sName, item: sItem } }, { target: xTarget }) => {
+        attr.bind(xTarget, sName, sItem);
+        return true;
+    };
 })(jaxon.cmd.node, jaxon.parser.attr, jaxon.ajax.command, jaxon.utils.dom, jaxon.utils.types,
     jaxon.config.baseDocument);
 
@@ -3142,8 +3194,7 @@ window.jaxon = jaxon;
      */
     self.sleep = ({ duration }, { queue: oQueue }) => {
         // The command queue is paused, and will be restarted after the specified delay.
-        oQueue.paused = true;
-        setTimeout(() => command.processQueue(oQueue), duration * 100);
+        command.pause(oQueue, (restart) => setTimeout(() => restart(), duration * 100));
         return true;
     };
 
@@ -3207,8 +3258,7 @@ window.jaxon = jaxon;
         })));
         return true;
     };
-})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters,
-    jaxon.ajax.command, jaxon.utils.types);
+})(jaxon.cmd.script, jaxon.parser.call, jaxon.ajax.parameters, jaxon.ajax.command, jaxon.utils.types);
 
 
 /*
@@ -3302,6 +3352,7 @@ jaxon.isLoaded = true;
     register('node.create', cmd.node.create, 'Node::Create');
     register('node.insert.before', cmd.node.insertBefore, 'Node::InsertBefore');
     register('node.insert.after', cmd.node.insertAfter, 'Node::InsertAfter');
+    register('node.bind', cmd.node.bind, 'Node::Bind');
 
     register('script.exec.call', cmd.script.execCall, 'Script::ExecJsonCall');
     register('script.exec.expr', cmd.script.execExpr, 'Script::ExecJsonExpr');
