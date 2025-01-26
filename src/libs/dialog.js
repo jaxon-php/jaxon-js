@@ -134,7 +134,7 @@
      *
      * @returns {true} The operation completed successfully.
      */
-    self.hide = ({ lib: sLibName }) => {
+    self.hide = (sLibName) => {
         const xLib = getLib(sLibName, 'hide');
         xLib.hide && xLib.hide();
         return true;
