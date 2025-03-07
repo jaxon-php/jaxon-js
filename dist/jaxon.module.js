@@ -992,6 +992,22 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Create a unique id
+     *
+     * @param {int} nLength The unique id length
+     *
+     *  @returns {string}
+     */
+    const createUniqueId = (nLength) => {
+        const chars = "abcdefghijklmnopqrstuvwxyz";
+        let result = "";
+        for (let i = 0; i < nLength; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+
+    /**
      * Register a dialog library.
      *
      * @param {string} sLibName The library name
@@ -1011,7 +1027,13 @@ window.jaxon = jaxon;
             ...(types.isObject(oOptions[sLibName]) ? oOptions[sLibName] : {}),
         };
         // Provide some utility functions to the dialog library.
-        const utils = { ...types, ready: dom.ready, js: call.execExpr, jq: query.jq };
+        const utils = {
+            ...types,
+            ready: dom.ready,
+            js: call.execExpr,
+            jq: query.jq,
+            createUniqueId,
+        };
         xCallback(libs[sLibName], options, utils);
     };
 
