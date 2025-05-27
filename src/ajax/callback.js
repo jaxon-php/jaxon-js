@@ -12,7 +12,7 @@
      */
     const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
         'onRequest', 'onResponseDelay', 'onExpiration', 'onResponseReceived',
-        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+        'onProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
      * @param {integer} iDelay The amount of time in milliseconds to delay.

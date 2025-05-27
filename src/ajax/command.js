@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, config, attr, queue, dom, types) {
+(function(self, config, attr, cbk, queue, dom, types) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -179,6 +179,7 @@
         message && console.log(message);
 
         status.onProcessing();
+        cbk.execute(oRequest, 'onProcessing');
 
         // Create a queue for the commands in the response.
         let nSequence = 0;
@@ -205,5 +206,5 @@
 
         self.processQueue(oQueue);
     };
-})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.utils.queue,
-    jaxon.utils.dom, jaxon.utils.types);
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.ajax.callback,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types);
