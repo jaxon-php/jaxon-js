@@ -64,15 +64,13 @@
      * @returns {object}
      */
     const getLib = (sLibName, sFunc) => {
-        if (!libs[sLibName]) {
-            console.warn(`Unable to find a dialog library with name "${sLibName}".`);
+        if (libs[sLibName] && libs[sLibName][sFunc]) {
+            return libs[sLibName];
         }
-        if (libs[sLibName]) {
-            if (libs[sLibName][sFunc]) {
-                return libs[sLibName];
-            }
-            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function..`);
-        }
+
+        !libs[sLibName] ?
+            console.warn(`Unable to find a dialog library with name "${sLibName}".`) :
+            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
 
         // Check if there is a default library in the config for the required feature.
         const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
