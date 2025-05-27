@@ -144,7 +144,7 @@
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
         cbk.clearTimer(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'beforeResponseProcessing');
+        cbk.execute(oRequest, 'onResponseReceived');
 
         return oResponse.processor(oRequest, oResponse);
     };

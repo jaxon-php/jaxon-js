@@ -11,7 +11,7 @@
      * @var {array}
      */
     const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
-        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
+        'onRequest', 'onResponseDelay', 'onExpiration', 'onResponseReceived',
         'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
 
     /**
