@@ -170,7 +170,7 @@
      * @return {true}
      */
     self.processCommands = (oRequest) => {
-        const { response: { content } = {}, status } = oRequest;
+        const { response: { content } = {} } = oRequest;
         if (!types.isObject(content)) {
             return;
         }
@@ -178,7 +178,6 @@
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
         message && console.log(message);
 
-        status.onProcessing();
         cbk.execute(oRequest, 'onProcessing');
 
         // Create a queue for the commands in the response.

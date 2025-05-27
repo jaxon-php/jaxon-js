@@ -107,8 +107,12 @@
         }
 
         const aRequestCallback = getRequestCallbackByNames(oRequest);
+        const oStatusCallback = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
+        const oCursorCallback = config.cursor.update;
 
         oRequest.callbacks = [
+            oStatusCallback,
+            oCursorCallback,
             ...aValidCallbacks,
             ...aRequestCallback,
         ];

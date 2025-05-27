@@ -221,8 +221,6 @@
      */
     self.complete = (oRequest) => {
         cbk.execute(oRequest, 'onComplete');
-        oRequest.cursor.onComplete();
-        oRequest.status.onComplete();
 
         cleanUp(oRequest);
 

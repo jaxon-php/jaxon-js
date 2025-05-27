@@ -250,8 +250,8 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onRequest: () => console.log('Sending Request...'),
-            onWaiting: () => console.log('Waiting for Response...'),
+            onPrepare: () => console.log('Sending Request...'),
+            onRequest: () => console.log('Waiting for Response...'),
             onProcessing: () => console.log('Processing...'),
             onComplete: () => console.log('Done.'),
         },
@@ -263,8 +263,8 @@ var jaxon = {
          * @type {object}
          */
         dontUpdate: {
+            onPrepare: () => {},
             onRequest: () => {},
-            onWaiting: () => {},
             onProcessing: () => {},
             onComplete: () => {}
         },
@@ -285,7 +285,7 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onWaiting: () => {
+            onRequest: () => {
                 if (jaxon.config.baseDocument.body) {
                     jaxon.config.baseDocument.body.style.cursor = 'wait';
                 }
@@ -304,7 +304,7 @@ var jaxon = {
          * @type {object}
          */
         dontUpdate: {
-            onWaiting: () => {},
+            onRequest: () => {},
             onComplete: () => {}
         },
     };

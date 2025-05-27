@@ -49,9 +49,6 @@
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
 
-        oRequest.status = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
-        oRequest.cursor = (oRequest.waitCursor) ? config.cursor.update : config.cursor.dontUpdate;
-
         // Set upload data in the request.
         upload.initialize(oRequest);
 
@@ -98,6 +95,12 @@
      * @returns {void}
      */
     self._send = (oRequest) => {
+        // The onResponseDelay and onExpiration aren't called immediately, but a timer
+        // is set to call them later, using delays that are set in the config.
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+        cbk.execute(oRequest, 'onRequest');
+
         fetch(oRequest.requestURI, oRequest.httpRequestOptions)
             .then(oRequest.response.converter)
             .then(oRequest.response.handler)
@@ -115,16 +118,6 @@
      */
     const submit = (oRequest) => {
         self.prepare(oRequest);
-        oRequest.status.onRequest();
-
-        // The onResponseDelay and onExpiration aren't called immediately, but a timer
-        // is set to call them later, using delays that are set in the config.
-        cbk.execute(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'onExpiration');
-        cbk.execute(oRequest, 'onRequest');
-        oRequest.cursor.onWaiting();
-        oRequest.status.onWaiting();
-
         self._send(oRequest);
     };
 
