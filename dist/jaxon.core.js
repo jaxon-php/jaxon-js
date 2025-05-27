@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.19',
+        patch: '0-beta.23',
     },
 
     debug: {
@@ -250,8 +250,8 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onRequest: () => console.log('Sending Request...'),
-            onWaiting: () => console.log('Waiting for Response...'),
+            onPrepare: () => console.log('Sending Request...'),
+            onRequest: () => console.log('Waiting for Response...'),
             onProcessing: () => console.log('Processing...'),
             onComplete: () => console.log('Done.'),
         },
@@ -263,8 +263,8 @@ var jaxon = {
          * @type {object}
          */
         dontUpdate: {
+            onPrepare: () => {},
             onRequest: () => {},
-            onWaiting: () => {},
             onProcessing: () => {},
             onComplete: () => {}
         },
@@ -285,7 +285,7 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onWaiting: () => {
+            onRequest: () => {
                 if (jaxon.config.baseDocument.body) {
                     jaxon.config.baseDocument.body.style.cursor = 'wait';
                 }
@@ -304,7 +304,7 @@ var jaxon = {
          * @type {object}
          */
         dontUpdate: {
-            onWaiting: () => {},
+            onRequest: () => {},
             onComplete: () => {}
         },
     };
@@ -915,15 +915,13 @@ window.jaxon = jaxon;
      * @returns {object}
      */
     const getLib = (sLibName, sFunc) => {
-        if (!libs[sLibName]) {
-            console.warn(`Unable to find a dialog library with name "${sLibName}".`);
+        if (libs[sLibName] && libs[sLibName][sFunc]) {
+            return libs[sLibName];
         }
-        if (libs[sLibName]) {
-            if (libs[sLibName][sFunc]) {
-                return libs[sLibName];
-            }
-            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function..`);
-        }
+
+        !libs[sLibName] ?
+            console.warn(`Unable to find a dialog library with name "${sLibName}".`) :
+            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
 
         // Check if there is a default library in the config for the required feature.
         const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
@@ -1711,23 +1709,33 @@ window.jaxon = jaxon;
 
 (function(self, types, config) {
     /**
-     * Create a timer to fire an event in the future.
-     * This will be used fire the onRequestDelay and onExpiration events.
-     *
-     * @param {integer} iDelay The amount of time in milliseconds to delay.
-     *
-     * @returns {object} A callback timer object.
-     */
-    const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
-
-    /**
      * The names of the available callbacks.
      *
      * @var {array}
      */
     const aCallbackNames = ['onInitialize', 'onProcessParams', 'onPrepare',
-        'onRequest', 'onResponseDelay', 'onExpiration', 'beforeResponseProcessing',
-        'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+        'onRequest', 'onResponseDelay', 'onExpiration', 'onResponseReceived',
+        'onProcessing', 'onFailure', 'onRedirect', 'onSuccess', 'onComplete'];
+
+    /**
+     * @param {integer} iDelay The amount of time in milliseconds to delay.
+     *
+     * @returns {object}
+     */
+    const setupTimer = (iDelay) => ({ timer: null, delay: iDelay });
+
+    /**
+     * Create timers that will be used fire the onRequestDelay and onExpiration events..
+     *
+     * @param {integer=} responseDelayTime
+     * @param {integer=} expirationTime
+     *
+     * @returns {object}
+     */
+    self.timers = (responseDelayTime, expirationTime) => ({
+        onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
+        onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
+    });
 
     /**
      * Create a blank callback object.
@@ -1738,23 +1746,51 @@ window.jaxon = jaxon;
      *
      * @returns {object} The callback object.
      */
-    self.create = (responseDelayTime, expirationTime) => {
-        const oCallback = {
-            timers: {
-                onResponseDelay: setupTimer(responseDelayTime ?? config.defaultResponseDelayTime),
-                onExpiration: setupTimer(expirationTime ?? config.defaultExpirationTime),
-            },
-        };
-        aCallbackNames.forEach(sName => oCallback[sName] = null);
-        return oCallback;
+    self.create = (responseDelayTime, expirationTime) => ({
+        timers: self.timers(responseDelayTime, expirationTime),
+    });
+
+    /**
+     * Get the callbacks from the oRequest.callback property.
+     *
+     * @param {object} oRequest
+     * @param {mixed} oRequest.callback
+     * @param {object} oRequest.func
+     *
+     * @returns {array}
+     */
+    const getRequestCallbacks = ({ callback: xCallbacks, func }) => {
+        if (xCallbacks === undefined) {
+            return [];
+        }
+        if (types.isArray(xCallbacks)) {
+            return xCallbacks;
+        }
+        if (types.isObject(xCallbacks)) {
+            return [xCallbacks];
+        }
+        console.warn(`Invalid callback value ignored on request to ${func.name}.`);
+        return [];
     };
 
     /**
-     * The global callback object which is active for every request.
+     * Make a callback object with the callback functions defined in the request object by their own name.
      *
-     * @var {object}
+     * @param {object} oRequest
+     *
+     * @returns {array}
      */
-    self.callback = self.create();
+    const getRequestCallbackByNames = (oRequest) => {
+        // Check if any callback is defined in the request object by its own name.
+        const oCallback = self.create();
+        aCallbackNames.forEach(sName => {
+            if (types.isFunction(oRequest[sName])) {
+                oCallback[sName] = oRequest[sName];
+                delete oRequest[sName];
+            }
+        });
+        return Object.keys(oCallback).length > 1 ? [oCallback] : [];
+    };
 
     /**
      * Move all the callbacks defined directly in the oRequest object to the
@@ -1765,57 +1801,52 @@ window.jaxon = jaxon;
      * @return {void}
      */
     self.initCallbacks = (oRequest) => {
-        if (types.isObject(oRequest.callback)) {
-            oRequest.callback = [oRequest.callback];
-        }
-        if (types.isArray(oRequest.callback)) {
-            oRequest.callback.forEach(oCallback => {
-                // Add the timers attribute, if it is not defined.
-                if (oCallback.timers === undefined) {
-                    oCallback.timers = {};
-                }
-            });
-            return;
+        const aCallbacks = getRequestCallbacks(oRequest);
+        const aValidCallbacks = aCallbacks.filter(xCallback => types.isObject(xCallback))
+            // Add the timers attribute, if it is not defined.
+            .map(oCallback => ({ ...oCallback, timers: { ...oCallback.timers }}));
+        if (aValidCallbacks.length !== aCallbacks.length) {
+            console.warn(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
         }
 
-        let callbackFound = false;
-        // Check if any callback is defined in the request object by its own name.
-        const callback = self.create();
-        aCallbackNames.forEach(sName => {
-            if (oRequest[sName] !== undefined) {
-                callback[sName] = oRequest[sName];
-                callbackFound = true;
-                delete oRequest[sName];
-            }
-        });
-        oRequest.callback = callbackFound ? [callback] : [];
+        const aRequestCallback = getRequestCallbackByNames(oRequest);
+        const oStatusCallback = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
+        const oCursorCallback = config.cursor.update;
+
+        oRequest.callbacks = [
+            oStatusCallback,
+            oCursorCallback,
+            ...aValidCallbacks,
+            ...aRequestCallback,
+        ];
     };
 
     /**
-     * Get a flatten array of callbacks
+     * Get the timer in a callback object.
      *
      * @param {object} oRequest The request context object.
-     * @param {array=} oRequest.callback The request callback(s).
+     * @param {mixed} oRequest.timers
+     * @param {string} sEvent
      *
-     * @returns {array}
+     * @returns {mixed}
      */
-    const getCallbacks = ({ callback = [] }) => [self.callback, ...callback];
+    const getTimer = ({ timers }, sEvent) => types.isObject(timers) ? timers[sEvent] : null;
 
     /**
      * Execute a callback event.
      *
      * @param {object} oCallback The callback object (or objects) which contain the event handlers to be executed.
-     * @param {string} sFunction The name of the event to be triggered.
+     * @param {string} sEvent The name of the event to be triggered.
      * @param {object} oRequest The callback argument.
      *
      * @returns {void}
      */
-    const execute = (oCallback, sFunction, oRequest) => {
-        const func = oCallback[sFunction];
+    const execute = (oCallback, sEvent, oRequest) => {
+        const func = oCallback[sEvent];
         if (!func || !types.isFunction(func)) {
             return;
         }
-        const timer = oCallback.timers[sFunction];
+        const timer = getTimer(oCallback, sEvent);
         if (!timer) {
             func(oRequest); // Call the function directly.
             return;
@@ -1828,36 +1859,36 @@ window.jaxon = jaxon;
      * Execute a callback event.
      *
      * @param {object} oRequest The request context object.
-     * @param {string} sFunction The name of the event to be triggered.
+     * @param {string} sEvent The name of the event to be triggered.
      *
      * @returns {void}
      */
-    self.execute = (oRequest, sFunction) => getCallbacks(oRequest)
-        .forEach(oCallback => execute(oCallback, sFunction, oRequest));
+    self.execute = (oRequest, sEvent) => oRequest.callbacks
+        .forEach(oCallback => execute(oCallback, sEvent, oRequest));
 
     /**
      * Clear a callback timer for the specified function.
      *
      * @param {object} oCallback The callback object (or objects) that contain the specified function timer to be cleared.
-     * @param {string} sFunction The name of the function associated with the timer to be cleared.
+     * @param {string} sEvent The name of the function associated with the timer to be cleared.
      *
      * @returns {void}
      */
-    const clearTimer = (oCallback, sFunction) => {
-        const timer = oCallback.timers[sFunction];
-        timer !== undefined && timer.timer !== null && clearTimeout(timer.timer);
+    const clearTimer = (oCallback, sEvent) => {
+        const timer = getTimer(oCallback, sEvent);
+        types.isObject(timer) && clearTimeout(timer.timer);
     };
 
     /**
      * Clear a callback timer for the specified function.
      *
      * @param {object} oRequest The request context object.
-     * @param {string} sFunction The name of the function associated with the timer to be cleared.
+     * @param {string} sEvent The name of the function associated with the timer to be cleared.
      *
      * @returns {void}
      */
-    self.clearTimer = (oRequest, sFunction) => getCallbacks(oRequest)
-        .forEach(oCallback => clearTimer(oCallback, sFunction));
+    self.clearTimer = (oRequest, sEvent) => oRequest.callbacks
+        .forEach(oCallback => clearTimer(oCallback, sEvent));
 })(jaxon.ajax.callback, jaxon.utils.types, jaxon.config);
 
 
@@ -1867,7 +1898,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, config, attr, queue, dom, types) {
+(function(self, config, attr, cbk, queue, dom, types) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -2033,7 +2064,7 @@ window.jaxon = jaxon;
      * @return {true}
      */
     self.processCommands = (oRequest) => {
-        const { response: { content } = {}, status } = oRequest;
+        const { response: { content } = {} } = oRequest;
         if (!types.isObject(content)) {
             return;
         }
@@ -2041,7 +2072,7 @@ window.jaxon = jaxon;
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
         message && console.log(message);
 
-        status.onProcessing();
+        cbk.execute(oRequest, 'onProcessing');
 
         // Create a queue for the commands in the response.
         let nSequence = 0;
@@ -2068,8 +2099,8 @@ window.jaxon = jaxon;
 
         self.processQueue(oQueue);
     };
-})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.utils.queue,
-    jaxon.utils.dom, jaxon.utils.types);
+})(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.ajax.callback,
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types);
 
 
 /**
@@ -2279,9 +2310,6 @@ window.jaxon = jaxon;
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
 
-        oRequest.status = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
-        oRequest.cursor = (oRequest.waitCursor) ? config.cursor.update : config.cursor.dontUpdate;
-
         // Set upload data in the request.
         upload.initialize(oRequest);
 
@@ -2328,6 +2356,12 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     self._send = (oRequest) => {
+        // The onResponseDelay and onExpiration aren't called immediately, but a timer
+        // is set to call them later, using delays that are set in the config.
+        cbk.execute(oRequest, 'onResponseDelay');
+        cbk.execute(oRequest, 'onExpiration');
+        cbk.execute(oRequest, 'onRequest');
+
         fetch(oRequest.requestURI, oRequest.httpRequestOptions)
             .then(oRequest.response.converter)
             .then(oRequest.response.handler)
@@ -2345,16 +2379,6 @@ window.jaxon = jaxon;
      */
     const submit = (oRequest) => {
         self.prepare(oRequest);
-        oRequest.status.onRequest();
-
-        // The onResponseDelay and onExpiration aren't called immediately, but a timer
-        // is set to call them later, using delays that are set in the config.
-        cbk.execute(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'onExpiration');
-        cbk.execute(oRequest, 'onRequest');
-        oRequest.cursor.onWaiting();
-        oRequest.status.onWaiting();
-
         self._send(oRequest);
     };
 
@@ -2567,7 +2591,7 @@ window.jaxon = jaxon;
         // The response is successfully received, clear the timers for expiration and delay.
         cbk.clearTimer(oRequest, 'onExpiration');
         cbk.clearTimer(oRequest, 'onResponseDelay');
-        cbk.execute(oRequest, 'beforeResponseProcessing');
+        cbk.execute(oRequest, 'onResponseReceived');
 
         return oResponse.processor(oRequest, oResponse);
     };
@@ -2644,8 +2668,6 @@ window.jaxon = jaxon;
      */
     self.complete = (oRequest) => {
         cbk.execute(oRequest, 'onComplete');
-        oRequest.cursor.onComplete();
-        oRequest.status.onComplete();
 
         cleanUp(oRequest);
 
