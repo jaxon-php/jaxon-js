@@ -107,9 +107,9 @@ test('Test form with names into brackets', () => {
   document.body.innerHTML = `
   <div id="wrapper">
     <form id="test_form">
-      <input name="[user][name]" value="John Doe" />
-      <input name="[user][email]" value="john.doe@website.com" />
-      <input name="[user][website]" value="john.doe.website.com" />
+      <input name="user[name]" value="John Doe" />
+      <input name="user[email]" value="john.doe@website.com" />
+      <input name="user[website]" value="john.doe.website.com" />
     </form>
   </div>`;
 
@@ -119,6 +119,30 @@ test('Test form with names into brackets', () => {
   expect(types.of(formValues.user)).toBe('object');
   expect(Object.keys(formValues.user).length).toBe(3);
   expect(formValues.user.name).toBe('John Doe');
+  expect(formValues.user.email).toBe('john.doe@website.com');
+  expect(formValues.user.website).toBe('john.doe.website.com');
+});
+
+test('Test form with names into multiple brackets', () => {
+  document.body.innerHTML = `
+  <div id="wrapper">
+    <form id="test_form">
+      <input name="user[name][first]" value="John" />
+      <input name="user[name][last]" value="Doe" />
+      <input name="user[email]" value="john.doe@website.com" />
+      <input name="user[website]" value="john.doe.website.com" />
+    </form>
+  </div>`;
+
+  const formValues = form.getValues('test_form');
+
+  expect(types.of(formValues)).toBe('object');
+  expect(types.of(formValues.user)).toBe('object');
+  expect(Object.keys(formValues.user).length).toBe(3);
+  expect(types.of(formValues.user.name)).toBe('object');
+  expect(Object.keys(formValues.user.name).length).toBe(2);
+  expect(formValues.user.name.first).toBe('John');
+  expect(formValues.user.name.last).toBe('Doe');
   expect(formValues.user.email).toBe('john.doe@website.com');
   expect(formValues.user.website).toBe('john.doe.website.com');
 });

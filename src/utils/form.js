@@ -19,26 +19,26 @@
             return { obj: values, attr: name };
         }
 
-        // Parse names into brackets
-        const regex = /\[(.*?)\]/;
-        const tmp = {
-            parent: values,
-            toParse: name, // The string to be parsed.
-        };
+        // Parse the base name
+        const nameRegex = /(.*?)\[/;
+        let matches = name.match(nameRegex);
+        // Matches is an array with values like "user[" and "user".
         const result = {
-            obj: null,
-            attr: '',
+            obj: values,
+            attr: matches[1],
         };
-        while ((matches = tmp.toParse.match(regex)) !== null) {
-            // When found, matches is an array like ["[user]","user"].
-            result.obj = tmp.parent;
-            result.attr = matches[1];
-            // Set tmp values fo the next loop.
-            if (tmp.parent[result.attr] === undefined) {
-                tmp.parent[result.attr] = {};
+
+        // Parse names into brackets
+        const attrRegex = /\[(.*?)\]/;
+        let toParse = name.substring(matches[1].length); // The string to be parsed.
+        while ((matches = toParse.match(attrRegex)) !== null) {
+            if (result.obj[result.attr] === undefined) {
+                result.obj[result.attr] = {};
             }
-            tmp.parent = tmp.parent[result.attr];
-            tmp.toParse = tmp.toParse.substring(matches[0].length);
+            result.obj = result.obj[result.attr];
+            // When found, matches is an array with values like "[email]" and "email".
+            result.attr = matches[1];
+            toParse = toParse.substring(matches[0].length);
         }
         return result;
     };
@@ -75,11 +75,6 @@
             return;
 
         const { obj, attr } = getValueObject(xOptions.values, name);
-        if (obj === null ) {
-            console.warn(`Unable to set the value of field ${name} in form with id ${xOptions.formId}.`);
-            return;
-        }
-
         obj[attr] = type !== 'select-multiple' ? value :
             Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
     };
