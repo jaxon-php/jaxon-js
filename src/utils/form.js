@@ -6,6 +6,44 @@
 
 (function(self, dom) {
     /**
+     * Get the object and attribute to be set for a given for entry.
+     *
+     * @param {object} values
+     * @param {string} name
+     *
+     * @returns {object|null}
+     */
+    const getValueObject = (values, name) => {
+        if (name.indexOf('[') < 0) {
+            // No brackets. Simply set the values.
+            return { obj: values, attr: name };
+        }
+
+        // Parse names into brackets
+        const regex = /\[(.*?)\]/;
+        const tmp = {
+            parent: values,
+            toParse: name, // The string to be parsed.
+        };
+        const result = {
+            obj: null,
+            attr: '',
+        };
+        while ((matches = tmp.toParse.match(regex)) !== null) {
+            // When found, matches is an array like ["[user]","user"].
+            result.obj = tmp.parent;
+            result.attr = matches[1];
+            // Set tmp values fo the next loop.
+            if (tmp.parent[result.attr] === undefined) {
+                tmp.parent[result.attr] = {};
+            }
+            tmp.parent = tmp.parent[result.attr];
+            tmp.toParse = tmp.toParse.substring(matches[0].length);
+        }
+        return result;
+    };
+
+    /**
      * @param {object} xOptions
      * @param {object} child
      * @param {string} child.type
@@ -19,57 +57,31 @@
      * @returns {void}
      */
     const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
+        // Do not read value of fields without name, or param fields.
         if (!name || 'PARAM' === tagName)
             return;
+        // Do not read value of disabled fields
         if (!xOptions.disabled && disabled)
             return;
         const { prefix } = xOptions;
+        // Only read values with the given prefix, if provided.
         if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
             return;
+        // Values of radio and checkbox, when they are not checked, are omitted.
         if ((type === 'radio' || type === 'checkbox') && !checked)
             return;
+        // Do not read value from file fields.
         if (type === 'file')
             return;
 
-        const values = type !== 'select-multiple' ? value :
-            Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
-        const keyBegin = name.indexOf('[');
-
-        if (keyBegin < 0) {
-            xOptions.values[name] = values;
+        const { obj, attr } = getValueObject(xOptions.values, name);
+        if (obj === null ) {
+            console.warn(`Unable to set the value of field ${name} in form with id ${xOptions.formId}.`);
             return;
         }
 
-        // Parse names into brackets
-        let k = name.substring(0, keyBegin);
-        let a = name.substring(keyBegin);
-        if (xOptions.values[k] === undefined) {
-            xOptions.values[k] = {};
-        }
-        let p = xOptions.values; // pointer reset
-        while (a.length > 0) {
-            const sa = a.substring(0, a.indexOf(']') + 1);
-            const lastKey = k; //save last key
-            const lastRef = p; //save last pointer
-
-            a = a.substring(a.indexOf(']') + 1);
-            p = p[k];
-            k = sa.substring(1, sa.length - 1);
-            if (k === '') {
-                if ('select-multiple' === type) {
-                    k = lastKey; //restore last key
-                    p = lastRef;
-                } else {
-                    k = p.length;
-                }
-            }
-            if (k === undefined) {
-                /*check against the global xOptions.values Stack wich is the next(last) usable index */
-                k = Object.keys(lastRef[lastKey]).length;
-            }
-            p[k] = p[k] || {};
-        }
-        p[k] = values;
+        obj[attr] = type !== 'select-multiple' ? value :
+            Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
     };
 
     /**
@@ -99,6 +111,7 @@
      */
     self.getValues = (formId, disabled = false, prefix = '') => {
         const xOptions = {
+            formId,
             // Submit disabled fields
             disabled: (disabled === true),
             // Only submit fields with a prefix
