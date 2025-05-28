@@ -1,8 +1,7 @@
 const jq = require('jquery');
 const {
-    config,
     cmd: { node },
-    ajax: { command: handler },
+    ajax: { command: handler, callback },
     utils: { dom, queue },
     parser: { query },
 } = require('../dist/jaxon.module');
@@ -10,17 +9,20 @@ const {
 // Init the selector library.
 query.jq = jq;
 
-const makeRequest = commands => ({
-    status: config.status.dontUpdate,
-    cursor: config.cursor.dontUpdate,
-    response: {
-        content: {
-            jxn: {
-                commands,
+const makeRequest = commands => {
+    const oRequest = {
+        callback: [],
+        response: {
+            content: {
+                jxn: {
+                    commands,
+                },
             },
         },
-    },
-});
+    };
+    callback.initCallbacks(oRequest);
+    return oRequest;
+};
 
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;

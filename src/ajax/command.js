@@ -181,10 +181,10 @@
         cbk.execute(oRequest, 'onProcessing');
 
         // Create a queue for the commands in the response.
-        let nSequence = 0;
         const oQueue = queue.create(config.commandQueueSize);
+        oQueue.sequence = 0;
         commands.forEach(command => queue.push(oQueue, {
-            sequence: nSequence++,
+            sequence: oQueue.sequence++,
             command: {
                 name: '*unknown*',
                 ...command,
@@ -194,7 +194,7 @@
         }));
         // Add a last command to clear the queue
         queue.push(oQueue, {
-            sequence: nSequence,
+            sequence: oQueue.sequence,
             command: {
                 name: 'response.complete',
                 fullName: 'Response Complete',

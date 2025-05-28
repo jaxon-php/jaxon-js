@@ -57,7 +57,7 @@
      * @returns {array}
      */
     const getRequestCallbacks = ({ callback: xCallbacks, func }) => {
-        if (xCallbacks === undefined) {
+        if (!xCallbacks) {
             return [];
         }
         if (types.isArray(xCallbacks)) {
