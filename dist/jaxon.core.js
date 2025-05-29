@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.23',
+        patch: '0-beta.24',
     },
 
     debug: {
@@ -461,35 +461,42 @@ window.jaxon = jaxon;
      *
      * @param {object} values
      * @param {string} name
+     * @param {string} formId
      *
      * @returns {object|null}
      */
-    const getValueObject = (values, name) => {
-        if (name.indexOf('[') < 0) {
-            // No brackets. Simply set the values.
-            return { obj: values, attr: name };
+    const getValueObject = (values, name, formId) => {
+        // Check the name validity
+        const nameRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)((\[[a-zA-Z0-9_][a-zA-Z0-9_-]*\])*)$/;
+        let matches = name.match(nameRegex);
+        if (!matches) {
+            // Invalid name
+            console.warn(`Invalid field name ${name} in form ${formId}.`);
+            return { obj: null, key: null };
         }
 
-        // Parse the base name
-        const nameRegex = /(.*?)\[/;
-        let matches = name.match(nameRegex);
-        // Matches is an array with values like "user[" and "user".
+        // Matches is an array with values like user[name][first], "user", "[name][first]" and "[first]".
         const result = {
             obj: values,
-            attr: matches[1],
+            key: matches[1],
         };
 
+        if (!matches[3]) {
+            // No keys into brackets. Simply set the values.
+            return result;
+        }
+
         // Parse names into brackets
-        const attrRegex = /\[(.*?)\]/;
-        let toParse = name.substring(matches[1].length); // The string to be parsed.
-        while ((matches = toParse.match(attrRegex)) !== null) {
-            if (result.obj[result.attr] === undefined) {
-                result.obj[result.attr] = {};
+        let arrayKeys = matches[2];
+        const keyRegex = /\[(.*?)\]/;
+        while ((matches = arrayKeys.match(keyRegex)) !== null) {
+            if (result.obj[result.key] === undefined) {
+                result.obj[result.key] = {};
             }
-            result.obj = result.obj[result.attr];
+            result.obj = result.obj[result.key];
             // When found, matches is an array with values like "[email]" and "email".
-            result.attr = matches[1];
-            toParse = toParse.substring(matches[0].length);
+            result.key = matches[1];
+            arrayKeys = arrayKeys.substring(matches[0].length);
         }
         return result;
     };
@@ -507,7 +514,7 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const _getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
+    const getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
         // Do not read value of fields without name, or param fields.
         if (!name || 'PARAM' === tagName)
             return;
@@ -525,8 +532,16 @@ window.jaxon = jaxon;
         if (type === 'file')
             return;
 
-        const { obj, attr } = getValueObject(xOptions.values, name);
-        obj[attr] = type !== 'select-multiple' ? value :
+        const { formId } = xOptions;
+        // The xOptions.values parameter must be passed by reference.
+        const { obj, key } = getValueObject(xOptions.values, name, formId);
+        if (obj === null) {
+            console.warn(`The value of the field ${name} in form ${formId} is ignored.`);
+            return;
+        }
+
+        // Update the form values.
+        obj[key] = type !== 'select-multiple' ? value :
             Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
     };
 
@@ -536,13 +551,13 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const _getValues = (xOptions, children) => {
+    const getValues = (xOptions, children) => {
         children.forEach(child => {
             const { childNodes, type } = child;
             if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
-                _getValues(xOptions, childNodes);
+                getValues(xOptions, childNodes);
             }
-           _getValue(xOptions, child);
+           getValue(xOptions, child);
         });
     };
 
@@ -568,7 +583,7 @@ window.jaxon = jaxon;
 
         const form = dom.$(formId);
         if (form && form.childNodes) {
-            _getValues(xOptions, form.childNodes);
+            getValues(xOptions, form.childNodes);
         }
         return xOptions.values;
     };
