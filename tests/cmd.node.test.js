@@ -3,7 +3,7 @@ const {
     cmd: { node },
     ajax: { command: handler, callback },
     utils: { dom, queue },
-    parser: { query },
+    parser: { attr, query },
 } = require('../dist/jaxon.module');
 
 // Init the selector library.
@@ -24,6 +24,8 @@ const makeRequest = commands => {
     return oRequest;
 };
 
+beforeEach(() => attr.reset());
+  
 test('Assign element inner html', () => {
     document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
 
@@ -168,6 +170,62 @@ test('Bind a node to a component with item', () => {
     };
 
     handler.processCommands(makeRequest([bindCommand, assignCommand]));
+
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
+});
+
+test('Assign a component not bound to a node', () => {
+    document.body.innerHTML = `<div id="wrapper"><span jxn-bind="Component" jxn-item="item"></span></div>`;
+
+    const assignCommand = {
+        name: 'node.assign',
+        args: {
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
+        },
+        component: {
+            name: 'Component',
+            item: 'item',
+        },
+    };
+
+    handler.processCommands(makeRequest([assignCommand]));
+
+    expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
+});
+
+test('Assign an unbound component to a node', () => {
+    document.body.innerHTML = `<div id="wrapper"><span id="username"></span></div>`;
+
+    const bindCommand = {
+        name: 'node.bind',
+        args: {
+            id: 'username',
+            component: {
+                name: 'Component',
+                item: 'item',
+            },
+        },
+    };
+
+    handler.processCommands(makeRequest([bindCommand]));
+
+    // This will unbind the component
+    document.body.innerHTML = `<div id="wrapper"><span jxn-bind="Component" jxn-item="item"></span></div>`;
+
+    const assignCommand = {
+        name: 'node.assign',
+        args: {
+            attr: 'innerHTML',
+            value: 'Mister Johnson',
+        },
+        component: {
+            name: 'Component',
+            item: 'item',
+        },
+    };
+
+    handler.processCommands(makeRequest([assignCommand]));
 
     expect(query.jq('#wrapper').text()).toBe('Mister Johnson');
 });

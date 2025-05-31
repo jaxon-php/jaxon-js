@@ -1190,7 +1190,9 @@ window.jaxon = jaxon;
      *
      * @var {object}
      */
-    const xComponentNodes = {};
+    const xBindings = {
+        nodes: {},
+    };
 
     /**
      * The default component item name
@@ -1198,6 +1200,13 @@ window.jaxon = jaxon;
      * @var {string}
      */
     const sDefaultComponentItem = 'main';
+
+    /**
+     * Reset the DOM nodes bindings.
+     *
+     * @returns {void}
+     */
+    self.reset = () => xBindings.nodes = {};
 
     /**
      * Find the DOM nodes with a given attribute
@@ -1300,7 +1309,7 @@ window.jaxon = jaxon;
         if (!sComponentItem) {
             sComponentItem = sDefaultComponentItem;
         }
-        xComponentNodes[`${sComponentName}_${sComponentItem}`] = xNode;
+        xBindings.nodes[`${sComponentName}_${sComponentItem}`] = xNode;
     };
 
     /**
@@ -1333,6 +1342,23 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Find the DOM node a given component is bound to.
+     *
+     * @param {string} sComponentName The component name.
+     * @param {string} sComponentItem The component item.
+     *
+     * @returns {Element|null}
+     */
+    const findComponentNode = (sComponentName, sComponentItem) => {
+        const sSelector = `[jxn-bind="${sComponentName}"][jxn-item="${sComponentItem}"]`;
+        const xNode = document.querySelector(sSelector);
+        if (xNode !== null) {
+            xBindings.nodes[`${sComponentName}_${sComponentItem}`] = xNode;
+        }
+        return xNode;
+    };
+
+    /**
      * Get the DOM node of a given component.
      *
      * @param {string} sComponentName The component name.
@@ -1341,8 +1367,17 @@ window.jaxon = jaxon;
      * @returns {Element|null}
      */
     self.node = (sComponentName, sComponentItem = sDefaultComponentItem) => {
-        const xComponent = xComponentNodes[`${sComponentName}_${sComponentItem}`] ?? null;
-        return !xComponent || !xComponent.isConnected ? null : xComponent;
+        const xComponent = xBindings.nodes[`${sComponentName}_${sComponentItem}`] ?? null;
+        if (xComponent !== null && xComponent.isConnected) {
+            return xComponent;
+        }
+
+        if (xComponent !== null) {
+            // The component is no more bound to the DOM
+            delete xBindings.nodes[`${sComponentName}_${sComponentItem}`];
+        }
+        // Try to find the component
+        return findComponentNode(sComponentName, sComponentItem);
     };
 })(jaxon.parser.attr, jaxon.cmd.event);
 
