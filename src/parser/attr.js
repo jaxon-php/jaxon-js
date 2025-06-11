@@ -78,19 +78,8 @@
 
         const sEvent = xNode.getAttribute(sAttr).trim();
         const oHandler = JSON.parse(xNode.getAttribute('jxn-call'));
-        if(!xNode.hasAttribute('jxn-select'))
-        {
-            // Set the event handler on the node.
-            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xTarget });
-            return;
-        }
-
-        // Set the event handler on the selected child nodes.
-        const sSelector = xNode.getAttribute('jxn-select').trim();
-        xTarget.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
-            // Set the event handler on the child node.
-            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xChild });
-        });
+        // Set the event handler on the node.
+        event.setEventHandler({ event: sEvent, func: oHandler }, { target: xTarget });
     };
 
     /**
@@ -104,19 +93,32 @@
             .forEach(xNode => setEventHandler(xNode, xNode, 'jxn-on'));
 
     /**
+     * @param {Element} xParent The parent node
+     * @param {string} sSelector The child selector
+     * @param {string} sEvent The event name
+     * @param {object} oHandler The event handler
+     *
+     * @returns {void}
+     */
+    const setChildEventHandler = (xParent, sSelector, sEvent, oHandler) => {
+        xParent.querySelectorAll(`:scope ${sSelector}`).forEach(xChild => {
+            // Set the event handler on the child node.
+            event.setEventHandler({ event: sEvent, func: oHandler }, { target: xChild });
+        });
+    };
+
+    /**
      * @param {Element} xContainer A DOM node.
      * @param {bool} bScopeIsOuter Process the outer HTML content
      *
      * @returns {void}
      */
-    const setTargetEventHandlers = (xContainer, bScopeIsOuter) =>
-        findNodesWithAttr(xContainer, 'jxn-target', bScopeIsOuter)
+    const setChildEventHandlers = (xContainer, bScopeIsOuter) =>
+        findNodesWithAttr(xContainer, 'jxn-event', bScopeIsOuter)
             .forEach(xTarget => {
-                xTarget.querySelectorAll(':scope > [jxn-event]').forEach(xNode => {
-                    // Check event declarations only on direct child.
-                    if (xNode.parentNode === xTarget) {
-                        setEventHandler(xTarget, xNode, 'jxn-event');
-                    }
+                const aEvents = JSON.parse(xTarget.getAttribute('jxn-event'));
+                aEvents?.forEach(({ select, event, handler }) => {
+                    setChildEventHandler(xTarget, select, event, handler);
                 });
             });
 
@@ -154,7 +156,7 @@
      */
     self.process = (xContainer = document, bScopeIsOuter = false) => {
         // Set event handlers on nodes
-        setTargetEventHandlers(xContainer, bScopeIsOuter);
+        setChildEventHandlers(xContainer, bScopeIsOuter);
         // Set event handlers on nodes
         setEventHandlers(xContainer, bScopeIsOuter);
         // Set event handlers on nodes
