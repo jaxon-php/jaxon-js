@@ -65,11 +65,11 @@
                         query.select(sName, query.context(xSelectContext, xGlobal));
             }
         },
-        event: ({ _name: sName, func: xExpression }, xOptions) => {
+        event: ({ _name: sName, mode, func: xExpression }, xOptions) => {
             // Set an event handler.
             // Takes the expression with a different context as argument.
             const { value: xCurrValue, context: xContext } = xOptions;
-            xCurrValue.on(sName, (event) => execExpression(xExpression, {
+            const fHandler = (event) => execExpression(xExpression, {
                 ...xOptions,
                 context: {
                     ...xContext,
@@ -77,7 +77,11 @@
                     target: event.currentTarget,
                 },
                 value: null,
-            }));
+            });
+
+            mode === 'jq' ?
+                xCurrValue.on(sName, fHandler) :
+                xCurrValue.addEventListener(sName, fHandler);
             return xCurrValue;
         },
         func: ({ _name: sName, args: aArgs = [] }, xOptions) => {

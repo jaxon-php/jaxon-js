@@ -139,6 +139,7 @@ test('Set an event handler', () => {
         }, {
             _type: 'event',
             _name: 'click',
+            mode: 'jq',
             func: {
                 _type: 'expr',
                 calls: [{
@@ -175,6 +176,7 @@ test('Use "this" in an event handler', () => {
         }, {
             _type: 'event',
             _name: 'click',
+            mode: 'jq',
             func: {
                 _type: 'expr',
                 calls: [{
