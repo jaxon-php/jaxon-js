@@ -55,16 +55,14 @@
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, event: xEvent, global: xGlobal } = {} } = xOptions;
+            const { context: { target: xTarget, global: xGlobal } = {} } = xOptions;
             switch(sName) {
                 case 'this': // The current event target.
-                    return mode === 'jq' ? query.select(xTarget) : (mode === 'js' ? xTarget : null);
-                case 'event': // The current event.
-                    return xEvent;
-                case 'window':
-                    return window;
+                    return mode === 'jq' ? query.select(xTarget) :
+                        (mode === 'js' ? xTarget : null);
                 default: // Call the selector.
-                    return query.select(sName, query.context(xSelectContext, xGlobal.target));
+                    return mode === 'js' ? document.getElementById(sName) :
+                        query.select(sName, query.context(xSelectContext, xGlobal));
             }
         },
         event: ({ _name: sName, func: xExpression }, xOptions) => {
@@ -78,29 +76,25 @@
                     event,
                     target: event.currentTarget,
                 },
+                value: null,
             }));
             return xCurrValue;
         },
         func: ({ _name: sName, args: aArgs = [] }, xOptions) => {
-            // Call a "global" function with the current context as "this".
-            const { context: xContext } = xOptions;
-            const func = dom.findFunction(sName);
-            return !func ? undefined : func.apply(xContext, getArgs(aArgs, xOptions));
-        },
-        method: ({ _name: sName, args: aArgs = [] }, { value: xCurrValue }) => {
-            // Call a function with the current value as "this".
-            const func = dom.findFunction(sName, xCurrValue);
-            // toInt() is a peudo-method that converts the current value to int.
-            return !func ? (sName === 'toInt' ? types.toInt(xCurrValue) : undefined) :
-                func.apply(xCurrValue, getArgs(aArgs, xCurrValue));
+            const { value: xCurrValue } = xOptions;
+            const func = dom.findFunction(sName, xCurrValue || window);
+            if (!func && sName === 'toInt') {
+                return types.toInt(xCurrValue);
+            }
+            return !func ? undefined : func.apply(xCurrValue, getArgs(aArgs, xOptions));
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, context: { target: xTarget } } = xOptions;
+            // xCurrValue === null ensures that we are at top level.
+            if (xCurrValue === null && sName === 'window') {
+                return !xValue ? window : null; // Cannot assign the window var.
+            }
             return processAttr(xCurrValue || xTarget, sName, xValue, xOptions);
-        },
-        // Global var. The parent is the "window" object.
-        gvar: ({ _name: sName, value: xValue }, xOptions) => {
-            return processAttr(window, sName, xValue, xOptions);
         },
     };
 
@@ -167,23 +161,6 @@
     const getArgs = (aArgs, xOptions) => aArgs.map(xArg => getValue(xArg, xOptions));
 
     /**
-     * Get the options for a json call.
-     *
-     * @param {object} xContext The context to execute calls in.
-     *
-     * @returns {object}
-     */
-    const getOptions = (xContext, xDefault = {}) => {
-        xContext.global = {
-            // Some functions are meant to be executed in the context of the component.
-            target: !xContext.component || !xContext.target ? null : xContext.target,
-        };
-        // Remove the component field from the xContext object.
-        const { component: _, ...xNewContext } = xContext;
-        return { context: { target: window, ...xNewContext }, ...xDefault };
-    }
-
-    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -197,6 +174,32 @@
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };
+
+    /**
+     * Get the options for a json call.
+     *
+     * @param {object} xContext The context to execute calls in.
+     *
+     * @returns {object}
+     */
+    const getOptions = (xContext) => {
+        // Some functions are meant to be executed in the context of the component.
+        if (xContext.component) {
+            xContext.global = xContext.target ?? null;
+        }
+        // Remove the component field from the xContext object.
+        const { component: _, ...xNewContext } = xContext;
+        return { context: { target: window, ...xNewContext }, value: null };
+    };
+
+    /**
+     * Make the options for a new expression call.
+     *
+     * @param {object} xOptions The current options.
+     *
+     * @returns {object}
+     */
+    const makeOptions = (xOptions) => ({ ...xOptions, value: null });
 
     /**
      * Execute a single javascript function call.
@@ -273,10 +276,10 @@
     const execWithConfirmation = ({ lib, question }, xAlert, aCalls, xOptions) =>
         dialog.confirm(lib, {
             ...question,
-            text: makePhrase(question.phrase, xOptions),
+            text: makePhrase(question.phrase, makeOptions(xOptions)),
         }, {
-            yes: () => execCalls(aCalls, xOptions),
-            no: () => showAlert(xAlert, xOptions),
+            yes: () => execCalls(aCalls, makeOptions(xOptions)),
+            no: () => showAlert(xAlert, makeOptions(xOptions)),
         });
 
     /**
@@ -288,10 +291,13 @@
      * @returns {boolean}
      */
     const execWithCondition = (aCondition, xAlert, aCalls, xOptions) => {
-        const [sOperator, xLeftArg, xRightArg] = aCondition;
+        const [sOperator, _xLeftArg, _xRightArg] = aCondition;
         const xComparator = xComparators[sOperator] ?? xErrors.comparator;
-        xComparator(getValue(xLeftArg, xOptions), getValue(xRightArg, xOptions)) ?
-            execCalls(aCalls, xOptions) : showAlert(xAlert, xOptions);
+        const xLeftArg = getValue(_xLeftArg, makeOptions(xOptions));
+        const xRightArg = getValue(_xRightArg, makeOptions(xOptions));
+        xComparator(xLeftArg, xRightArg) ?
+            execCalls(aCalls, makeOptions(xOptions)) :
+            showAlert(xAlert, makeOptions(xOptions));
     };
 
     /**
@@ -324,6 +330,6 @@
      * @returns {void}
      */
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
-        execExpression(xExpression, getOptions(xContext, { value: null }));
+        execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
     jaxon.utils.form, jaxon.utils.types);

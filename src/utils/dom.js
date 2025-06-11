@@ -96,10 +96,6 @@
      * @returns {object|null}
      */
     self.findFunction = (sFuncName, context = window) => {
-        if (sFuncName === 'toInt' && context === window) {
-            return types.toInt;
-        }
-
         const aNames = sFuncName.split(".");
         const nLength = aNames.length;
         for (let i = 0; i < nLength && (context); i++) {

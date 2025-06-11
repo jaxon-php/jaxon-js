@@ -16,7 +16,7 @@ test('Read str value from the DOM', () => {
             _name: '#integer',
             mode: 'jq',
         }, {
-            _type: 'method',
+            _type: 'func',
             _name: 'text',
         }],
     });
@@ -34,7 +34,7 @@ test('Read str value from the DOM', () => {
             _name: '#integer',
             mode: 'jq',
         }, {
-            _type: 'method',
+            _type: 'func',
             _name: 'html',
         }],
     });
@@ -57,7 +57,7 @@ test('Read int value from the DOM', () => {
                     _name: '#integer',
                     mode: 'jq',
                 }, {
-                    _type: 'method',
+                    _type: 'func',
                     _name: 'text',
                 }]
             }],
@@ -77,10 +77,10 @@ test('Read int value from the DOM, with the toInt() "method"', () => {
             _name: '#integer',
             mode: 'jq',
         }, {
-            _type: 'method',
+            _type: 'func',
             _name: 'text',
         }, {
-            _type: 'method',
+            _type: 'func',
             _name: 'toInt',
         }],
     });
@@ -98,7 +98,7 @@ test('Assign element inner html', () => {
             _name: '#username',
             mode: 'jq',
         }, {
-            _type: 'method',
+            _type: 'func',
             _name: 'html',
             args: ['Mister Johnson'],
         }],
@@ -117,7 +117,7 @@ test('Assign element inner html', () => {
 //             _name: '#username',
 //             mode: 'jq',
 //         }, {
-//             _type: 'method',
+//             _type: 'func',
 //             _name: 'prop',
 //             args: ['outerHTML', 'Mister Johnson'],
 //         }],
@@ -146,7 +146,7 @@ test('Set an event handler', () => {
                     _name: '#username',
                     mode: 'jq',
                 }, {
-                    _type: 'method',
+                    _type: 'func',
                     _name: 'html',
                     args: ['Mister Johnson'],
                 }],
@@ -182,7 +182,7 @@ test('Use "this" in an event handler', () => {
                     _name: 'this',
                     mode: 'jq',
                 }, {
-                    _type: 'method',
+                    _type: 'func',
                     _name: 'html',
                     args: ['Mister Johnson'],
                 }],
@@ -204,7 +204,10 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue1 = window.defValue
     const undefValue1 = call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'defValue',
         }],
     });
@@ -214,7 +217,10 @@ test('Access to undefined vars', () => {
     // Javascript code: window.defValue = '1024'
     call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'defValue',
             value: '1024',
         }],
@@ -225,7 +231,10 @@ test('Access to undefined vars', () => {
     // Javascript code: const defValue = window.defValue
     const defValue = call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'defValue',
         }],
     });
@@ -235,9 +244,12 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue2 = window.defValue.intValue
     const undefValue2 = call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'defValue',
-        },{
+        }, {
             _type: 'attr',
             _name: 'intValue',
         }],
@@ -248,9 +260,12 @@ test('Access to undefined vars', () => {
     // Javascript code: const undefValue3 = window.intValue.defValue
     const undefValue3 = call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'intValue',
-        },{
+        }, {
             _type: 'attr',
             _name: 'defValue',
         }],
@@ -265,7 +280,10 @@ test('Access to "global" vars', () => {
     // Javascript code: window.strValue = '1024'
     call.execExpr({
         calls: [{
-            _type: 'gvar',
+            _type: 'attr',
+            _name: 'window',
+        }, {
+            _type: 'attr',
             _name: 'strValue',
             value: '1024',
         }],
