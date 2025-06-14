@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.24',
+        patch: '0-beta.26',
     },
 
     debug: {
@@ -1469,10 +1469,16 @@ window.jaxon = jaxon;
         func: ({ _name: sName, args: aArgs = [] }, xOptions) => {
             const { value: xCurrValue } = xOptions;
             const func = dom.findFunction(sName, xCurrValue || window);
-            if (!func && sName === 'toInt') {
-                return types.toInt(xCurrValue);
+            if (!func) {
+                if (sName === 'trim') {
+                    return xCurrValue.trim();
+                }
+                if (sName === 'toInt') {
+                    return types.toInt(xCurrValue);
+                }
+                return undefined;
             }
-            return !func ? undefined : func.apply(xCurrValue, getArgs(aArgs, xOptions));
+            return func.apply(xCurrValue, getArgs(aArgs, xOptions));
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, context: { target: xTarget } } = xOptions;
@@ -1515,6 +1521,25 @@ window.jaxon = jaxon;
     /**
      * Get the value of a single argument.
      *
+     * @param {object} xArg
+     * @param {string} sValue
+     *
+     * @returns {mixed}
+     */
+    const getFinalValue = (xArg, sValue) => {
+        const { trim, toInt } = xArg;
+        if (trim) {
+            sValue = sValue.trim();
+        }
+        if (toInt) {
+            sValue = types.toInt(sValue);
+        }
+        return sValue;
+    };
+
+    /**
+     * Get the value of a single argument.
+     *
      * @param {mixed} xArg
      * @param {object} xOptions The call options.
      *
@@ -1524,11 +1549,11 @@ window.jaxon = jaxon;
         if (!isValidCall(xArg)) {
             return xArg;
         }
-        const { _type: sType, _name: sName } = xArg;
+        const { _type: sType, _name: sName, toInt } = xArg;
         switch(sType) {
             case 'form': return form.getValues(sName);
-            case 'html': return dom.$(sName).innerHTML;
-            case 'input': return dom.$(sName).value;
+            case 'html': return getFinalValue(xArg, dom.$(sName).innerHTML);
+            case 'input': return getFinalValue(xArg, dom.$(sName).value);
             case 'checked': return dom.$(sName).checked;
             case 'expr': return execExpression(xArg, xOptions);
             case '_': return sName === 'this' ? xOptions.value : undefined;
