@@ -167,7 +167,7 @@
         if (!isValidCall(xArg)) {
             return xArg;
         }
-        const { _type: sType, _name: sName, toInt } = xArg;
+        const { _type: sType, _name: sName } = xArg;
         switch(sType) {
             case 'form': return form.getValues(sName);
             case 'html': return getFinalValue(xArg, dom.$(sName).innerHTML);
