@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0-beta.26',
+        patch: '0',
     },
 
     debug: {
@@ -1549,7 +1549,7 @@ window.jaxon = jaxon;
         if (!isValidCall(xArg)) {
             return xArg;
         }
-        const { _type: sType, _name: sName, toInt } = xArg;
+        const { _type: sType, _name: sName } = xArg;
         switch(sType) {
             case 'form': return form.getValues(sName);
             case 'html': return getFinalValue(xArg, dom.$(sName).innerHTML);
