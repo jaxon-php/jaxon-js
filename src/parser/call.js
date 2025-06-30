@@ -104,7 +104,7 @@
             if (xCurrValue === null && sName === 'window') {
                 return !xValue ? window : null; // Cannot assign the window var.
             }
-            return processAttr(xCurrValue || xTarget, sName, xValue, xOptions);
+            return processAttr(xCurrValue || xTarget || window, sName, xValue, xOptions);
         },
     };
 
