@@ -146,3 +146,48 @@ test('Test form with names into multiple brackets', () => {
   expect(formValues.user.email).toBe('john.doe@website.com');
   expect(formValues.user.website).toBe('john.doe.website.com');
 });
+
+test('Test form with array field', () => {
+  document.body.innerHTML = `
+  <div id="wrapper">
+    <form id="test_form">
+      <input name="values[]" value="First value" />
+      <input name="values[]" value="Second value" />
+      <input name="values[]" value="Third value" />
+    </form>
+  </div>`;
+
+  const formValues = form.getValues('test_form');
+
+  expect(types.of(formValues)).toBe('object');
+  expect(types.of(formValues.values)).toBe('array');
+  expect(Object.keys(formValues.values).length).toBe(3);
+  expect(formValues.values[0]).toBe('First value');
+  expect(formValues.values[1]).toBe('Second value');
+  expect(formValues.values[2]).toBe('Third value');
+});
+
+test('Test form with object with array field', () => {
+  document.body.innerHTML = `
+  <div id="wrapper">
+    <form id="test_form">
+      <input name="user[roles][]" value="First role" />
+      <input name="user[perms][]" value="First perm" />
+      <input name="user[roles][]" value="Second role" />
+      <input name="user[perms][]" value="Second perm" />
+    </form>
+  </div>`;
+
+  const formValues = form.getValues('test_form');
+
+  expect(types.of(formValues)).toBe('object');
+  expect(types.of(formValues.user)).toBe('object');
+  expect(types.of(formValues.user.roles)).toBe('array');
+  expect(types.of(formValues.user.perms)).toBe('array');
+  expect(Object.keys(formValues.user.roles).length).toBe(2);
+  expect(Object.keys(formValues.user.perms).length).toBe(2);
+  expect(formValues.user.roles[0]).toBe('First role');
+  expect(formValues.user.roles[1]).toBe('Second role');
+  expect(formValues.user.perms[0]).toBe('First perm');
+  expect(formValues.user.perms[1]).toBe('Second perm');
+});
