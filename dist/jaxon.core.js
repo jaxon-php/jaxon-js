@@ -17,7 +17,7 @@ var jaxon = {
     version: {
         major: '5',
         minor: '0',
-        patch: '0',
+        patch: '1',
     },
 
     debug: {
@@ -453,22 +453,30 @@ window.jaxon = jaxon;
 
 (function(self, dom) {
     /**
-     * Get the object and attribute to be set for a given for entry.
+     * Set the value of a form field.
      *
      * @param {object} values
-     * @param {string} name
+     * @param {string} fieldName
+     * @param {mixed} fieldValue
      * @param {string} formId
      *
-     * @returns {object|null}
+     * @returns {void}
      */
-    const getValueObject = (values, name, formId) => {
+    const setFieldValue = (values, fieldName, fieldValue, formId) => {
         // Check the name validity
-        const nameRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)((\[[a-zA-Z0-9_][a-zA-Z0-9_-]*\])*)$/;
-        let matches = name.match(nameRegex);
+        const nameRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)((\[[a-zA-Z0-9_-]*\])*)$/;
+        let matches = fieldName.match(nameRegex);
         if (!matches) {
             // Invalid name
-            console.warn(`Invalid field name ${name} in form ${formId}.`);
-            return { obj: null, key: null };
+            console.warn(`Invalid field name ${fieldName} in form ${formId}.`);
+            console.warn(`The value of the field ${fieldName} in form ${formId} is ignored.`);
+            return;
+        }
+
+        if (!matches[3]) {
+            // No keys into brackets. Simply set the values.
+            values[fieldName] = fieldValue;
+            return;
         }
 
         // Matches is an array with values like user[name][first], "user", "[name][first]" and "[first]".
@@ -476,25 +484,33 @@ window.jaxon = jaxon;
             obj: values,
             key: matches[1],
         };
-
-        if (!matches[3]) {
-            // No keys into brackets. Simply set the values.
-            return result;
-        }
-
         // Parse names into brackets
         let arrayKeys = matches[2];
         const keyRegex = /\[(.*?)\]/;
         while ((matches = arrayKeys.match(keyRegex)) !== null) {
+            // When found, matches is an array with values like "[email]" and "email".
+            const key = matches[1].trim();
+            if (key === '') {
+                // The field is defined as an array in the form (eg users[]).
+                if (result.obj[result.key] === undefined) {
+                    result.obj[result.key] = [];
+                }
+                result.obj[result.key].push(fieldValue);
+                // Nested arrays are not supported. So the function returns here.
+                return;
+            }
+
+            // The field is an object.
             if (result.obj[result.key] === undefined) {
                 result.obj[result.key] = {};
             }
             result.obj = result.obj[result.key];
-            // When found, matches is an array with values like "[email]" and "email".
-            result.key = matches[1];
+            result.key = key;
+
             arrayKeys = arrayKeys.substring(matches[0].length);
         }
-        return result;
+        // The field is an object.
+        result.obj[result.key] = fieldValue;
     };
 
     /**
@@ -528,17 +544,11 @@ window.jaxon = jaxon;
         if (type === 'file')
             return;
 
-        const { formId } = xOptions;
-        // The xOptions.values parameter must be passed by reference.
-        const { obj, key } = getValueObject(xOptions.values, name, formId);
-        if (obj === null) {
-            console.warn(`The value of the field ${name} in form ${formId} is ignored.`);
-            return;
-        }
-
         // Update the form values.
-        obj[key] = type !== 'select-multiple' ? value :
+        const fieldValue = type !== 'select-multiple' ? value :
             Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
+        // The xOptions.values parameter must be passed by reference.
+        setFieldValue(xOptions.values, name, fieldValue, xOptions.formId);
     };
 
     /**
@@ -553,7 +563,7 @@ window.jaxon = jaxon;
             if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
                 getValues(xOptions, childNodes);
             }
-           getValue(xOptions, child);
+            getValue(xOptions, child);
         });
     };
 
@@ -1486,7 +1496,7 @@ window.jaxon = jaxon;
             if (xCurrValue === null && sName === 'window') {
                 return !xValue ? window : null; // Cannot assign the window var.
             }
-            return processAttr(xCurrValue || xTarget, sName, xValue, xOptions);
+            return processAttr(xCurrValue || xTarget || window, sName, xValue, xOptions);
         },
     };
 
