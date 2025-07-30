@@ -55,30 +55,29 @@
      */
     const xCommands = {
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
-            const { context: { target: xTarget, global: xGlobal } = {} } = xOptions;
-            switch(sName) {
-                case 'this': // The current event target.
-                    return mode === 'jq' ? query.select(xTarget) :
-                        (mode === 'js' ? xTarget : null);
-                default: // Call the selector.
-                    return mode === 'js' ? document.getElementById(sName) :
-                        query.select(sName, query.context(xSelectContext, xGlobal));
+            if (sName === 'this') {
+                const { context: { target: xTarget } = {} } = xOptions;
+                return mode === 'jq' ? query.select(xTarget) :
+                    (mode === 'js' ? xTarget : null);
             }
+
+            const { context: { global: xGlobal } = {} } = xOptions;
+            return mode === 'js' ? document.getElementById(sName) :
+                query.select(sName, query.context(xSelectContext, xGlobal));
         },
         event: ({ _name: sName, mode, func: xExpression }, xOptions) => {
             // Set an event handler.
             // Takes the expression with a different context as argument.
-            const { value: xCurrValue, context: xContext } = xOptions;
             const fHandler = (event) => execExpression(xExpression, {
                 ...xOptions,
                 context: {
-                    ...xContext,
+                    ...xOptions.context,
                     event,
                     target: event.currentTarget,
                 },
                 value: null,
             });
-
+            const { value: xCurrValue } = xOptions;
             mode === 'jq' ?
                 xCurrValue.on(sName, fHandler) :
                 xCurrValue.addEventListener(sName, fHandler);
@@ -96,15 +95,17 @@
                 }
                 return undefined;
             }
+
             return func.apply(xCurrValue, getArgs(aArgs, xOptions));
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
-            const { value: xCurrValue, context: { target: xTarget } } = xOptions;
-            // xCurrValue === null ensures that we are at top level.
-            if (xCurrValue === null && sName === 'window') {
+            const { value: xCurrValue, depth } = xOptions;
+            // depth === 0 ensures that we are at top level.
+            if (depth === 0 && sName === 'window') {
                 return !xValue ? window : null; // Cannot assign the window var.
             }
-            return processAttr(xCurrValue || xTarget || window, sName, xValue, xOptions);
+
+            return processAttr(xCurrValue || window, sName, xValue, xOptions);
         },
     };
 
@@ -173,8 +174,7 @@
             case 'html': return getFinalValue(xArg, dom.$(sName).innerHTML);
             case 'input': return getFinalValue(xArg, dom.$(sName).value);
             case 'checked': return dom.$(sName).checked;
-            case 'expr': return execExpression(xArg, xOptions);
-            case '_': return sName === 'this' ? xOptions.value : undefined;
+            case 'expr': return execExpression(xArg, makeOptions(xOptions));
             default: return undefined;
         }
     };
@@ -200,6 +200,7 @@
     const execCall = (xCall, xOptions) => {
         const xCommand = !isValidCall(xCall) ? xErrors.command.invalid :
             (xCommands[xCall._type] ?? xErrors.command.unknown);
+        xOptions.depth++; // Increment the call depth.
         xOptions.value = xCommand(xCall, xOptions);
         return xOptions.value;
     };
@@ -208,17 +209,15 @@
      * Get the options for a json call.
      *
      * @param {object} xContext The context to execute calls in.
+     * @param {boolean} xContext.component Take the target component as call target
+     * @param {object=} xContext.target The target component
+     * @param {object=} xContext.event The trigger event
      *
      * @returns {object}
      */
-    const getOptions = (xContext) => {
-        // Some functions are meant to be executed in the context of the component.
-        if (xContext.component) {
-            xContext.global = xContext.target ?? null;
-        }
-        // Remove the component field from the xContext object.
-        const { component: _, ...xNewContext } = xContext;
-        return { context: { target: window, ...xNewContext }, value: null };
+    const getOptions = ({ component, target, event }) => {
+        const global = component ? (target ?? null) : null;
+        return { context: { global, target, event }, value: null };
     };
 
     /**
@@ -238,8 +237,11 @@
      *
      * @returns {mixed}
      */
-    self.execCall = (xCall, xContext = {}) =>
-        types.isObject(xCall) && execCall(xCall, getOptions(xContext));
+    self.execCall = (xCall, xContext = {}) => {
+        const xOptions = getOptions(xContext);
+        xOptions.depth = -1; // The first call must start with depth at 0.
+        return types.isObject(xCall) && execCall(xCall, xOptions);
+    };
 
     /**
      * Execute the javascript code represented by an expression object.
@@ -250,8 +252,11 @@
      *
      * @returns {mixed}
      */
-    const execCalls = (aCalls, xOptions) => aCalls.reduce((xValue, xCall) =>
-        xValue === undefined ? undefined : execCall(xCall, xOptions), null);
+    const execCalls = (aCalls, xOptions) => {
+        xOptions.depth = -1; // The first call must start with depth at 0.
+        return aCalls.reduce((xValue, xCall) =>
+            xValue === undefined ? undefined : execCall(xCall, xOptions), null);
+    };
 
     /**
      * Replace placeholders in a given string with values

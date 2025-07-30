@@ -200,6 +200,74 @@ test('Use "this" in an event handler', () => {
     expect(query.jq('.username').text()).toBe('Mister Johnson');
 });
 
+test('Get value from an object in an event handler', () => {
+    document.body.innerHTML = `<div id="wrapper"><span class="username"></span></div>`;
+
+    // Javascript code: user.name = 'Mister Johnson'
+    call.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'user',
+            value: { name: 'Mister Johnson' },
+        }],
+    });
+
+    // Javascript code: const username = user.name
+    const username = call.execExpr({
+        calls: [{
+            _type: 'attr',
+            _name: 'user',
+        }, {
+            _type: 'attr',
+            _name: 'name',
+        }],
+    });
+
+    expect(username).toBe('Mister Johnson');
+
+    // Set an event handler
+    // Javascript code: $('.username')->on('click', () => $(this)->html(user.name))
+    call.execExpr({
+        calls: [{
+            _type: 'select',
+            _name: '.username',
+            mode: 'jq',
+        }, {
+            _type: 'event',
+            _name: 'click',
+            mode: 'jq',
+            func: {
+                _type: 'expr',
+                calls: [{
+                    _type: 'select',
+                    _name: 'this',
+                    mode: 'jq',
+                }, {
+                    _type: 'func',
+                    _name: 'html',
+                    args: [{
+                        _type: 'expr',
+                        calls: [{
+                            _type: 'attr',
+                            _name: 'user',
+                        }, {
+                            _type: 'attr',
+                            _name: 'name',
+                        }],
+                    }],
+                }],
+            },
+        }],
+    });
+
+    expect(query.jq('.username').text()).toBe('');
+
+    // Trigger the event
+    query.jq('.username').trigger('click');
+
+    expect(query.jq('.username').text()).toBe('Mister Johnson');
+});
+
 test('Access to undefined vars', () => {
     expect(window.defValue).toBe(undefined);
 
