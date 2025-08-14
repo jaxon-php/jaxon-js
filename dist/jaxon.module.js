@@ -1788,7 +1788,7 @@ window.jaxon = jaxon;
             return xTarget;
         }
         if (!xTarget) {
-            return xSelectContext;
+            return self.select(xSelectContext).first();
         }
         return self.select(xSelectContext, xTarget).first();
     };
