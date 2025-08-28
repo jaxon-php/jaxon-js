@@ -183,16 +183,16 @@ try {
             - warningText
             - errorText
     */
-    const writeDebugMessage = function(text, prefix, cls) {
+    self.writeDebugMessage = function(text, prefix, cls) {
         try {
             if (!self.window || self.window.closed) {
                 self.window = window.open(self.windowSource, self.windowID, self.windowStyle);
                 if ("about:blank" === self.windowSource)
                     self.window.document.write(self.windowTemplate);
             }
-            if ('undefined' === typeof prefix)
+            if (prefix === undefined)
                 prefix = '';
-            if ('undefined' === typeof cls)
+            if (cls === undefined)
                 cls = 'debugText';
 
             text = self.prepareDebugText(text);
@@ -237,7 +237,7 @@ try {
     */
     const commandHandler = command.unregister('script.debug');
     command.register('script.debug', ({ message }) => {
-        writeDebugMessage(message, self.messages.warning, 'warningText');
+        self.writeDebugMessage(message, self.messages.warning, 'warningText');
         return commandHandler({ message });
     });
 
@@ -271,7 +271,7 @@ try {
                 msg += JSON.stringify(args);
             }
             msg += '):\n' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
         }
         return true;
     }
@@ -291,7 +291,7 @@ try {
             try {
                 const rv = callHandler(name, args, context);
     
-                writeDebugMessage(self.messages.processing.calling.supplant({
+                self.writeDebugMessage(self.messages.processing.calling.supplant({
                     cmd: fullName || name,
                     options: JSON.stringify({
                         ...(component ? { component } : {}),
@@ -302,7 +302,7 @@ try {
                 return rv;
             } catch (e) {
                 const msg = 'jaxon.ajax.command.callHandler: ' + getExceptionText(e) + '\n';
-                writeDebugMessage(msg, self.messages.error, 'errorText');
+                self.writeDebugMessage(msg, self.messages.error, 'errorText');
                 throw e;
             }
         }
@@ -321,13 +321,13 @@ try {
     const dom = utils.dom.$;
     utils.dom.$ = function(sId) {
         try {
-            const returnValue = dom(sId);
+            let returnValue = dom(sId);
             if ('object' != typeof returnValue)
                 throw { code: 10008 };
             return returnValue;
         } catch (e) {
             const msg = '$:' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.warning, 'warningText');
+            self.writeDebugMessage(msg, self.messages.warning, 'warningText');
         }
     }
 
@@ -344,13 +344,13 @@ try {
     request._send = function(oRequest) {
         try {
             const length = oRequest.requestData.length || 0;
-            writeDebugMessage(self.messages.request.sending);
+            self.writeDebugMessage(self.messages.request.sending);
             oRequest.beginDate = new Date();
             sendRequest(oRequest);
-            writeDebugMessage(self.messages.request.sent.supplant({ length }));
+            self.writeDebugMessage(self.messages.request.sent.supplant({ length }));
         } catch (e) {
             const msg = 'jaxon.ajax.request._send: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -372,19 +372,19 @@ try {
         let text = decodeURIComponent(oRequest.requestData);
         text = text.replace(new RegExp('&jxn', 'g'), '\n&jxn');
         msg += text;
-        writeDebugMessage(msg);
+        self.writeDebugMessage(msg);
 
         msg = self.messages.request.calling;
         const separator = '\n';
         for (let mbr in oRequest.functionName) {
             msg += separator + mbr + ': ' + oRequest.functionName[mbr];
         }
-        writeDebugMessage(msg);
+        self.writeDebugMessage(msg);
 
         try {
             return submitRequest(oRequest);
         } catch (e) {
-            writeDebugMessage(e.message);
+            self.writeDebugMessage(e.message);
             if (0 < oRequest.retry)
                 throw e;
         }
@@ -403,11 +403,11 @@ try {
     request.initialize = function(oRequest) {
         try {
             const msg = self.messages.request.init;
-            writeDebugMessage(msg);
+            self.writeDebugMessage(msg);
             return initializeRequest(oRequest);
         } catch (e) {
             const msg = 'jaxon.ajax.request.initialize: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -428,15 +428,15 @@ try {
                 const msg = self.messages.processing.parameters.supplant({
                     count: oRequest.parameters.length
                 });
-                writeDebugMessage(msg);
+                self.writeDebugMessage(msg);
             } else {
                 const msg = self.messages.processing.no_parameters;
-                writeDebugMessage(msg);
+                self.writeDebugMessage(msg);
             }
             return processParameters(oRequest);
         } catch (e) {
             const msg = 'jaxon.ajax.parameters.process: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -454,11 +454,11 @@ try {
     request.prepare = function(oRequest) {
         try {
             const msg = self.messages.request.preparing;
-            writeDebugMessage(msg);
+            self.writeDebugMessage(msg);
             return prepareRequest(oRequest);
         } catch (e) {
             const msg = 'jaxon.ajax.request.prepare: '; + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -475,7 +475,7 @@ try {
     const executeRequest = request.execute;
     request.execute = function() {
         try {
-            writeDebugMessage(self.messages.request.starting);
+            self.writeDebugMessage(self.messages.request.starting);
 
             const numArgs = arguments.length;
 
@@ -489,7 +489,7 @@ try {
             return executeRequest(oFunction, oOptions);
         } catch (e) {
             const msg = 'jaxon.ajax.request.execute: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -518,23 +518,23 @@ try {
                     length: JSON.stringify(oRequest.responseContent).length,
                     duration: oRequest.midDate - oRequest.beginDate
                 }) + '\n' + JSON.stringify(oRequest.responseContent, null, 2);
-                writeDebugMessage(msg);
+                self.writeDebugMessage(msg);
             } else if (response.isErrorCode(status)) {
                 const msg = self.messages.response.content.supplant({
                     status: status,
                     text: JSON.stringify(oRequest.responseContent, null, 2)
                 });
-                writeDebugMessage(msg, self.messages.error, 'errorText');
+                self.writeDebugMessage(msg, self.messages.error, 'errorText');
             } else if (response.isRedirectCode(status)) {
                 const msg = self.messages.response.redirect.supplant({
                     location: oRequest.response.headers.get('location')
                 });
-                writeDebugMessage(msg);
+                self.writeDebugMessage(msg);
             }
             return responseReceived(oRequest);
         } catch (e) {
             const msg = 'jaxon.ajax.response.received: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
         }
 
         return null;
@@ -552,15 +552,15 @@ try {
     const responseCompleted = response.complete;
     response.complete = function(oRequest) {
         try {
-            const returnValue = responseCompleted(oRequest);
+            let returnValue = responseCompleted(oRequest);
             oRequest.endDate = new Date();
             const duration = (oRequest.endDate - oRequest.beginDate);
             const msg = self.messages.processing.done.supplant({ duration });
-            writeDebugMessage(msg);
+            self.writeDebugMessage(msg);
             return returnValue;
         } catch (e) {
             const msg = 'jaxon.ajax.response.complete: ' + getExceptionText(e) + '\n';
-            writeDebugMessage(msg, self.messages.error, 'errorText');
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
             throw e;
         }
     }
@@ -580,7 +580,7 @@ try {
             } catch (e) {
                 const msg = 'jaxon.cmd.node.assign: ' + getExceptionText(e) + '\n' +
                     'Eval: element.' + property + ' = data;\n';
-                writeDebugMessage(msg, self.messages.error, 'errorText');
+                self.writeDebugMessage(msg, self.messages.error, 'errorText');
             }
             return true;
         }
@@ -594,50 +594,9 @@ try {
 */
 jaxon.dom.ready(function() {
     // Generate wrapper functions for verbose debug.
-    (function(self) {
+    (function(self, debug) {
         if (!self.active) {
             return;
-        }
-
-        /*
-            Function: jaxon.debug.verbose.expandObject
-            
-            Generate a debug message expanding all the first level
-            members found therein.
-            
-            
-            Parameters:
-            
-            obj - (object):  The object to be enumerated.
-            
-            Returns:
-            
-            string - The textual representation of all the first
-                level members.
-        */
-        const expandObject = function(obj) {
-            const rec = 1 < arguments.length ? arguments[1] : true;
-            if ('function' == typeof(obj)) {
-                return '[Function]';
-            } else if ('object' == typeof(obj)) {
-                if (true == rec) {
-                    let t = ' { ';
-                    let separator = '';
-                    for (let m in obj) {
-                        t += separator;
-                        t += m;
-                        t += ': ';
-                        try {
-                            t += expandObject(obj[m], false);
-                        } catch (e) {
-                            t += '[n/a]';
-                        }
-                        separator = ', ';
-                    }
-                    t += ' } ';
-                    return t;
-                } else return '[Object]';
-            } else return '"' + obj + '"';
         }
 
         /*
@@ -647,8 +606,7 @@ jaxon.dom.ready(function() {
             
             Parameters:
             
-            obj - (object):  The object that contains the function to be
-                wrapped.
+            obj - (object):  The object that contains the function to be wrapped.
             name - (string):  The name of the function to be wrapped.
             
             Returns:
@@ -663,7 +621,7 @@ jaxon.dom.ready(function() {
                 const pLen = arguments.length;
                 for (let p = 0; p < pLen; ++p) {
                     fun += separator;
-                    fun += expandObject(arguments[p]);
+                    fun += JSON.stringify(arguments[p]);
                     separator = ',';
                 }
 
@@ -671,9 +629,9 @@ jaxon.dom.ready(function() {
 
                 let msg = '--> ' + fun;
 
-                writeDebugMessage(msg);
+                debug.writeDebugMessage(msg);
 
-                const returnValue = true;
+                let returnValue = true;
                 let code = 'returnValue = obj(';
                 separator = '';
                 for (let p = 0; p < pLen; ++p) {
@@ -684,8 +642,8 @@ jaxon.dom.ready(function() {
 
                 eval(code);
 
-                msg = '<-- ' + fun + ' returns ' + expandObject(returnValue);
-                writeDebugMessage(msg);
+                msg = '<-- ' + fun + ' returns ' + JSON.stringify(returnValue);
+                debug.writeDebugMessage(msg);
 
                 return returnValue;
             }
@@ -721,5 +679,5 @@ jaxon.dom.ready(function() {
         self.hook(jaxon.ajax.command, 'jaxon.ajax.command.');
 
         self.isLoaded = true;
-    })(jaxon.debug.verbose);
+    })(jaxon.debug.verbose, jaxon.debug);
 });
