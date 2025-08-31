@@ -223,6 +223,42 @@ try {
         }
     }
 
+    /**
+     * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
+     * @returns {string}
+     */
+    const getCircularReplacer = () => {
+        const ancestors = [];
+        return function (key, value) {
+            if (typeof value !== "object" || value === null) {
+                return value;
+            }
+            // Added feature: do not include the document object.
+            if (value === document) {
+                return "[Document]";
+            }
+            // `this` is the object that value is contained in,
+            // i.e., its direct parent.
+            while (ancestors.length > 0 && ancestors.at(-1) !== this) {
+                ancestors.pop();
+            }
+            if (ancestors.includes(value)) {
+                return "[Circular]";
+            }
+            ancestors.push(value);
+            return value;
+        };
+    };
+
+    /**
+     * Serialize object with cyclic structures.
+     *
+     * @param {mixed} obj 
+     *
+     * @returns {string}
+     */
+    self.stringify = (obj) => JSON.stringify(obj, getCircularReplacer(), 2);
+
     /*
         Function: jaxon.ajax.command.unregister
         
@@ -268,7 +304,7 @@ try {
                 msg += '"' + fullName + '"';
             }
             if ('undefined' != typeof args) {
-                msg += JSON.stringify(args);
+                msg += self.stringify(args);
             }
             msg += '):\n' + getExceptionText(e) + '\n';
             self.writeDebugMessage(msg, self.messages.error, 'errorText');
@@ -293,10 +329,10 @@ try {
     
                 self.writeDebugMessage(self.messages.processing.calling.supplant({
                     cmd: fullName || name,
-                    options: JSON.stringify({
+                    options: self.stringify({
                         ...(component ? { component } : {}),
                         args,
-                    }, null, 2),
+                    }),
                 }));
     
                 return rv;
@@ -515,14 +551,14 @@ try {
                 oRequest.midDate = new Date();
                 const msg = self.messages.response.success.supplant({
                     status: status,
-                    length: JSON.stringify(oRequest.responseContent).length,
+                    length: self.stringify(oRequest.responseContent).length,
                     duration: oRequest.midDate - oRequest.beginDate
-                }) + '\n' + JSON.stringify(oRequest.responseContent, null, 2);
+                }) + '\n' + self.stringify(oRequest.responseContent);
                 self.writeDebugMessage(msg);
             } else if (response.isErrorCode(status)) {
                 const msg = self.messages.response.content.supplant({
                     status: status,
-                    text: JSON.stringify(oRequest.responseContent, null, 2)
+                    text: self.stringify(oRequest.responseContent)
                 });
                 self.writeDebugMessage(msg, self.messages.error, 'errorText');
             } else if (response.isRedirectCode(status)) {
@@ -621,7 +657,7 @@ jaxon.dom.ready(function() {
                 const pLen = arguments.length;
                 for (let p = 0; p < pLen; ++p) {
                     fun += separator;
-                    fun += JSON.stringify(arguments[p]);
+                    fun += debug.stringify(arguments[p]);
                     separator = ',';
                 }
 
@@ -642,7 +678,7 @@ jaxon.dom.ready(function() {
 
                 eval(code);
 
-                msg = '<-- ' + fun + ' returns ' + JSON.stringify(returnValue);
+                msg = '<-- ' + fun + ' returns ' + debug.stringify(returnValue);
                 debug.writeDebugMessage(msg);
 
                 return returnValue;
