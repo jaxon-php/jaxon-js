@@ -15,9 +15,10 @@ var jaxon = {
      * Version number
      */
     version: {
+        number: '5.0.6',
         major: '5',
         minor: '0',
-        patch: '4',
+        patch: '6',
     },
 
     debug: {
@@ -2291,7 +2292,7 @@ window.jaxon = jaxon;
     const setParams = ({ func, parameters, bags = [] }, fSetter) => {
         const dNow = new Date();
         fSetter('jxnr', dNow.getTime());
-        fSetter('jxnv', `${version.major}.${version.minor}.${version.patch}`);
+        fSetter('jxnv', version.number);
         // The parameters value was assigned from the js "arguments" var in a function. So it
         // is an array-like object, that we need to convert to a real array => [...parameters].
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
