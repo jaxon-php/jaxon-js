@@ -37,7 +37,7 @@ try {
     alert(e.name + ': ' + e.message);
 }
 
-(function(self, parameters, request, response, command, utils) {
+(function(self, parameters, request, response, command, query, utils) {
     /*
         String: jaxon.debug.windowSource
         
@@ -233,7 +233,10 @@ try {
             if (typeof value !== "object" || value === null) {
                 return value;
             }
-            // Added feature: do not include the document object.
+            // Added feature: do not include the window and document object.
+            if (value === window) {
+                return "[Window]";
+            }
             if (value === document) {
                 return "[Document]";
             }
@@ -608,21 +611,35 @@ try {
         
         This is a wrapper around the standard <jaxon.cmd.node.assign> function.
     */
-    if (jaxon.cmd.node.assign) {
-        const assign = jaxon.cmd.node.assign;
-        jaxon.cmd.node.assign = function({ target: element, prop: property, data }) {
-            try {
-                return assign(element, property, data);
-            } catch (e) {
-                const msg = 'jaxon.cmd.node.assign: ' + getExceptionText(e) + '\n' +
-                    'Eval: element.' + property + ' = data;\n';
-                self.writeDebugMessage(msg, self.messages.error, 'errorText');
-            }
-            return true;
+    const nodeAssign = jaxon.cmd.node.assign;
+    jaxon.cmd.node.assign = function({ target: element, prop: property, data }) {
+        try {
+            return nodeAssign(element, property, data);
+        } catch (e) {
+            const msg = 'jaxon.cmd.node.assign: ' + getExceptionText(e) + '\n' +
+                'Eval: element.' + property + ' = data;\n';
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
         }
+        return true;
     }
+
+    const jQuerySelector = query.select;
+    query.select = (xSelector, xContext = null) => {
+        const sel = self.stringify(xSelector);
+        try {
+            const elements = jQuerySelector(xSelector, xContext);
+            const jqLibrary = query.jq === window.jQuery ? 'jQuery' :
+                (query.jq === window.chibi ? 'Chibi' : '[Custom]')
+            const msg = 'jaxon.parser.query.select(' + sel + ') using ' + jqLibrary + '\n';
+            self.writeDebugMessage(msg, self.messages.info);
+            return elements;
+        } catch (e) {
+            const msg = 'jaxon.parser.query.select(' + sel + '): ' + getExceptionText(e) + '\n';
+            self.writeDebugMessage(msg, self.messages.error, 'errorText');
+        }
+    };
 })(jaxon.debug, jaxon.ajax.parameters, jaxon.ajax.request, jaxon.ajax.response,
-    jaxon.ajax.command, jaxon.utils);
+    jaxon.ajax.command, jaxon.parser.query, jaxon.utils);
 
 /*
     The jaxon verbose debugging module.

@@ -1767,13 +1767,13 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, jq) {
+(function(self) {
     /**
      * The selector function.
      *
      * @var {object}
      */
-    self.jq = jq;
+    self.jq = null;
 
     /**
      * Make the context for a DOM selector
@@ -1801,10 +1801,15 @@ window.jaxon = jaxon;
      *
      * @returns {object}
      */
-    self.select = (xSelector, xContext = null) => !xContext ?
-        self.jq(xSelector) : self.jq(xSelector, xContext);
-})(jaxon.parser.query, window.jQuery ?? window.chibi);
-// window.chibi is the ChibiJs (https://github.com/kylebarrow/chibi) selector function.
+    self.select = (xSelector, xContext = null) => {
+        // window.chibi is the ChibiJs (https://github.com/kylebarrow/chibi) selector function.
+        if (!self.jq) {
+            // Chibi is used only when jQuery is not loaded in the page.
+            self.jq = window.jQuery ?? window.chibi;
+        }
+        return !xContext ? self.jq(xSelector) : self.jq(xSelector, xContext);
+    };
+})(jaxon.parser.query);
 
 
 /**
