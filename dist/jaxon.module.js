@@ -15,10 +15,10 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.6',
+        number: '5.0.7',
         major: '5',
         minor: '0',
-        patch: '6',
+        patch: '7',
     },
 
     debug: {
@@ -1414,6 +1414,7 @@ window.jaxon = jaxon;
         ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
+        error: () => false, // The default comparison operator.
     };
 
     /**
@@ -1450,13 +1451,19 @@ window.jaxon = jaxon;
         select: ({ _name: sName, mode, context: xSelectContext = null }, xOptions) => {
             if (sName === 'this') {
                 const { context: { target: xTarget } = {} } = xOptions;
-                return mode === 'jq' ? query.select(xTarget) :
-                    (mode === 'js' ? xTarget : null);
+                return mode === 'jq' ?
+                    { call: '$(this)', value: query.select(xTarget) } :
+                    { call: 'this', value: mode === 'js' ? xTarget : null };
             }
 
             const { context: { global: xGlobal } = {} } = xOptions;
-            return mode === 'js' ? document.getElementById(sName) :
-                query.select(sName, query.context(xSelectContext, xGlobal));
+            return mode === 'jq' ? {
+                call: `$('${sName}')`,
+                value: query.select(sName, query.context(xSelectContext, xGlobal)),
+            } : {
+                call: `document.getElementById('${sName}')`,
+                value: document.getElementById(sName),
+            };
         },
         event: ({ _name: sName, mode, func: xExpression }, xOptions) => {
             // Set an event handler.
@@ -1470,54 +1477,62 @@ window.jaxon = jaxon;
                 },
                 value: null,
             });
-            const { value: xCurrValue } = xOptions;
-            mode === 'jq' ?
-                xCurrValue.on(sName, fHandler) :
+            const { value: xCurrValue, call: sCall } = xOptions;
+            mode === 'jq' ? xCurrValue.on(sName, fHandler) :
                 xCurrValue.addEventListener(sName, fHandler);
-            return xCurrValue;
+            return {
+                call: mode === 'jq' ? `${sCall}.on(${sName}, [handler])` :
+                    `${sCall}.addEventListener(${sName}, [handler])`,
+                value: xCurrValue,
+            };
         },
         func: ({ _name: sName, args: aArgs = [] }, xOptions) => {
-            const { value: xCurrValue } = xOptions;
+            const { value: xCurrValue, call: sCall } = xOptions;
+            const sFuncName = (!sCall ? sName : `${sCall}.${sName}`) + '()';
             const func = dom.findFunction(sName, xCurrValue || window);
             if (!func) {
                 if (sName === 'trim') {
-                    return xCurrValue.trim();
+                    return { call: `trim(${sName})`, value: xCurrValue.trim() };
                 }
                 if (sName === 'toInt') {
-                    return types.toInt(xCurrValue);
+                    return { call: `parseInt(${sName})`, value: types.toInt(xCurrValue) };
                 }
-                return undefined;
+
+                // Tried to call an undefined function.
+                console.error(`Call to undefined function ${sFuncName}.`);
+                return { call: sFuncName, value: undefined };
             }
 
-            return func.apply(xCurrValue, getArgs(aArgs, xOptions));
+            return {
+                call: sFuncName,
+                value: func.apply(xCurrValue, getArgs(aArgs, xOptions)),
+            };
         },
         attr: ({ _name: sName, value: xValue }, xOptions) => {
-            const { value: xCurrValue, depth } = xOptions;
+            const { value: xCurrValue, depth, call: sCall } = xOptions;
             // depth === 0 ensures that we are at top level.
             if (depth === 0 && sName === 'window') {
-                return !xValue ? window : null; // Cannot assign the window var.
+                if (!xValue) {
+                    return { call: 'window', value: window };
+                }
+                console.error('Cannot assign the "window" var.');
+                return { call: 'null', value: null };
             }
 
-            return processAttr(xCurrValue || window, sName, xValue, xOptions);
+            const sAttrName = !sCall ? sName : `${sCall}.${sName}`;
+            const xAttrValue = processAttr(xCurrValue || window, sName, xValue, xOptions);
+            if (xAttrValue === undefined) {
+                console.error(`Call to undefined variable ${sAttrName}.`);
+            }
+            return { call: sAttrName, value: xAttrValue };
         },
-    };
-
-    /**
-     * The function to call if one of the above is not found.
-     *
-     * @var {object}
-     */
-    const xErrors = {
-        comparator: () => false, // The default comparison operator.
-        command: {
-            invalid: (xCall) => {
-                console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
-                return undefined;
-            },
-            unknown: (xCall) => {
-                console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
-                return undefined;
-            },
+        invalid: (xCall) => {
+            console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+            return { call: undefined, value: undefined };
+        },
+        unknown: (xCall) => {
+            console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+            return { call: undefined, value: undefined };
         },
     };
 
@@ -1583,6 +1598,25 @@ window.jaxon = jaxon;
     const getArgs = (aArgs, xOptions) => aArgs.map(xArg => getValue(xArg, xOptions));
 
     /**
+     * Execute a command, then fill and return the options object.
+     * This function is extended in debug mode to add debug messages.
+     *
+     * @param {object} xCall
+     * @param {object} xOptions The call options.
+     *
+     * @returns {void}
+     */
+    self.execCommand = (xCall, xOptions) => {
+        const xCommand = !isValidCall(xCall) ? xCommands.invalid :
+            (xCommands[xCall._type] ?? xCommands.unknown);
+        xOptions.depth++; // Increment the call depth.
+        const { call, value } = xCommand(xCall, xOptions);
+        xOptions.call = call;
+        xOptions.value = value;
+        return xOptions;
+    };
+
+    /**
      * Execute a single call.
      *
      * @param {object} xCall
@@ -1590,13 +1624,7 @@ window.jaxon = jaxon;
      *
      * @returns {void}
      */
-    const execCall = (xCall, xOptions) => {
-        const xCommand = !isValidCall(xCall) ? xErrors.command.invalid :
-            (xCommands[xCall._type] ?? xErrors.command.unknown);
-        xOptions.depth++; // Increment the call depth.
-        xOptions.value = xCommand(xCall, xOptions);
-        return xOptions.value;
-    };
+    const execCall = (xCall, xOptions) => self.execCommand(xCall, xOptions).value;
 
     /**
      * Get the options for a json call.
@@ -1719,7 +1747,7 @@ window.jaxon = jaxon;
      */
     const execWithCondition = (aCondition, xAlert, aCalls, xOptions) => {
         const [sOperator, _xLeftArg, _xRightArg] = aCondition;
-        const xComparator = xComparators[sOperator] ?? xErrors.comparator;
+        const xComparator = xComparators[sOperator] ?? xComparators.error;
         const xLeftArg = getValue(_xLeftArg, makeOptions(xOptions));
         const xRightArg = getValue(_xRightArg, makeOptions(xOptions));
         xComparator(xLeftArg, xRightArg) ?

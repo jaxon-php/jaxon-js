@@ -37,7 +37,7 @@ try {
     alert(e.name + ': ' + e.message);
 }
 
-(function(self, parameters, request, response, command, query, utils) {
+(function(self, parameters, request, response, command, call, query, utils) {
     /*
         String: jaxon.debug.windowSource
         
@@ -617,11 +617,26 @@ try {
             return nodeAssign(element, property, data);
         } catch (e) {
             const msg = 'jaxon.cmd.node.assign: ' + getExceptionText(e) + '\n' +
-                'Eval: element.' + property + ' = data;\n';
+                'Eval: element.' + property + ' = data;\n' +
+                self.stringify({ target: element, prop: property, data }) + '\n';
             self.writeDebugMessage(msg, self.messages.error, 'errorText');
         }
         return true;
     }
+
+    const execCallCommand = call.execCommand;
+    call.execCommand = (xCall, xOptions) => {
+        xOptions = execCallCommand(xCall, xOptions);
+        const callNames = {
+            select: 'selector',
+            event: 'event handler',
+            attr: 'attribute',
+            func: 'function',
+        };
+        const callName = callNames[xCall._type] ?? `[unknown(${xCall._type})]`
+        console.log(`Call parser has called ${callName} ${xOptions.call}.`);
+        return xOptions;
+    };
 
     const jQuerySelector = query.select;
     query.select = (xSelector, xContext = null) => {
@@ -639,7 +654,7 @@ try {
         }
     };
 })(jaxon.debug, jaxon.ajax.parameters, jaxon.ajax.request, jaxon.ajax.response,
-    jaxon.ajax.command, jaxon.parser.query, jaxon.utils);
+    jaxon.ajax.command, jaxon.parser.call, jaxon.parser.query, jaxon.utils);
 
 /*
     The jaxon verbose debugging module.
