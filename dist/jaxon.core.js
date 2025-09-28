@@ -15,10 +15,10 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.7',
+        number: '5.0.8',
         major: '5',
         minor: '0',
-        patch: '7',
+        patch: '8',
     },
 
     debug: {
@@ -1511,7 +1511,7 @@ window.jaxon = jaxon;
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, depth, call: sCall } = xOptions;
             // depth === 0 ensures that we are at top level.
-            if (depth === 0 && sName === 'window') {
+            if (depth === 0 && (sName === 'window' || sName === '')) {
                 if (!xValue) {
                     return { call: 'window', value: window };
                 }
