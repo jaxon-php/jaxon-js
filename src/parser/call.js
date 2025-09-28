@@ -118,7 +118,7 @@
         attr: ({ _name: sName, value: xValue }, xOptions) => {
             const { value: xCurrValue, depth, call: sCall } = xOptions;
             // depth === 0 ensures that we are at top level.
-            if (depth === 0 && sName === 'window') {
+            if (depth === 0 && (sName === 'window' || sName === '')) {
                 if (!xValue) {
                     return { call: 'window', value: window };
                 }
