@@ -4,66 +4,97 @@
  * global: jaxon
  */
 
-(function(self, dom) {
+(function(self, dom, types) {
+    /**
+     * @param {string} type
+     * @param {string} name
+     * @param {string} tagName
+     * @param {string} prefix
+     * @param {mixed} value
+     * @param {boolean} checked
+     * @param {boolean} takeDisabled
+     * @param {boolean} disabled
+     *
+     * @returns {void}
+     */
+    const fieldIsInvalid = (type, name, tagName, prefix, value, checked, takeDisabled, disabled) =>
+        // Do not read value of fields without name, or param fields.
+        !name || 'PARAM' === tagName ||
+        // Do not read value of disabled fields
+        (!takeDisabled && disabled) ||
+        // Only read values with the given prefix, if provided.
+        (prefix.length > 0 && prefix !== name.substring(0, prefix.length)) ||
+        // Values of radio and checkbox, when they are not checked, are omitted.
+        ((type === 'radio' || type === 'checkbox') && !checked) ||
+        // Values of dropdown select, when they are undefined, are omitted.
+        ((type === 'select-one' || type === 'select-multiple') && value === undefined) ||
+        // Do not read value from file fields.
+        type === 'file';
+
+    /**
+     * Get the value of a multiple select field.
+     *
+     * @param {array} options
+     *
+     * @returns {mixed}
+     */
+    const getSelectedValues = (options) => Array.from(options)
+        .filter(({ selected }) => selected).map(({ value }) => value);
+
+    /**
+     * Get the value of a form field.
+     *
+     * @param {string} type
+     * @param {object} values
+     * @param {array} options
+     *
+     * @returns {mixed}
+     */
+    const getSimpleFieldValue = (type, value, options) =>
+        // For select multiple fields, take the last selected value, as PHP does.
+        // Unlike PHP, Javascript will set "value" as the first selected value.
+        type !== 'select-multiple' ? value : getSelectedValues(options).pop();
+
     /**
      * Set the value of a form field.
      *
      * @param {object} values
-     * @param {string} fieldName
-     * @param {mixed} fieldValue
-     * @param {string} formId
+     * @param {string} varName
+     * @param {string} varKeys
+     * @param {string} type
+     * @param {mixed} falue
+     * @param {array} options
      *
      * @returns {void}
      */
-    const setFieldValue = (values, fieldName, fieldValue, formId) => {
-        // Check the name validity
-        const nameRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)((\[[a-zA-Z0-9_-]*\])*)$/;
-        let matches = fieldName.match(nameRegex);
-        if (!matches) {
-            // Invalid name
-            console.warn(`Invalid field name ${fieldName} in form ${formId}.`);
-            console.warn(`The value of the field ${fieldName} in form ${formId} is ignored.`);
-            return;
-        }
+    const setFieldValue = (values, varName, varKeys, type, value, options) => {
+        const result = { obj: values, key: varName };
 
-        if (!matches[3]) {
-            // No keys into brackets. Simply set the values.
-            values[fieldName] = fieldValue;
-            return;
-        }
-
-        // Matches is an array with values like user[name][first], "user", "[name][first]" and "[first]".
-        const result = {
-            obj: values,
-            key: matches[1],
-        };
         // Parse names into brackets
-        let arrayKeys = matches[2];
         const keyRegex = /\[(.*?)\]/;
-        while ((matches = arrayKeys.match(keyRegex)) !== null) {
+        while ((matches = varKeys.match(keyRegex)) !== null) {
             // When found, matches is an array with values like "[email]" and "email".
             const key = matches[1].trim();
             if (key === '') {
                 // The field is defined as an array in the form (eg users[]).
-                if (result.obj[result.key] === undefined) {
-                    result.obj[result.key] = [];
-                }
-                result.obj[result.key].push(fieldValue);
+                const currentValue = result.obj[result.key] ?? [];
+                result.obj[result.key] = type === 'select-multiple' ?
+                    getSelectedValues(options) : [...currentValue, value];
                 // Nested arrays are not supported. So the function returns here.
                 return;
             }
 
-            // The field is an object.
             if (result.obj[result.key] === undefined) {
                 result.obj[result.key] = {};
             }
+            // The field is an object.
             result.obj = result.obj[result.key];
             result.key = key;
-
-            arrayKeys = arrayKeys.substring(matches[0].length);
+            varKeys = varKeys.substring(matches[0].length);
         }
+
         // The field is an object.
-        result.obj[result.key] = fieldValue;
+        result.obj[result.key] = getSimpleFieldValue(type, value, options);
     };
 
     /**
@@ -80,28 +111,33 @@
      * @returns {void}
      */
     const getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
-        // Do not read value of fields without name, or param fields.
-        if (!name || 'PARAM' === tagName)
-            return;
-        // Do not read value of disabled fields
-        if (!xOptions.disabled && disabled)
-            return;
-        const { prefix } = xOptions;
-        // Only read values with the given prefix, if provided.
-        if (prefix.length > 0 && prefix !== name.substring(0, prefix.length))
-            return;
-        // Values of radio and checkbox, when they are not checked, are omitted.
-        if ((type === 'radio' || type === 'checkbox') && !checked)
-            return;
-        // Do not read value from file fields.
-        if (type === 'file')
-            return;
+        const { prefix, formId, disabled: takeDisabled } = xOptions;
 
-        // Update the form values.
-        const fieldValue = type !== 'select-multiple' ? value :
-            Array.from(options).filter(({ selected }) => selected).map(({ value: v }) => v);
+        if (fieldIsInvalid(type, name, tagName, prefix, value, checked, takeDisabled, disabled)) {
+            return;
+        }
+
+        // Check the name validity
+        const nameRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)((\[[a-zA-Z0-9_-]*\])*)$/;
+        let matches = name.match(nameRegex);
+        if (!matches) {
+            // Invalid name
+            console.warn(`Invalid field name ${name} in form ${formId}.`);
+            console.warn(`The value of the field ${name} in form ${formId} is ignored.`);
+            return;
+        }
+
+        if (!matches[3]) {
+            // No keys into brackets. Simply set the values.
+            xOptions.values[name] = getSimpleFieldValue(type, value, options);
+            return;
+        }
+
+        // Matches is an array with values like user[name][first], "user", "[name][first]" and "[first]".
+        const varName = matches[1];
+        const varKeys = matches[2];
         // The xOptions.values parameter must be passed by reference.
-        setFieldValue(xOptions.values, name, fieldValue, xOptions.formId);
+        setFieldValue(xOptions.values, varName, varKeys, type, value, options);
     };
 
     /**
@@ -113,7 +149,7 @@
     const getValues = (xOptions, children) => {
         children.forEach(child => {
             const { childNodes, type } = child;
-            if (childNodes !== undefined && type !== 'select-one' && type !== 'select-multiple') {
+            if (types.isArray(childNodes) && type !== 'select-one' && type !== 'select-multiple') {
                 getValues(xOptions, childNodes);
             }
             getValue(xOptions, child);
@@ -141,9 +177,9 @@
         };
 
         const form = dom.$(formId);
-        if (form && form.childNodes) {
+        if (form?.childNodes) {
             getValues(xOptions, form.childNodes);
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.types);

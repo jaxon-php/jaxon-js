@@ -34,12 +34,75 @@ test('Test form without id', () => {
   expect(Object.keys(formValues).length).toBe(0);
 });
 
-test('Test form with multiple select', () => {
+test('Test form with multiple select in simple var', () => {
   // Fix: https://github.com/jaxon-php/jaxon-core/issues/128
   document.body.innerHTML = `
   <div id="wrapper">
     <form id="test_form">
       <select multiple="multiple" name="multiselect">
+        <option value="1" selected>Value 1</option>
+        <option value="2" selected>Value 2</option>
+        <option value="3">Value 3</option>
+      </select>
+    </form>
+  </div>`;
+
+  const formValues = form.getValues('test_form');
+
+  expect(types.of(formValues)).toBe('object');
+  expect(types.of(formValues.multiselect)).toBe('string');
+  expect(formValues.multiselect).toBe('2');
+});
+
+test('Test assign command on multiple select in simple var', () => {
+    // Fix: https://github.com/jaxon-php/jaxon-js/issues/29
+    document.body.innerHTML = `
+    <div id="wrapper">
+      <form id="test_form">
+        <select id="multiselect" multiple="multiple" name="multiselect">
+          <option value="1">Value 1</option>
+          <option value="2">Value 2</option>
+          <option value="3">Value 3</option>
+        </select>
+      </form>
+    </div>`;
+
+    const formValues0 = form.getValues('test_form');
+
+    expect(types.of(formValues0)).toBe('object');
+    expect(formValues0.multiselect).toBe(undefined);
+
+    node.assign({
+        attr: 'options[0].selected',
+        value: 'true',
+    }, {
+        target: dom.$('multiselect'),
+    });
+    const formValues1 = form.getValues('test_form');
+
+    expect(types.of(formValues1)).toBe('object');
+    expect(types.of(formValues1.multiselect)).toBe('string');
+    expect(formValues1.multiselect).toBe('1');
+
+    node.assign({
+        attr: 'options[1].selected',
+        value: 'true',
+    }, {
+        target: dom.$('multiselect'),
+    });
+    const formValues2 = form.getValues('test_form');
+
+    expect(types.of(formValues2)).toBe('object');
+    expect(types.of(formValues2.multiselect)).toBe('string');
+    expect(formValues2.multiselect).toBe('2');
+});
+
+test('Test form with multiple select in array var', () => {
+  // Fix: https://github.com/jaxon-php/jaxon-core/issues/128
+  document.body.innerHTML = `
+  <div id="wrapper">
+    <form id="test_form">
+      <select multiple="multiple" name="multiselect[]">
         <option value="1" selected>Value 1</option>
         <option value="2" selected>Value 2</option>
         <option value="3">Value 3</option>
@@ -56,12 +119,12 @@ test('Test form with multiple select', () => {
   expect(formValues.multiselect[1]).toBe('2');
 });
 
-test('Test assign command on multiple select', () => {
+test('Test assign command on multiple select in array var', () => {
     // Fix: https://github.com/jaxon-php/jaxon-js/issues/29
     document.body.innerHTML = `
     <div id="wrapper">
       <form id="test_form">
-        <select id="multiselect" multiple="multiple" name="multiselect">
+        <select id="multiselect" multiple="multiple" name="multiselect[]">
           <option value="1">Value 1</option>
           <option value="2">Value 2</option>
           <option value="3">Value 3</option>
@@ -101,6 +164,29 @@ test('Test assign command on multiple select', () => {
     expect(formValues2.multiselect.length).toBe(2);
     expect(formValues2.multiselect[0]).toBe('1');
     expect(formValues2.multiselect[1]).toBe('2');
+});
+
+test('Test multiple select in nested array var', () => {
+    // Fix: https://github.com/jaxon-php/jaxon-js/issues/29
+    document.body.innerHTML = `
+    <div id="wrapper">
+      <form id="test_form">
+        <select id="multiselect" multiple="multiple" name="user[roles][]">
+        <option value="1" selected>Value 1</option>
+        <option value="2">Value 2</option>
+        <option value="3" selected>Value 3</option>
+        </select>
+      </form>
+    </div>`;
+
+    const formValues = form.getValues('test_form');
+
+    expect(types.of(formValues)).toBe('object');
+    expect(types.of(formValues.user)).toBe('object');
+    expect(types.of(formValues.user.roles)).toBe('array');
+    expect(formValues.user.roles.length).toBe(2);
+    expect(formValues.user.roles[0]).toBe('1');
+    expect(formValues.user.roles[1]).toBe('3');
 });
 
 test('Test form with names into brackets', () => {
