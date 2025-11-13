@@ -18,7 +18,7 @@ var jaxon = {
         number: '5.0.9',
         major: '5',
         minor: '0',
-        patch: '8',
+        patch: '9',
     },
 
     debug: {
