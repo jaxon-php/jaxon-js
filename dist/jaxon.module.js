@@ -15,10 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.9',
-        major: '5',
-        minor: '0',
-        patch: '9',
+        number: '5.0.10',
     },
 
     debug: {
@@ -58,6 +55,7 @@ var jaxon = {
         queue: {},
         types: {},
         string: {},
+        logger: {},
     },
 
     dom: {},
@@ -72,7 +70,7 @@ var jaxon = {
  * These are application level settings; however, they can be overridden by
  * specifying the appropriate configuration options on a per call basis.
  */
-(function(self) {
+(function(self, logger) {
     /**
      * An array of header entries where the array key is the header option name and
      * the associated value is the value that will set when the request object is initialized.
@@ -251,10 +249,10 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onPrepare: () => console.log('Sending Request...'),
-            onRequest: () => console.log('Waiting for Response...'),
-            onProcessing: () => console.log('Processing...'),
-            onComplete: () => console.log('Done.'),
+            onPrepare: () => logger.consoleMode().debug('Sending Request...'),
+            onRequest: () => logger.consoleMode().debug('Waiting for Response...'),
+            onProcessing: () => logger.consoleMode().debug('Processing...'),
+            onComplete: () => logger.consoleMode().debug('Done.'),
         },
 
         /**
@@ -309,7 +307,7 @@ var jaxon = {
             onComplete: () => {}
         },
     };
-})(jaxon.config);
+})(jaxon.config, jaxon.utils.logger);
 
 // Make jaxon accessible with the dom.findFunction function.
 window.jaxon = jaxon;
@@ -422,6 +420,16 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Find an object using its name as a string.
+     *
+     * @param {string} sFuncName The name of the object to find.
+     * @param {object} context
+     *
+     * @returns {object|null}
+     */
+    self.findObject = self.findFunction
+
+    /**
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *
@@ -452,7 +460,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, types) {
+(function(self, dom, logger) {
     /**
      * @param {string} type
      * @param {string} name
@@ -460,16 +468,16 @@ window.jaxon = jaxon;
      * @param {string} prefix
      * @param {mixed} value
      * @param {boolean} checked
-     * @param {boolean} takeDisabled
+     * @param {boolean} withDisabled
      * @param {boolean} disabled
      *
      * @returns {void}
      */
-    const fieldIsInvalid = (type, name, tagName, prefix, value, checked, takeDisabled, disabled) =>
+    const fieldIsInvalid = (type, name, tagName, prefix, value, checked, withDisabled, disabled) =>
         // Do not read value of fields without name, or param fields.
         !name || 'PARAM' === tagName ||
         // Do not read value of disabled fields
-        (!takeDisabled && disabled) ||
+        (!withDisabled && disabled) ||
         // Only read values with the given prefix, if provided.
         (prefix.length > 0 && prefix !== name.substring(0, prefix.length)) ||
         // Values of radio and checkbox, when they are not checked, are omitted.
@@ -484,7 +492,7 @@ window.jaxon = jaxon;
      *
      * @param {array} options
      *
-     * @returns {mixed}
+     * @returns {array}
      */
     const getSelectedValues = (options) => Array.from(options)
         .filter(({ selected }) => selected).map(({ value }) => value);
@@ -559,9 +567,9 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     const getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
-        const { prefix, formId, disabled: takeDisabled } = xOptions;
+        const { prefix, formId, withDisabled } = xOptions;
 
-        if (fieldIsInvalid(type, name, tagName, prefix, value, checked, takeDisabled, disabled)) {
+        if (fieldIsInvalid(type, name, tagName, prefix, value, checked, withDisabled, disabled)) {
             return;
         }
 
@@ -570,8 +578,8 @@ window.jaxon = jaxon;
         let matches = name.match(nameRegex);
         if (!matches) {
             // Invalid name
-            console.warn(`Invalid field name ${name} in form ${formId}.`);
-            console.warn(`The value of the field ${name} in form ${formId} is ignored.`);
+            logger.warning(`Invalid field name ${name} in form ${formId}.`);
+            logger.warning(`The value of the field ${name} in form ${formId} is ignored.`);
             return;
         }
 
@@ -596,8 +604,8 @@ window.jaxon = jaxon;
      */
     const getValues = (xOptions, children) => {
         children.forEach(child => {
-            const { childNodes, type } = child;
-            if (types.isArray(childNodes) && type !== 'select-one' && type !== 'select-multiple') {
+            const { childNodes = null, type } = child;
+            if (childNodes !== null && type !== 'select-one' && type !== 'select-multiple') {
                 getValues(xOptions, childNodes);
             }
             getValue(xOptions, child);
@@ -608,29 +616,140 @@ window.jaxon = jaxon;
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} withDisabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled = false, prefix = '') => {
+    self.getValues = (formId, withDisabled = false, prefix = '') => {
         const xOptions = {
             formId,
             // Submit disabled fields
-            disabled: (disabled === true),
+            withDisabled: (withDisabled === true),
             // Only submit fields with a prefix
             prefix: prefix ?? '',
             // Form values
             values: {},
         };
 
-        const form = dom.$(formId);
-        if (form?.childNodes) {
-            getValues(xOptions, form.childNodes);
+        const { childNodes } = dom.$(formId) ?? {};
+        if (childNodes) {
+            getValues(xOptions, childNodes);
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.types);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.logger);
+
+
+/**
+ * Class: jaxon.utils.logger
+ *
+ * global: jaxon
+ */
+
+(function(self, dom, types, debug) {
+    /**
+     * @var object
+     */
+    const xMode = {
+        console: false, // Log in console only.
+    };
+
+    /**
+     * @returns {void}
+     */
+    const resetMode = () => {
+        xMode.console = false;
+    };
+
+    /**
+     * @returns {this}
+     */
+    self.consoleMode = () => {
+        xMode.console = true;
+        return self;
+    };
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {string}
+     */
+    const consoleMessage = (sMessage, xContext) => sMessage +
+        (!types.isObject(xContext) ? '' : ': ' + JSON.stringify(xContext));
+
+    /**
+     * @returns {object|null}
+     */
+    self.logger = () => (xMode.console || debug.active || !debug.logger) ?
+        null : dom.findObject(debug.logger);
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {void}
+     */
+    self.error = (sMessage, xContext) => {
+        console.error(consoleMessage(sMessage, xContext));
+
+        self.logger()?.error(sMessage, { ...xContext });
+        resetMode();
+    };
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {void}
+     */
+    self.warning = (sMessage, xContext) => {
+        console.warn(consoleMessage(sMessage, xContext));
+
+        self.logger()?.warning(sMessage, { ...xContext });
+        resetMode();
+    };
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {void}
+     */
+    self.notice = (sMessage, xContext) => {
+        console.log(consoleMessage(sMessage, xContext));
+
+        self.logger()?.notice(sMessage, { ...xContext });
+        resetMode();
+    };
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {void}
+     */
+    self.info = (sMessage, xContext) => {
+        console.info(consoleMessage(sMessage, xContext));
+
+        self.logger()?.info(sMessage, { ...xContext });
+        resetMode();
+    };
+
+    /**
+     * @param {string} sMessage
+     * @param {object=} xContext
+     *
+     * @returns {void}
+     */
+    self.debug = (sMessage, xContext) => {
+        console.debug(consoleMessage(sMessage, xContext));
+
+        self.logger()?.debug(sMessage, { ...xContext });
+        resetMode();
+    };
+})(jaxon.utils.logger, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);
 
 
 /**
@@ -921,7 +1040,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, attr, call, query, types) {
+(function(self, dom, attr, call, query, types, logger) {
     /**
      * Config data.
      *
@@ -986,8 +1105,8 @@ window.jaxon = jaxon;
         }
 
         !libs[sLibName] ?
-            console.warn(`Unable to find a dialog library with name "${sLibName}".`) :
-            console.warn(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
+            logger.warning(`Unable to find a dialog library with name "${sLibName}".`) :
+            logger.warning(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
 
         // Check if there is a default library in the config for the required feature.
         const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
@@ -995,7 +1114,7 @@ window.jaxon = jaxon;
             return libs[config.defaults[sLibType]];
         }
         if (!libs.default[sFunc]) {
-            console.error(`Unable to find a dialog library with the "${sFunc}" function.`);
+            logger.error(`Unable to find a dialog library with the "${sFunc}" function.`);
         }
         return libs.default;
     };
@@ -1143,7 +1262,7 @@ window.jaxon = jaxon;
             confirm(dialogContent(title, question)) ? yesCb() : (noCb && noCb());
     });
 })(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
-    jaxon.parser.query, jaxon.utils.types);
+    jaxon.parser.query, jaxon.utils.types, jaxon.utils.logger);
 
 
 /**
@@ -1435,7 +1554,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, query, dialog, dom, form, types) {
+(function(self, query, dialog, dom, form, types, logger) {
     /**
      * The comparison operators.
      *
@@ -1535,7 +1654,7 @@ window.jaxon = jaxon;
                 }
 
                 // Tried to call an undefined function.
-                console.error(`Call to undefined function ${sFuncName}.`);
+                logger.error(`Call to undefined function ${sFuncName}.`);
                 return { call: sFuncName, value: undefined };
             }
 
@@ -1551,23 +1670,23 @@ window.jaxon = jaxon;
                 if (!xValue) {
                     return { call: 'window', value: window };
                 }
-                console.error('Cannot assign the "window" var.');
+                logger.error('Cannot assign the "window" var.');
                 return { call: 'null', value: null };
             }
 
             const sAttrName = !sCall ? sName : `${sCall}.${sName}`;
             const xAttrValue = processAttr(xCurrValue || window, sName, xValue, xOptions);
             if (xAttrValue === undefined) {
-                console.error(`Call to undefined variable ${sAttrName}.`);
+                logger.error(`Call to undefined variable ${sAttrName}.`);
             }
             return { call: sAttrName, value: xAttrValue };
         },
         invalid: (xCall) => {
-            console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+            logger.error('Invalid command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
         unknown: (xCall) => {
-            console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+            logger.error('Unknown command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
     };
@@ -1823,7 +1942,7 @@ window.jaxon = jaxon;
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
-    jaxon.utils.form, jaxon.utils.types);
+    jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);
 
 
 /**
@@ -1883,7 +2002,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, types, config) {
+(function(self, types, logger, config) {
     /**
      * The names of the available callbacks.
      *
@@ -1945,7 +2064,7 @@ window.jaxon = jaxon;
         if (types.isObject(xCallbacks)) {
             return [xCallbacks];
         }
-        console.warn(`Invalid callback value ignored on request to ${func.name}.`);
+        logger.warning(`Invalid callback value ignored on request to ${func.name}.`);
         return [];
     };
 
@@ -1982,7 +2101,7 @@ window.jaxon = jaxon;
             // Add the timers attribute, if it is not defined.
             .map(oCallback => ({ ...oCallback, timers: { ...oCallback.timers }}));
         if (aValidCallbacks.length !== aCallbacks.length) {
-            console.warn(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
+            logger.warning(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
         }
 
         const aRequestCallback = getRequestCallbackByNames(oRequest);
@@ -2065,7 +2184,7 @@ window.jaxon = jaxon;
      */
     self.clearTimer = (oRequest, sEvent) => oRequest.callbacks
         .forEach(oCallback => clearTimer(oCallback, sEvent));
-})(jaxon.ajax.callback, jaxon.utils.types, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.types, jaxon.utils.logger, jaxon.config);
 
 
 /**
@@ -2074,7 +2193,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, config, attr, cbk, queue, dom, types) {
+(function(self, config, attr, cbk, queue, dom, types, logger) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -2147,7 +2266,7 @@ window.jaxon = jaxon;
     self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
-            console.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
+            logger.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
             return true;
         }
 
@@ -2155,13 +2274,13 @@ window.jaxon = jaxon;
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
             if (!context.target) {
-                console.error('Unable to find component node: ' + JSON.stringify(component));
+                logger.error('Unable to find component node: ' + JSON.stringify(component));
             }
         }
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
             if (!context.target) {
-                console.error('Unable to find node with id : ' + args.id);
+                logger.error('Unable to find node with id : ' + args.id);
             }
         }
 
@@ -2182,7 +2301,7 @@ window.jaxon = jaxon;
             self.execute(context);
             return true;
         } catch (e) {
-            console.log(e);
+            logger.error(e);
         }
         return false;
     };
@@ -2246,7 +2365,7 @@ window.jaxon = jaxon;
         }
 
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
-        message && console.log(message);
+        message && logger.console(message);
 
         cbk.execute(oRequest, 'onProcessing');
 
@@ -2276,7 +2395,7 @@ window.jaxon = jaxon;
         self.processQueue(oQueue);
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.ajax.callback,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types);
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.logger);
 
 
 /**
@@ -2875,7 +2994,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, console) {
+(function(self, dom, logger) {
     /**
      * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
      * @param {string=} oRequest.upload The HTML file upload field id
@@ -2895,19 +3014,19 @@ window.jaxon = jaxon;
         const input = dom.$(oRequest.upload.id);
 
         if (!input) {
-            console.log('Unable to find input field for file upload with id ' + oRequest.upload.id);
+            logger.error('Unable to find input field for file upload with id ' + oRequest.upload.id);
             return false;
         }
         if (input.type !== 'file') {
-            console.log('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+            logger.error('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
             return false;
         }
         if (input.files.length === 0) {
-            console.log('There is no file selected for upload in input field with id ' + oRequest.upload.id);
+            logger.error('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
         if (input.name === undefined) {
-            console.log('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
+            logger.error('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
             return false;
         }
         oRequest.upload.input = input;
@@ -2929,7 +3048,7 @@ window.jaxon = jaxon;
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-})(jaxon.ajax.upload, jaxon.utils.dom, console);
+})(jaxon.ajax.upload, jaxon.utils.dom, jaxon.utils.logger);
 
 
 /**
@@ -3549,6 +3668,11 @@ jaxon.setBag = jaxon.ajax.parameters.setBag;
 jaxon.processCustomAttrs = jaxon.parser.attr.process;
 
 /**
+ * Shortcut to <jaxon.utils.logger.logger>.
+ */
+jaxon.logger = jaxon.utils.logger.logger;
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;
@@ -3556,7 +3680,7 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax) {
+(function(register, cmd, ajax, logger) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
         ajax.response.complete(request);
@@ -3585,7 +3709,7 @@ jaxon.isLoaded = true;
     register('handler.remove', cmd.event.removeHandler, 'Script::RemoveHandler');
 
     register('script.debug', ({ message }) => {
-        console.log(message);
+        logger.consoleMode().debug(message);
         return true;
     }, 'Debug message');
 
@@ -3599,7 +3723,7 @@ jaxon.isLoaded = true;
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');
-})(jaxon.register, jaxon.cmd, jaxon.ajax);
+})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.utils.logger);
 
 
 /** global: jaxon */

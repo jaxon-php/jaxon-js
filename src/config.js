@@ -15,10 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.9',
-        major: '5',
-        minor: '0',
-        patch: '9',
+        number: '5.0.10',
     },
 
     debug: {
