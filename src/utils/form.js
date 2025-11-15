@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, dom, types, logger) {
+(function(self, dom, logger) {
     /**
      * @param {string} type
      * @param {string} name
@@ -148,8 +148,8 @@
      */
     const getValues = (xOptions, children) => {
         children.forEach(child => {
-            const { childNodes, type } = child;
-            if (types.isArray(childNodes) && type !== 'select-one' && type !== 'select-multiple') {
+            const { childNodes = null, type } = child;
+            if (childNodes !== null && type !== 'select-one' && type !== 'select-multiple') {
                 getValues(xOptions, childNodes);
             }
             getValue(xOptions, child);
@@ -176,10 +176,10 @@
             values: {},
         };
 
-        const form = dom.$(formId);
-        if (form?.childNodes) {
-            getValues(xOptions, form.childNodes);
+        const { childNodes } = dom.$(formId) ?? {};
+        if (childNodes) {
+            getValues(xOptions, childNodes);
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.logger);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.logger);
