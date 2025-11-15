@@ -105,6 +105,16 @@
     };
 
     /**
+     * Find an object using its name as a string.
+     *
+     * @param {string} sFuncName The name of the object to find.
+     * @param {object} context
+     *
+     * @returns {object|null}
+     */
+    self.findObject = self.findFunction
+
+    /**
      * Given an element and an attribute with 0 or more dots,
      * get the inner object and the corresponding attribute name.
      *

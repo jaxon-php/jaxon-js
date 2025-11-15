@@ -66,6 +66,11 @@ jaxon.setBag = jaxon.ajax.parameters.setBag;
 jaxon.processCustomAttrs = jaxon.parser.attr.process;
 
 /**
+ * Shortcut to <jaxon.utils.logger.logger>.
+ */
+jaxon.logger = jaxon.utils.logger.logger;
+
+/**
  * Indicates if jaxon module is loaded.
  */
 jaxon.isLoaded = true;

@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, types, debug) {
+(function(self, dom, types, debug) {
     /**
      * @var object
      */
@@ -37,6 +37,12 @@
         (!types.isObject(xContext) ? '' : ': ' + JSON.stringify(xContext));
 
     /**
+     * @returns {object|null}
+     */
+    self.logger = () => (xMode.console || debug.active || !debug.logger) ?
+        null : dom.findObject(debug.logger);
+
+    /**
      * @param {string} sMessage
      * @param {object=} xContext
      *
@@ -45,6 +51,7 @@
     self.error = (sMessage, xContext) => {
         console.error(consoleMessage(sMessage, xContext));
 
+        self.logger()?.error(sMessage, { ...xContext });
         resetMode();
     };
 
@@ -57,6 +64,7 @@
     self.warning = (sMessage, xContext) => {
         console.warn(consoleMessage(sMessage, xContext));
 
+        self.logger()?.warning(sMessage, { ...xContext });
         resetMode();
     };
 
@@ -69,6 +77,7 @@
     self.notice = (sMessage, xContext) => {
         console.log(consoleMessage(sMessage, xContext));
 
+        self.logger()?.notice(sMessage, { ...xContext });
         resetMode();
     };
 
@@ -81,6 +90,7 @@
     self.info = (sMessage, xContext) => {
         console.info(consoleMessage(sMessage, xContext));
 
+        self.logger()?.info(sMessage, { ...xContext });
         resetMode();
     };
 
@@ -93,6 +103,7 @@
     self.debug = (sMessage, xContext) => {
         console.debug(consoleMessage(sMessage, xContext));
 
+        self.logger()?.debug(sMessage, { ...xContext });
         resetMode();
     };
-})(jaxon.utils.logger, jaxon.utils.types, jaxon.debug);
+})(jaxon.utils.logger, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);
