@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, dom, types) {
+(function(self, dom, types, logger) {
     /**
      * @param {string} type
      * @param {string} name
@@ -12,16 +12,16 @@
      * @param {string} prefix
      * @param {mixed} value
      * @param {boolean} checked
-     * @param {boolean} takeDisabled
+     * @param {boolean} withDisabled
      * @param {boolean} disabled
      *
      * @returns {void}
      */
-    const fieldIsInvalid = (type, name, tagName, prefix, value, checked, takeDisabled, disabled) =>
+    const fieldIsInvalid = (type, name, tagName, prefix, value, checked, withDisabled, disabled) =>
         // Do not read value of fields without name, or param fields.
         !name || 'PARAM' === tagName ||
         // Do not read value of disabled fields
-        (!takeDisabled && disabled) ||
+        (!withDisabled && disabled) ||
         // Only read values with the given prefix, if provided.
         (prefix.length > 0 && prefix !== name.substring(0, prefix.length)) ||
         // Values of radio and checkbox, when they are not checked, are omitted.
@@ -36,7 +36,7 @@
      *
      * @param {array} options
      *
-     * @returns {mixed}
+     * @returns {array}
      */
     const getSelectedValues = (options) => Array.from(options)
         .filter(({ selected }) => selected).map(({ value }) => value);
@@ -111,9 +111,9 @@
      * @returns {void}
      */
     const getValue = (xOptions, { type, name, tagName, checked, disabled, value, options }) => {
-        const { prefix, formId, disabled: takeDisabled } = xOptions;
+        const { prefix, formId, withDisabled } = xOptions;
 
-        if (fieldIsInvalid(type, name, tagName, prefix, value, checked, takeDisabled, disabled)) {
+        if (fieldIsInvalid(type, name, tagName, prefix, value, checked, withDisabled, disabled)) {
             return;
         }
 
@@ -122,8 +122,8 @@
         let matches = name.match(nameRegex);
         if (!matches) {
             // Invalid name
-            console.warn(`Invalid field name ${name} in form ${formId}.`);
-            console.warn(`The value of the field ${name} in form ${formId} is ignored.`);
+            logger.warning(`Invalid field name ${name} in form ${formId}.`);
+            logger.warning(`The value of the field ${name} in form ${formId} is ignored.`);
             return;
         }
 
@@ -160,16 +160,16 @@
      * Build an associative array of form elements and their values from the specified form.
      *
      * @param {string} formId The unique name (id) of the form to be processed.
-     * @param {boolean=false} disabled (optional): Include form elements which are currently disabled.
+     * @param {boolean=false} withDisabled (optional): Include form elements which are currently disabled.
      * @param {string=''} prefix (optional): A prefix used for selecting form elements.
      *
      * @returns {object} An associative array of form element id and value.
      */
-    self.getValues = (formId, disabled = false, prefix = '') => {
+    self.getValues = (formId, withDisabled = false, prefix = '') => {
         const xOptions = {
             formId,
             // Submit disabled fields
-            disabled: (disabled === true),
+            withDisabled: (withDisabled === true),
             // Only submit fields with a prefix
             prefix: prefix ?? '',
             // Form values
@@ -182,4 +182,4 @@
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.types);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.logger);

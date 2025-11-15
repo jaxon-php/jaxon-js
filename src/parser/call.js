@@ -6,7 +6,7 @@
  * global: jaxon
  */
 
-(function(self, query, dialog, dom, form, types) {
+(function(self, query, dialog, dom, form, types, logger) {
     /**
      * The comparison operators.
      *
@@ -106,7 +106,7 @@
                 }
 
                 // Tried to call an undefined function.
-                console.error(`Call to undefined function ${sFuncName}.`);
+                logger.error(`Call to undefined function ${sFuncName}.`);
                 return { call: sFuncName, value: undefined };
             }
 
@@ -122,23 +122,23 @@
                 if (!xValue) {
                     return { call: 'window', value: window };
                 }
-                console.error('Cannot assign the "window" var.');
+                logger.error('Cannot assign the "window" var.');
                 return { call: 'null', value: null };
             }
 
             const sAttrName = !sCall ? sName : `${sCall}.${sName}`;
             const xAttrValue = processAttr(xCurrValue || window, sName, xValue, xOptions);
             if (xAttrValue === undefined) {
-                console.error(`Call to undefined variable ${sAttrName}.`);
+                logger.error(`Call to undefined variable ${sAttrName}.`);
             }
             return { call: sAttrName, value: xAttrValue };
         },
         invalid: (xCall) => {
-            console.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+            logger.error('Invalid command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
         unknown: (xCall) => {
-            console.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+            logger.error('Unknown command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
     };
@@ -394,4 +394,4 @@
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
-    jaxon.utils.form, jaxon.utils.types);
+    jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);

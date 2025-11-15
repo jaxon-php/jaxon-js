@@ -73,7 +73,7 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax) {
+(function(register, cmd, ajax, logger) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
         ajax.response.complete(request);
@@ -102,7 +102,7 @@ jaxon.isLoaded = true;
     register('handler.remove', cmd.event.removeHandler, 'Script::RemoveHandler');
 
     register('script.debug', ({ message }) => {
-        console.log(message);
+        logger.consoleMode().debug(message);
         return true;
     }, 'Debug message');
 
@@ -116,4 +116,4 @@ jaxon.isLoaded = true;
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');
-})(jaxon.register, jaxon.cmd, jaxon.ajax);
+})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.utils.logger);
