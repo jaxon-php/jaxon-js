@@ -293,7 +293,12 @@ var jaxon = {
                 if (jaxon.config.baseDocument.body) {
                     jaxon.config.baseDocument.body.style.cursor = 'auto';
                 }
-            }
+            },
+            onFailure: function() {
+                if (jaxon.config.baseDocument.body) {
+                    jaxon.config.baseDocument.body.style.cursor = 'auto';
+                }
+            },
         },
 
         /**
@@ -304,7 +309,8 @@ var jaxon = {
          */
         dontUpdate: {
             onRequest: () => {},
-            onComplete: () => {}
+            onComplete: () => {},
+            onFailure: () => {},
         },
     };
 })(jaxon.config, jaxon.utils.logger);
