@@ -96,7 +96,7 @@
      */
     const setFormDataParams = (oRequest) => {
         oRequest.requestData = new FormData();
-        setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
+        setParams(oRequest, (sParam, sValue) => oRequest.requestData.append(sParam, sValue));
 
         // Files to upload
         const { name: field, files } = oRequest.upload.input;

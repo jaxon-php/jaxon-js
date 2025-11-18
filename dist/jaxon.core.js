@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.10',
+        number: '5.0.11',
     },
 
     debug: {
@@ -193,48 +193,6 @@ var jaxon = {
     };
 
     /**
-     * Set the options in the request object
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @returns {void}
-     */
-    self.setRequestOptions = (oRequest) => {
-        if (self.requestURI === undefined) {
-            throw { code: 10005 };
-        }
-
-        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...self[sHeader], ...oRequest[sHeader] });
-
-        const oDefaultOptions = {
-            statusMessages: self.statusMessages,
-            waitCursor: self.waitCursor,
-            mode: self.defaultMode,
-            method: self.defaultMethod,
-            URI: self.requestURI,
-            httpVersion: self.defaultHttpVersion,
-            contentType: self.defaultContentType,
-            retry: self.defaultRetry,
-            maxObjectDepth: self.maxObjectDepth,
-            maxObjectSize: self.maxObjectSize,
-            upload: false,
-            aborted: false,
-            response: {
-                convertToJson: self.convertResponseToJson,
-            },
-        };
-        Object.keys(oDefaultOptions).forEach(sOption =>
-            oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
-
-        oRequest.method = oRequest.method.toUpperCase();
-        if (oRequest.method !== 'GET') {
-            oRequest.method = 'POST'; // W3C: Method is case sensitive
-        }
-        oRequest.requestRetry = oRequest.retry;
-    };
-
-    /**
      * Class: jaxon.config.status
      *
      * Provides support for updating the browser's status bar during the request process.
@@ -293,7 +251,12 @@ var jaxon = {
                 if (jaxon.config.baseDocument.body) {
                     jaxon.config.baseDocument.body.style.cursor = 'auto';
                 }
-            }
+            },
+            onFailure: function() {
+                if (jaxon.config.baseDocument.body) {
+                    jaxon.config.baseDocument.body.style.cursor = 'auto';
+                }
+            },
         },
 
         /**
@@ -304,7 +267,8 @@ var jaxon = {
          */
         dontUpdate: {
             onRequest: () => {},
-            onComplete: () => {}
+            onComplete: () => {},
+            onFailure: () => {},
         },
     };
 })(jaxon.config, jaxon.utils.logger);
@@ -2105,8 +2069,8 @@ window.jaxon = jaxon;
         }
 
         const aRequestCallback = getRequestCallbackByNames(oRequest);
-        const oStatusCallback = (oRequest.statusMessages) ? config.status.update : config.status.dontUpdate;
-        const oCursorCallback = config.cursor.update;
+        const oStatusCallback = !oRequest.statusMessages ? config.status.dontUpdate : config.status.update;
+        const oCursorCallback = !oRequest.waitCursor ? config.cursor.dontUpdate : config.cursor.update;
 
         oRequest.callbacks = [
             oStatusCallback,
@@ -2494,15 +2458,14 @@ window.jaxon = jaxon;
      *
      * @return {FormData}
      */
-    const getFormDataParams = (oRequest) => {
-        const rd = new FormData();
-        setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
+    const setFormDataParams = (oRequest) => {
+        oRequest.requestData = new FormData();
+        setParams(oRequest, (sParam, sValue) => oRequest.requestData.append(sParam, sValue));
 
         // Files to upload
         const { name: field, files } = oRequest.upload.input;
         // The "files" var is an array-like object, that we need to convert to a real array.
-        files && [...files].forEach(file => rd.append(field, file));
-        return rd;
+        files && [...files].forEach(file => oRequest.requestData.append(field, file));
     };
 
     /**
@@ -2512,16 +2475,17 @@ window.jaxon = jaxon;
      *
      * @return {string}
      */
-    const getUrlEncodedParams = (oRequest) => {
+    const setUrlEncodedParams = (oRequest) => {
         const rd = [];
         setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
         if (oRequest.method === 'POST') {
-            return rd.join('&');
+            oRequest.requestData = rd.join('&');
+            return;
         }
         // Move the parameters to the URL for HTTP GET requests
         oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
-        return ''; // The request body is empty
+        oRequest.requestData = ''; // The request body is empty
     };
 
     /**
@@ -2537,7 +2501,6 @@ window.jaxon = jaxon;
     /**
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
-     *
      * Note:
      * This is called once per request; upon a request failure, this will not be called for additional retries.
      *
@@ -2545,12 +2508,8 @@ window.jaxon = jaxon;
      *
      * @return {void}
      */
-    self.process = (oRequest) => {
-        // Make request parameters.
-        oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = hasUpload(oRequest) ?
-            getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-    };
+    self.process = (oRequest) => hasUpload(oRequest) ?
+        setFormDataParams(oRequest) : setUrlEncodedParams(oRequest);
 })(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);
 
 
@@ -2592,6 +2551,47 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Set the options in the request object
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    const setRequestOptions = (oRequest) => {
+        if (config.requestURI === undefined) {
+            throw { code: 10005 };
+        }
+
+        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...config[sHeader], ...oRequest[sHeader] });
+
+        const oDefaultOptions = {
+            statusMessages: config.statusMessages,
+            waitCursor: config.waitCursor,
+            mode: config.defaultMode,
+            method: config.defaultMethod,
+            requestURI: config.requestURI,
+            httpVersion: config.defaultHttpVersion,
+            contentType: config.defaultContentType,
+            requestRetry: config.defaultRetry,
+            maxObjectDepth: config.maxObjectDepth,
+            maxObjectSize: config.maxObjectSize,
+            upload: false,
+            aborted: false,
+            response: {
+                convertToJson: config.convertResponseToJson,
+            },
+        };
+        Object.keys(oDefaultOptions).forEach(sOption =>
+            oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
+
+        oRequest.method = oRequest.method.toUpperCase();
+        if (oRequest.method !== 'GET') {
+            oRequest.method = 'POST'; // W3C: Method is case sensitive
+        }
+    };
+
+    /**
      * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
@@ -2601,7 +2601,7 @@ window.jaxon = jaxon;
      * @returns {void}
      */
     self.initialize = (oRequest) => {
-        config.setRequestOptions(oRequest);
+        setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
 
@@ -2933,11 +2933,14 @@ window.jaxon = jaxon;
     const cleanUp = (oRequest) => {
         // clean up -- these items are restored when the request is initiated
         delete oRequest.func;
-        delete oRequest.URI;
         delete oRequest.requestURI;
         delete oRequest.requestData;
         delete oRequest.httpRequestOptions;
         delete oRequest.response;
+        delete oRequest.callbacks;
+        delete oRequest.commonHeaders;
+        delete oRequest.postHeaders;
+        delete oRequest.getHeaders;
     };
 
     /**

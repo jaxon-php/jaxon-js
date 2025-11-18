@@ -407,7 +407,7 @@ try {
     */
     const submitRequest = request.submit;
     request.submit = function(oRequest) {
-        let msg = oRequest.method + ': ' + oRequest.URI + '\n';
+        let msg = oRequest.method + ': ' + oRequest.requestURI + '\n';
         let text = decodeURIComponent(oRequest.requestData);
         text = text.replace(new RegExp('&jxn', 'g'), '\n&jxn');
         msg += text;
@@ -424,7 +424,7 @@ try {
             return submitRequest(oRequest);
         } catch (e) {
             self.writeDebugMessage(e.message);
-            if (0 < oRequest.retry)
+            if (0 < oRequest.requestRetry)
                 throw e;
         }
     }
