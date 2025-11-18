@@ -193,48 +193,6 @@ var jaxon = {
     };
 
     /**
-     * Set the options in the request object
-     *
-     * @param {object} oRequest The request context object.
-     *
-     * @returns {void}
-     */
-    self.setRequestOptions = (oRequest) => {
-        if (self.requestURI === undefined) {
-            throw { code: 10005 };
-        }
-
-        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
-        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...self[sHeader], ...oRequest[sHeader] });
-
-        const oDefaultOptions = {
-            statusMessages: self.statusMessages,
-            waitCursor: self.waitCursor,
-            mode: self.defaultMode,
-            method: self.defaultMethod,
-            URI: self.requestURI,
-            httpVersion: self.defaultHttpVersion,
-            contentType: self.defaultContentType,
-            retry: self.defaultRetry,
-            maxObjectDepth: self.maxObjectDepth,
-            maxObjectSize: self.maxObjectSize,
-            upload: false,
-            aborted: false,
-            response: {
-                convertToJson: self.convertResponseToJson,
-            },
-        };
-        Object.keys(oDefaultOptions).forEach(sOption =>
-            oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
-
-        oRequest.method = oRequest.method.toUpperCase();
-        if (oRequest.method !== 'GET') {
-            oRequest.method = 'POST'; // W3C: Method is case sensitive
-        }
-        oRequest.requestRetry = oRequest.retry;
-    };
-
-    /**
      * Class: jaxon.config.status
      *
      * Provides support for updating the browser's status bar during the request process.

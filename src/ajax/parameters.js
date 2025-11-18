@@ -94,15 +94,14 @@
      *
      * @return {FormData}
      */
-    const getFormDataParams = (oRequest) => {
-        const rd = new FormData();
+    const setFormDataParams = (oRequest) => {
+        oRequest.requestData = new FormData();
         setParams(oRequest, (sParam, sValue) => rd.append(sParam, sValue));
 
         // Files to upload
         const { name: field, files } = oRequest.upload.input;
         // The "files" var is an array-like object, that we need to convert to a real array.
-        files && [...files].forEach(file => rd.append(field, file));
-        return rd;
+        files && [...files].forEach(file => oRequest.requestData.append(field, file));
     };
 
     /**
@@ -112,16 +111,17 @@
      *
      * @return {string}
      */
-    const getUrlEncodedParams = (oRequest) => {
+    const setUrlEncodedParams = (oRequest) => {
         const rd = [];
         setParams(oRequest, (sParam, sValue) => rd.push(sParam + '=' + sValue));
 
         if (oRequest.method === 'POST') {
-            return rd.join('&');
+            oRequest.requestData = rd.join('&');
+            return;
         }
         // Move the parameters to the URL for HTTP GET requests
         oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
-        return ''; // The request body is empty
+        oRequest.requestData = ''; // The request body is empty
     };
 
     /**
@@ -137,7 +137,6 @@
     /**
      * Processes request specific parameters and generates the temporary
      * variables needed by jaxon to initiate and process the request.
-     *
      * Note:
      * This is called once per request; upon a request failure, this will not be called for additional retries.
      *
@@ -145,10 +144,6 @@
      *
      * @return {void}
      */
-    self.process = (oRequest) => {
-        // Make request parameters.
-        oRequest.requestURI = oRequest.URI;
-        oRequest.requestData = hasUpload(oRequest) ?
-            getFormDataParams(oRequest) : getUrlEncodedParams(oRequest);
-    };
+    self.process = (oRequest) => hasUpload(oRequest) ?
+        setFormDataParams(oRequest) : setUrlEncodedParams(oRequest);
 })(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);

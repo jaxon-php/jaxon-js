@@ -191,11 +191,14 @@
     const cleanUp = (oRequest) => {
         // clean up -- these items are restored when the request is initiated
         delete oRequest.func;
-        delete oRequest.URI;
         delete oRequest.requestURI;
         delete oRequest.requestData;
         delete oRequest.httpRequestOptions;
         delete oRequest.response;
+        delete oRequest.callbacks;
+        delete oRequest.commonHeaders;
+        delete oRequest.postHeaders;
+        delete oRequest.getHeaders;
     };
 
     /**

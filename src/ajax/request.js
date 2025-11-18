@@ -36,6 +36,47 @@
     };
 
     /**
+     * Set the options in the request object
+     *
+     * @param {object} oRequest The request context object.
+     *
+     * @returns {void}
+     */
+    const setRequestOptions = (oRequest) => {
+        if (config.requestURI === undefined) {
+            throw { code: 10005 };
+        }
+
+        const aHeaders = ['commonHeaders', 'postHeaders', 'getHeaders'];
+        aHeaders.forEach(sHeader => oRequest[sHeader] = { ...config[sHeader], ...oRequest[sHeader] });
+
+        const oDefaultOptions = {
+            statusMessages: config.statusMessages,
+            waitCursor: config.waitCursor,
+            mode: config.defaultMode,
+            method: config.defaultMethod,
+            requestURI: config.requestURI,
+            httpVersion: config.defaultHttpVersion,
+            contentType: config.defaultContentType,
+            requestRetry: config.defaultRetry,
+            maxObjectDepth: config.maxObjectDepth,
+            maxObjectSize: config.maxObjectSize,
+            upload: false,
+            aborted: false,
+            response: {
+                convertToJson: config.convertResponseToJson,
+            },
+        };
+        Object.keys(oDefaultOptions).forEach(sOption =>
+            oRequest[sOption] = oRequest[sOption] ?? oDefaultOptions[sOption]);
+
+        oRequest.method = oRequest.method.toUpperCase();
+        if (oRequest.method !== 'GET') {
+            oRequest.method = 'POST'; // W3C: Method is case sensitive
+        }
+    };
+
+    /**
      * Initialize a request object.
      *
      * @param {object} oRequest An object that specifies call specific settings that will,
@@ -45,7 +86,7 @@
      * @returns {void}
      */
     self.initialize = (oRequest) => {
-        config.setRequestOptions(oRequest);
+        setRequestOptions(oRequest);
         cbk.initCallbacks(oRequest);
         cbk.execute(oRequest, 'onInitialize');
 
