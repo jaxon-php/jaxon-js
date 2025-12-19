@@ -115,7 +115,7 @@ jaxon.isLoaded = true;
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
-    register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
+    // register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
     register('dialog.confirm', cmd.dialog.execConfirm, 'Dialog::Confirm');
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');

@@ -32,15 +32,6 @@
     self.setBags = (oValues) => Object.keys(oValues).forEach(sBag => self.setBag(sBag, oValues[sBag]));
 
     /**
-     * Clear an entry in the data bag.
-     *
-     * @param {string} sBag   The data bag name.
-     *
-     * @return {void}
-     */
-    self.clearBag = (sBag) => delete databags[sBag];
-
-    /**
      * Make the databag object to send in the HTTP request.
      *
      * @param {array} aBags The data bag names.
