@@ -15,12 +15,12 @@
     /**
      * Save data in the data bag.
      *
-     * @param {string} sBag   The data bag name.
+     * @param {string} sBagName   The data bag name.
      * @param {object} oValues The values to save in the data bag.
      *
      * @return {void}
      */
-    self.setBag = (sBag, oValues) => databags[sBag] = oValues;
+    self.setBag = (sBagName, oValues) => databags[sBagName] = oValues;
 
     /**
      * Save data in the data bag.
@@ -29,7 +29,8 @@
      *
      * @return {void}
      */
-    self.setBags = (oValues) => Object.keys(oValues).forEach(sBag => self.setBag(sBag, oValues[sBag]));
+    self.setBags = (oValues) => Object.keys(oValues)
+        .forEach(sBagName => self.setBag(sBagName, oValues[sBagName]));
 
     /**
      * Make the databag object to send in the HTTP request.
@@ -38,19 +39,11 @@
      *
      * @return {object}
      */
-    const getBagsValues = (aBags) => JSON.stringify(aBags.reduce((oValues, sBag) => ({
-        ...oValues,
-        [sBag]: databags[sBag] ?? undefined }
-    ), {}));
-
-    /**
-     * Get the value of a parameter of an ajax call.
-     *
-     * @param {mixed} oVal - The value to be stringified
-     *
-     * @returns {mixed}
-     */
-    const getParamValue = (oVal) => oVal === undefined || types.of(oVal) === 'function' ? null : oVal;
+    const getBagsValues = (aBags) => aBags.reduce((oValues, sBagName) =>
+        (databags[sBagName] === undefined ? oValues : {
+            ...oValues,
+            [sBagName]: databags[sBagName],
+        }), {});
 
     /**
      * Sets the request parameters in a container.
@@ -72,10 +65,10 @@
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         fSetter('jxncall', encodeURIComponent(JSON.stringify({
             ...func,
-            args: [...parameters].map(xParam => getParamValue(xParam)),
+            args: [...parameters].filter(xParam => xParam !== undefined && !types.isFunction(xParam)),
         })));
         // Add the databag values, if required.
-        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsValues(bags)));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(JSON.stringify(getBagsValues(bags))));
     };
 
     /**
