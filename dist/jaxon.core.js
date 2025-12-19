@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.0.11',
+        number: '5.0.12',
     },
 
     debug: {
@@ -2368,7 +2368,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, types, version) {
+(function(self, types, dom, version) {
     /**
      * The array of data bags
      *
@@ -2379,12 +2379,12 @@ window.jaxon = jaxon;
     /**
      * Save data in the data bag.
      *
-     * @param {string} sBag   The data bag name.
+     * @param {string} sBagName   The data bag name.
      * @param {object} oValues The values to save in the data bag.
      *
      * @return {void}
      */
-    self.setBag = (sBag, oValues) => databags[sBag] = oValues;
+    self.setBag = (sBagName, oValues) => databags[sBagName] = oValues;
 
     /**
      * Save data in the data bag.
@@ -2393,16 +2393,34 @@ window.jaxon = jaxon;
      *
      * @return {void}
      */
-    self.setBags = (oValues) => Object.keys(oValues).forEach(sBag => self.setBag(sBag, oValues[sBag]));
+    self.setBags = (oValues) => Object.keys(oValues)
+        .forEach(sBagName => self.setBag(sBagName, oValues[sBagName]));
 
     /**
-     * Clear an entry in the data bag.
+     * Make the databag object to send in the HTTP request.
      *
-     * @param {string} sBag   The data bag name.
+     * @param {string} sBagName The data bag name.
+     * @param {string} sBagKey The data bag entry key.
+     * @param {string} sDataKey The data bag value key.
+     * @param {mixed} xDefault The default value.
      *
-     * @return {void}
+     * @return {mixed}
      */
-    self.clearBag = (sBag) => delete databags[sBag];
+    self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
+        if(databags[sBagName] === undefined || databags[sBagName][sBagKey] === undefined)
+        {
+            return xDefault;
+        }
+
+        const databag = databags[sBagName][sBagKey];
+        if(!types.isObject(databag))
+        {
+            return xDefault;
+        }
+
+        const xValue = dom.findObject(sDataKey, databag);
+        return xValue !== null ? xValue : xDefault;
+    };
 
     /**
      * Make the databag object to send in the HTTP request.
@@ -2411,19 +2429,11 @@ window.jaxon = jaxon;
      *
      * @return {object}
      */
-    const getBagsValues = (aBags) => JSON.stringify(aBags.reduce((oValues, sBag) => ({
-        ...oValues,
-        [sBag]: databags[sBag] ?? undefined }
-    ), {}));
-
-    /**
-     * Get the value of a parameter of an ajax call.
-     *
-     * @param {mixed} oVal - The value to be stringified
-     *
-     * @returns {mixed}
-     */
-    const getParamValue = (oVal) => oVal === undefined || types.of(oVal) === 'function' ? null : oVal;
+    const getBagsValues = (aBags) => aBags.reduce((oValues, sBagName) =>
+        (databags[sBagName] === undefined ? oValues : {
+            ...oValues,
+            [sBagName]: databags[sBagName],
+        }), {});
 
     /**
      * Sets the request parameters in a container.
@@ -2445,10 +2455,10 @@ window.jaxon = jaxon;
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         fSetter('jxncall', encodeURIComponent(JSON.stringify({
             ...func,
-            args: [...parameters].map(xParam => getParamValue(xParam)),
+            args: [...parameters].filter(xParam => xParam !== undefined && !types.isFunction(xParam)),
         })));
         // Add the databag values, if required.
-        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(getBagsValues(bags)));
+        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(JSON.stringify(getBagsValues(bags))));
     };
 
     /**
@@ -2510,7 +2520,7 @@ window.jaxon = jaxon;
      */
     self.process = (oRequest) => hasUpload(oRequest) ?
         setFormDataParams(oRequest) : setUrlEncodedParams(oRequest);
-})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.utils.dom, jaxon.version);
 
 
 /**
@@ -3666,6 +3676,11 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
+ * Shortcut to <jaxon.ajax.parameters.getBagValue>.
+ */
+jaxon.bag = jaxon.ajax.parameters.getBagValue;
+
+/**
  * Shortcut to <jaxon.parser.attr.process>.
  */
 jaxon.processCustomAttrs = jaxon.parser.attr.process;
@@ -3720,7 +3735,7 @@ jaxon.isLoaded = true;
     register('pg.paginate', cmd.script.paginate, 'Paginator::Paginate');
     // Data bags
     register('databag.set', cmd.script.setDatabag, 'Databag::SetValues');
-    register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
+    // register('databag.clear', cmd.script.clearDatabag, 'Databag::ClearValue');
     // Dialogs
     register('dialog.confirm', cmd.dialog.execConfirm, 'Dialog::Confirm');
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
