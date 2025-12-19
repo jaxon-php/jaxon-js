@@ -61,6 +61,11 @@ jaxon.getFormValues = jaxon.utils.form.getValues;
 jaxon.setBag = jaxon.ajax.parameters.setBag;
 
 /**
+ * Shortcut to <jaxon.ajax.parameters.getBagValue>.
+ */
+jaxon.bag = jaxon.ajax.parameters.getBagValue;
+
+/**
  * Shortcut to <jaxon.parser.attr.process>.
  */
 jaxon.processCustomAttrs = jaxon.parser.attr.process;

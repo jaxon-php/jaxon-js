@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, types, version) {
+(function(self, types, dom, version) {
     /**
      * The array of data bags
      *
@@ -31,6 +31,32 @@
      */
     self.setBags = (oValues) => Object.keys(oValues)
         .forEach(sBagName => self.setBag(sBagName, oValues[sBagName]));
+
+    /**
+     * Make the databag object to send in the HTTP request.
+     *
+     * @param {string} sBagName The data bag name.
+     * @param {string} sBagKey The data bag entry key.
+     * @param {string} sDataKey The data bag value key.
+     * @param {mixed} xDefault The default value.
+     *
+     * @return {mixed}
+     */
+    self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
+        if(databags[sBagName] === undefined || databags[sBagName][sBagKey] === undefined)
+        {
+            return xDefault;
+        }
+
+        const databag = databags[sBagName][sBagKey];
+        if(!types.isObject(databag))
+        {
+            return xDefault;
+        }
+
+        const xValue = dom.findObject(sDataKey, databag);
+        return xValue !== null ? xValue : xDefault;
+    };
 
     /**
      * Make the databag object to send in the HTTP request.
@@ -130,4 +156,4 @@
      */
     self.process = (oRequest) => hasUpload(oRequest) ?
         setFormDataParams(oRequest) : setUrlEncodedParams(oRequest);
-})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.version);
+})(jaxon.ajax.parameters, jaxon.utils.types, jaxon.utils.dom, jaxon.version);
