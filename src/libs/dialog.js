@@ -178,7 +178,7 @@
             ...types,
             ready: dom.ready,
             js: call.execExpr,
-            jq: query.jq,
+            jq: query.select,
             createUniqueId,
         };
         xCallback(libs[sLibName], options, utils);

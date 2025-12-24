@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.1.0',
+        number: '5.1.1',
     },
 
     debug: {
@@ -1178,7 +1178,7 @@ window.jaxon = jaxon;
             ...types,
             ready: dom.ready,
             js: call.execExpr,
-            jq: query.jq,
+            jq: query.select,
             createUniqueId,
         };
         xCallback(libs[sLibName], options, utils);
