@@ -21,7 +21,9 @@
         if (sAttr !== 'outerHTML' || !xTarget.parentNode) {
             xNode[sAttr] = xValue;
             // Process Jaxon custom attributes in the new node HTML content.
-            sAttr === 'innerHTML' && attr.process(xTarget, false);
+            if (sAttr === 'innerHTML') {
+                attr.process(xTarget, false);
+            }
             return;
         }
 
@@ -36,7 +38,9 @@
                 // Process Jaxon custom attributes in the new node HTML content.
                 xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
                     aMutations[0].addedNodes[0] : null;
-                xTarget && attr.process(xTarget, true);
+                if (xTarget) {
+                    attr.process(xTarget, true);
+                }
                 // Restart the command queue processing.
                 restart();
             })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
