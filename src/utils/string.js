@@ -63,15 +63,12 @@
          *
          * @returns {string}
          */
-        String.prototype.supplant = function(values) {
-            return this.replace(
-                /\{([^{}]*)\}/g,
-                (a, b) => {
-                    const r = values[b];
-                    const t = typeof r;
-                    return t === 'string' || t === 'number' ? r : a;
-                }
-            );
-        };
+        String.prototype.supplant = (values) => this.replace(
+            /\{([^{}]*)\}/g,
+            (a, b) => {
+                const t = typeof values[b];
+                return t === 'string' || t === 'number' ? values[b] : a;
+            }
+        );
     }
 })(jaxon.utils.string);
