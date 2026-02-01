@@ -6,7 +6,7 @@
  * global: jaxon
  */
 
-(function(self, query, dialog, dom, form, types, logger) {
+(function(self, query, dialog, dom, string, form, types, logger) {
     /**
      * The comparison operators.
      *
@@ -297,7 +297,7 @@
      * @returns {string}
      */
     const makePhrase = ({ str, args }, xOptions) =>
-        str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+        string.supplant(str, args.reduce((oArgs, xArg, nIndex) =>
             ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
 
     /**
@@ -394,4 +394,4 @@
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
-    jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.utils.string, jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);

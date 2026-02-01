@@ -903,22 +903,21 @@ window.jaxon = jaxon;
      * String functions for Jaxon
      * See http://javascript.crockford.com/remedial.html for more explanation
      */
-    if (!String.prototype.supplant) {
-        /**
-         * Substitute variables in the string
-         *
-         * @param {object} values The substitution values
-         *
-         * @returns {string}
-         */
-        String.prototype.supplant = (values) => this.replace(
-            /\{([^{}]*)\}/g,
-            (a, b) => {
-                const t = typeof values[b];
-                return t === 'string' || t === 'number' ? values[b] : a;
-            }
-        );
-    }
+    /**
+     * Substitute variables in the string
+     *
+     * @param {string} str The string to substitute
+     * @param {object} values The substitution values
+     *
+     * @returns {string}
+     */
+    self.supplant = (str, values) => str.replace(
+        /\{([^{}]*)\}/g,
+        (a, b) => {
+            const t = typeof values[b];
+            return t === 'string' || t === 'number' ? values[b] : a;
+        }
+    );
 })(jaxon.utils.string);
 
 
@@ -1517,7 +1516,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, query, dialog, dom, form, types, logger) {
+(function(self, query, dialog, dom, string, form, types, logger) {
     /**
      * The comparison operators.
      *
@@ -1808,7 +1807,7 @@ window.jaxon = jaxon;
      * @returns {string}
      */
     const makePhrase = ({ str, args }, xOptions) =>
-        str.supplant(args.reduce((oArgs, xArg, nIndex) =>
+        string.supplant(str, args.reduce((oArgs, xArg, nIndex) =>
             ({ ...oArgs, [nIndex + 1]: getValue(xArg, xOptions) }), {}));
 
     /**
@@ -1905,7 +1904,7 @@ window.jaxon = jaxon;
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
-    jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.utils.string, jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);
 
 
 /**

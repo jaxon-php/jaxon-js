@@ -39,13 +39,16 @@ test('Add on prefix with capital letter and prefix.', () => {
 });
 
 test('Replace placeholder in a string.', () => {
-    expect('Really Mr. {name}?'.supplant({'name': 'Johnson'})).toBe('Really Mr. Johnson?');
+    expect(string.supplant('Really Mr. {name}?',
+        {'name': 'Johnson'})).toBe('Really Mr. Johnson?');
 });
 
 test('Replace placeholders in a string.', () => {
-    expect('{name} Mr. {word}!'.supplant({'name': 'Goodbye', 'word': 'Johnson'})).toBe('Goodbye Mr. Johnson!');
+    expect(string.supplant('{name} Mr. {word}!',
+        {'name': 'Goodbye', 'word': 'Johnson'})).toBe('Goodbye Mr. Johnson!');
 });
 
 test('Replace inversed placeholders in a string.', () => {
-    expect('Mr. {word}, {name}!'.supplant({'name': 'Goodbye', 'word': 'Johnson'})).toBe('Mr. Johnson, Goodbye!');
+    expect(string.supplant('Mr. {word}, {name}!',
+        {'name': 'Goodbye', 'word': 'Johnson'})).toBe('Mr. Johnson, Goodbye!');
 });
