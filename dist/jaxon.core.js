@@ -58,6 +58,8 @@ var jaxon = {
         logger: {},
     },
 
+    bag: {},
+
     dom: {},
 
     dialog: {},
@@ -909,16 +911,13 @@ window.jaxon = jaxon;
          *
          * @returns {string}
          */
-        String.prototype.supplant = function(values) {
-            return this.replace(
-                /\{([^{}]*)\}/g,
-                (a, b) => {
-                    const r = values[b];
-                    const t = typeof r;
-                    return t === 'string' || t === 'number' ? r : a;
-                }
-            );
-        };
+        String.prototype.supplant = (values) => this.replace(
+            /\{([^{}]*)\}/g,
+            (a, b) => {
+                const t = typeof values[b];
+                return t === 'string' || t === 'number' ? values[b] : a;
+            }
+        );
     }
 })(jaxon.utils.string);
 
@@ -2387,17 +2386,62 @@ window.jaxon = jaxon;
     self.setBag = (sBagName, oValues) => databags[sBagName] = oValues;
 
     /**
-     * Save data in the data bag.
+     * Set the values in an entry in the databag.
      *
-     * @param {object} oValues The values to save in the data bag.
+     * @param {string} sBagName The data bag name.
+     * @param {string} sBagKey The data bag entry key.
+     * @param {mixed} xValue The entry value.
      *
-     * @return {void}
+     * @return {bool}
      */
-    self.setBags = (oValues) => Object.keys(oValues)
-        .forEach(sBagName => self.setBag(sBagName, oValues[sBagName]));
+    self.setBagEntry = (sBagName, sBagKey, xValue) => {
+        // Only objects are allowed in a databag.
+        if (databags[sBagName] === undefined || !types.isObject(xValue)) {
+            return false;
+        }
+
+        databags[sBagName][sBagKey] = xValue;
+        return true;
+    };
 
     /**
-     * Make the databag object to send in the HTTP request.
+     * Get the values in an entry in the databag.
+     *
+     * @param {string} sBagName The data bag name.
+     * @param {string} sBagKey The data bag entry key.
+     *
+     * @return {object|undefined}
+     */
+    self.getBagEntry = (sBagName, sBagKey) => databags[sBagName] === undefined ?
+        undefined : databags[sBagName][sBagKey];
+
+    /**
+     * Set a value in the databag.
+     *
+     * @param {string} sBagName The data bag name.
+     * @param {string} sBagKey The data bag entry key.
+     * @param {string} sDataKey The data bag value key.
+     * @param {mixed} xValue The entry value.
+     *
+     * @return {bool}
+     */
+    self.setBagValue = (sBagName, sBagKey, sDataKey, xValue) => {
+        const xBagEntry = self.getBagEntry(sBagName, sBagKey);
+        if (xBagEntry === undefined) {
+            return false;
+        }
+
+        const xBag = dom.getInnerObject(sDataKey, xBagEntry);
+        if (xBag === null) {
+            return false;
+        }
+
+        xBag.node[xBag.attr] = xValue;
+        return true;
+    };
+
+    /**
+     * Get a single value from the databag.
      *
      * @param {string} sBagName The data bag name.
      * @param {string} sBagKey The data bag entry key.
@@ -2407,33 +2451,44 @@ window.jaxon = jaxon;
      * @return {mixed}
      */
     self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
-        if(databags[sBagName] === undefined || databags[sBagName][sBagKey] === undefined)
-        {
+        const xBagEntry = self.getBagEntry(sBagName, sBagKey);
+        if (xBagEntry === undefined) {
             return xDefault;
         }
 
-        const databag = databags[sBagName][sBagKey];
-        if(!types.isObject(databag))
-        {
-            return xDefault;
-        }
-
-        const xValue = dom.findObject(sDataKey, databag);
-        return xValue !== null ? xValue : xDefault;
+        return dom.findObject(sDataKey, xBagEntry) ?? xDefault;
     };
 
     /**
-     * Make the databag object to send in the HTTP request.
+     * Get multiple values from the databag.
      *
      * @param {array} aBags The data bag names.
      *
      * @return {object}
      */
-    const getBagsValues = (aBags) => aBags.reduce((oValues, sBagName) =>
-        (databags[sBagName] === undefined ? oValues : {
+    const getBags = (aBags) => aBags.reduce((oValues, sBagName) =>
+        databags[sBagName] === undefined || databags[sBagName] === null ? oValues : {
             ...oValues,
             [sBagName]: databags[sBagName],
-        }), {});
+        }, {});
+
+    /**
+     * Check the validity of a call argument.
+     *
+     * @param {mixed} xArg
+     *
+     * @return {bool}
+     */
+    const callArgIsValid = (xArg) => xArg !== undefined && !types.isFunction(xArg);
+
+    /**
+     * Encode a parameter for the request.
+     *
+     * @param {object} xParam request parameter.
+     *
+     * @return {string}
+     */
+    const encodeParameter = (xParam) => encodeURIComponent(JSON.stringify(xParam));
 
     /**
      * Sets the request parameters in a container.
@@ -2453,12 +2508,14 @@ window.jaxon = jaxon;
         // The parameters value was assigned from the js "arguments" var in a function. So it
         // is an array-like object, that we need to convert to a real array => [...parameters].
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
-        fSetter('jxncall', encodeURIComponent(JSON.stringify({
+        fSetter('jxncall', encodeParameter({
             ...func,
-            args: [...parameters].filter(xParam => xParam !== undefined && !types.isFunction(xParam)),
-        })));
-        // Add the databag values, if required.
-        bags.length > 0 && fSetter('jxnbags', encodeURIComponent(JSON.stringify(getBagsValues(bags))));
+            args: [...parameters].filter(xArg => callArgIsValid(xArg)),
+        }));
+        // Add the databag values, if there's any.
+        if (bags.length > 0) {
+            fSetter('jxnbags', encodeParameter(getBags(bags)));
+        }
     };
 
     /**
@@ -3256,7 +3313,9 @@ window.jaxon = jaxon;
         if (sAttr !== 'outerHTML' || !xTarget.parentNode) {
             xNode[sAttr] = xValue;
             // Process Jaxon custom attributes in the new node HTML content.
-            sAttr === 'innerHTML' && attr.process(xTarget, false);
+            if (sAttr === 'innerHTML') {
+                attr.process(xTarget, false);
+            }
             return;
         }
 
@@ -3271,7 +3330,9 @@ window.jaxon = jaxon;
                 // Process Jaxon custom attributes in the new node HTML content.
                 xTarget = aMutations.length > 0 && aMutations[0].addedNodes?.length > 0 ?
                     aMutations[0].addedNodes[0] : null;
-                xTarget && attr.process(xTarget, true);
+                if (xTarget) {
+                    attr.process(xTarget, true);
+                }
                 // Restart the command queue processing.
                 restart();
             })).observe(xNode.parentNode, { attributes: false, childList: true, subtree: false });
@@ -3574,7 +3635,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.setDatabag = ({ values }) => {
-        parameters.setBags(values);
+        Object.keys(values).forEach(sBag => parameters.setBag(sBag, values[sBag]));
         return true;
     };
 
@@ -3671,14 +3732,14 @@ jaxon.alert = jaxon.dialog.alert;
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /**
- * Shortcut to <jaxon.ajax.parameters.setBag>.
+ * Shortcut to <jaxon.ajax.parameters.setBagValue>.
  */
-jaxon.setBag = jaxon.ajax.parameters.setBag;
+jaxon.bag.set = jaxon.ajax.parameters.setBagValue;
 
 /**
  * Shortcut to <jaxon.ajax.parameters.getBagValue>.
  */
-jaxon.bag = jaxon.ajax.parameters.getBagValue;
+jaxon.bag.get = jaxon.ajax.parameters.getBagValue;
 
 /**
  * Shortcut to <jaxon.parser.attr.process>.

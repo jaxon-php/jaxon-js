@@ -58,6 +58,8 @@ var jaxon = {
         logger: {},
     },
 
+    bag: {},
+
     dom: {},
 
     dialog: {},

@@ -56,14 +56,14 @@ jaxon.alert = jaxon.dialog.alert;
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /**
- * Shortcut to <jaxon.ajax.parameters.setBag>.
+ * Shortcut to <jaxon.ajax.parameters.setBagValue>.
  */
-jaxon.setBag = jaxon.ajax.parameters.setBag;
+jaxon.bag.set = jaxon.ajax.parameters.setBagValue;
 
 /**
  * Shortcut to <jaxon.ajax.parameters.getBagValue>.
  */
-jaxon.bag = jaxon.ajax.parameters.getBagValue;
+jaxon.bag.get = jaxon.ajax.parameters.getBagValue;
 
 /**
  * Shortcut to <jaxon.parser.attr.process>.
