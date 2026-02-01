@@ -33,7 +33,7 @@
         .forEach(sBagName => self.setBag(sBagName, oValues[sBagName]));
 
     /**
-     * Make the databag object to send in the HTTP request.
+     * Get a single value from the databag.
      *
      * @param {string} sBagName The data bag name.
      * @param {string} sBagKey The data bag entry key.
@@ -43,33 +43,22 @@
      * @return {mixed}
      */
     self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
-        if(databags[sBagName] === undefined || databags[sBagName][sBagKey] === undefined)
-        {
-            return xDefault;
-        }
-
-        const databag = databags[sBagName][sBagKey];
-        if(!types.isObject(databag))
-        {
-            return xDefault;
-        }
-
-        const xValue = dom.findObject(sDataKey, databag);
+        const xValue = dom.findObject(`${sBagName}.${sBagKey}.${sDataKey}`, databags);
         return xValue !== null ? xValue : xDefault;
     };
 
     /**
-     * Make the databag object to send in the HTTP request.
+     * Get multiple values from the databag.
      *
      * @param {array} aBags The data bag names.
      *
      * @return {object}
      */
     const getBagsValues = (aBags) => aBags.reduce((oValues, sBagName) =>
-        (databags[sBagName] === undefined ? oValues : {
+        databags[sBagName] === undefined || databags[sBagName] === null ? oValues : {
             ...oValues,
             [sBagName]: databags[sBagName],
-        }), {});
+        }, {});
 
     /**
      * Sets the request parameters in a container.
