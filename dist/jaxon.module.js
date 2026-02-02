@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.2.0',
+        number: '5.2.1',
     },
 
     debug: {
@@ -3731,14 +3731,24 @@ jaxon.alert = jaxon.dialog.alert;
 jaxon.getFormValues = jaxon.utils.form.getValues;
 
 /**
+ * Shortcut to <jaxon.ajax.parameters.setBagEntry>.
+ */
+jaxon.bag.setEntry = jaxon.ajax.parameters.setBagEntry;
+
+/**
+ * Shortcut to <jaxon.ajax.parameters.getBagEntry>.
+ */
+jaxon.bag.getEntry = jaxon.ajax.parameters.getBagEntry;
+
+/**
  * Shortcut to <jaxon.ajax.parameters.setBagValue>.
  */
-jaxon.bag.set = jaxon.ajax.parameters.setBagValue;
+jaxon.bag.setValue = jaxon.ajax.parameters.setBagValue;
 
 /**
  * Shortcut to <jaxon.ajax.parameters.getBagValue>.
  */
-jaxon.bag.get = jaxon.ajax.parameters.getBagValue;
+jaxon.bag.getValue = jaxon.ajax.parameters.getBagValue;
 
 /**
  * Shortcut to <jaxon.parser.attr.process>.
