@@ -13,16 +13,6 @@
     const databags = {};
 
     /**
-     * Save data in the data bag.
-     *
-     * @param {string} sBagName   The data bag name.
-     * @param {object} oValues The values to save in the data bag.
-     *
-     * @return {void}
-     */
-    self.setBag = (sBagName, oValues) => databags[sBagName] = oValues;
-
-    /**
      * Set the values in an entry in the databag.
      *
      * @param {string} sBagName The data bag name.
@@ -32,8 +22,7 @@
      * @return {bool}
      */
     self.setBagEntry = (sBagName, sBagKey, xValue) => {
-        // Only objects are allowed in a databag.
-        if (databags[sBagName] === undefined || !types.isObject(xValue)) {
+        if (databags[sBagName] === undefined) {
             return false;
         }
 
@@ -64,7 +53,8 @@
      */
     self.setBagValue = (sBagName, sBagKey, sDataKey, xValue) => {
         const xBagEntry = self.getBagEntry(sBagName, sBagKey);
-        if (xBagEntry === undefined) {
+        // We need an object to get the data key from.
+        if (xBagEntry === undefined || !types.isObject(xBagEntry)) {
             return false;
         }
 
@@ -89,11 +79,30 @@
      */
     self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
         const xBagEntry = self.getBagEntry(sBagName, sBagKey);
-        if (xBagEntry === undefined) {
+        // We need an object to get the data key from.
+        if (xBagEntry === undefined || !types.isObject(xBagEntry)) {
             return xDefault;
         }
 
         return dom.findObject(sDataKey, xBagEntry) ?? xDefault;
+    };
+
+    /**
+     * Save data in the databags.
+     *
+     * @param {object} oValues The databags values.
+     *
+     * @return {void}
+     */
+    self.setBags = (oValues) => {
+        // Make sure the values are objects.
+        if (types.isObject(oValues)) {
+            Object.keys(oValues).forEach(sBagName => {
+                if (types.isObject(oValues[sBagName])) {
+                    databags[sBagName] = oValues[sBagName];
+                }
+            });
+        }
     };
 
     /**
@@ -143,7 +152,7 @@
         fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', version.number);
         // The parameters value was assigned from the js "arguments" var in a function. So it
-        // is an array-like object, that we need to convert to a real array => [...parameters].
+        // is an array-like object, that we need to convert to a true array => [...parameters].
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         fSetter('jxncall', encodeParameter({
             ...func,
@@ -168,8 +177,10 @@
 
         // Files to upload
         const { name: field, files } = oRequest.upload.input;
-        // The "files" var is an array-like object, that we need to convert to a real array.
-        files && [...files].forEach(file => oRequest.requestData.append(field, file));
+        if(files) {
+            // The "files" var is an array-like object, that we need to convert to a true array.
+            [...files].forEach(file => oRequest.requestData.append(field, file));
+        }
     };
 
     /**
@@ -187,6 +198,7 @@
             oRequest.requestData = rd.join('&');
             return;
         }
+
         // Move the parameters to the URL for HTTP GET requests
         oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
         oRequest.requestData = ''; // The request body is empty

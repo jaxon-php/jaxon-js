@@ -80,7 +80,7 @@
      * @returns {true} The operation completed successfully.
      */
     self.setDatabag = ({ values }) => {
-        Object.keys(values).forEach(sBag => parameters.setBag(sBag, values[sBag]));
+        parameters.setBags(values);
         return true;
     };
 
