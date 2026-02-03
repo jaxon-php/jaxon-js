@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, types, logger, config) {
+(function(self, types, log, config) {
     /**
      * The names of the available callbacks.
      *
@@ -66,7 +66,7 @@
         if (types.isObject(xCallbacks)) {
             return [xCallbacks];
         }
-        logger.warning(`Invalid callback value ignored on request to ${func.name}.`);
+        log.warning(`Invalid callback value ignored on request to ${func.name}.`);
         return [];
     };
 
@@ -103,7 +103,7 @@
             // Add the timers attribute, if it is not defined.
             .map(oCallback => ({ ...oCallback, timers: { ...oCallback.timers }}));
         if (aValidCallbacks.length !== aCallbacks.length) {
-            logger.warning(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
+            log.warning(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
         }
 
         const aRequestCallback = getRequestCallbackByNames(oRequest);
@@ -186,4 +186,4 @@
      */
     self.clearTimer = (oRequest, sEvent) => oRequest.callbacks
         .forEach(oCallback => clearTimer(oCallback, sEvent));
-})(jaxon.ajax.callback, jaxon.utils.types, jaxon.utils.logger, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.types, jaxon.utils.log, jaxon.config);

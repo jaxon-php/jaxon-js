@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, config, attr, cbk, queue, dom, types, logger) {
+(function(self, config, attr, cbk, queue, dom, types, log) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -77,7 +77,7 @@
     self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
-            logger.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
+            log.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
             return true;
         }
 
@@ -85,13 +85,13 @@
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
             if (!context.target) {
-                logger.error('Unable to find component node: ' + JSON.stringify(component));
+                log.error('Unable to find component node: ' + JSON.stringify(component));
             }
         }
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
             if (!context.target) {
-                logger.error('Unable to find node with id : ' + args.id);
+                log.error('Unable to find node with id : ' + args.id);
             }
         }
 
@@ -112,7 +112,7 @@
             self.execute(context);
             return true;
         } catch (e) {
-            logger.error(e);
+            log.error(e);
         }
         return false;
     };
@@ -176,7 +176,7 @@
         }
 
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
-        message && logger.console(message);
+        message && log.console(message);
 
         cbk.execute(oRequest, 'onProcessing');
 
@@ -206,4 +206,4 @@
         self.processQueue(oQueue);
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.ajax.callback,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.log);

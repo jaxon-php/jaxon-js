@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, dom, logger) {
+(function(self, dom, log) {
     /**
      * @param {string} type
      * @param {string} name
@@ -122,8 +122,8 @@
         let matches = name.match(nameRegex);
         if (!matches) {
             // Invalid name
-            logger.warning(`Invalid field name ${name} in form ${formId}.`);
-            logger.warning(`The value of the field ${name} in form ${formId} is ignored.`);
+            log.warning(`Invalid field name ${name} in form ${formId}.`);
+            log.warning(`The value of the field ${name} in form ${formId} is ignored.`);
             return;
         }
 
@@ -182,4 +182,4 @@
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.logger);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.log);

@@ -1,5 +1,5 @@
 /**
- * Class: jaxon.utils.logger
+ * Class: jaxon.utils.log
  *
  * global: jaxon
  */
@@ -106,4 +106,4 @@
         self.logger()?.debug(sMessage, { ...xContext });
         resetMode();
     };
-})(jaxon.utils.logger, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);
+})(jaxon.utils.log, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);

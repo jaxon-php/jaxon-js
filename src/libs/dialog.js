@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, dom, attr, call, query, types, logger) {
+(function(self, dom, attr, call, query, types, log) {
     /**
      * Config data.
      *
@@ -69,8 +69,8 @@
         }
 
         !libs[sLibName] ?
-            logger.warning(`Unable to find a dialog library with name "${sLibName}".`) :
-            logger.warning(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
+            log.warning(`Unable to find a dialog library with name "${sLibName}".`) :
+            log.warning(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
 
         // Check if there is a default library in the config for the required feature.
         const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
@@ -78,7 +78,7 @@
             return libs[config.defaults[sLibType]];
         }
         if (!libs.default[sFunc]) {
-            logger.error(`Unable to find a dialog library with the "${sFunc}" function.`);
+            log.error(`Unable to find a dialog library with the "${sFunc}" function.`);
         }
         return libs.default;
     };
@@ -226,4 +226,4 @@
             confirm(dialogContent(title, question)) ? yesCb() : (noCb && noCb());
     });
 })(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
-    jaxon.parser.query, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.parser.query, jaxon.utils.types, jaxon.utils.log);

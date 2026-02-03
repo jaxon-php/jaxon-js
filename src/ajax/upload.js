@@ -4,7 +4,7 @@
  * global: jaxon
  */
 
-(function(self, dom, logger) {
+(function(self, dom, log) {
     /**
      * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
      * @param {string=} oRequest.upload The HTML file upload field id
@@ -24,19 +24,19 @@
         const input = dom.$(oRequest.upload.id);
 
         if (!input) {
-            logger.error('Unable to find input field for file upload with id ' + oRequest.upload.id);
+            log.error('Unable to find input field for file upload with id ' + oRequest.upload.id);
             return false;
         }
         if (input.type !== 'file') {
-            logger.error('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+            log.error('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
             return false;
         }
         if (input.files.length === 0) {
-            logger.error('There is no file selected for upload in input field with id ' + oRequest.upload.id);
+            log.error('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
         if (input.name === undefined) {
-            logger.error('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
+            log.error('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
             return false;
         }
         oRequest.upload.input = input;
@@ -58,4 +58,4 @@
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-})(jaxon.ajax.upload, jaxon.utils.dom, jaxon.utils.logger);
+})(jaxon.ajax.upload, jaxon.utils.dom, jaxon.utils.log);

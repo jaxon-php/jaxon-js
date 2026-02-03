@@ -55,7 +55,7 @@ var jaxon = {
         queue: {},
         types: {},
         string: {},
-        logger: {},
+        log: {},
     },
 
     bag: {},
@@ -72,7 +72,7 @@ var jaxon = {
  * These are application level settings; however, they can be overridden by
  * specifying the appropriate configuration options on a per call basis.
  */
-(function(self, logger) {
+(function(self, log) {
     /**
      * An array of header entries where the array key is the header option name and
      * the associated value is the value that will set when the request object is initialized.
@@ -209,10 +209,10 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onPrepare: () => logger.consoleMode().debug('Sending Request...'),
-            onRequest: () => logger.consoleMode().debug('Waiting for Response...'),
-            onProcessing: () => logger.consoleMode().debug('Processing...'),
-            onComplete: () => logger.consoleMode().debug('Done.'),
+            onPrepare: () => log.consoleMode().debug('Sending Request...'),
+            onRequest: () => log.consoleMode().debug('Waiting for Response...'),
+            onProcessing: () => log.consoleMode().debug('Processing...'),
+            onComplete: () => log.consoleMode().debug('Done.'),
         },
 
         /**
@@ -273,7 +273,7 @@ var jaxon = {
             onFailure: () => {},
         },
     };
-})(jaxon.config, jaxon.utils.logger);
+})(jaxon.config, jaxon.utils.log);
 
 // Make jaxon accessible with the dom.findFunction function.
 window.jaxon = jaxon;
