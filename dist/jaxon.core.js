@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.2.1',
+        number: '5.2.2',
     },
 
     debug: {
@@ -55,7 +55,7 @@ var jaxon = {
         queue: {},
         types: {},
         string: {},
-        logger: {},
+        log: {},
     },
 
     bag: {},
@@ -72,7 +72,7 @@ var jaxon = {
  * These are application level settings; however, they can be overridden by
  * specifying the appropriate configuration options on a per call basis.
  */
-(function(self, logger) {
+(function(self, log) {
     /**
      * An array of header entries where the array key is the header option name and
      * the associated value is the value that will set when the request object is initialized.
@@ -209,10 +209,10 @@ var jaxon = {
          * @type {object}
          */
         update: {
-            onPrepare: () => logger.consoleMode().debug('Sending Request...'),
-            onRequest: () => logger.consoleMode().debug('Waiting for Response...'),
-            onProcessing: () => logger.consoleMode().debug('Processing...'),
-            onComplete: () => logger.consoleMode().debug('Done.'),
+            onPrepare: () => log.consoleMode().debug('Sending Request...'),
+            onRequest: () => log.consoleMode().debug('Waiting for Response...'),
+            onProcessing: () => log.consoleMode().debug('Processing...'),
+            onComplete: () => log.consoleMode().debug('Done.'),
         },
 
         /**
@@ -273,7 +273,7 @@ var jaxon = {
             onFailure: () => {},
         },
     };
-})(jaxon.config, jaxon.utils.logger);
+})(jaxon.config, jaxon.utils.log);
 
 // Make jaxon accessible with the dom.findFunction function.
 window.jaxon = jaxon;
@@ -426,7 +426,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, logger) {
+(function(self, dom, log) {
     /**
      * @param {string} type
      * @param {string} name
@@ -544,8 +544,8 @@ window.jaxon = jaxon;
         let matches = name.match(nameRegex);
         if (!matches) {
             // Invalid name
-            logger.warning(`Invalid field name ${name} in form ${formId}.`);
-            logger.warning(`The value of the field ${name} in form ${formId} is ignored.`);
+            log.warning(`Invalid field name ${name} in form ${formId}.`);
+            log.warning(`The value of the field ${name} in form ${formId} is ignored.`);
             return;
         }
 
@@ -604,11 +604,11 @@ window.jaxon = jaxon;
         }
         return xOptions.values;
     };
-})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.logger);
+})(jaxon.utils.form, jaxon.utils.dom, jaxon.utils.log);
 
 
 /**
- * Class: jaxon.utils.logger
+ * Class: jaxon.utils.log
  *
  * global: jaxon
  */
@@ -715,7 +715,7 @@ window.jaxon = jaxon;
         self.logger()?.debug(sMessage, { ...xContext });
         resetMode();
     };
-})(jaxon.utils.logger, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);
+})(jaxon.utils.log, jaxon.utils.dom, jaxon.utils.types, jaxon.debug);
 
 
 /**
@@ -1002,7 +1002,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, attr, call, query, types, logger) {
+(function(self, dom, attr, call, query, types, log) {
     /**
      * Config data.
      *
@@ -1067,8 +1067,8 @@ window.jaxon = jaxon;
         }
 
         !libs[sLibName] ?
-            logger.warning(`Unable to find a dialog library with name "${sLibName}".`) :
-            logger.warning(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
+            log.warning(`Unable to find a dialog library with name "${sLibName}".`) :
+            log.warning(`The chosen dialog library doesn't implement the "${sFunc}" function.`);
 
         // Check if there is a default library in the config for the required feature.
         const sLibType = sFunc === 'show' || sFunc === 'hide' ? 'modal' : sFunc;
@@ -1076,7 +1076,7 @@ window.jaxon = jaxon;
             return libs[config.defaults[sLibType]];
         }
         if (!libs.default[sFunc]) {
-            logger.error(`Unable to find a dialog library with the "${sFunc}" function.`);
+            log.error(`Unable to find a dialog library with the "${sFunc}" function.`);
         }
         return libs.default;
     };
@@ -1224,7 +1224,7 @@ window.jaxon = jaxon;
             confirm(dialogContent(title, question)) ? yesCb() : (noCb && noCb());
     });
 })(jaxon.dialog, jaxon.dom, jaxon.parser.attr, jaxon.parser.call,
-    jaxon.parser.query, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.parser.query, jaxon.utils.types, jaxon.utils.log);
 
 
 /**
@@ -1516,7 +1516,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, query, dialog, dom, string, form, types, logger) {
+(function(self, query, dialog, dom, string, form, types, log) {
     /**
      * The comparison operators.
      *
@@ -1616,7 +1616,7 @@ window.jaxon = jaxon;
                 }
 
                 // Tried to call an undefined function.
-                logger.error(`Call to undefined function ${sFuncName}.`);
+                log.error(`Call to undefined function ${sFuncName}.`);
                 return { call: sFuncName, value: undefined };
             }
 
@@ -1632,23 +1632,23 @@ window.jaxon = jaxon;
                 if (!xValue) {
                     return { call: 'window', value: window };
                 }
-                logger.error('Cannot assign the "window" var.');
+                log.error('Cannot assign the "window" var.');
                 return { call: 'null', value: null };
             }
 
             const sAttrName = !sCall ? sName : `${sCall}.${sName}`;
             const xAttrValue = processAttr(xCurrValue || window, sName, xValue, xOptions);
             if (xAttrValue === undefined) {
-                logger.error(`Call to undefined variable ${sAttrName}.`);
+                log.error(`Call to undefined variable ${sAttrName}.`);
             }
             return { call: sAttrName, value: xAttrValue };
         },
         invalid: (xCall) => {
-            logger.error('Invalid command: ' + JSON.stringify({ call: xCall }));
+            log.error('Invalid command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
         unknown: (xCall) => {
-            logger.error('Unknown command: ' + JSON.stringify({ call: xCall }));
+            log.error('Unknown command: ' + JSON.stringify({ call: xCall }));
             return { call: undefined, value: undefined };
         },
     };
@@ -1904,7 +1904,7 @@ window.jaxon = jaxon;
     self.execExpr = (xExpression, xContext = {}) => types.isObject(xExpression) &&
         execExpression(xExpression, getOptions(xContext));
 })(jaxon.parser.call, jaxon.parser.query, jaxon.dialog, jaxon.utils.dom,
-    jaxon.utils.string, jaxon.utils.form, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.utils.string, jaxon.utils.form, jaxon.utils.types, jaxon.utils.log);
 
 
 /**
@@ -1964,7 +1964,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, types, logger, config) {
+(function(self, types, log, config) {
     /**
      * The names of the available callbacks.
      *
@@ -2026,7 +2026,7 @@ window.jaxon = jaxon;
         if (types.isObject(xCallbacks)) {
             return [xCallbacks];
         }
-        logger.warning(`Invalid callback value ignored on request to ${func.name}.`);
+        log.warning(`Invalid callback value ignored on request to ${func.name}.`);
         return [];
     };
 
@@ -2063,7 +2063,7 @@ window.jaxon = jaxon;
             // Add the timers attribute, if it is not defined.
             .map(oCallback => ({ ...oCallback, timers: { ...oCallback.timers }}));
         if (aValidCallbacks.length !== aCallbacks.length) {
-            logger.warning(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
+            log.warning(`Invalid callback object ignored on request to ${oRequest.func.name}.`);
         }
 
         const aRequestCallback = getRequestCallbackByNames(oRequest);
@@ -2146,7 +2146,7 @@ window.jaxon = jaxon;
      */
     self.clearTimer = (oRequest, sEvent) => oRequest.callbacks
         .forEach(oCallback => clearTimer(oCallback, sEvent));
-})(jaxon.ajax.callback, jaxon.utils.types, jaxon.utils.logger, jaxon.config);
+})(jaxon.ajax.callback, jaxon.utils.types, jaxon.utils.log, jaxon.config);
 
 
 /**
@@ -2155,7 +2155,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, config, attr, cbk, queue, dom, types, logger) {
+(function(self, config, attr, cbk, queue, dom, types, log) {
     /**
      * An array that is used internally in the jaxon.fn.handler object to keep track
      * of command handlers that have been registered.
@@ -2228,7 +2228,7 @@ window.jaxon = jaxon;
     self.execute = (context) => {
         const { command: { name, args = {}, component = {} } } = context;
         if (!self.isRegistered({ name })) {
-            logger.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
+            log.error('Trying to execute unknown command: ' + JSON.stringify({ name, args }));
             return true;
         }
 
@@ -2236,13 +2236,13 @@ window.jaxon = jaxon;
         if ((component.name)) {
             context.target = attr.node(component.name, component.item);
             if (!context.target) {
-                logger.error('Unable to find component node: ' + JSON.stringify(component));
+                log.error('Unable to find component node: ' + JSON.stringify(component));
             }
         }
         if (!context.target && (args.id)) {
             context.target = dom.$(args.id);
             if (!context.target) {
-                logger.error('Unable to find node with id : ' + args.id);
+                log.error('Unable to find node with id : ' + args.id);
             }
         }
 
@@ -2263,7 +2263,7 @@ window.jaxon = jaxon;
             self.execute(context);
             return true;
         } catch (e) {
-            logger.error(e);
+            log.error(e);
         }
         return false;
     };
@@ -2327,7 +2327,7 @@ window.jaxon = jaxon;
         }
 
         const { debug: { message } = {}, jxn: { commands = [] } = {} } = content;
-        message && logger.console(message);
+        message && log.console(message);
 
         cbk.execute(oRequest, 'onProcessing');
 
@@ -2357,7 +2357,7 @@ window.jaxon = jaxon;
         self.processQueue(oQueue);
     };
 })(jaxon.ajax.command, jaxon.config, jaxon.parser.attr, jaxon.ajax.callback,
-    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.logger);
+    jaxon.utils.queue, jaxon.utils.dom, jaxon.utils.types, jaxon.utils.log);
 
 
 /**
@@ -2375,16 +2375,6 @@ window.jaxon = jaxon;
     const databags = {};
 
     /**
-     * Save data in the data bag.
-     *
-     * @param {string} sBagName   The data bag name.
-     * @param {object} oValues The values to save in the data bag.
-     *
-     * @return {void}
-     */
-    self.setBag = (sBagName, oValues) => databags[sBagName] = oValues;
-
-    /**
      * Set the values in an entry in the databag.
      *
      * @param {string} sBagName The data bag name.
@@ -2394,8 +2384,7 @@ window.jaxon = jaxon;
      * @return {bool}
      */
     self.setBagEntry = (sBagName, sBagKey, xValue) => {
-        // Only objects are allowed in a databag.
-        if (databags[sBagName] === undefined || !types.isObject(xValue)) {
+        if (databags[sBagName] === undefined) {
             return false;
         }
 
@@ -2426,7 +2415,8 @@ window.jaxon = jaxon;
      */
     self.setBagValue = (sBagName, sBagKey, sDataKey, xValue) => {
         const xBagEntry = self.getBagEntry(sBagName, sBagKey);
-        if (xBagEntry === undefined) {
+        // We need an object to get the data key from.
+        if (xBagEntry === undefined || !types.isObject(xBagEntry)) {
             return false;
         }
 
@@ -2451,11 +2441,30 @@ window.jaxon = jaxon;
      */
     self.getBagValue = (sBagName, sBagKey, sDataKey, xDefault) => {
         const xBagEntry = self.getBagEntry(sBagName, sBagKey);
-        if (xBagEntry === undefined) {
+        // We need an object to get the data key from.
+        if (xBagEntry === undefined || !types.isObject(xBagEntry)) {
             return xDefault;
         }
 
         return dom.findObject(sDataKey, xBagEntry) ?? xDefault;
+    };
+
+    /**
+     * Save data in the databags.
+     *
+     * @param {object} oValues The databags values.
+     *
+     * @return {void}
+     */
+    self.setBags = (oValues) => {
+        // Make sure the values are objects.
+        if (types.isObject(oValues)) {
+            Object.keys(oValues).forEach(sBagName => {
+                if (types.isObject(oValues[sBagName])) {
+                    databags[sBagName] = oValues[sBagName];
+                }
+            });
+        }
     };
 
     /**
@@ -2505,7 +2514,7 @@ window.jaxon = jaxon;
         fSetter('jxnr', dNow.getTime());
         fSetter('jxnv', version.number);
         // The parameters value was assigned from the js "arguments" var in a function. So it
-        // is an array-like object, that we need to convert to a real array => [...parameters].
+        // is an array-like object, that we need to convert to a true array => [...parameters].
         // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
         fSetter('jxncall', encodeParameter({
             ...func,
@@ -2530,8 +2539,10 @@ window.jaxon = jaxon;
 
         // Files to upload
         const { name: field, files } = oRequest.upload.input;
-        // The "files" var is an array-like object, that we need to convert to a real array.
-        files && [...files].forEach(file => oRequest.requestData.append(field, file));
+        if(files) {
+            // The "files" var is an array-like object, that we need to convert to a true array.
+            [...files].forEach(file => oRequest.requestData.append(field, file));
+        }
     };
 
     /**
@@ -2549,6 +2560,7 @@ window.jaxon = jaxon;
             oRequest.requestData = rd.join('&');
             return;
         }
+
         // Move the parameters to the URL for HTTP GET requests
         oRequest.requestURI += (oRequest.requestURI.indexOf('?') === -1 ? '?' : '&') + rd.join('&');
         oRequest.requestData = ''; // The request body is empty
@@ -3063,7 +3075,7 @@ window.jaxon = jaxon;
  * global: jaxon
  */
 
-(function(self, dom, logger) {
+(function(self, dom, log) {
     /**
      * @param {object} oRequest A request object, created initially by a call to <jaxon.ajax.request.initialize>
      * @param {string=} oRequest.upload The HTML file upload field id
@@ -3083,19 +3095,19 @@ window.jaxon = jaxon;
         const input = dom.$(oRequest.upload.id);
 
         if (!input) {
-            logger.error('Unable to find input field for file upload with id ' + oRequest.upload.id);
+            log.error('Unable to find input field for file upload with id ' + oRequest.upload.id);
             return false;
         }
         if (input.type !== 'file') {
-            logger.error('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
+            log.error('The upload input field with id ' + oRequest.upload.id + ' is not of type file');
             return false;
         }
         if (input.files.length === 0) {
-            logger.error('There is no file selected for upload in input field with id ' + oRequest.upload.id);
+            log.error('There is no file selected for upload in input field with id ' + oRequest.upload.id);
             return false;
         }
         if (input.name === undefined) {
-            logger.error('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
+            log.error('The upload input field with id ' + oRequest.upload.id + ' has no name attribute');
             return false;
         }
         oRequest.upload.input = input;
@@ -3117,7 +3129,7 @@ window.jaxon = jaxon;
             oRequest.postHeaders['content-type'] = oRequest.contentType;
         }
     }
-})(jaxon.ajax.upload, jaxon.utils.dom, jaxon.utils.logger);
+})(jaxon.ajax.upload, jaxon.utils.dom, jaxon.utils.log);
 
 
 /**
@@ -3634,7 +3646,7 @@ window.jaxon = jaxon;
      * @returns {true} The operation completed successfully.
      */
     self.setDatabag = ({ values }) => {
-        Object.keys(values).forEach(sBag => parameters.setBag(sBag, values[sBag]));
+        parameters.setBags(values);
         return true;
     };
 
@@ -3756,9 +3768,9 @@ jaxon.bag.getValue = jaxon.ajax.parameters.getBagValue;
 jaxon.processCustomAttrs = jaxon.parser.attr.process;
 
 /**
- * Shortcut to <jaxon.utils.logger.logger>.
+ * Shortcut to <jaxon.utils.log.logger>.
  */
-jaxon.logger = jaxon.utils.logger.logger;
+jaxon.logger = jaxon.utils.log.logger;
 
 /**
  * Indicates if jaxon module is loaded.
@@ -3768,7 +3780,7 @@ jaxon.isLoaded = true;
 /**
  * Register the command handlers provided by the library, and initialize the message object.
  */
-(function(register, cmd, ajax, logger) {
+(function(register, cmd, ajax, log) {
     // Pseudo command needed to complete queued commands processing.
     register('response.complete', (args, { request }) => {
         ajax.response.complete(request);
@@ -3797,7 +3809,7 @@ jaxon.isLoaded = true;
     register('handler.remove', cmd.event.removeHandler, 'Script::RemoveHandler');
 
     register('script.debug', ({ message }) => {
-        logger.consoleMode().debug(message);
+        log.consoleMode().debug(message);
         return true;
     }, 'Debug message');
 
@@ -3811,4 +3823,4 @@ jaxon.isLoaded = true;
     register('dialog.alert.show', cmd.dialog.showAlert, 'Dialog::ShowAlert');
     register('dialog.modal.show', cmd.dialog.showModal, 'Dialog::ShowModal');
     register('dialog.modal.hide', cmd.dialog.hideModal, 'Dialog::HideModal');
-})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.utils.logger);
+})(jaxon.register, jaxon.cmd, jaxon.ajax, jaxon.utils.log);
