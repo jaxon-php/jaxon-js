@@ -36,7 +36,7 @@
      * @param {string} sBagName The data bag name.
      * @param {string} sBagKey The data bag entry key.
      *
-     * @return {object|undefined}
+     * @return {mixed}
      */
     self.getBagEntry = (sBagName, sBagKey) => databags[sBagName] === undefined ?
         undefined : databags[sBagName][sBagKey];
