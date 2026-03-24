@@ -1,6 +1,6 @@
 /*
     @package jaxon
-    @version $Id: jaxon.core.js 327 2007-02-28 16:55:26Z calltoconstruct $
+    @version $Id: jaxon.core.js 327 2007-02-28 16:55:26Z
     @copyright Copyright (c) 2005-2007 by Jared White & J. Max Wilson
     @copyright Copyright (c) 2008-2010 by Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
     @copyright Copyright (c) 2017 by Thierry Feuzeu, Joseph Woolley, Steffen Konerow, Jared White  & J. Max Wilson
@@ -119,8 +119,8 @@ var jaxon = {
 
     /**
      * The request mode.
-     * - 'asynchronous' - The request will immediately return, the response will be processed
-     *   when (and if) it is received.
+     * - 'asynchronous' - The request will immediately return.
+     *   The response will be processed when (and if) it is received.
      * - 'synchronous' - The request will block, waiting for the response.
      *   This option allows the server to return a value directly to the caller.
      */
@@ -148,7 +148,7 @@ var jaxon = {
 
     /**
      * The amount of time to wait, in milliseconds, before a request is considered expired.
-     * This is used to trigger the <jaxon.callback.onExpiration event.
+     * This is used to trigger the <jaxon.callback.onExpiration> event.
      */
     self.defaultExpirationTime = 10000;
 
@@ -188,7 +188,7 @@ var jaxon = {
      * Common options for all HTTP requests to the server.
      */
     self.httpRequestOptions = {
-        mode: "cors", // no-cors, *cors, same-origin
+        mode: "no-cors", // *no-cors, cors, same-origin
         cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
         credentials: "same-origin", // include, *same-origin, omit
         redirect: "manual", // manual, *follow, error
@@ -2398,7 +2398,7 @@ window.jaxon = jaxon;
      * @param {string} sBagName The data bag name.
      * @param {string} sBagKey The data bag entry key.
      *
-     * @return {object|undefined}
+     * @return {mixed}
      */
     self.getBagEntry = (sBagName, sBagKey) => databags[sBagName] === undefined ?
         undefined : databags[sBagName][sBagKey];
