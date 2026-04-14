@@ -56,9 +56,12 @@
      *
      * @param {string} sValue
      *
-     * @returns {integer}
+     * @returns {integer|null}
      */
-    self.toInt = (sValue) => parseInt(sValue);
+    self.toInt = (sValue) => {
+        const nValue = parseInt(sValue);
+        return isNaN(nValue) ? null : nValue;
+    };
 
     if (!Array.prototype.top) {
         /**
