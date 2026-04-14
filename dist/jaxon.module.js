@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.2.2',
+        number: '5.2.3',
     },
 
     debug: {
@@ -979,9 +979,12 @@ window.jaxon = jaxon;
      *
      * @param {string} sValue
      *
-     * @returns {integer}
+     * @returns {integer|null}
      */
-    self.toInt = (sValue) => parseInt(sValue);
+    self.toInt = (sValue) => {
+        const nValue = parseInt(sValue);
+        return isNaN(nValue) ? null : nValue;
+    };
 
     if (!Array.prototype.top) {
         /**
@@ -1531,6 +1534,8 @@ window.jaxon = jaxon;
         ge: (xLeftArg, xRightArg) => xLeftArg >= xRightArg,
         lt: (xLeftArg, xRightArg) => xLeftArg < xRightArg,
         le: (xLeftArg, xRightArg) => xLeftArg <= xRightArg,
+        ty: (xLeftArg) => !!xLeftArg,
+        fy: (xLeftArg) => !xLeftArg,
         error: () => false, // The default comparison operator.
     };
 
