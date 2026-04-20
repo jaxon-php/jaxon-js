@@ -92,17 +92,6 @@
 
         // Set upload data in the request.
         upload.initialize(oRequest);
-
-        // The request is submitted only if there is no pending requests in the outgoing queue.
-        oRequest.submit = queue.empty(self.q.send);
-
-        // Synchronous requests are always queued.
-        // Asynchronous requests are queued in send queue only if they are not submitted.
-        oRequest.queued = false;
-        if (!oRequest.submit || oRequest.mode === 'synchronous') {
-            queue.push(self.q.send, oRequest);
-            oRequest.queued = true;
-        }
     };
 
     /**
@@ -170,6 +159,9 @@
      * @returns {void}
      */
     self.submit = (oRequest) => {
+        cbk.execute(oRequest, 'onProcessParams');
+        params.process(oRequest);
+
         while (oRequest.requestRetry-- > 0) {
             try {
                 submit(oRequest);
@@ -216,10 +208,17 @@
         oRequest.func = func;
         self.initialize(oRequest);
 
-        cbk.execute(oRequest, 'onProcessParams');
-        params.process(oRequest);
+        // The request is submitted only if there is no pending requests in the outgoing queue.
+        const bSubmit = queue.empty(self.q.send);
+        // Synchronous requests are always queued. Asynchronous requests are queued if the send
+        // queue is not empty, which means there is at least one pending synchronous request.
+        oRequest.queued = false;
+        if (!bSubmit || oRequest.mode === 'synchronous') {
+            queue.push(self.q.send, oRequest);
+            oRequest.queued = true;
+        }
 
-        oRequest.submit && self.submit(oRequest);
+        bSubmit && self.submit(oRequest);
     };
 })(jaxon.ajax.request, jaxon.config, jaxon.ajax.parameters, jaxon.ajax.response,
     jaxon.ajax.callback, jaxon.ajax.upload, jaxon.utils.queue);

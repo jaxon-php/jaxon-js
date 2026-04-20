@@ -245,5 +245,5 @@
             }
         }
     };
-})(jaxon.ajax.response, jaxon.ajax.command, jaxon.ajax.request, jaxon.ajax.callback,
-    jaxon.utils.queue);
+})(jaxon.ajax.response, jaxon.ajax.command, jaxon.ajax.request,
+    jaxon.ajax.callback, jaxon.utils.queue);
