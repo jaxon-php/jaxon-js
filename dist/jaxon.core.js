@@ -1878,6 +1878,11 @@ window.jaxon = jaxon;
     };
 
     /**
+     * @var {object} The debounce timers
+     */
+    const xDebounceTimers = {};
+
+    /**
      * Execute the javascript code represented by an expression object.
      *
      * @param {object} xExpression
@@ -1886,6 +1891,17 @@ window.jaxon = jaxon;
      * @returns {mixed}
      */
     const execExpression = (xExpression, xOptions) => {
+        const { debounce: { label = null, interval = null } = {} } = xExpression;
+        if(label !== null && interval !== null) {
+            if(xDebounceTimers[label] !== undefined) {
+                clearTimeout(xDebounceTimers[label]);
+            }
+            xExpression.debounce = undefined;
+            const handler = () => execExpression(xExpression, xOptions);
+            xDebounceTimers[label] = setTimeout(handler, interval);
+            return;
+        }
+
         const { calls, confirm, condition, alert } = xExpression;
         if((confirm)) {
             execWithConfirmation(confirm, alert, calls, xOptions);
