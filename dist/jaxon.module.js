@@ -15,7 +15,7 @@ var jaxon = {
      * Version number
      */
     version: {
-        number: '5.2.4',
+        number: '5.2.5',
     },
 
     debug: {
@@ -2489,6 +2489,15 @@ window.jaxon = jaxon;
     };
 
     /**
+     * Get the values in a databag.
+     *
+     * @param {string} sBagName The data bag name.
+     *
+     * @return {object}
+     */
+    self.getBag = (sBagName) => databags[sBagName];
+
+    /**
      * Get multiple values from the databag.
      *
      * @param {array} aBags The data bag names.
@@ -3761,6 +3770,11 @@ jaxon.alert = jaxon.dialog.alert;
  * Shortcut to <jaxon.utils.form.getValues>.
  */
 jaxon.getFormValues = jaxon.utils.form.getValues;
+
+/**
+ * Shortcut to <jaxon.ajax.parameters.getBag>.
+ */
+jaxon.bag.getBag = jaxon.ajax.parameters.getBag;
 
 /**
  * Shortcut to <jaxon.ajax.parameters.setBagEntry>.

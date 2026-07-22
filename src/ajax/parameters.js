@@ -106,6 +106,15 @@
     };
 
     /**
+     * Get the values in a databag.
+     *
+     * @param {string} sBagName The data bag name.
+     *
+     * @return {object}
+     */
+    self.getBag = (sBagName) => databags[sBagName];
+
+    /**
      * Get multiple values from the databag.
      *
      * @param {array} aBags The data bag names.
