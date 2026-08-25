@@ -1,12 +1,12 @@
 /*
     File: jaxon.debug.js
-    
+
     This optional file contains the debugging module for use with jaxon.
     If you include this module after the standard <jaxon_core.js> module, you will receive debugging messages,
     including errors, that occur during the processing of your jaxon requests.
-    
+
     Title: jaxon debugging module
-    
+
     Please see <copyright.inc.php> for a detailed description, copyright and license information.
 */
 
@@ -40,28 +40,28 @@ try {
 (function(self, parameters, request, response, command, call, query, utils) {
     /*
         String: jaxon.debug.windowSource
-        
+
         The default URL that is given to the debugging window upon creation.
     */
     self.windowSource = 'about:blank';
 
     /*
         String: jaxon.debug.windowID
-        
+
         A 'unique' name used to identify the debugging window that is attached to this jaxon session.
     */
     self.windowID = 'jaxon_debug_window'; // + new Date().getTime();
 
     /*
         String: windowStyle
-        
+
         The parameters that will be used to create the debugging window.
     */
     self.windowStyle = 'width=800,height=600,scrollbars=yes,resizable=yes,status=yes';
 
     /*
         String: windowTemplate
-        
+
         The HTML template and CSS style information used to populate the
         debugging window upon creation.
     */
@@ -85,28 +85,28 @@ try {
 
     /*
         Boolean: jaxon.debug.isLoaded
-        
+
         true - indicates that the debugging module is loaded
     */
     self.isLoaded = true;
 
     /*
         Boolean: isLoaded
-        
+
         true - indicates that the verbose debugging module is loaded.
     */
     self.verbose.isLoaded = false;
 
     /*
         Boolean: active
-        
+
         true - indicates that the verbose debugging module is active.
     */
     self.verbose.active = false;
 
     /*
         Function: jaxon.debug.getExceptionText
-        
+
         Parameters:
         e - (object): Exception
     */
@@ -128,9 +128,9 @@ try {
 
     /*
         Function: jaxon.debug.prepareDebugText
-        
+
         Convert special characters to their HTML equivellents so they will show up in the <jaxon.debug.window>.
-        
+
         Parameters:
             text - (string): Debug text
     */
@@ -165,18 +165,18 @@ try {
 
     /*
         Function: jaxon.debug.writeDebugMessage
-        
+
         Output a debug message to the debug window if available or send to an
-        alert box.  If the debug window has not been created, attempt to 
+        alert box.  If the debug window has not been created, attempt to
         create it.
-        
+
         Parameters:
-        
+
         text - (string):  The text to output.
-        
-        prefix - (string):  The prefix to use; this is prepended onto the 
+
+        prefix - (string):  The prefix to use; this is prepended onto the
             message; it should indicate the type of message (warning, error)
-            
+
         cls - (string):  The className that will be applied to the message;
             invoking a style from the CSS provided in  <self.windowTemplate>.
             Should be one of the following:
@@ -256,7 +256,7 @@ try {
     /**
      * Serialize object with cyclic structures.
      *
-     * @param {mixed} obj 
+     * @param {mixed} obj
      *
      * @returns {string}
      */
@@ -264,15 +264,15 @@ try {
 
     /*
         Function: jaxon.ajax.command.unregister
-        
+
         Catch any exception thrown during the unregistration of command handler and display an appropriate debug message.
-        
+
         This is a wrapper around the standard <jaxon.ajax.command.unregister> function.
-        
+
         Parameters:
             child - (object): Childnode
             obj - (object): Object
-            
+
     */
     const commandHandler = command.unregister('script.debug');
     command.register('script.debug', ({ message }) => {
@@ -282,11 +282,11 @@ try {
 
     /*
         Function: jaxon.debug.executeCommand
-        
+
         Catch any exceptions that are thrown by a response command handler
         and display a message in the debugger.
-        
-        This is a wrapper function which surrounds the standard 
+
+        This is a wrapper function which surrounds the standard
         <jaxon.ajax.command.execute> function.
     */
     const executeCommand = command.execute;
@@ -317,11 +317,11 @@ try {
 
     /*
         Function: jaxon.ajax.command.call
-        
-        Validates that a function name was provided, generates a message 
+
+        Validates that a function name was provided, generates a message
         indicating that a jaxon call is starting and sets a flag in the
         request object indicating that debugging is enabled for this call.
-        
+
         This is a wrapper around the standard <jaxon.ajax.command.call> function.
     */
         const callHandler = command.callHandler;
@@ -329,7 +329,7 @@ try {
             const { command: { fullName }, component } = context;
             try {
                 const rv = callHandler(name, args, context);
-    
+
                 self.writeDebugMessage(self.messages.processing.calling.supplant({
                     cmd: fullName || name,
                     options: self.stringify({
@@ -337,7 +337,7 @@ try {
                         args,
                     }),
                 }));
-    
+
                 return rv;
             } catch (e) {
                 const msg = 'jaxon.ajax.command.callHandler: ' + getExceptionText(e) + '\n';
@@ -345,17 +345,17 @@ try {
                 throw e;
             }
         }
-    
+
     /*
         Function: jaxon.utils.dom.$
-        
+
         Catch any exceptions thrown while attempting to locate an HTML element by it's unique name.
-        
+
         This is a wrapper around the standard <jaxon.utils.dom.$> function.
-        
+
         Parameters:
         sId - (string): Element ID or name
-        
+
     */
     const dom = utils.dom.$;
     utils.dom.$ = function(sId) {
@@ -372,11 +372,11 @@ try {
 
     /*
         Function: jaxon.ajax.request._send
-        
+
         Generate a message indicating that the jaxon request is
         about the be sent to the server.
-        
-        This is a wrapper around the standard <jaxon.ajax.request._send> 
+
+        This is a wrapper around the standard <jaxon.ajax.request._send>
         function.
     */
     const sendRequest = request._send;
@@ -396,12 +396,12 @@ try {
 
     /*
         Function: jaxon.ajax.request.submit
-        
-        Generate a message indicating that a request is ready to be 
+
+        Generate a message indicating that a request is ready to be
         submitted; providing the URL and the function being invoked.
-        
+
         Catch any exceptions thrown and display a message.
-        
+
         This is a wrapper around the standard <jaxon.ajax.request.submit>
         function.
     */
@@ -431,10 +431,10 @@ try {
 
     /*
         Function: jaxon.ajax.request.initialize
-        
+
         Generate a message indicating that the request object is
         being initialized.
-        
+
         This is a wrapper around the standard <jaxon.ajax.request.initialize>
         function.
     */
@@ -453,10 +453,10 @@ try {
 
     /*
         Function: jaxon.ajax.parameters.process
-        
+
         Generate a message indicating that the request object is
         being populated with the parameters provided.
-        
+
         This is a wrapper around the standard <jaxon.ajax.parameters.process>
         function.
     */
@@ -482,11 +482,11 @@ try {
 
     /*
         Function: jaxon.ajax.request.prepare
-        
+
         Generate a message indicating that the request is being
         prepared.  This may occur more than once for a request
         if it errors and a retry is attempted.
-        
+
         This is a wrapper around the standard <jaxon.ajax.request.prepare>
     */
     const prepareRequest = request.prepare;
@@ -504,11 +504,11 @@ try {
 
     /*
         Function: jaxon.ajax.request.execute
-        
-        Validates that a function name was provided, generates a message 
+
+        Validates that a function name was provided, generates a message
         indicating that a jaxon request is starting and sets a flag in the
         request object indicating that debugging is enabled for this request.
-        
+
         This is a wrapper around the standard <jaxon.ajax.request.execute> function.
     */
     const executeRequest = request.execute;
@@ -535,14 +535,14 @@ try {
 
     /*
         Function: jaxon.ajax.response.received
-        
+
         Generate a message indicating that a response has been received
         from the server; provide some statistical data regarding the
         response and the response time.
-        
+
         Catch any exceptions that are thrown during the processing of
         the response and generate a message.
-        
+
         This is a wrapper around the standard <jaxon.ajax.response.received>
         function.
     */
@@ -581,10 +581,10 @@ try {
 
     /*
         Function: jaxon.ajax.response.complete
-        
+
         Generate a message indicating that the request has completed
         and provide some statistics regarding the request and response.
-        
+
         This is a wrapper around the standard <jaxon.ajax.request.complete>
         function.
     */
@@ -606,9 +606,9 @@ try {
 
     /*
         Function: jaxon.cmd.node.assign
-        
+
         Catch any exceptions thrown during the assignment and display an error message.
-        
+
         This is a wrapper around the standard <jaxon.cmd.node.assign> function.
     */
     const nodeAssign = jaxon.cmd.node.assign;
@@ -669,16 +669,16 @@ jaxon.dom.ready(function() {
 
         /*
             Function: jaxon.debug.verbose.makeFunction
-            
+
             Generate a wrapper function around the specified function.
-            
+
             Parameters:
-            
+
             obj - (object):  The object that contains the function to be wrapped.
             name - (string):  The name of the function to be wrapped.
-            
+
             Returns:
-            
+
             function - The wrapper function.
         */
         const makeFunction = function(obj, name) {
@@ -719,11 +719,11 @@ jaxon.dom.ready(function() {
 
         /*
             Function: jaxon.debug.verbose.hook
-            
+
             Generate a wrapper function around each of the functions contained within the specified object.
-            
-            Parameters: 
-            
+
+            Parameters:
+
             x - (object):  The object to be scanned.
             base - (string):  The base reference to be prepended to the generated wrapper functions.
         */

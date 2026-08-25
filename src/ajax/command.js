@@ -69,7 +69,7 @@
      * in the first parameter.  If the command exists, the function checks to see if
      * the command references a DOM object by ID; if so, the object is located within
      * the DOM and added to the command data.  The command handler is then called.
-     * 
+     *
      * @param {object} context The response command to be executed.
      *
      * @returns {true} The command completed successfully.
@@ -102,7 +102,7 @@
 
     /**
      * Process a single command
-     * 
+     *
      * @param {object} context The response command to process
      *
      * @returns {boolean}
